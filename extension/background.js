@@ -599,13 +599,18 @@ const DAEMON_URL = 'http://127.0.0.1:9333'
 let connected = false
 function setBadge(ok) {
   connected = ok
-  if (ok) {
-    chrome.action.setBadgeText({ text: '' })
-  } else {
-    chrome.action.setBadgeText({ text: '!' })
-    chrome.action.setBadgeBackgroundColor({ color: '#EF4444' })
-  }
+  chrome.action.setBadgeText({ text: ok ? '' : '!' })
+  if (!ok) chrome.action.setBadgeBackgroundColor({ color: '#EF4444' })
+  chrome.action.setTitle({ title: ok ? 'Tap — connected' : 'Tap — disconnected (daemon not running)' })
 }
+
+// Click icon: show status or reconnect
+chrome.action.onClicked.addListener(async () => {
+  if (connected) return
+  // Disconnected — try immediate reconnect
+  setBadge(false)
+  if (!polling) pollLoop()
+})
 
 // Keep-alive: MV3 service worker dies after ~30s idle.
 // chrome.alarms fires every 25s to wake us up and restart pollLoop if needed.
