@@ -131,6 +131,12 @@ async function handleMethod(method, params = {}, senderTabId = null) {
 
   switch (method) {
 
+    case 'reload': {
+      // Daemon broadcast: reload extension after tap update
+      chrome.runtime.reload()
+      return { ok: true }
+    }
+
     // ========== CORE (8) — CDP for input, chrome.scripting for eval ==========
 
     case 'eval': {
