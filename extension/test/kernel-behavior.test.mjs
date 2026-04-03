@@ -194,30 +194,38 @@ console.log('\n  -- Rule 4: Eval Scope Isolation --\n')
 // ═══════════════════════════════════════════════════════════
 // Rule 5: Tab Recovery
 // Why: when a tab is manually closed, its ID becomes stale.
-// handleMethod must validate tab exists and auto-create if needed.
+// resolveTab() validates tab exists and auto-creates if needed.
+// handleMethod delegates to resolveTab() for tab resolution.
 // ═══════════════════════════════════════════════════════════
 
 console.log('\n  -- Rule 5: Tab Recovery --\n')
 
 {
-  const hmStart = BG_SRC.indexOf('async function handleMethod(')
-  // Get the portion before the switch statement
-  const switchStart = BG_SRC.indexOf('switch (method)', hmStart)
-  const preamble = BG_SRC.substring(hmStart, switchStart)
+  const rtStart = BG_SRC.indexOf('async function resolveTab(')
+  assert(rtStart !== -1, 'resolveTab function must exist')
+  const rtBody = BG_SRC.substring(rtStart, rtStart + 500)
 
-  test('handleMethod validates tab exists via chrome.tabs.get', () => {
-    assert(preamble.includes('chrome.tabs.get'),
-      'handleMethod must call chrome.tabs.get to verify tab still exists')
+  test('resolveTab validates tab exists via chrome.tabs.get', () => {
+    assert(rtBody.includes('chrome.tabs.get'),
+      'resolveTab must call chrome.tabs.get to verify tab still exists')
   })
 
-  test('handleMethod catches dead tab errors', () => {
-    assert(preamble.includes('catch'),
-      'handleMethod must catch errors from chrome.tabs.get for dead tabs')
+  test('resolveTab catches dead tab errors', () => {
+    assert(rtBody.includes('catch'),
+      'resolveTab must catch errors from chrome.tabs.get for dead tabs')
   })
 
-  test('handleMethod auto-creates tab when none exists', () => {
-    assert(preamble.includes('chrome.tabs.create'),
-      'handleMethod must auto-create a tab when no valid tab is found')
+  test('resolveTab auto-creates tab when none exists', () => {
+    assert(rtBody.includes('chrome.tabs.create'),
+      'resolveTab must auto-create a tab when no valid tab is found')
+  })
+
+  test('handleMethod delegates to resolveTab', () => {
+    const hmStart = BG_SRC.indexOf('async function handleMethod(')
+    const switchStart = BG_SRC.indexOf('switch (method)', hmStart)
+    const preamble = BG_SRC.substring(hmStart, switchStart)
+    assert(preamble.includes('resolveTab'),
+      'handleMethod must delegate tab resolution to resolveTab()')
   })
 }
 

@@ -30,30 +30,39 @@ function test(name, fn) {
 
 // ═══════════════════════════════════════════════════════════
 // Rule 1: Tab Routing
-// Why: handleMethod must use params.tabId first, fall back to
+// Why: resolveTab() must use params.tabId first, fall back to
 // activeTabId, and auto-create a tab when neither is available.
+// handleMethod delegates to resolveTab().
 // ═══════════════════════════════════════════════════════════
 
 console.log('\n  -- Rule 1: Tab Routing --\n')
 
 {
-  const hmStart = BG_SRC.indexOf('async function handleMethod(')
-  const switchStart = BG_SRC.indexOf('switch (method)', hmStart)
-  const preamble = BG_SRC.substring(hmStart, switchStart)
+  const rtStart = BG_SRC.indexOf('async function resolveTab(')
+  assert(rtStart !== -1, 'resolveTab function must exist')
+  const rtBody = BG_SRC.substring(rtStart, rtStart + 500)
 
-  test('handleMethod uses params.tabId for routing', () => {
-    assert(preamble.includes('params.tabId'),
-      'handleMethod must extract tabId from params for explicit tab targeting')
+  test('resolveTab uses params.tabId for routing', () => {
+    assert(rtBody.includes('params.tabId'),
+      'resolveTab must extract tabId from params for explicit tab targeting')
   })
 
-  test('handleMethod falls back to activeTabId', () => {
-    assert(preamble.includes('activeTabId'),
-      'handleMethod must fall back to activeTabId when params.tabId is not provided')
+  test('resolveTab falls back to activeTabId', () => {
+    assert(rtBody.includes('activeTabId'),
+      'resolveTab must fall back to activeTabId when params.tabId is not provided')
   })
 
-  test('handleMethod auto-creates tab with chrome.tabs.create', () => {
-    assert(preamble.includes('chrome.tabs.create'),
-      'handleMethod must auto-create a tab when no valid tabId is available')
+  test('resolveTab auto-creates tab with chrome.tabs.create', () => {
+    assert(rtBody.includes('chrome.tabs.create'),
+      'resolveTab must auto-create a tab when no valid tabId is available')
+  })
+
+  test('handleMethod delegates to resolveTab', () => {
+    const hmStart = BG_SRC.indexOf('async function handleMethod(')
+    const switchStart = BG_SRC.indexOf('switch (method)', hmStart)
+    const preamble = BG_SRC.substring(hmStart, switchStart)
+    assert(preamble.includes('resolveTab'),
+      'handleMethod must delegate tab resolution to resolveTab()')
   })
 }
 
@@ -151,19 +160,24 @@ test('let activeTabId exists as fallback', () => {
     'must keep activeTabId as default fallback variable')
 })
 
-test('handleMethod sets activeTabId on auto-create', () => {
-  const hmStart = BG_SRC.indexOf('async function handleMethod(')
-  const autoCreate = BG_SRC.indexOf('chrome.tabs.create', hmStart)
-  const context = BG_SRC.substring(autoCreate, autoCreate + 200)
+test('resolveTab sets activeTabId on auto-create', () => {
+  const rtStart = BG_SRC.indexOf('async function resolveTab(')
+  const rtBody = BG_SRC.substring(rtStart, rtStart + 500)
+  const autoCreate = rtBody.indexOf('chrome.tabs.create')
+  const context = rtBody.substring(autoCreate, autoCreate + 200)
   assert(context.includes('activeTabId = tabId') || context.includes('activeTabId ='),
     'must set activeTabId when auto-creating a tab so subsequent calls reuse it')
 })
 
 test('params.tabId takes priority over activeTabId', () => {
-  const hmStart = BG_SRC.indexOf('async function handleMethod(')
-  const context = BG_SRC.substring(hmStart, hmStart + 200)
-  assert(context.includes('params.tabId'),
-    'handleMethod must check params.tabId first before falling back to activeTabId')
+  const rtStart = BG_SRC.indexOf('async function resolveTab(')
+  const rtBody = BG_SRC.substring(rtStart, rtStart + 500)
+  assert(rtBody.includes('params.tabId'),
+    'resolveTab must check params.tabId first before falling back to activeTabId')
+  const tabIdIdx = rtBody.indexOf('params.tabId')
+  const activeIdx = rtBody.indexOf('activeTabId')
+  assert(tabIdIdx < activeIdx,
+    'params.tabId must be checked before activeTabId (explicit overrides default)')
 })
 
 test('activeTabId is initialized to null', () => {
@@ -171,18 +185,12 @@ test('activeTabId is initialized to null', () => {
     'activeTabId must be initialized to null')
 })
 
-test('handleMethod reads activeTabId as fallback only', () => {
+test('handleMethod delegates tab resolution to resolveTab', () => {
   const hmStart = BG_SRC.indexOf('async function handleMethod(')
   const switchStart = BG_SRC.indexOf('switch (method)', hmStart)
   const preamble = BG_SRC.substring(hmStart, switchStart)
-  // It should read activeTabId but not write to it
-  assert(preamble.includes('activeTabId'),
-    'handleMethod must read activeTabId as fallback')
-  // Verify the pattern: params.tabId first, then activeTabId
-  const tabIdIdx = preamble.indexOf('params.tabId')
-  const activeIdx = preamble.indexOf('activeTabId')
-  assert(tabIdIdx < activeIdx,
-    'params.tabId must be checked before activeTabId (explicit overrides default)')
+  assert(preamble.includes('resolveTab'),
+    'handleMethod must delegate tab resolution to resolveTab()')
 })
 
 // --- Summary ---

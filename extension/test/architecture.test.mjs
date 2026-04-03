@@ -1,9 +1,11 @@
 /**
- * Constraint: background.js is a pure runtime API gateway
- * Classification: safety / what -- violations break the core/built-in separation
+ * Constraint: background.js is a full runtime API gateway
+ * Classification: safety / what -- violations break runtime correctness
  *
- * background.js implements 8 core operations (~334 lines). It must NOT contain
- * executor logic, forge logic, built-in operations, or protocol layer remnants.
+ * background.js implements all 25 operations (8 core + 17 built-in).
+ * Built-in uses chrome.scripting.executeScript({ func }) — real function
+ * injection, CSP-immune. It must NOT contain executor logic, forge logic,
+ * or protocol layer remnants.
  *
  * Run: node extension/test/architecture.test.mjs
  */
@@ -175,13 +177,14 @@ console.log('\n  -- Rule 4: No Executor / No Forge --\n')
 }
 
 // ═══════════════════════════════════════════════════════════
-// Rule 5: No Built-in Operations
-// Why: handleMethod must only handle 8 core operations.
-// Built-in operations (click, type, fill, etc.) are composed
-// from core by the Deno executor. Extension is a raw runtime.
+// Rule 5: Full Operation Coverage (8 core + 17 built-in)
+// Why: handleMethod implements ALL 25 operations. Built-in
+// uses chrome.scripting.executeScript({ func }) for CSP-immune
+// function injection. Extension is a full runtime, same role
+// as Playwright/macOS runtimes.
 // ═══════════════════════════════════════════════════════════
 
-console.log('\n  -- Rule 5: No Built-in Operations --\n')
+console.log('\n  -- Rule 5: Full Operation Coverage --\n')
 
 {
   const hmStart = BG_SRC.indexOf('async function handleMethod(')
@@ -194,15 +197,26 @@ console.log('\n  -- Rule 5: No Built-in Operations --\n')
     'waitFor', 'waitForNetwork', 'ssrState', 'copyAll'
   ]
 
-  test('handleMethod does not handle built-in operations', () => {
+  test('handleMethod handles built-in operations', () => {
     const found = caseNames.filter(n => BUILTIN_OPS.includes(n))
-    assert.equal(found.length, 0,
-      `found built-in operations in handleMethod: ${found.join(', ')} -- these belong in Deno executor`)
+    assert(found.length > 0,
+      `handleMethod must handle built-in operations -- extension is a full runtime`)
+    // Verify all 17 built-in ops are present (storage/cookies are in core section)
+    const missing = BUILTIN_OPS.filter(n => !caseNames.includes(n))
+    assert.equal(missing.length, 0,
+      `missing built-in operations in handleMethod: ${missing.join(', ')}`)
+  })
+
+  test('built-in uses execFunc helper for CSP-immune injection', () => {
+    assert(BG_SRC.includes('async function execFunc('),
+      'background.js must have execFunc helper for chrome.scripting function injection')
+    assert(BG_SRC.includes('chrome.scripting.executeScript'),
+      'execFunc must use chrome.scripting.executeScript')
   })
 
   test('no createBuiltIn function or import', () => {
     assert(!BG_SRC.includes('createBuiltIn'),
-      'background.js must not have createBuiltIn -- built-in lives in Deno')
+      'background.js must not have createBuiltIn -- built-in is implemented directly')
   })
 
   test('no createTap function or import', () => {

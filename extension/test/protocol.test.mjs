@@ -2,9 +2,9 @@
  * Constraint: extension runtime contract
  * Classification: safety / what -- missing core op = tap runtime crash
  *
- * background.js is a pure API gateway implementing 8 core operations.
- * It must not contain protocol layer remnants (createCore, createBuiltIn,
- * createTap, getTap, handleTapCommand, protocol.js import).
+ * background.js is a full API gateway implementing 8 core + 17 built-in
+ * operations. It must not contain protocol layer remnants (createCore,
+ * createBuiltIn, createTap, getTap, handleTapCommand, protocol.js import).
  *
  * Run: node extension/test/protocol.test.mjs
  */
@@ -66,12 +66,13 @@ console.log('\n  -- Rule 1: Core Operations Coverage --\n')
 }
 
 // ═══════════════════════════════════════════════════════════
-// Rule 2: No Built-in in Extension
-// Why: click/type/fill/hover/scroll/etc are composed from core by
-// the Deno executor. Extension is a raw runtime providing primitives.
+// Rule 2: Built-in Operations in Extension
+// Why: Extension is a full runtime (same role as Playwright/macOS).
+// handleMethod implements all 17 built-in operations using
+// chrome.scripting.executeScript({ func }) for CSP-immune injection.
 // ═══════════════════════════════════════════════════════════
 
-console.log('\n  -- Rule 2: No Built-in in Extension --\n')
+console.log('\n  -- Rule 2: Built-in Operations in Extension --\n')
 
 {
   const hmStart = BG_SRC.indexOf('async function handleMethod(')
@@ -84,10 +85,10 @@ console.log('\n  -- Rule 2: No Built-in in Extension --\n')
     'waitFor', 'waitForNetwork', 'ssrState', 'copyAll'
   ]
 
-  test('no built-in operation cases in handleMethod switch', () => {
-    const found = caseNames.filter(n => BUILTIN_OPS.includes(n))
-    assert.equal(found.length, 0,
-      `found built-in cases: ${found.join(', ')} -- built-in operations belong in Deno executor`)
+  test('built-in operation cases exist in handleMethod switch', () => {
+    const missing = BUILTIN_OPS.filter(n => !caseNames.includes(n))
+    assert.equal(missing.length, 0,
+      `missing built-in cases: ${missing.join(', ')} -- extension must handle all 17 built-in operations`)
   })
 }
 
@@ -238,7 +239,7 @@ test('no legacy Bridge.* prefix in any case statement', () => {
 
 test('WebSocket message handler strips tap. prefix for compatibility', () => {
   const wsSection = BG_SRC.substring(BG_SRC.indexOf('ws.onmessage') || 0)
-  assert(wsSection.includes('replace') && wsSection.includes('"tap."'),
+  assert(wsSection.includes('replace') && (wsSection.includes("'tap.'") || wsSection.includes('"tap."')),
     'WebSocket handler must strip tap. prefix from incoming method names for backward compatibility')
 })
 
