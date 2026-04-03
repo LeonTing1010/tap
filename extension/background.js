@@ -176,7 +176,7 @@ async function handleMethod(method, params = {}, senderTabId = null) {
         const r = await Promise.race([
           chrome.debugger.sendCommand({ tabId }, 'Runtime.evaluate',
             { expression: cdpExpr, returnByValue: true, awaitPromise: true }),
-          new Promise((_, rej) => setTimeout(() => rej(new Error('CDP eval timeout')), 30000))
+          new Promise((_, rej) => setTimeout(() => rej(new Error('CDP eval timeout')), 25000))
         ])
         scheduleDetach(tabId)
         if (r?.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description)
@@ -248,7 +248,7 @@ async function handleMethod(method, params = {}, senderTabId = null) {
     }
 
     case 'wait':
-      await new Promise(r => setTimeout(r, params.ms))
+      await new Promise(r => setTimeout(r, Math.min(params.ms, 25000)))
       return {}
 
     case 'screenshot': {
@@ -458,7 +458,7 @@ async function handleMethod(method, params = {}, senderTabId = null) {
     }
 
     case 'waitFor': {
-      const ms = params.ms || 10000
+      const ms = Math.min(params.ms || 10000, 25000)
       await execFunc(tabId, (sel, timeout) => {
         if (document.querySelector(sel)) return true
         return new Promise((resolve, reject) => {
@@ -473,7 +473,7 @@ async function handleMethod(method, params = {}, senderTabId = null) {
     }
 
     case 'waitForNetwork': {
-      await new Promise(r => setTimeout(r, params.ms || 3000))
+      await new Promise(r => setTimeout(r, Math.min(params.ms || 3000, 25000)))
       return {}
     }
 
@@ -597,6 +597,8 @@ const KEY_MAP = {
 // --- HTTP Polling to Daemon ---
 
 const DAEMON_URL = 'http://127.0.0.1:9333'
+// Unique session ID — daemon uses this to evict ghost polls from old service workers
+const SESSION_ID = crypto.randomUUID()
 
 // Badge: show connection status on extension icon
 let connected = false
@@ -638,10 +640,12 @@ async function pollLoop() {
     let res
     try {
       // Long-poll: daemon holds connection until a command arrives (up to 20s)
+      // Explicit 25s timeout — prevents indefinite hang that kills service worker
       res = await fetch(`${DAEMON_URL}/poll`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: '{}',
+        body: JSON.stringify({ sessionId: SESSION_ID }),
+        signal: AbortSignal.timeout(25000),
       })
     } catch {
       // Daemon not running — badge + backoff + retry (don't exit loop)
@@ -653,7 +657,6 @@ async function pollLoop() {
     try {
       const body = await res.json()
       const commands = body.commands || []
-      console.log(`[tap] poll got ${commands.length} commands`)
       setBadge(true)
 
       for (const cmd of commands) {
@@ -662,14 +665,12 @@ async function pollLoop() {
         const resolvedParams = { ...(params || {}) }
         if (msgTabId && !resolvedParams.tabId) resolvedParams.tabId = msgTabId
 
-        console.log(`[tap] cmd: ${method}`, JSON.stringify(resolvedParams).slice(0, 200))
         let response
         try {
           const result = await handleMethod(method, resolvedParams, null)
-          console.log(`[tap] ok: ${method}`)
           response = { id, result }
         } catch (error) {
-          console.error(`[tap] err: ${method}`, error.message)
+          console.error(`[tap] ${method}:`, error.message)
           response = { id, error: { code: -32000, message: error.message } }
         }
 
