@@ -133,8 +133,8 @@ async function handleMethod(method, params = {}, senderTabId = null) {
     
     case 'eval': {
       const safeExpr = '{\n' + params.expression + '\n}'
-      // CDP needs an async IIFE to safely await — block statements don't return Promises
-      const cdpExpr = '(async()=>{\n' + params.expression + '\n})()'
+      // CDP: use indirect eval wrapped in async IIFE — bypasses CSP and returns value
+      const cdpExpr = '(async () => { return (0, eval)(' + JSON.stringify(safeExpr) + ') })()'
 
       // Fast path: debugger already attached — use CDP directly (faster, bypasses CSP)
       if (debuggerSessions.get(tabId)?.attached) {
