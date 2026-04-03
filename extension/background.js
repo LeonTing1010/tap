@@ -282,3 +282,53 @@ const KEY_MAP = {
   PageUp: { key: 'PageUp', code: 'PageUp', windowsVirtualKeyCode: 33 },
   PageDown: { key: 'PageDown', code: 'PageDown', windowsVirtualKeyCode: 34 },
 }
+
+// --- WebSocket Connection to Daemon ---
+const DAEMON_URL = 'ws://127.0.0.1:9333';
+let ws = null;
+
+function connectToDaemon() {
+  if (ws) {
+    ws.close();
+    ws = null;
+  }
+
+  console.log('[tap] connecting to daemon at', DAEMON_URL);
+  ws = new WebSocket(DAEMON_URL);
+
+  ws.onopen = () => {
+    console.log('[tap] connected to daemon');
+  };
+
+  ws.onclose = () => {
+    console.log('[tap] disconnected from daemon');
+    ws = null;
+    setTimeout(connectToDaemon, 3000);
+  };
+
+  ws.onerror = (error) => {
+    console.error('[tap] WebSocket error:', error);
+  };
+
+  ws.onmessage = async (event) => {
+    try {
+      const msg = JSON.parse(event.data);
+      const { id, method: rawMethod, params } = msg;
+      const method = rawMethod?.replace?.("tap.", "") || rawMethod;
+      console.log('[tap] received:', method, 'id=' + id);
+
+      const result = await handleMethod(method, params || {}, null);
+      ws.send(JSON.stringify({ id, result, error: null }));
+    } catch (error) {
+      console.error('[tap] error handling message:', error);
+      ws.send(JSON.stringify({
+        id: event.data?.id || 0,
+        result: null,
+        error: error.message
+      }));
+    }
+  };
+}
+
+// Connect on startup
+connectToDaemon();
