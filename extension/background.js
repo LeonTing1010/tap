@@ -139,9 +139,20 @@ async function handleMethod(method, params = {}, senderTabId = null) {
         args: [safeExpr],
         world: 'MAIN'
       })
-      
+
       const wrapped = result?.result
       if (wrapped?.__ok) return wrapped.value
+
+      // CSP fallback: if eval blocked by Content-Security-Policy, use CDP
+      if (wrapped?.error?.includes('Content Security Policy') || wrapped?.error?.includes('unsafe-eval')) {
+        const r = await withDebugger(tabId, () =>
+          chrome.debugger.sendCommand({ tabId }, 'Runtime.evaluate', {
+            expression: safeExpr, returnByValue: true, awaitPromise: true
+          })
+        )
+        if (r?.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description)
+        return r?.result?.value
+      }
       throw new Error(wrapped?.error || 'eval failed')
     }
     
