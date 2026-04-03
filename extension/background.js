@@ -105,7 +105,13 @@ async function resolveTab(params) {
     try { await chrome.tabs.get(tabId) }
     catch { tabId = null }
   }
-  return tabId || null
+  if (!tabId) {
+    // Auto-create a tab when no valid tabId is available
+    const tab = await chrome.tabs.create({ active: true })
+    tabId = tab.id
+    activeTabId = tabId
+  }
+  return tabId
 }
 
 // --- Message Handler ---
