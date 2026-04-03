@@ -264,7 +264,7 @@ async function handleMethod(method, params = {}, senderTabId = null) {
           'eval', 'pointer', 'keyboard', 'nav', 'wait', 'screenshot', 'cookies', 'storage',
           'click', 'type', 'fill', 'hover', 'scroll', 'pressKey', 'select',
           'fetch', 'find', 'download', 'waitFor', 'waitForNetwork', 'ssrState', 'copyAll',
-          'upload', 'dialog'
+          'upload', 'dialog', 'extract'
         ]
       }
 
@@ -486,6 +486,27 @@ async function handleMethod(method, params = {}, senderTabId = null) {
 
     case 'copyAll':
       return await execFunc(tabId, () => document.body.innerText)
+
+    case 'extract': {
+      const sel = params.selector
+      const fields = params.fields
+      return await execFunc(tabId, (rowSel, fieldMap) => {
+        return Array.from(document.querySelectorAll(rowSel)).map(row => {
+          const obj = {}
+          for (const [name, spec] of Object.entries(fieldMap)) {
+            const atIdx = spec.indexOf('@')
+            if (atIdx > 0) {
+              const elSel = spec.substring(0, atIdx)
+              const attr = spec.substring(atIdx + 1)
+              obj[name] = row.querySelector(elSel)?.getAttribute(attr) || ''
+            } else {
+              obj[name] = row.querySelector(spec)?.textContent?.trim() || ''
+            }
+          }
+          return obj
+        })
+      }, sel, fields)
+    }
 
     case 'upload': {
       // CDP setFileInputFiles — can't be done via chrome.scripting
