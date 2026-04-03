@@ -108,12 +108,7 @@ async function resolveTab(params) {
     try { await chrome.tabs.get(tabId) }
     catch { tabId = null }
   }
-  if (!tabId) {
-    const tab = await chrome.tabs.create({ url: 'about:blank' })
-    tabId = tab.id
-    activeTabId = tabId
-  }
-  return tabId
+  return tabId || null
 }
 
 // --- Message Handler ---
@@ -127,7 +122,12 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 })
 
 async function handleMethod(method, params = {}, senderTabId = null) {
-  const tabId = await resolveTab(params)
+  let tabId = await resolveTab(params)
+
+  // nav and tab.new can work without an existing tab — they create one
+  if (!tabId && method !== 'nav' && method !== 'tab.new' && method !== 'tab.list' && method !== 'capabilities') {
+    throw new Error('No active tab. Call nav first to open a page.')
+  }
 
   switch (method) {
 
@@ -224,13 +224,21 @@ async function handleMethod(method, params = {}, senderTabId = null) {
     }
 
     case 'nav': {
-      const current = await chrome.tabs.get(tabId)
-      if (current.url?.startsWith('chrome://')) {
+      if (!tabId) {
+        // No tab exists yet — create one with the target URL
         const tab = await chrome.tabs.create({ url: params.url })
+        tabId = tab.id
         activeTabId = tab.id
       } else {
-        await chrome.tabs.update(tabId, { url: params.url })
-        activeTabId = tabId
+        const current = await chrome.tabs.get(tabId)
+        if (current.url?.startsWith('chrome://') || current.url?.startsWith('data:')) {
+          const tab = await chrome.tabs.create({ url: params.url })
+          tabId = tab.id
+          activeTabId = tab.id
+        } else {
+          await chrome.tabs.update(tabId, { url: params.url })
+          activeTabId = tabId
+        }
       }
       await waitForTabLoad(activeTabId, params.url)
       return { frameId: 'main', tabId: activeTabId }
@@ -259,12 +267,13 @@ async function handleMethod(method, params = {}, senderTabId = null) {
 
     case 'capabilities':
       return {
-        runtime: 'extension', version: '0.5.0',
+        runtime: 'extension', version: '0.6.0',
         supports: [
           'eval', 'pointer', 'keyboard', 'nav', 'wait', 'screenshot', 'cookies', 'storage',
           'click', 'type', 'fill', 'hover', 'scroll', 'pressKey', 'select',
           'fetch', 'find', 'download', 'waitFor', 'waitForNetwork', 'ssrState', 'copyAll',
-          'upload', 'dialog', 'extract'
+          'upload', 'dialog', 'extract',
+          'tab.new', 'tab.list', 'tab.close'
         ]
       }
 
@@ -538,6 +547,26 @@ async function handleMethod(method, params = {}, senderTabId = null) {
       return {}
     }
 
+    // ========== TAB MANAGEMENT ==========
+
+    case 'tab.new': {
+      const url = params.url || undefined
+      const tab = await chrome.tabs.create(url ? { url } : {})
+      activeTabId = tab.id
+      return { tabId: tab.id, url: tab.url || '' }
+    }
+
+    case 'tab.list': {
+      const tabs = await chrome.tabs.query({})
+      return tabs.map(t => ({ tabId: t.id, url: t.url, title: t.title, active: t.active }))
+    }
+
+    case 'tab.close': {
+      const closeId = params.tabId || tabId
+      if (closeId) await chrome.tabs.remove(closeId).catch(() => {})
+      return {}
+    }
+
     default:
       throw new Error(`Unknown method: ${method}`)
   }
@@ -562,34 +591,60 @@ const KEY_MAP = {
   PageDown: { key: 'PageDown', code: 'PageDown', windowsVirtualKeyCode: 34 },
 }
 
-// --- WebSocket Connection to Daemon ---
+// --- HTTP Polling to Daemon ---
 
-const DAEMON_URL = 'ws://127.0.0.1:9333'
-let ws = null
+const DAEMON_URL = 'http://127.0.0.1:9333'
+let polling = false
+let pollInterval = null
 
-function connectToDaemon() {
-  if (ws) { ws.close(); ws = null }
-  console.log('[tap] connecting to daemon at', DAEMON_URL)
-  ws = new WebSocket(DAEMON_URL)
+async function pollDaemon() {
+  if (polling) return
+  polling = true
+  try {
+    const res = await fetch(`${DAEMON_URL}/poll`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}',
+    })
+    const { commands } = await res.json()
 
-  ws.onopen = () => console.log('[tap] connected to daemon')
-  ws.onclose = () => { ws = null; setTimeout(connectToDaemon, 3000) }
-  ws.onerror = () => {}
+    for (const cmd of commands || []) {
+      const { id, method: rawMethod, params, tabId: msgTabId } = cmd
+      const method = rawMethod?.replace?.('tap.', '') || rawMethod
+      const resolvedParams = { ...(params || {}) }
+      if (msgTabId && !resolvedParams.tabId) resolvedParams.tabId = msgTabId
 
-  ws.onmessage = async (event) => {
-    const msg = JSON.parse(event.data)
-    const { id, method: rawMethod, params, tabId: msgTabId } = msg
-    const method = rawMethod?.replace?.('tap.', '') || rawMethod
-    const resolvedParams = { ...(params || {}) }
-    if (msgTabId && !resolvedParams.tabId) resolvedParams.tabId = msgTabId
+      let response
+      try {
+        const result = await handleMethod(method, resolvedParams, null)
+        response = { id, result }
+      } catch (error) {
+        response = { id, error: { code: -32000, message: error.message } }
+      }
 
-    try {
-      const result = await handleMethod(method, resolvedParams, null)
-      ws.send(JSON.stringify({ id, result, error: null }))
-    } catch (error) {
-      ws.send(JSON.stringify({ id, result: null, error: error.message }))
+      await fetch(`${DAEMON_URL}/result`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(response),
+      })
     }
+
+    // Adaptive interval: fast when busy, slow when idle
+    setPollRate(commands?.length > 0 ? 50 : 500)
+  } catch {
+    // Daemon not running — slow down
+    setPollRate(3000)
+  } finally {
+    polling = false
   }
 }
 
-connectToDaemon()
+function setPollRate(ms) {
+  if (pollInterval) clearInterval(pollInterval)
+  pollInterval = setInterval(pollDaemon, ms)
+}
+
+// Start polling
+console.log('[tap] polling daemon at', DAEMON_URL)
+setPollRate(500)
+pollDaemon()
