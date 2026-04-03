@@ -647,7 +647,11 @@ async function pollLoop() {
         body: JSON.stringify({ sessionId: SESSION_ID }),
         signal: AbortSignal.timeout(25000),
       })
-    } catch {
+    } catch (e) {
+      if (e?.name === 'TimeoutError') {
+        // AbortSignal timeout — daemon is alive but slow, just re-poll immediately
+        continue
+      }
       // Daemon not running — badge + backoff + retry (don't exit loop)
       setBadge(false)
       await new Promise(r => setTimeout(r, 3000))
