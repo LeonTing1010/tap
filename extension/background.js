@@ -618,29 +618,42 @@ chrome.action.onClicked.addListener(async () => {
   if (!polling) pollLoop()
 })
 
-// Keep-alive: MV3 service worker dies after ~30s idle.
-// chrome.alarms fires every 25s to wake us up and restart pollLoop if needed.
+// Keep-alive: MV3 kills service workers after ~30s idle.
+// chrome.alarms wakes us every 1min (Chrome minimum) to restart pollLoop.
 let polling = false
-chrome.alarms.create('keepalive', { periodInMinutes: 25 / 60 })
-chrome.alarms.onAlarm.addListener((alarm) => {
-  if (alarm.name === 'keepalive' && !polling) {
+chrome.alarms.create('keepalive', { periodInMinutes: 1 })
+chrome.alarms.onAlarm.addListener(() => {
+  if (!polling) {
     console.log('[tap] alarm woke service worker — restarting pollLoop')
-    pollLoop()
+    startPoll()
   }
 })
 
-async function pollLoop() {
-  if (polling) return // prevent duplicate loops
+function startPoll() {
+  if (polling) return
   polling = true
+  pollLoop()
+}
+
+async function pollLoop() {
   console.log('[tap] long-poll loop started, daemon:', DAEMON_URL)
   while (true) {
+    let res
     try {
       // Long-poll: daemon holds connection until a command arrives (up to 20s)
-      const res = await fetch(`${DAEMON_URL}/poll`, {
+      res = await fetch(`${DAEMON_URL}/poll`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: '{}',
       })
+    } catch {
+      // Daemon not running — badge + backoff + retry (don't exit loop)
+      setBadge(false)
+      await new Promise(r => setTimeout(r, 3000))
+      continue
+    }
+
+    try {
       const { commands } = await res.json()
       setBadge(true)
 
@@ -658,21 +671,20 @@ async function pollLoop() {
           response = { id, error: { code: -32000, message: error.message } }
         }
 
-        await fetch(`${DAEMON_URL}/result`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(response),
-        })
+        // Send result back — ignore errors (daemon may have restarted)
+        try {
+          await fetch(`${DAEMON_URL}/result`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(response),
+          })
+        } catch { /* daemon gone — next poll will reconnect */ }
       }
-      // Immediately re-poll — daemon will hold the connection if nothing pending
     } catch {
-      // Daemon not running — show disconnected badge, exit loop.
-      // Alarm will restart pollLoop when service worker wakes up.
-      setBadge(false)
-      polling = false
-      return
+      // Bad response — retry
+      await new Promise(r => setTimeout(r, 1000))
     }
   }
 }
 
-pollLoop()
+startPoll()
