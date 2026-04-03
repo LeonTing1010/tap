@@ -596,8 +596,10 @@ const KEY_MAP = {
 const DAEMON_URL = 'http://127.0.0.1:9333'
 
 // Badge: show connection status on extension icon
-function setBadge(connected) {
-  if (connected) {
+let connected = false
+function setBadge(ok) {
+  connected = ok
+  if (ok) {
     chrome.action.setBadgeText({ text: '' })
   } else {
     chrome.action.setBadgeText({ text: '!' })
@@ -605,7 +607,20 @@ function setBadge(connected) {
   }
 }
 
+// Keep-alive: MV3 service worker dies after ~30s idle.
+// chrome.alarms fires every 25s to wake us up and restart pollLoop if needed.
+let polling = false
+chrome.alarms.create('keepalive', { periodInMinutes: 25 / 60 })
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === 'keepalive' && !polling) {
+    console.log('[tap] alarm woke service worker — restarting pollLoop')
+    pollLoop()
+  }
+})
+
 async function pollLoop() {
+  if (polling) return // prevent duplicate loops
+  polling = true
   console.log('[tap] long-poll loop started, daemon:', DAEMON_URL)
   while (true) {
     try {
@@ -640,9 +655,11 @@ async function pollLoop() {
       }
       // Immediately re-poll — daemon will hold the connection if nothing pending
     } catch {
-      // Daemon not running — show disconnected badge, wait before retrying
+      // Daemon not running — show disconnected badge, exit loop.
+      // Alarm will restart pollLoop when service worker wakes up.
       setBadge(false)
-      await new Promise(r => setTimeout(r, 3000))
+      polling = false
+      return
     }
   }
 }
