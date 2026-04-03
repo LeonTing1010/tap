@@ -73,18 +73,15 @@ async function cdpClick(tabId, x, y) {
 // --- Navigation Helper ---
 
 async function waitForTabLoad(tabId, url = null) {
-  await new Promise((resolve) => {
-    const listener = (updatedTabId, changeInfo) => {
-      if (updatedTabId !== tabId) return
-      if (changeInfo.status === 'complete') {
-        chrome.tabs.onUpdated.removeListener(listener)
-        resolve()
-      }
-    }
-    chrome.tabs.onUpdated.addListener(listener)
-    // Deadline: don't hang forever if tab never reaches 'complete'
-    setTimeout(() => { chrome.tabs.onUpdated.removeListener(listener); resolve() }, 30000)
-  })
+  // MV3 fix: poll chrome.tabs.get() every 300ms instead of setTimeout(30s).
+  // Long setTimeout lets Chrome kill the service worker (~30s idle limit).
+  // Short API calls keep it alive.
+  const deadline = Date.now() + 30000
+  while (Date.now() < deadline) {
+    const tab = await chrome.tabs.get(tabId)
+    if (tab.status === 'complete') break
+    await new Promise(r => setTimeout(r, 300))
+  }
   const tab = await chrome.tabs.get(tabId)
   if (tab.url?.startsWith('chrome-error://') || tab.url === '') {
     throw new Error(`Tab failed to load: ${url || tab.url}`)
@@ -654,20 +651,25 @@ async function pollLoop() {
     }
 
     try {
-      const { commands } = await res.json()
+      const body = await res.json()
+      const commands = body.commands || []
+      console.log(`[tap] poll got ${commands.length} commands`)
       setBadge(true)
 
-      for (const cmd of commands || []) {
+      for (const cmd of commands) {
         const { id, method: rawMethod, params, tabId: msgTabId } = cmd
         const method = rawMethod?.replace?.('tap.', '') || rawMethod
         const resolvedParams = { ...(params || {}) }
         if (msgTabId && !resolvedParams.tabId) resolvedParams.tabId = msgTabId
 
+        console.log(`[tap] cmd: ${method}`, JSON.stringify(resolvedParams).slice(0, 200))
         let response
         try {
           const result = await handleMethod(method, resolvedParams, null)
+          console.log(`[tap] ok: ${method}`)
           response = { id, result }
         } catch (error) {
+          console.error(`[tap] err: ${method}`, error.message)
           response = { id, error: { code: -32000, message: error.message } }
         }
 
