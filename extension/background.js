@@ -70,6 +70,27 @@ async function cdpClick(tabId, x, y) {
   })
 }
 
+// --- Navigation Helper ---
+
+async function waitForTabLoad(tabId, url = null) {
+  await new Promise((resolve) => {
+    const listener = (updatedTabId, changeInfo) => {
+      if (updatedTabId !== tabId) return
+      if (changeInfo.status === 'complete') {
+        chrome.tabs.onUpdated.removeListener(listener)
+        resolve()
+      }
+    }
+    chrome.tabs.onUpdated.addListener(listener)
+    // Deadline: don't hang forever if tab never reaches 'complete'
+    setTimeout(() => { chrome.tabs.onUpdated.removeListener(listener); resolve() }, 30000)
+  })
+  const tab = await chrome.tabs.get(tabId)
+  if (tab.url?.startsWith('chrome-error://') || tab.url === '') {
+    throw new Error(`Tab failed to load: ${url || tab.url}`)
+  }
+}
+
 // --- Scripting Helper (CSP-immune function injection) ---
 
 async function execFunc(tabId, func, ...args) {
