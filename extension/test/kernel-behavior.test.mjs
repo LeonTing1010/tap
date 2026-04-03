@@ -257,6 +257,75 @@ console.log('\n  -- Rule 6: Screenshot Defaults --\n')
   })
 }
 
+// ═══════════════════════════════════════════════════════════
+// Rule 8: Click Uses JS-First, CDP Fallback
+// Why: cdpClick triggers chrome.debugger.attach → visible yellow
+// "debugging" bar. JS el.click() via execFunc is invisible to user
+// and immune to CSP. CDP only needed when isTrusted is required.
+// Classification: quality / what — yellow bar degrades UX
+// ═══════════════════════════════════════════════════════════
+
+console.log('\n  -- Rule 8: Click JS-First --\n')
+
+{
+  const clickStart = BG_SRC.indexOf("case 'click':")
+  const clickEnd = BG_SRC.indexOf("case 'type':")
+  const clickBody = BG_SRC.substring(clickStart, clickEnd)
+
+  test('click uses execFunc for JS click (not cdpClick as primary)', () => {
+    // Why: execFunc injects real function via chrome.scripting — no debugger needed
+    assert(clickBody.includes('el.click()') || clickBody.includes('.click()'),
+      'click must use JS el.click() via execFunc as primary path')
+  })
+
+  test('click has CDP fallback for isTrusted failures', () => {
+    // Why: some sites (Google, payment forms) check event.isTrusted
+    assert(clickBody.includes('cdpClick'),
+      'click must fall back to cdpClick when JS click fails')
+  })
+
+  test('click tries JS before CDP (JS is first path)', () => {
+    // Why: JS click = no debugger bar, no user-visible side effects
+    const jsClickPos = clickBody.indexOf('.click()')
+    const cdpClickPos = clickBody.indexOf('cdpClick')
+    assert(jsClickPos < cdpClickPos,
+      'JS click must come before CDP click in the execution flow')
+  })
+}
+
+// ══════════════════════════════════════════════════════���════
+// Rule 9: Dialog Uses JS Override, Not CDP
+// Why: CDP Page.handleJavaScriptDialog requires debugger attach.
+// JS window.confirm/alert/prompt override via execFunc avoids it.
+// Classification: quality / what — debugger attach for dialog is overkill
+// ═══════════════════════════════════════════════════════════
+
+console.log('\n  -- Rule 9: Dialog JS Override --\n')
+
+{
+  const dialogStart = BG_SRC.indexOf("case 'dialog':")
+  const dialogEnd = BG_SRC.indexOf("default:", dialogStart)
+  const dialogBody = BG_SRC.substring(dialogStart, dialogEnd)
+
+  test('dialog uses execFunc (JS override), not CDP', () => {
+    // Why: execFunc injects function that overrides window.confirm etc.
+    assert(dialogBody.includes('execFunc'),
+      'dialog must use execFunc for JS-based dialog handling')
+  })
+
+  test('dialog does not use withDebugger or CDP', () => {
+    // Why: dialog should not trigger debugger attach
+    assert(!dialogBody.includes('withDebugger') && !dialogBody.includes('chrome.debugger'),
+      'dialog must not use CDP — JS override is sufficient')
+  })
+
+  test('dialog overrides window.confirm/alert/prompt', () => {
+    // Why: overriding native dialog functions catches future dialogs
+    assert(dialogBody.includes('confirm') || dialogBody.includes('alert'),
+      'dialog must override native dialog functions')
+  })
+}
+
 // --- Summary ---
 console.log(`\n${passed + failed} constraints, ${passed} passed, ${failed} failed\n`)
 process.exit(failed > 0 ? 1 : 0)

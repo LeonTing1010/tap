@@ -272,7 +272,8 @@ async function handleMethod(method, params = {}, senderTabId = null) {
 
     case 'click': {
       const target = (params.target || params.selector)
-      const coords = await execFunc(tabId, (t) => {
+      // JS-first: use el.click() via execFunc — no debugger, no yellow bar, CSP-immune
+      const result = await execFunc(tabId, (t) => {
         let el = document.querySelector(t)
         if (!el) {
           for (const e of document.querySelectorAll('a, button, [role="button"], input, [onclick], [tabindex]')) {
@@ -288,10 +289,14 @@ async function handleMethod(method, params = {}, senderTabId = null) {
         }
         if (!el) throw new Error('Element not found: ' + t)
         el.scrollIntoView({ block: 'center', behavior: 'instant' })
+        el.click()
         const r = el.getBoundingClientRect()
-        return { x: Math.round(r.x + r.width / 2), y: Math.round(r.y + r.height / 2) }
+        return { clicked: true, x: Math.round(r.x + r.width / 2), y: Math.round(r.y + r.height / 2) }
       }, target)
-      await cdpClick(tabId, coords.x, coords.y)
+      // CDP fallback: if site needs isTrusted events, retry with cdpClick
+      if (params.trusted) {
+        await cdpClick(tabId, result.x, result.y)
+      }
       return {}
     }
 
@@ -499,12 +504,16 @@ async function handleMethod(method, params = {}, senderTabId = null) {
     }
 
     case 'dialog': {
-      await withDebugger(tabId, async () => {
-        await chrome.debugger.sendCommand({ tabId }, 'Page.handleJavaScriptDialog', {
-          accept: params.accept !== false,
-          promptText: params.prompt_text || ''
-        })
-      })
+      // JS override: inject dialog handlers via execFunc — no debugger needed
+      const accept = params.accept !== false
+      const text = params.prompt_text || ''
+      await execFunc(tabId, (doAccept, promptText) => {
+        window.alert = () => {}
+        window.confirm = () => doAccept
+        window.prompt = () => doAccept ? promptText : null
+        // Also handle beforeunload
+        window.onbeforeunload = null
+      }, accept, text)
       return {}
     }
 
