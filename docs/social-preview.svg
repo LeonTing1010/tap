@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0918"/>
+      <stop offset="50%" stop-color="#110f24"/>
+      <stop offset="100%" stop-color="#0a0918"/>
+    </linearGradient>
+    <linearGradient id="logo-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4F46E5"/>
+      <stop offset="100%" stop-color="#1E1B4B"/>
+    </linearGradient>
+    <radialGradient id="glow1" cx="30%" cy="40%">
+      <stop offset="0%" stop-color="rgba(79,70,229,0.15)"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+    <radialGradient id="glow2" cx="75%" cy="60%">
+      <stop offset="0%" stop-color="rgba(251,191,36,0.06)"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1280" height="640" fill="url(#bg)"/>
+  <rect width="1280" height="640" fill="url(#glow1)"/>
+  <rect width="1280" height="640" fill="url(#glow2)"/>
+
+  <!-- Subtle grid lines -->
+  <g stroke="rgba(79,70,229,0.04)" stroke-width="1">
+    <line x1="0" y1="160" x2="1280" y2="160"/>
+    <line x1="0" y1="320" x2="1280" y2="320"/>
+    <line x1="0" y1="480" x2="1280" y2="480"/>
+    <line x1="320" y1="0" x2="320" y2="640"/>
+    <line x1="640" y1="0" x2="640" y2="640"/>
+    <line x1="960" y1="0" x2="960" y2="640"/>
+  </g>
+
+  <!-- Logo -->
+  <g transform="translate(540, 80) scale(0.32)">
+    <circle cx="256" cy="256" r="240" fill="url(#logo-bg)"/>
+    <circle cx="290" cy="275" r="80" fill="white"/>
+    <circle cx="230" cy="210" r="58" fill="white"/>
+    <path d="M 200 250 Q 230 280 270 270 Q 260 230 240 215 Q 215 235 200 250 Z" fill="white"/>
+    <polygon points="215,155 228,105 238,155" fill="#EF4444"/>
+    <polygon points="232,152 248,110 255,158" fill="#DC2626"/>
+    <polygon points="178,206 100,196 102,204 176,214" fill="#FBBF24"/>
+    <polygon points="176,214 102,204 100,212 178,220" fill="#D97706"/>
+    <circle cx="212" cy="200" r="10" fill="#1E1B4B"/>
+    <circle cx="209" cy="197" r="3.5" fill="white"/>
+    <path d="M 270 240 C 330 220 380 250 370 310 C 365 340 340 355 315 350 C 330 310 320 270 280 255 Z" fill="#C7D2FE"/>
+    <path d="M 340 330 L 380 410 L 365 405 L 330 335 Z" fill="#A5B4FC"/>
+    <path d="M 330 340 L 360 425 L 345 420 L 320 345 Z" fill="#818CF8"/>
+    <circle cx="98" cy="204" r="3" fill="white" opacity="0.9"/>
+    <path d="M 84 190 A 18 18 0 0 1 84 218" fill="none" stroke="white" stroke-width="3" opacity="0.65" stroke-linecap="round"/>
+    <path d="M 68 180 A 30 30 0 0 1 68 228" fill="none" stroke="white" stroke-width="2.5" opacity="0.35" stroke-linecap="round"/>
+  </g>
+
+  <!-- Title -->
+  <text x="640" y="310" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="72" fill="white" font-weight="400" letter-spacing="-2">Tap</text>
+
+  <!-- Tagline -->
+  <text x="640" y="370" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="26" fill="#9892B0" font-weight="300">The interface protocol for AI agents</text>
+
+  <!-- Subtitle -->
+  <text x="640" y="415" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="18" fill="#FBBF24" font-weight="400" font-style="italic">forge once, run forever</text>
+
+  <!-- Stats row -->
+  <g transform="translate(280, 470)">
+    <!-- Kernel -->
+    <g transform="translate(0, 0)">
+      <rect x="0" y="0" width="160" height="64" rx="12" fill="rgba(79,70,229,0.1)" stroke="rgba(79,70,229,0.2)" stroke-width="1"/>
+      <text x="80" y="30" text-anchor="middle" font-family="Georgia, serif" font-size="24" fill="white">8</text>
+      <text x="80" y="50" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="#5D5680" letter-spacing="1.5">KERNEL</text>
+    </g>
+    <!-- Stdlib -->
+    <g transform="translate(180, 0)">
+      <rect x="0" y="0" width="160" height="64" rx="12" fill="rgba(79,70,229,0.1)" stroke="rgba(79,70,229,0.2)" stroke-width="1"/>
+      <text x="80" y="30" text-anchor="middle" font-family="Georgia, serif" font-size="24" fill="white">17</text>
+      <text x="80" y="50" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="#5D5680" letter-spacing="1.5">STDLIB</text>
+    </g>
+    <!-- Skills -->
+    <g transform="translate(360, 0)">
+      <rect x="0" y="0" width="160" height="64" rx="12" fill="rgba(251,191,36,0.08)" stroke="rgba(251,191,36,0.15)" stroke-width="1"/>
+      <text x="80" y="30" text-anchor="middle" font-family="Georgia, serif" font-size="24" fill="white">106</text>
+      <text x="80" y="50" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="#5D5680" letter-spacing="1.5">SKILLS</text>
+    </g>
+    <!-- Cost -->
+    <g transform="translate(540, 0)">
+      <rect x="0" y="0" width="160" height="64" rx="12" fill="rgba(251,191,36,0.08)" stroke="rgba(251,191,36,0.15)" stroke-width="1"/>
+      <text x="80" y="30" text-anchor="middle" font-family="Georgia, serif" font-size="24" fill="#FBBF24">$0</text>
+      <text x="80" y="50" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="#5D5680" letter-spacing="1.5">RUNTIME</text>
+    </g>
+  </g>
+
+  <!-- Bottom accent line -->
+  <rect x="0" y="636" width="1280" height="4" fill="url(#logo-bg)"/>
+</svg>

@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "Tap",
+  "version": "0.4.0",
+  "description": "The protocol for AI to tap into any website. Runtime for Extension.",
+  "permissions": [
+    "debugger",
+    "activeTab",
+    "tabs",
+    "scripting",
+    "cookies",
+    "storage"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "externally_connectable": {
+    "matches": ["<all_urls>"]
+  },
+  "minimum_chrome_version": "116"
+}

@@ -1,0 +1,14 @@
+# macOS
+.DS_Store
+
+# Release binaries
+release/
+
+# Node
+node_modules/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
