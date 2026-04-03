@@ -56,13 +56,13 @@ test('scheduleDetach clears previous timer before scheduling', () => {
     'scheduleDetach must clearTimeout on previous timer to prevent double detach')
 })
 
-test('withDebugger has try/finally lifecycle (attach in try, detach in finally)', () => {
+test('withDebugger delegates to ensureDebugger and has try/finally lifecycle', () => {
   const wdStart = BG_SRC.indexOf('async function withDebugger(')
   assert(wdStart !== -1, 'withDebugger function must exist')
   const wdBody = BG_SRC.substring(wdStart, wdStart + 400)
+  assert(wdBody.includes('ensureDebugger'), 'withDebugger must delegate attach to ensureDebugger')
   assert(wdBody.includes('try'), 'withDebugger must have try block')
   assert(wdBody.includes('finally'), 'withDebugger must have finally block')
-  assert(wdBody.includes('chrome.debugger.attach'), 'withDebugger must attach debugger in try')
   assert(wdBody.includes('scheduleDetach'), 'withDebugger must scheduleDetach in finally')
 })
 

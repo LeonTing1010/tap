@@ -99,12 +99,13 @@ test('cdpClick accepts tabId parameter', () => {
     'cdpClick must accept tabId as a parameter')
 })
 
-test('withDebugger passes tabId to chrome.debugger.attach', () => {
-  const wdStart = BG_SRC.indexOf('async function withDebugger(')
-  const wdBody = BG_SRC.substring(wdStart, wdStart + 300)
-  assert(wdBody.includes('chrome.debugger.attach({ tabId }') ||
-    wdBody.includes('chrome.debugger.attach({tabId}'),
-    'withDebugger must pass tabId to chrome.debugger.attach')
+test('ensureDebugger passes tabId to chrome.debugger.attach', () => {
+  const edStart = BG_SRC.indexOf('async function ensureDebugger(')
+  assert(edStart !== -1, 'ensureDebugger function must exist')
+  const edBody = BG_SRC.substring(edStart, edStart + 500)
+  assert(edBody.includes('chrome.debugger.attach({ tabId }') ||
+    edBody.includes('chrome.debugger.attach({tabId}'),
+    'ensureDebugger must pass tabId to chrome.debugger.attach')
 })
 
 // ═══════════════════════════════════════════════════════════
@@ -137,45 +138,32 @@ console.log('\n  -- Rule 3: Tab Cleanup --\n')
 }
 
 // ═══════════════════════════════════════════════════════════
-// Rule 4: activeTabId Fallback
-// Why: activeTabId is a backward-compatible default. handleMethod
-// must NOT set activeTabId (prevents pollution across sessions).
-// Only explicit tab management should set it.
+// Rule 4: activeTabId Management
+// Why: activeTabId is the default tab for commands without explicit tabId.
+// It must be set on auto-create and nav (so subsequent calls reuse the tab),
+// but explicit tabId in params always takes priority.
 // ═══════════════════════════════════════════════════════════
 
-console.log('\n  -- Rule 4: activeTabId Fallback --\n')
+console.log('\n  -- Rule 4: activeTabId Management --\n')
 
 test('let activeTabId exists as fallback', () => {
   assert(BG_SRC.includes('let activeTabId'),
     'must keep activeTabId as default fallback variable')
 })
 
-test('handleMethod does NOT set activeTabId', () => {
+test('handleMethod sets activeTabId on auto-create', () => {
   const hmStart = BG_SRC.indexOf('async function handleMethod(')
-  const hmEnd = BG_SRC.indexOf('\n}', BG_SRC.indexOf('switch (method)', hmStart))
-  // Find the full handleMethod function by brace counting
-  const bodyStart = BG_SRC.indexOf('{', hmStart)
-  let depth = 0, end = bodyStart
-  for (let i = bodyStart; i < BG_SRC.length; i++) {
-    if (BG_SRC[i] === '{') depth++
-    if (BG_SRC[i] === '}') depth--
-    if (depth === 0) { end = i + 1; break }
-  }
-  const hmBody = BG_SRC.substring(hmStart, end)
+  const autoCreate = BG_SRC.indexOf('chrome.tabs.create', hmStart)
+  const context = BG_SRC.substring(autoCreate, autoCreate + 200)
+  assert(context.includes('activeTabId = tabId') || context.includes('activeTabId ='),
+    'must set activeTabId when auto-creating a tab so subsequent calls reuse it')
+})
 
-  // Check for activeTabId assignments (exclude reads and null checks)
-  const lines = hmBody.split('\n')
-  const assignments = lines.filter(line => {
-    const t = line.trim()
-    return t.includes('activeTabId =') &&
-      !t.startsWith('//') &&
-      !t.includes('= null') &&
-      !t.includes('let ') &&
-      !t.includes('|| activeTabId') &&
-      !t.includes('? activeTabId')
-  })
-  assert.equal(assignments.length, 0,
-    `handleMethod must not set activeTabId (found ${assignments.length} assignments: ${assignments.map(l => l.trim()).join('; ')}) -- prevents cross-session pollution`)
+test('params.tabId takes priority over activeTabId', () => {
+  const hmStart = BG_SRC.indexOf('async function handleMethod(')
+  const context = BG_SRC.substring(hmStart, hmStart + 200)
+  assert(context.includes('params.tabId'),
+    'handleMethod must check params.tabId first before falling back to activeTabId')
 })
 
 test('activeTabId is initialized to null', () => {

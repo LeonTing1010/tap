@@ -52,13 +52,33 @@ function scheduleDetach(tabId) {
       debuggerSessions.delete(tabId)
     } catch { /* ignore */ }
   }, 5000)
-  debuggerSessions.set(tabId, { detachTimer: timer })
+  // Preserve attached state — only clear on actual detach
+  debuggerSessions.set(tabId, { ...session, detachTimer: timer })
+}
+
+async function ensureDebugger(tabId) {
+  const session = debuggerSessions.get(tabId)
+  if (session?.attached) return // already attached
+  try {
+    // Timeout: chrome.debugger.attach can hang if Chrome blocks it
+    await Promise.race([
+      chrome.debugger.attach({ tabId }, '1.3'),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('debugger attach timeout')), 5000))
+    ])
+    debuggerSessions.set(tabId, { ...debuggerSessions.get(tabId), attached: true })
+  } catch (e) {
+    // "Already attached" is fine — another call attached it
+    if (e.message?.includes('Already attached')) {
+      debuggerSessions.set(tabId, { ...debuggerSessions.get(tabId), attached: true })
+      return
+    }
+    throw e
+  }
 }
 
 async function withDebugger(tabId, fn) {
+  await ensureDebugger(tabId)
   try {
-    await chrome.debugger.attach({ tabId }, '1.3')
-    debuggerSessions.set(tabId, { ...debuggerSessions.get(tabId), attached: true })
     return await fn()
   } finally {
     scheduleDetach(tabId)
@@ -104,7 +124,8 @@ async function handleMethod(method, params = {}, senderTabId = null) {
   if (!tabId) {
     const tab = await chrome.tabs.create({ url: 'about:blank' })
     tabId = tab.id
-    console.log(`[tap] created tab ${tabId}`)
+    activeTabId = tabId
+    console.log(`[tap] created tab ${tabId} (set as active)`)
   }
   
   switch (method) {
@@ -112,13 +133,15 @@ async function handleMethod(method, params = {}, senderTabId = null) {
     
     case 'eval': {
       const safeExpr = '{\n' + params.expression + '\n}'
-      
-      // Fast path: debugger attached
+      // CDP needs an async IIFE to safely await — block statements don't return Promises
+      const cdpExpr = '(async()=>{\n' + params.expression + '\n})()'
+
+      // Fast path: debugger already attached — use CDP directly (faster, bypasses CSP)
       if (debuggerSessions.get(tabId)?.attached) {
         try {
           const r = await chrome.debugger.sendCommand(
             { tabId }, 'Runtime.evaluate',
-            { expression: safeExpr, returnByValue: true, awaitPromise: true }
+            { expression: cdpExpr, returnByValue: true, awaitPromise: true }
           )
           scheduleDetach(tabId)
           if (r?.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description)
@@ -128,8 +151,8 @@ async function handleMethod(method, params = {}, senderTabId = null) {
           debuggerSessions.delete(tabId)
         }
       }
-      
-      // Normal path: chrome.scripting
+
+      // Normal path: chrome.scripting (undetectable, but blocked by CSP)
       const [result] = await chrome.scripting.executeScript({
         target: { tabId },
         func: async (expr) => {
@@ -143,13 +166,17 @@ async function handleMethod(method, params = {}, senderTabId = null) {
       const wrapped = result?.result
       if (wrapped?.__ok) return wrapped.value
 
-      // CSP fallback: if eval blocked by Content-Security-Policy, use CDP
+      // CSP fallback: eval blocked → attach debugger and use CDP Runtime.evaluate
       if (wrapped?.error?.includes('Content Security Policy') || wrapped?.error?.includes('unsafe-eval')) {
-        const r = await withDebugger(tabId, () =>
-          chrome.debugger.sendCommand({ tabId }, 'Runtime.evaluate', {
-            expression: safeExpr, returnByValue: true, awaitPromise: true
-          })
-        )
+        await ensureDebugger(tabId)
+        const r = await Promise.race([
+          chrome.debugger.sendCommand(
+            { tabId }, 'Runtime.evaluate',
+            { expression: cdpExpr, returnByValue: true, awaitPromise: true }
+          ),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('CDP eval timeout')), 30000))
+        ])
+        scheduleDetach(tabId)
         if (r?.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description)
         return r?.result?.value
       }
@@ -233,7 +260,8 @@ async function handleMethod(method, params = {}, senderTabId = null) {
         await chrome.tabs.update(tabId, { url: params.url })
       }
       await waitForTabLoad(tabId, params.url)
-      return { frameId: 'main' }
+      activeTabId = tabId
+      return { frameId: 'main', tabId }
     }
     
     case 'wait': {
@@ -324,11 +352,14 @@ function connectToDaemon() {
   ws.onmessage = async (event) => {
     try {
       const msg = JSON.parse(event.data);
-      const { id, method: rawMethod, params } = msg;
+      const { id, method: rawMethod, params, tabId: msgTabId } = msg;
       const method = rawMethod?.replace?.("tap.", "") || rawMethod;
-      console.log('[tap] received:', method, 'id=' + id);
+      // tabId from envelope top-level (daemon relay) or params (direct)
+      const resolvedParams = { ...(params || {}) };
+      if (msgTabId && !resolvedParams.tabId) resolvedParams.tabId = msgTabId;
+      console.log('[tap] received:', method, 'id=' + id, 'tab=' + (resolvedParams.tabId || 'auto'));
 
-      const result = await handleMethod(method, params || {}, null);
+      const result = await handleMethod(method, resolvedParams, null);
       ws.send(JSON.stringify({ id, result, error: null }));
     } catch (error) {
       console.error('[tap] error handling message:', error);

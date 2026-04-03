@@ -156,7 +156,7 @@ console.log('\n  -- Rule 4: Eval Scope Isolation --\n')
 
 {
   const evalStart = BG_SRC.indexOf("case 'eval':")
-  const evalBody = BG_SRC.substring(evalStart, evalStart + 1200)
+  const evalBody = BG_SRC.substring(evalStart, evalStart + 2000)
 
   test('eval wraps expression in block scope', () => {
     assert(evalBody.includes("'{\\n'") || evalBody.includes("'\\n}'") ||
