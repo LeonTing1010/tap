@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tap — Programs Beat Prompts</title>
-<meta name="description" content="AI forges deterministic programs from live interfaces. 8 core + 17 built-in operations, 3 runtimes, 199 constraint tests, zero AI at runtime.">
+<meta name="description" content="The interface protocol for AI agents. One binary + one extension. Forge once, run forever — zero AI at runtime.">
 <meta property="og:title" content="Tap — Programs Beat Prompts">
-<meta property="og:description" content="AI forges deterministic programs from live interfaces. 8 core + 17 built-in operations, 3 runtimes, zero AI at runtime.">
+<meta property="og:description" content="The interface protocol for AI agents. One binary + one extension. Forge once, run forever — zero AI at runtime.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://leonting1010.github.io/tap/">
 <meta property="og:image" content="https://leonting1010.github.io/tap/social-preview.svg">
@@ -14,9 +14,9 @@
 <meta property="og:image:height" content="640">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Tap — Programs Beat Prompts">
-<meta name="twitter:description" content="AI forges deterministic programs from live interfaces. 8 core + 17 built-in operations, 3 runtimes, zero AI at runtime.">
+<meta name="twitter:description" content="The interface protocol for AI agents. One binary + one extension. Forge once, run forever — zero AI at runtime.">
 <meta name="twitter:image" content="https://leonting1010.github.io/tap/social-preview.svg">
-<meta name="keywords" content="AI agents, MCP, model context protocol, Chrome extension, Playwright, Deno, tap protocol, forge, deterministic automation, sandbox, self-healing, unix pipes, macOS automation, constraint-driven">
+<meta name="keywords" content="AI agents, MCP, model context protocol, Chrome extension, Playwright, tap protocol, forge, deterministic automation, browser automation, unix pipes, macOS automation">
 <meta name="author" content="LeonTing1010">
 <link rel="canonical" href="https://leonting1010.github.io/tap/">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Ccircle cx='256' cy='256' r='240' fill='%234F46E5'/%3E%3Ccircle cx='290' cy='275' r='80' fill='white'/%3E%3Ccircle cx='230' cy='210' r='58' fill='white'/%3E%3C/svg%3E">
@@ -25,10 +25,10 @@
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
   "name": "Tap",
-  "description": "Programs beat prompts. AI forges deterministic programs from live interfaces. 8 core + 17 built-in operations, 3 runtimes, 199 constraint tests, zero AI at runtime.",
+  "description": "The interface protocol for AI agents. One binary + one extension. Forge once, run forever — zero AI at runtime.",
   "url": "https://leonting1010.github.io/tap/",
   "downloadUrl": "https://github.com/LeonTing1010/tap/releases/latest",
-  "softwareVersion": "0.5.0",
+  "softwareVersion": "0.4.0",
   "operatingSystem": "macOS, Linux, Windows",
   "applicationCategory": "DeveloperApplication",
   "license": "https://opensource.org/licenses/MIT",
@@ -38,7 +38,7 @@
     "url": "https://github.com/LeonTing1010"
   },
   "codeRepository": "https://github.com/LeonTing1010/tap",
-  "keywords": ["AI agents", "MCP", "tap protocol", "forge", "deterministic automation", "Chrome extension", "Playwright", "sandbox", "self-healing"]
+  "keywords": ["AI agents", "MCP", "tap protocol", "forge", "deterministic automation", "Chrome extension", "Playwright", "browser automation"]
 }
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1077,7 +1077,7 @@ footer {
   <div class="container">
     <div class="hero-inner">
       <div class="hero-text">
-        <div class="hero-eyebrow">v0.3.0 &mdash; 106 skills across 50 sites</div>
+        <div class="hero-eyebrow">v0.4.0 &mdash; One binary + one extension</div>
         <h1>The interface<br>protocol for<br>AI <em>agents</em></h1>
         <p class="hero-sub">Forge once, run forever. AI analyzes a site once, creates a deterministic script, and that script runs forever &mdash; no AI, no tokens, no hallucinations.</p>
         <div class="hero-actions">
@@ -1130,7 +1130,7 @@ footer {
       <div class="stat-label">Built-in Operations</div>
     </div>
     <div class="stat">
-      <div class="stat-value">106</div>
+      <div class="stat-value">119</div>
       <div class="stat-label">Ready Skills</div>
     </div>
     <div class="stat">
@@ -1344,7 +1344,7 @@ footer {
   <div class="container">
     <div class="skills-header">
       <div class="section-label reveal">Skills</div>
-      <h2 class="reveal">106 skills. 50 sites. <em>Ready now.</em></h2>
+      <h2 class="reveal">119 skills. 55+ sites. <em>Ready now.</em></h2>
       <p class="reveal">API-first extraction where possible, DOM fallback when necessary. Uses your real Chrome session &mdash; no API keys needed.</p>
     </div>
 
@@ -1422,17 +1422,17 @@ footer {
   <div class="container">
     <div class="arch-header">
       <div class="section-label reveal">Architecture</div>
-      <h2 class="reveal">~1,800 lines. <em>Zero</em> dependencies.</h2>
-      <p class="reveal">The entire system &mdash; CLI, MCP server, executor, daemon, two runtimes &mdash; in under 2,000 lines of Deno.</p>
+      <h2 class="reveal">One binary. <em>Zero</em> dependencies.</h2>
+      <p class="reveal">Everything you need in a single binary + a Chrome extension. CLI, MCP server, executor, and all runtimes &mdash; just download and run.</p>
     </div>
 
     <div class="arch-diagram reveal">
 <pre>
-                      <span class="hl-indigo">Chrome Extension</span> <span class="hl-dim">(core via CDP)</span>
+                      <span class="hl-indigo">Chrome Extension</span> <span class="hl-dim">(your real browser)</span>
                     &#x250C;&#x2500;
-<span class="hl-white">AI Agent</span> &larr;&rarr; <span class="hl-gold">MCP</span> &larr;&rarr; <span class="hl-white">Deno Executor</span> &#x2500;&#x2524;
-  <span class="hl-dim">CLI / MCP</span>          <span class="hl-dim">load + run</span>     &#x2514;&#x2500;
-                      <span class="hl-indigo">Playwright</span> <span class="hl-dim">(core via pw API)</span>
+<span class="hl-white">AI Agent</span> &larr;&rarr; <span class="hl-gold">MCP</span> &larr;&rarr; <span class="hl-white">Tap Executor</span> &#x2500;&#x2524;
+  <span class="hl-dim">CLI / MCP</span>          <span class="hl-dim">load + run</span>   &#x2514;&#x2500;
+                      <span class="hl-indigo">Playwright</span> <span class="hl-dim">(headless, CI/CD)</span>
 </pre>
     </div>
 
@@ -1447,7 +1447,7 @@ footer {
       </div>
       <div class="arch-feat">
         <h4>MCP Native</h4>
-        <p>43 tools across 6 categories. Works with Claude Code, Cursor, Windsurf, and any MCP client.</p>
+        <p>Full protocol exposed as MCP tools. Works with Claude Code, Cursor, Windsurf, and any MCP client.</p>
       </div>
     </div>
   </div>
@@ -1466,17 +1466,17 @@ footer {
       <div class="install-step reveal">
         <div class="install-step-num">1</div>
         <div>
-          <h4>Install CLI</h4>
-          <p>One-line install for macOS and Linux.</p>
-          <div class="code-block"><span class="prompt">$ </span><span class="cmd">curl -fsSL https://raw.githubusercontent.com/LeonTing1010/tap/master/install.sh | sh</span></div>
+          <h4>Install</h4>
+          <p>One command installs the binary and extension. Or download from <a href="https://github.com/LeonTing1010/tap/releases/latest" style="color:var(--indigo-light)">Releases</a>.</p>
+          <div class="code-block"><span class="prompt">$ </span><span class="cmd">curl -fsSL https://leonting1010.github.io/tap/install.sh | sh</span></div>
         </div>
       </div>
       <div class="install-step reveal">
         <div class="install-step-num">2</div>
         <div>
-          <h4>Load Extension &amp; Skills</h4>
-          <p>Download <a href="https://github.com/LeonTing1010/tap/releases/latest" style="color:var(--indigo-light)">tap-extension.zip</a> from Releases, unzip, load unpacked in Chrome. Then install community skills.</p>
-          <div class="code-block"><span class="prompt">$ </span><span class="cmd">tap update</span></div>
+          <h4>Load Extension</h4>
+          <p>Open <code style="font-family:var(--font-mono);font-size:13px;color:var(--indigo-light)">chrome://extensions/</code> &rarr; Developer mode &rarr; Load unpacked &rarr; <code style="font-family:var(--font-mono);font-size:13px;color:var(--indigo-light)">~/.tap/extension</code></p>
+          <div class="code-block"><span class="prompt">$ </span><span class="cmd">tap update</span>  <span class="comment"># install community skills</span></div>
         </div>
       </div>
       <div class="install-step reveal">
