@@ -594,57 +594,45 @@ const KEY_MAP = {
 // --- HTTP Polling to Daemon ---
 
 const DAEMON_URL = 'http://127.0.0.1:9333'
-let polling = false
-let pollInterval = null
 
-async function pollDaemon() {
-  if (polling) return
-  polling = true
-  try {
-    const res = await fetch(`${DAEMON_URL}/poll`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: '{}',
-    })
-    const { commands } = await res.json()
-
-    for (const cmd of commands || []) {
-      const { id, method: rawMethod, params, tabId: msgTabId } = cmd
-      const method = rawMethod?.replace?.('tap.', '') || rawMethod
-      const resolvedParams = { ...(params || {}) }
-      if (msgTabId && !resolvedParams.tabId) resolvedParams.tabId = msgTabId
-
-      let response
-      try {
-        const result = await handleMethod(method, resolvedParams, null)
-        response = { id, result }
-      } catch (error) {
-        response = { id, error: { code: -32000, message: error.message } }
-      }
-
-      await fetch(`${DAEMON_URL}/result`, {
+async function pollLoop() {
+  console.log('[tap] long-poll loop started, daemon:', DAEMON_URL)
+  while (true) {
+    try {
+      // Long-poll: daemon holds connection until a command arrives (up to 20s)
+      const res = await fetch(`${DAEMON_URL}/poll`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(response),
+        body: '{}',
       })
-    }
+      const { commands } = await res.json()
 
-    // Adaptive interval: fast when busy, slow when idle
-    setPollRate(commands?.length > 0 ? 50 : 500)
-  } catch {
-    // Daemon not running — slow down
-    setPollRate(3000)
-  } finally {
-    polling = false
+      for (const cmd of commands || []) {
+        const { id, method: rawMethod, params, tabId: msgTabId } = cmd
+        const method = rawMethod?.replace?.('tap.', '') || rawMethod
+        const resolvedParams = { ...(params || {}) }
+        if (msgTabId && !resolvedParams.tabId) resolvedParams.tabId = msgTabId
+
+        let response
+        try {
+          const result = await handleMethod(method, resolvedParams, null)
+          response = { id, result }
+        } catch (error) {
+          response = { id, error: { code: -32000, message: error.message } }
+        }
+
+        await fetch(`${DAEMON_URL}/result`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(response),
+        })
+      }
+      // Immediately re-poll — daemon will hold the connection if nothing pending
+    } catch {
+      // Daemon not running — wait before retrying
+      await new Promise(r => setTimeout(r, 3000))
+    }
   }
 }
 
-function setPollRate(ms) {
-  if (pollInterval) clearInterval(pollInterval)
-  pollInterval = setInterval(pollDaemon, ms)
-}
-
-// Start polling
-console.log('[tap] polling daemon at', DAEMON_URL)
-setPollRate(500)
-pollDaemon()
+pollLoop()
