@@ -76,7 +76,7 @@ async function waitForTabLoad(tabId, url = null) {
   // MV3 fix: poll chrome.tabs.get() every 300ms instead of setTimeout(30s).
   // Long setTimeout lets Chrome kill the service worker (~30s idle limit).
   // Short API calls keep it alive.
-  const deadline = Date.now() + 30000
+  const deadline = Date.now() + 25000
   while (Date.now() < deadline) {
     const tab = await chrome.tabs.get(tabId)
     if (tab.status === 'complete') break
