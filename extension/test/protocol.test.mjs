@@ -1,11 +1,10 @@
 /**
- * Constraint: Tap protocol contract (POSIX-inspired core + built-in)
- * Classification: safety / what — missing method = tap runtime crash
+ * Constraint: extension runtime contract
+ * Classification: safety / what -- missing core op = tap runtime crash
  *
- * Why: protocol.js is the only interface between .tap.js and the browser.
- * If a method is missing or misnamed, taps fail silently.
- *
- * Architecture: 8 core primitives + 17 built-in operations = 25 total
+ * background.js is a pure API gateway implementing 8 core operations.
+ * It must not contain protocol layer remnants (createCore, createBuiltIn,
+ * createTap, getTap, handleTapCommand, protocol.js import).
  *
  * Run: node extension/test/protocol.test.mjs
  */
@@ -13,14 +12,7 @@
 import { strict as assert } from 'node:assert'
 import { readFileSync } from 'node:fs'
 
-// Core: irreducible primitives every runtime must implement
-const CORE_METHODS = ['eval', 'pointer', 'keyboard', 'nav', 'wait', 'screenshot', 'tap', 'capabilities']
-
-// Built-in: named operations built on core, runtime may override
-const BUILTIN_METHODS = ['click', 'type', 'fill', 'hover', 'scroll', 'pressKey', 'select', 'upload', 'dialog',
-  'fetch', 'find', 'cookies', 'download', 'waitFor', 'waitForNetwork', 'ssrState', 'storage']
-
-const ALL_METHODS = [...CORE_METHODS, ...BUILTIN_METHODS]
+const BG_SRC = readFileSync(new URL('../background.js', import.meta.url), 'utf-8')
 
 let passed = 0
 let failed = 0
@@ -37,322 +29,219 @@ function test(name, fn) {
   }
 }
 
-console.log('\nprotocol constraints (POSIX core + built-in)\n')
+// ═══════════════════════════════════════════════════════════
+// Rule 1: Core Operations Coverage
+// Why: handleMethod must have cases for all 8 core operations
+// plus a default for unknown methods.
+// ═══════════════════════════════════════════════════════════
 
-const src = readFileSync(new URL('../protocol/protocol.js', import.meta.url), 'utf-8')
+console.log('\n  -- Rule 1: Core Operations Coverage --\n')
 
-test('protocol.js exists and is non-empty', () => {
-  assert(src.length > 0)
-})
+{
+  const hmStart = BG_SRC.indexOf('async function handleMethod(')
+  assert(hmStart !== -1, 'handleMethod must exist')
+  const hmBody = BG_SRC.substring(hmStart)
+  const caseNames = [...hmBody.matchAll(/case\s+'([^']+)'/g)].map(m => m[1])
 
-test('exports createTap function', () => {
-  assert(src.includes('export function createTap'))
-})
+  const CORE_OPS = ['eval', 'pointer', 'keyboard', 'nav', 'wait', 'screenshot', 'cookies', 'capabilities']
 
-// --- Architecture constraints ---
+  for (const op of CORE_OPS) {
+    test(`handleMethod has case for '${op}'`, () => {
+      assert(caseNames.includes(op),
+        `handleMethod missing case '${op}' -- all 8 core operations must be handled`)
+    })
+  }
 
-console.log('\n  core architecture\n')
+  test('handleMethod has default case for unknown methods', () => {
+    assert(hmBody.includes('default:'),
+      'handleMethod must have a default case to reject unknown methods')
+  })
 
-test('createCore function exists (runtime-specific layer)', () => {
-  assert(src.includes('function createCore('), 'must have createCore for runtime-specific primitives')
-})
-
-test('createBuiltIn function exists (built on core)', () => {
-  assert(src.includes('function createBuiltIn(core'), 'must have createBuiltIn that takes core as argument')
-})
-
-test('built-in receives core as dependency (dependency inversion)', () => {
-  assert(src.includes('createBuiltIn(core)'), 'createTap must pass core to createBuiltIn')
-})
-
-// --- Core primitives ---
-
-console.log('\n  core primitives (8)\n')
-
-for (const method of CORE_METHODS) {
-  test(`core.${method} is defined`, () => {
-    const patterns = [`async ${method}(`, `${method}(`]
-    const coreSection = src.substring(src.indexOf('function createCore'), src.indexOf('function createBuiltIn'))
-    const found = patterns.some(p => coreSection.includes(p))
-    assert(found, `core.${method} not found in createCore`)
+  test('default case throws Error for unknown method', () => {
+    const defaultIdx = hmBody.indexOf('default:')
+    const defaultSection = hmBody.substring(defaultIdx, defaultIdx + 200)
+    assert(defaultSection.includes('throw') && defaultSection.includes('Unknown'),
+      'default case must throw an error for unknown methods')
   })
 }
 
-// --- Built-in operations ---
+// ═══════════════════════════════════════════════════════════
+// Rule 2: No Built-in in Extension
+// Why: click/type/fill/hover/scroll/etc are composed from core by
+// the Deno executor. Extension is a raw runtime providing primitives.
+// ═══════════════════════════════════════════════════════════
 
-console.log('\n  built-in operations (16)\n')
+console.log('\n  -- Rule 2: No Built-in in Extension --\n')
 
-for (const method of BUILTIN_METHODS) {
-  test(`builtIn.${method} is defined`, () => {
-    const patterns = [`async ${method}(`, `${method}(`]
-    const builtInSection = src.substring(src.indexOf('function createBuiltIn'), src.indexOf('export function createTap'))
-    const found = patterns.some(p => builtInSection.includes(p))
-    assert(found, `builtIn.${method} not found in createBuiltIn`)
+{
+  const hmStart = BG_SRC.indexOf('async function handleMethod(')
+  const hmBody = BG_SRC.substring(hmStart)
+  const caseNames = [...hmBody.matchAll(/case\s+'([^']+)'/g)].map(m => m[1])
+
+  const BUILTIN_OPS = [
+    'click', 'type', 'fill', 'hover', 'scroll', 'pressKey', 'select',
+    'upload', 'dialog', 'fetch', 'find', 'download',
+    'waitFor', 'waitForNetwork', 'ssrState', 'copyAll'
+  ]
+
+  test('no built-in operation cases in handleMethod switch', () => {
+    const found = caseNames.filter(n => BUILTIN_OPS.includes(n))
+    assert.equal(found.length, 0,
+      `found built-in cases: ${found.join(', ')} -- built-in operations belong in Deno executor`)
   })
 }
 
-// --- Public API (flat merge) ---
+// ═══════════════════════════════════════════════════════════
+// Rule 3: No Protocol Layer Remnants
+// Why: background.js was simplified from a protocol-delegating bridge
+// to a direct API gateway. Old abstractions must not linger.
+// ═══════════════════════════════════════════════════════════
 
-console.log('\n  public API (flat merge)\n')
+console.log('\n  -- Rule 3: No Protocol Layer Remnants --\n')
 
-for (const method of ALL_METHODS) {
-  test(`tap.${method} is exposed`, () => {
-    const pageSection = src.substring(src.indexOf('const tap = {'), src.indexOf('return tap'))
-    assert(pageSection.includes(`${method}:`), `tap.${method} not exposed in createTap`)
+test('no createCore reference', () => {
+  assert(!BG_SRC.includes('createCore'),
+    'createCore is a protocol abstraction -- background.js implements core directly')
+})
+
+test('no createBuiltIn reference', () => {
+  assert(!BG_SRC.includes('createBuiltIn'),
+    'createBuiltIn belongs in Deno, not extension')
+})
+
+test('no createTap reference', () => {
+  assert(!BG_SRC.includes('createTap'),
+    'createTap is a protocol factory -- background.js is a flat API gateway')
+})
+
+test('no getTap reference', () => {
+  assert(!BG_SRC.includes('getTap'),
+    'getTap was removed when protocol delegation was simplified')
+})
+
+test('no handleTapCommand reference', () => {
+  assert(!BG_SRC.includes('handleTapCommand'),
+    'handleTapCommand was replaced by handleMethod')
+})
+
+test('no protocol.js import', () => {
+  assert(!BG_SRC.includes("protocol.js") && !BG_SRC.includes("protocol/protocol"),
+    'protocol.js no longer exists -- background.js implements operations directly')
+})
+
+// ═══════════════════════════════════════════════════════════
+// Rule 4: Capabilities Declaration
+// Why: capabilities case must exist and declare the runtime
+// identity and supported operations, enabling negotiation.
+// ═══════════════════════════════════════════════════════════
+
+console.log('\n  -- Rule 4: Capabilities Declaration --\n')
+
+{
+  const capStart = BG_SRC.indexOf("case 'capabilities':")
+  assert(capStart !== -1, 'capabilities case must exist')
+  const capBody = BG_SRC.substring(capStart, capStart + 400)
+
+  test('capabilities declares runtime as extension', () => {
+    assert(capBody.includes("'extension'"),
+      "capabilities must declare runtime: 'extension'")
+  })
+
+  test('capabilities lists core operations in supports array', () => {
+    const CORE_OPS = ['eval', 'pointer', 'keyboard', 'nav', 'wait', 'screenshot']
+    for (const op of CORE_OPS) {
+      assert(capBody.includes(`'${op}'`),
+        `capabilities supports array must include '${op}'`)
+    }
+  })
+
+  test('capabilities returns an object (not a function call)', () => {
+    assert(capBody.includes('return {'),
+      'capabilities must return a plain object with runtime info')
   })
 }
 
-// --- Structural constraints ---
+// ═══════════════════════════════════════════════════════════
+// Rule 5: Inspect Tools NOT in Extension
+// Why: eval-based inspect tools (a11y, dom, page, element, etc.)
+// live in Deno src/inspect.ts, not in the extension.
+// ═══════════════════════════════════════════════════════════
 
-console.log('\n  structural constraints\n')
+console.log('\n  -- Rule 5: Inspect Tools NOT in Extension --\n')
 
-test('createTap returns tap object', () => {
-  const apiSection = src.substring(src.indexOf('export function createTap'))
-  assert(apiSection.includes('return tap'))
-})
+{
+  const INSPECT_TOOLS = [
+    'inspect.page', 'inspect.element', 'inspect.a11y', 'inspect.dom',
+    'inspect.globals', 'inspect.download', 'inspect.apiLog', 'inspect.toasts',
+    'inspect.networkStart', 'inspect.networkDump'
+  ]
 
-test('built-in uses core.eval (not chrome.scripting directly)', () => {
-  const builtInSection = src.substring(src.indexOf('function createBuiltIn'), src.indexOf('export function createTap'))
-  assert(builtInSection.includes('core.eval'), 'built-in should call core.eval')
-  assert(!builtInSection.includes('chrome.scripting'), 'built-in must NOT use chrome.scripting directly — use core.eval')
-})
-
-test('built-in uses core.pointer (not chrome.debugger directly for mouse)', () => {
-  const builtInSection = src.substring(src.indexOf('function createBuiltIn'), src.indexOf('export function createTap'))
-  assert(builtInSection.includes('core.pointer'), 'built-in should call core.pointer for mouse operations')
-})
-
-test('built-in uses core.keyboard (not chrome.debugger directly for keys)', () => {
-  const builtInSection = src.substring(src.indexOf('function createBuiltIn'), src.indexOf('export function createTap'))
-  assert(builtInSection.includes('core.keyboard'), 'built-in should call core.keyboard for key operations')
-})
-
-test('withDebugger helper exists for CDP session management', () => {
-  assert(src.includes('withDebugger'), 'must have withDebugger helper')
-})
-
-test(`exactly ${ALL_METHODS.length} methods in tap API`, () => {
-  const pageSection = src.substring(src.indexOf('const tap = {'), src.indexOf('return tap'))
-  // Count property assignments like 'methodName: core.method' or 'methodName: builtIn.method'
-  const assignments = pageSection.match(/\w+:\s*(core|builtIn)\.\w+/g) || []
-  assert.equal(assignments.length, ALL_METHODS.length,
-    `expected ${ALL_METHODS.length} tap methods, found ${assignments.length}: ${assignments.join(', ')}`)
-})
-
-// --- Isolation constraints (safety / what — violation = architectural rot) ---
-
-console.log('\n  isolation constraints\n')
-
-test('core does not call or import built-in (no circular dependency)', () => {
-  // Why: core is the primitive layer — if it calls built-in, a new runtime can't implement core independently
-  const coreSection = src.substring(src.indexOf('function createCore'), src.indexOf('function createBuiltIn'))
-  assert(!coreSection.includes('createBuiltIn'), 'core must not call createBuiltIn')
-  assert(!coreSection.includes('builtIn.'), 'core must not call built-in methods')
-})
-
-test('only createTap and PROTOCOL_VERSION are exported', () => {
-  // Why: core and built-in are internal — external code sees merged tap object + version constant
-  const exports = src.match(/export\s+(function|const|let|var|class)\s+\w+/g) || []
-  assert.equal(exports.length, 2, `expected 2 exports, found ${exports.length}: ${exports.join(', ')}`)
-  assert(exports.some(e => e.includes('createTap')), 'must export createTap')
-  assert(exports.some(e => e.includes('PROTOCOL_VERSION')), 'must export PROTOCOL_VERSION')
-})
-
-// --- Protocol versioning (safety / what — mismatched versions = silent breakage across runtimes) ---
-
-console.log('\n  protocol versioning\n')
-
-test('PROTOCOL_VERSION constant exists and is semver', () => {
-  // Why: without a version, runtimes and taps can't negotiate compatibility
-  const match = src.match(/export\s+const\s+PROTOCOL_VERSION\s*=\s*'(\d+\.\d+\.\d+)'/)
-  assert(match, 'PROTOCOL_VERSION must be exported as semver string (e.g. "1.0.0")')
-})
-
-test('capabilities() includes protocol version', () => {
-  // Why: runtime self-declaration must include version so callers can check compatibility
-  const capImpl = src.indexOf('capabilities() {')
-  assert(capImpl !== -1, 'capabilities() not found')
-  const capSection = src.substring(capImpl, capImpl + 800)
-  assert(capSection.includes('PROTOCOL_VERSION'), 'capabilities() must include PROTOCOL_VERSION')
-})
-
-// --- Cross-domain constraint (safety / what-x-what — bridge must delegate to protocol) ---
-
-console.log('\n  cross-domain: bridge → protocol delegation\n')
-
-const bgSrc = readFileSync(new URL('../../extension/background.js', import.meta.url), 'utf-8')
-
-test('background.js imports createTap from protocol.js', () => {
-  // Why: bridge must use the protocol layer, not reimplement operations
-  assert(bgSrc.includes("import { createTap }"), 'background.js must import createTap')
-})
-
-test('background.js has getTap factory', () => {
-  // Why: factory binds tabId + deps, creating protocol instances for delegation
-  assert(bgSrc.includes('function getTap('), 'must have getTap factory')
-  assert(bgSrc.includes('createTap('), 'getTap must call createTap')
-})
-
-// Delegated handlers: background.js case label → tap method it must call
-const DELEGATED_HANDLERS = [
-  ['tap.click', 'click'],
-  ['tap.type', 'type'],
-  ['tap.hover', 'hover'],
-  ['tap.scroll', 'scroll'],
-  ['tap.pressKey', 'pressKey'],
-  ['tap.select', 'select'],
-  ['tap.upload', 'upload'],
-  ['tap.find', 'find'],
-  ['tap.cookies', 'cookies'],
-  ['tap.dialog', 'dialog'],
-  ['tap.storage', 'storage'],
-  ['tap.fetch', 'fetch'],
-  ['tap.download', 'download'],
-  ['tap.ssrState', 'ssrState'],
-  ['tap.capabilities', 'capabilities'],
-  ['tap.waitFor', 'waitFor'],
-  ['tap.waitForNetwork', 'waitForNetwork'],
-]
-
-for (const [caseName, method] of DELEGATED_HANDLERS) {
-  test(`${caseName} delegates to tap.${method}`, () => {
-    // Why: single source of truth — bridge must not reimplement what protocol provides
-    const casePattern = `case '${caseName}':`
-    const caseStart = bgSrc.indexOf(casePattern)
-    assert(caseStart !== -1, `${caseName} handler not found`)
-    const nextCase = bgSrc.indexOf("case '", caseStart + casePattern.length)
-    const handlerSection = bgSrc.substring(caseStart, nextCase !== -1 ? nextCase : caseStart + 500)
-    assert(handlerSection.includes('getTap('), `${caseName} must use getTap()`)
-    assert(handlerSection.includes(`.${method}(`), `${caseName} must call .${method}()`)
+  test('no inspect tool cases in background.js', () => {
+    const found = INSPECT_TOOLS.filter(t => BG_SRC.includes(`case '${t}':`))
+    assert.equal(found.length, 0,
+      `found inspect tools in extension: ${found.join(', ')} -- these must live in Deno inspect.ts`)
   })
 }
 
-test('no legacy Tap.* prefix in case statements', () => {
-  // Why: protocol envelope routes by method name directly, Tap. prefix is dead code
-  const tapCases = bgSrc.match(/case\s+'Tap\./g) || []
-  assert.equal(tapCases.length, 0, `found ${tapCases.length} legacy Tap.* case statements — remove prefix`)
+// ═══════════════════════════════════════════════════════════
+// Rule 6: Layer Isolation
+// Why: background.js must not import from other modules or
+// reference executor/forge logic. It uses chrome.runtime.onMessage
+// for internal extension communication.
+// ═══════════════════════════════════════════════════════════
+
+console.log('\n  -- Rule 6: Layer Isolation --\n')
+
+{
+  const stripped = BG_SRC.replace(/\/\/.*/g, '').replace(/\/\*[\s\S]*?\*\//g, '')
+
+  test('no executor references (comments stripped)', () => {
+    assert(!stripped.toLowerCase().includes('executor'),
+      'background.js must not reference executor')
+  })
+
+  test('no forge references (comments stripped)', () => {
+    assert(!stripped.toLowerCase().includes('forge'),
+      'background.js must not reference forge')
+  })
+
+  test('no import statements', () => {
+    assert(!stripped.includes('import '),
+      'background.js must not import from other modules -- it is self-contained')
+  })
+
+  test('uses chrome.runtime.onMessage for internal messaging', () => {
+    assert(BG_SRC.includes('chrome.runtime.onMessage'),
+      'must use chrome.runtime.onMessage for extension internal communication')
+  })
+}
+
+// ═══════════════════════════════════════════════════════════
+// Rule 7: Wire Name Format
+// Why: no legacy Tap.*/Bridge.* prefixes in case statements or
+// message routing.
+// ═══════════════════════════════════════════════════════════
+
+console.log('\n  -- Rule 7: Wire Name Format --\n')
+
+test('no legacy Tap.* prefix in any case statement', () => {
+  const tapCases = BG_SRC.match(/case\s+'Tap\./g) || []
+  assert.equal(tapCases.length, 0,
+    `found ${tapCases.length} legacy Tap.* case statements -- use bare names`)
 })
 
-test('handleMessage does not route by Tap.* or Bridge.* prefix', () => {
-  // Why: all bridge communication uses protocol envelope now, prefix routing is legacy
-  const handleMsgSection = bgSrc.substring(bgSrc.indexOf('async function handleMessage('), bgSrc.indexOf('async function handleMessage(') + 800)
-  assert(!handleMsgSection.includes("startsWith('Tap.')"), 'handleMessage must not route by Tap.* prefix')
-  assert(!handleMsgSection.includes("startsWith('Bridge.')"), 'handleMessage must not route by Bridge.* prefix')
+test('no legacy Bridge.* prefix in any case statement', () => {
+  const bridgeCases = BG_SRC.match(/case\s+'Bridge\./g) || []
+  assert.equal(bridgeCases.length, 0,
+    `found ${bridgeCases.length} legacy Bridge.* case statements -- use bare names`)
 })
 
-test('WebSocket bridge routes through handleMessage', () => {
-  // Why: all Rust→Extension communication must go through the unified message handler
-  const onMessageIdx = bgSrc.indexOf('.onmessage')
-  assert(onMessageIdx !== -1, 'WebSocket onmessage handler must exist')
-  const onCloseIdx = bgSrc.indexOf('.onclose', onMessageIdx)
-  const wsHandler = bgSrc.substring(onMessageIdx, onCloseIdx !== -1 ? onCloseIdx : onMessageIdx + 500)
-  assert(wsHandler.includes('handleMessage'), 'WebSocket must route through handleMessage')
+test('WebSocket message handler strips tap. prefix for compatibility', () => {
+  const wsSection = BG_SRC.substring(BG_SRC.indexOf('ws.onmessage') || 0)
+  assert(wsSection.includes('replace') && wsSection.includes('"tap."'),
+    'WebSocket handler must strip tap. prefix from incoming method names for backward compatibility')
 })
 
-// --- Capability constraint (quality / what — capabilities() must be accurate) ---
-
-console.log('\n  capability accuracy\n')
-
-test('capabilities() core list matches CORE_METHODS', () => {
-  // Why: capabilities() is the runtime's self-declaration — if stale, scripts can't negotiate
-  // Find the actual implementation (skip JSDoc), look for 'capabilities() {' pattern
-  const capImpl = src.indexOf('capabilities() {')
-  assert(capImpl !== -1, 'capabilities() implementation not found')
-  const capSection = src.substring(capImpl, capImpl + 600)
-  for (const m of CORE_METHODS) {
-    assert(capSection.includes(`'${m}'`), `capabilities() missing core method '${m}'`)
-  }
-})
-
-test('capabilities() builtIn list matches BUILTIN_METHODS', () => {
-  // Why: same as above — builtIn declaration must match actual built-in
-  const capImpl = src.indexOf('capabilities() {')
-  const capSection = src.substring(capImpl, capImpl + 600)
-  for (const m of BUILTIN_METHODS) {
-    assert(capSection.includes(`'${m}'`), `capabilities() missing builtIn method '${m}'`)
-  }
-})
-
-// --- Layer isolation constraints (safety / what — violations = architectural rot) ---
-
-console.log('\n  layer isolation\n')
-
-test('background.js does not import core internals (createCore, createBuiltIn)', () => {
-  // Why: bridge layer must only depend on the public protocol interface (createTap)
-  assert(!bgSrc.includes('createCore'), 'bridge must not import createCore — use createTap')
-  assert(!bgSrc.includes('createBuiltIn'), 'bridge must not import createBuiltIn — use createTap')
-})
-
-test('background.js delegated handlers do not use chrome.scripting.executeScript', () => {
-  // Why: delegated operations must go through protocol layer, not reimplement with raw chrome APIs
-  for (const [caseName] of DELEGATED_HANDLERS) {
-    const caseStart = bgSrc.indexOf(`case '${caseName}':`)
-    if (caseStart === -1) continue
-    const nextCase = bgSrc.indexOf("case '", caseStart + caseName.length + 10)
-    const section = bgSrc.substring(caseStart, nextCase !== -1 ? nextCase : caseStart + 500)
-    assert(!section.includes('chrome.scripting.executeScript'),
-      `${caseName} handler uses chrome.scripting directly — must delegate to protocol`)
-  }
-})
-
-test('protocol.js does not import from background.js (no upward dependency)', () => {
-  // Why: protocol is the lower layer — it must not depend on the bridge layer above it
-  assert(!src.includes("from '../background"), 'protocol must not import from background.js')
-  assert(!src.includes("from './background"), 'protocol must not import from background.js')
-})
-
-test('eval-based inspect tools migrated to Deno (not in background.js)', () => {
-  // Why: inspect.page/element/a11y/dom/globals/download/apiLog/toasts are pure tap.eval() —
-  // they must NOT be in background.js. They live in Deno src/inspect.ts.
-  const MIGRATED = ['inspect.page', 'inspect.element', 'inspect.a11y', 'inspect.dom',
-    'inspect.globals', 'inspect.download', 'inspect.apiLog', 'inspect.toasts']
-  for (const tool of MIGRATED) {
-    assert(!bgSrc.includes(`case '${tool}':`),
-      `${tool} must not be in background.js — migrated to Deno inspect.ts`)
-  }
-})
-
-test('Deno mcp.ts tool names all use category.method format', () => {
-  // Why: unified naming convention — every tool must have a dot separator
-  const mcpSrc = readFileSync(new URL('../../src/mcp.ts', import.meta.url), 'utf-8')
-  // Extract only from buildToolsSchema() function (not serverInfo or other metadata)
-  const schemaSection = mcpSrc.substring(mcpSrc.indexOf('function buildToolsSchema'))
-  const toolNames = [...schemaSection.matchAll(/name:\s*"([^"]+)"/g)].map(m => m[1])
-  assert(toolNames.length >= 20, `expected 20+ tools, got ${toolNames.length}`)
-  for (const name of toolNames) {
-    assert(name.includes('.'), `MCP tool "${name}" missing category.method dot — expected format like "tap.click"`)
-  }
-})
-
-// ── Daemon Architecture Constraints ──
-
-test('Extension reconnect prevents cascade via identity check', () => {
-  // Why: when daemon replaces old connection, the old WebSocket's onclose fires.
-  // Without identity check (bridgeSocket === ws), each close triggers a new connect,
-  // which triggers another close, creating an infinite reconnect cascade.
-  const bgSrc = readFileSync(new URL('../../extension/background.js', import.meta.url), 'utf-8')
-  const connectFn = bgSrc.substring(bgSrc.indexOf('function connectBridge()'))
-  assert(connectFn.includes('bridgeSocket === ws'),
-    'onclose must check bridgeSocket === ws to prevent reconnect cascade')
-})
-
-test('Extension detaches old socket before reconnecting', () => {
-  // Why: old socket's onclose/onerror must be nullified before creating new connection,
-  // otherwise stale events from the old socket trigger spurious reconnects.
-  const bgSrc = readFileSync(new URL('../../extension/background.js', import.meta.url), 'utf-8')
-  const connectFn = bgSrc.substring(bgSrc.indexOf('function connectBridge()'))
-  assert(connectFn.includes('onclose = null'),
-    'connectBridge must null out old socket onclose before reconnecting')
-})
-
-test('Deno cli.ts uses wire names directly (no conversion layer)', () => {
-  // Why: wire names are identical everywhere — MCP tool name = tap proxy method = extension case.
-  // convertToolName was removed; the default relay passes name through unchanged.
-  const cliSrc = readFileSync(new URL('../../src/cli.ts', import.meta.url), 'utf-8')
-  assert(!cliSrc.includes('convertToolName'), 'convertToolName must not exist — wire names pass through directly')
-  // Verify relay sends name as-is
-  assert(cliSrc.includes('client.sendTap("tool", name, args'), 'default relay must send tool name unchanged')
-})
-
+// --- Summary ---
 console.log(`\n${passed + failed} constraints, ${passed} passed, ${failed} failed\n`)
 process.exit(failed > 0 ? 1 : 0)

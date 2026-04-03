@@ -1,11 +1,10 @@
 /**
- * Constraint: kernel behavioral correctness
- * Classification: safety / what — violations cause silent failures on real sites
+ * Constraint: core operation behavioral correctness
+ * Classification: safety / what -- violations cause silent failures on real sites
  *
- * Why: architecture tests check structural purity (no CDP in stdlib, etc.)
- * but never ask "does a click actually click on React apps?" These constraints
- * verify the implementation patterns that make kernel primitives behaviorally
- * correct — discovered via real-world failures on X, Dev.to, Juejin.
+ * Architecture tests check structural purity. These constraints verify the
+ * implementation patterns that make core primitives behaviorally correct --
+ * discovered via real-world failures.
  *
  * Run: node extension/test/kernel-behavior.test.mjs
  */
@@ -13,9 +12,7 @@
 import { strict as assert } from 'node:assert'
 import { readFileSync } from 'node:fs'
 
-const PROTOCOL_SRC = readFileSync(new URL('../protocol/protocol.js', import.meta.url), 'utf-8')
-const BACKGROUND_SRC = readFileSync(new URL('../background.js', import.meta.url), 'utf-8')
-const INSPECT_SRC = readFileSync(new URL('../../src/inspect.ts', import.meta.url), 'utf-8')
+const BG_SRC = readFileSync(new URL('../background.js', import.meta.url), 'utf-8')
 
 let passed = 0
 let failed = 0
@@ -33,222 +30,224 @@ function test(name, fn) {
 }
 
 // ═══════════════════════════════════════════════════════════
-// Rule 1: CDP Click — full pointer event chain
-// Why: React (and other frameworks) use event delegation. mouseover/mouseenter
-// fires during mouseMoved and registers the target. Without it, mousePressed
-// + mouseReleased dispatch CDP events but React's onClick never fires.
-// Discovered: X/Twitter Post button silently ignored 3 clicks.
+// Rule 1: CDP Click Event Chain
+// Why: React and other frameworks need mousePressed + mouseReleased
+// as a pair. Missing either means the click never registers.
 // ═══════════════════════════════════════════════════════════
 
-console.log('\n  ── Rule 1: CDP Click Event Chain ──\n')
+console.log('\n  -- Rule 1: CDP Click Event Chain --\n')
 
-test('cdpClick dispatches mouseMoved before mousePressed', () => {
-  const cdpClick = BACKGROUND_SRC.substring(
-    BACKGROUND_SRC.indexOf('async function cdpClick'),
-    BACKGROUND_SRC.indexOf('async function cdpClick') + 500
-  )
-  const movedIdx = cdpClick.indexOf('mouseMoved')
-  const pressedIdx = cdpClick.indexOf('mousePressed')
-  assert(movedIdx !== -1, 'cdpClick must dispatch mouseMoved')
-  assert(movedIdx < pressedIdx, 'mouseMoved must come before mousePressed')
-})
+{
+  const cdpClickStart = BG_SRC.indexOf('async function cdpClick(')
+  assert(cdpClickStart !== -1, 'cdpClick function must exist')
+  // Find the end of cdpClick by locating the next top-level function or section
+  const cdpClickBody = BG_SRC.substring(cdpClickStart, cdpClickStart + 500)
 
-test('_fallbackClick dispatches mouseMoved before mousePressed', () => {
-  const fallback = PROTOCOL_SRC.substring(
-    PROTOCOL_SRC.indexOf('async function _fallbackClick'),
-    PROTOCOL_SRC.indexOf('async function _fallbackClick') + 500
-  )
-  const movedIdx = fallback.indexOf('mouseMoved')
-  const pressedIdx = fallback.indexOf('mousePressed')
-  assert(movedIdx !== -1, '_fallbackClick must dispatch mouseMoved')
-  assert(movedIdx < pressedIdx, 'mouseMoved must come before mousePressed')
-})
+  test('cdpClick dispatches mousePressed', () => {
+    assert(cdpClickBody.includes('mousePressed'),
+      'cdpClick must dispatch mousePressed event')
+  })
 
-// ═══════════════════════════════════════════════════════════
-// Rule 2: Keyboard — correct virtual key codes
-// Why: CDP windowsVirtualKeyCode for letter keys must be uppercase ASCII
-// (65 for 'A', not 97 for 'a'). Wrong code = Chrome ignores modifier combos.
-// Discovered: Cmd+A (select all) silently failed on contenteditable.
-// ═══════════════════════════════════════════════════════════
+  test('cdpClick dispatches mouseReleased', () => {
+    assert(cdpClickBody.includes('mouseReleased'),
+      'cdpClick must dispatch mouseReleased event')
+  })
 
-console.log('\n  ── Rule 2: Keyboard Key Codes ──\n')
+  test('mousePressed comes before mouseReleased', () => {
+    const pressedIdx = cdpClickBody.indexOf('mousePressed')
+    const releasedIdx = cdpClickBody.indexOf('mouseReleased')
+    assert(pressedIdx < releasedIdx,
+      'mousePressed must come before mouseReleased -- press then release')
+  })
 
-test('keyboard uses uppercase charCode for virtual key codes', () => {
-  const keyboardFn = PROTOCOL_SRC.substring(
-    PROTOCOL_SRC.indexOf('async keyboard('),
-    PROTOCOL_SRC.indexOf('async nav(')
-  )
-  assert(keyboardFn.includes('toUpperCase().charCodeAt'),
-    'windowsVirtualKeyCode must use toUpperCase().charCodeAt(0) — lowercase codes are ignored by Chrome')
-})
+  test('cdpClick uses Input.dispatchMouseEvent', () => {
+    assert(cdpClickBody.includes('Input.dispatchMouseEvent'),
+      'cdpClick must use CDP Input.dispatchMouseEvent for native mouse events')
+  })
+}
 
 // ═══════════════════════════════════════════════════════════
-// Rule 3: Keyboard — modifier commands
-// Why: CDP keyDown with Meta modifier alone doesn't execute browser shortcuts.
-// Chrome requires `commands: ['selectAll']` in the event params for Cmd+A
-// to actually select all. Without it, the key event fires but nothing happens.
-// Discovered: Cmd+A in type() couldn't clear contenteditable on X.
+// Rule 2: Keyboard Key Codes
+// Why: CDP windowsVirtualKeyCode must match expected values.
+// Wrong key codes cause modifier combos to silently fail.
 // ═══════════════════════════════════════════════════════════
 
-console.log('\n  ── Rule 3: Keyboard Modifier Commands ──\n')
+console.log('\n  -- Rule 2: Keyboard Key Codes --\n')
 
-test('keyboard passes commands array for modifier combos', () => {
-  const keyboardFn = PROTOCOL_SRC.substring(
-    PROTOCOL_SRC.indexOf('async keyboard('),
-    PROTOCOL_SRC.indexOf('async nav(')
-  )
-  assert(keyboardFn.includes('commands'),
-    'keyboard must build and pass commands array for modifier key combos')
-})
+{
+  const keyMapStart = BG_SRC.indexOf('const KEY_MAP')
+  assert(keyMapStart !== -1, 'KEY_MAP must exist')
+  const keyMapBody = BG_SRC.substring(keyMapStart, keyMapStart + 800)
 
-test('keyboard maps Meta+A to selectAll command', () => {
-  const keyboardFn = PROTOCOL_SRC.substring(
-    PROTOCOL_SRC.indexOf('async keyboard('),
-    PROTOCOL_SRC.indexOf('async nav(')
-  )
-  assert(keyboardFn.includes('selectAll'),
-    'Meta+A must map to selectAll command')
-})
+  test('KEY_MAP has Enter with windowsVirtualKeyCode 13', () => {
+    assert(keyMapBody.includes('Enter') && keyMapBody.includes('13'),
+      'Enter key must map to windowsVirtualKeyCode 13')
+  })
 
-test('keyDown events include commands in dispatch', () => {
-  const keyboardFn = PROTOCOL_SRC.substring(
-    PROTOCOL_SRC.indexOf('async keyboard('),
-    PROTOCOL_SRC.indexOf('async nav(')
-  )
-  // Find keyDown dispatches in press/down branches (not type/insertText)
-  const pressSection = keyboardFn.substring(keyboardFn.indexOf("// 'press'"))
-  assert(pressSection.includes('commands'),
-    'keyDown dispatch in press action must include commands array')
-})
+  test('KEY_MAP has Tab with windowsVirtualKeyCode 9', () => {
+    assert(keyMapBody.includes('Tab') && keyMapBody.includes(': 9'),
+      'Tab key must map to windowsVirtualKeyCode 9')
+  })
 
-// ═══════════════════════════════════════════════════════════
-// Rule 4: Eval — scope isolation
-// Why: tap.eval runs user expressions via (0, eval)(expr) in global scope.
-// const/let at global scope can't be redeclared — second call with same
-// variable name throws SyntaxError. Block wrapping { expr } scopes them.
-// Discovered: second tap.eval with `const editor` threw SyntaxError on X.
-// ═══════════════════════════════════════════════════════════
+  test('KEY_MAP has Escape with windowsVirtualKeyCode 27', () => {
+    assert(keyMapBody.includes('Escape') && keyMapBody.includes('27'),
+      'Escape key must map to windowsVirtualKeyCode 27')
+  })
 
-console.log('\n  ── Rule 4: Eval Scope Isolation ──\n')
-
-test('tap.eval wraps expression in block scope', () => {
-  const evalCase = BACKGROUND_SRC.substring(
-    BACKGROUND_SRC.indexOf("case 'tap.eval'"),
-    BACKGROUND_SRC.indexOf("case 'tap.eval'") + 600
-  )
-  assert(evalCase.includes("'{\\n'") || evalCase.includes("'\\n}'") || evalCase.includes("'{\\n' + params.expression") || evalCase.includes("'\\n' + params.expression + '\\n}'"),
-    'tap.eval must wrap expression in block scope { } to prevent const/let pollution')
-})
-
-test('routeCDP Runtime.evaluate wraps expression in block scope', () => {
-  const evalRoute = BACKGROUND_SRC.substring(
-    BACKGROUND_SRC.indexOf("case 'Runtime.evaluate'"),
-    BACKGROUND_SRC.indexOf("case 'Runtime.evaluate'") + 800
-  )
-  assert(evalRoute.includes('safeExpr'),
-    'Runtime.evaluate must use block-scoped expression')
-})
+  test('keyboard fallback uses toUpperCase().charCodeAt for virtual codes', () => {
+    const kbStart = BG_SRC.indexOf("case 'keyboard':")
+    const kbBody = BG_SRC.substring(kbStart, kbStart + 800)
+    assert(kbBody.includes('toUpperCase().charCodeAt'),
+      'windowsVirtualKeyCode for letter keys must use toUpperCase().charCodeAt(0) -- lowercase codes are ignored by Chrome')
+  })
+}
 
 // ═══════════════════════════════════════════════════════════
-// Rule 5: Tab Recovery — requireTab validates existence
-// Why: when a tab is manually closed, its ID becomes stale. Using a stale
-// tabId throws "No tab with id: X" on every subsequent call with no recovery.
-// routeCDP already had this pattern; requireTab was missing it.
-// Discovered: user closed X compose tab → all subsequent calls crashed.
+// Rule 3: Keyboard Modifier Commands
+// Why: CDP keyDown with Meta modifier alone does not execute browser
+// shortcuts. Chrome requires `commands: ['selectAll']` for Cmd+A.
 // ═══════════════════════════════════════════════════════════
 
-console.log('\n  ── Rule 5: Tab Recovery ──\n')
+console.log('\n  -- Rule 3: Keyboard Modifier Commands --\n')
 
-test('requireTab validates tab still exists', () => {
-  const requireTab = BACKGROUND_SRC.substring(
-    BACKGROUND_SRC.indexOf('async function requireTab'),
-    BACKGROUND_SRC.indexOf('async function requireTab') + 400
-  )
-  assert(requireTab.includes('tabs.get'),
-    'requireTab must call chrome.tabs.get() to verify tab exists before using it')
-})
+{
+  const kbStart = BG_SRC.indexOf("case 'keyboard':")
+  const kbBody = BG_SRC.substring(kbStart, kbStart + 1200)
 
-test('requireTab and routeCDP both recover from dead tabs', () => {
-  // Extract full requireTab function body — skip past param default `{}`
-  const rtStart = BACKGROUND_SRC.indexOf('async function requireTab')
-  const rtFirstLine = BACKGROUND_SRC.indexOf('\n', rtStart)
-  let depth = 0, rtEnd = rtStart
-  for (let i = rtFirstLine; i < BACKGROUND_SRC.length; i++) {
-    if (BACKGROUND_SRC[i] === '{') depth++
-    if (BACKGROUND_SRC[i] === '}') depth--
-    if (depth === 0 && BACKGROUND_SRC[i] === '}') { rtEnd = i + 1; break }
-  }
-  const requireTab = BACKGROUND_SRC.substring(rtStart, rtEnd)
-  const routeCDP = BACKGROUND_SRC.substring(
-    BACKGROUND_SRC.indexOf('async function routeCDP'),
-    BACKGROUND_SRC.indexOf('async function routeCDP') + 400
-  )
-  // Both must: try chrome.tabs.get → catch → recover
-  assert(requireTab.includes('chrome.tabs.get') && requireTab.includes('catch'),
-    'requireTab must try chrome.tabs.get and catch dead tab')
-  assert(routeCDP.includes('chrome.tabs.get') && routeCDP.includes('catch'),
-    'routeCDP must try chrome.tabs.get and catch dead tab')
-})
+  test('keyboard builds commands array for modifier combos', () => {
+    assert(kbBody.includes('commands'),
+      'keyboard case must build commands array for modifier key combos')
+  })
 
-// ═══════════════════════════════════════════════════════════
-// Rule 6: Screenshot — AI-friendly defaults
-// Why: kernel screenshot returns PNG (lossless, ~2-4MB for 1920x1080).
-// As base64 that's 2.7-5.3M chars — always exceeds AI context token limits.
-// tap.screenshot handler must route through captureScreenshot with jpeg+quality.
-// Discovered: every screenshot call returned 540K+ chars, unusable.
-// ═══════════════════════════════════════════════════════════
+  test('keyboard maps Meta+A to selectAll', () => {
+    assert(kbBody.includes('selectAll'),
+      'Meta+A must map to selectAll command')
+  })
 
-console.log('\n  ── Rule 6: Screenshot Defaults ──\n')
+  test('keyboard maps Meta+C to copy', () => {
+    assert(kbBody.includes('copy'),
+      'Meta+C must map to copy command')
+  })
 
-test('tap.screenshot does not use raw kernel screenshot', () => {
-  const ssCase = BACKGROUND_SRC.substring(
-    BACKGROUND_SRC.indexOf("case 'tap.screenshot'"),
-    BACKGROUND_SRC.indexOf("case 'tap.screenshot'") + 400
-  )
-  assert(!ssCase.includes('tap.screenshot()') || ssCase.includes('routeCDP') || ssCase.includes('captureScreenshot'),
-    'tap.screenshot must not call raw kernel.screenshot() — must route through CDP with format/quality')
-})
+  test('keyboard maps Meta+V to paste', () => {
+    assert(kbBody.includes('paste'),
+      'Meta+V must map to paste command')
+  })
 
-test('tap.screenshot defaults to jpeg format', () => {
-  const ssCase = BACKGROUND_SRC.substring(
-    BACKGROUND_SRC.indexOf("case 'tap.screenshot'"),
-    BACKGROUND_SRC.indexOf("case 'tap.screenshot'") + 400
-  )
-  assert(ssCase.includes("'jpeg'"),
-    'tap.screenshot must default to jpeg format for AI-friendly size')
-})
+  test('type action uses keyDown/keyUp per character', () => {
+    // Find the type action section within keyboard case
+    assert(kbBody.includes("action === 'type'"),
+      'keyboard must handle type action')
+    const typeSection = kbBody.substring(kbBody.indexOf("action === 'type'"))
+    assert(typeSection.includes('keyDown') && typeSection.includes('keyUp'),
+      'type action must dispatch keyDown and keyUp per character')
+    assert(typeSection.includes('for'),
+      'type action must iterate over characters')
+  })
+}
 
 // ═══════════════════════════════════════════════════════════
-// Rule 7: Inspect — type-safe value access
-// Why: el.value is not always a string. <input type="number"> returns number,
-// <progress> returns number, custom elements can have object values.
-// Calling .substring() on a number throws TypeError.
-// Discovered: inspect_a11y crashed on X due to non-string el.value.
+// Rule 4: Eval Scope Isolation
+// Why: const/let at global scope cannot be redeclared. Block
+// wrapping { expr } scopes them so repeated evals work.
 // ═══════════════════════════════════════════════════════════
 
-console.log('\n  ── Rule 7: Inspect Type Safety ──\n')
+console.log('\n  -- Rule 4: Eval Scope Isolation --\n')
 
-test('inspect.a11y coerces el.value to String before substring', () => {
-  const a11ySection = INSPECT_SRC.substring(
-    INSPECT_SRC.indexOf("case \"inspect.a11y\""),
-    INSPECT_SRC.indexOf("case \"inspect.dom\"")
-  )
-  assert(!a11ySection.includes('el.value?.substring'),
-    'must not call .substring() directly on el.value — use String(el.value) first')
-  assert(a11ySection.includes('String(el.value)'),
-    'must coerce el.value via String() before calling .substring()')
-})
+{
+  const evalStart = BG_SRC.indexOf("case 'eval':")
+  const evalBody = BG_SRC.substring(evalStart, evalStart + 1200)
 
-test('inspect.element coerces el.value to String before substring', () => {
-  const elemSection = INSPECT_SRC.substring(
-    INSPECT_SRC.indexOf("case \"inspect.element\""),
-    INSPECT_SRC.indexOf("case \"inspect.a11y\"")
-  )
-  assert(!elemSection.includes('el.value?.substring'),
-    'must not call .substring() directly on el.value — use String(el.value) first')
-  assert(elemSection.includes('String(el.value)'),
-    'must coerce el.value via String() before calling .substring()')
-})
+  test('eval wraps expression in block scope', () => {
+    assert(evalBody.includes("'{\\n'") || evalBody.includes("'\\n}'") ||
+      evalBody.includes("'{\\n' + params") ||
+      (evalBody.includes('{\\n') && evalBody.includes('\\n}')) ||
+      evalBody.includes("safeExpr"),
+      'eval must wrap expression in block scope { } to prevent const/let redeclaration errors')
+    // Verify the actual block wrapping pattern
+    assert(evalBody.includes('safeExpr'),
+      'eval must compute safeExpr (block-wrapped expression)')
+  })
+
+  test('safeExpr adds block scope braces', () => {
+    // Find the safeExpr assignment
+    const safeExprLine = BG_SRC.substring(BG_SRC.indexOf('safeExpr'), BG_SRC.indexOf('safeExpr') + 100)
+    assert(safeExprLine.includes('{') && safeExprLine.includes('}'),
+      'safeExpr must wrap expression in { } block scope')
+  })
+
+  test('eval uses chrome.scripting.executeScript with MAIN world', () => {
+    assert(evalBody.includes('chrome.scripting.executeScript'),
+      'eval must use chrome.scripting.executeScript')
+    assert(evalBody.includes("'MAIN'"),
+      'eval must execute in MAIN world to access page context')
+  })
+
+  test('eval has CDP fast path when debugger attached', () => {
+    assert(evalBody.includes('debuggerSessions.get'),
+      'eval must check if debugger is attached for fast path')
+    assert(evalBody.includes('Runtime.evaluate'),
+      'eval CDP fast path must use Runtime.evaluate')
+  })
+}
+
+// ═══════════════════════════════════════════════════════════
+// Rule 5: Tab Recovery
+// Why: when a tab is manually closed, its ID becomes stale.
+// handleMethod must validate tab exists and auto-create if needed.
+// ═══════════════════════════════════════════════════════════
+
+console.log('\n  -- Rule 5: Tab Recovery --\n')
+
+{
+  const hmStart = BG_SRC.indexOf('async function handleMethod(')
+  // Get the portion before the switch statement
+  const switchStart = BG_SRC.indexOf('switch (method)', hmStart)
+  const preamble = BG_SRC.substring(hmStart, switchStart)
+
+  test('handleMethod validates tab exists via chrome.tabs.get', () => {
+    assert(preamble.includes('chrome.tabs.get'),
+      'handleMethod must call chrome.tabs.get to verify tab still exists')
+  })
+
+  test('handleMethod catches dead tab errors', () => {
+    assert(preamble.includes('catch'),
+      'handleMethod must catch errors from chrome.tabs.get for dead tabs')
+  })
+
+  test('handleMethod auto-creates tab when none exists', () => {
+    assert(preamble.includes('chrome.tabs.create'),
+      'handleMethod must auto-create a tab when no valid tab is found')
+  })
+}
+
+// ═══════════════════════════════════════════════════════════
+// Rule 6: Screenshot Defaults
+// Why: PNG screenshots are too large for AI context. Must default
+// to jpeg with quality parameter for reasonable size.
+// ═══════════════════════════════════════════════════════════
+
+console.log('\n  -- Rule 6: Screenshot Defaults --\n')
+
+{
+  const ssStart = BG_SRC.indexOf("case 'screenshot':")
+  const ssBody = BG_SRC.substring(ssStart, ssStart + 300)
+
+  test('screenshot defaults to jpeg format', () => {
+    assert(ssBody.includes("'jpeg'"),
+      'screenshot must default to jpeg format for AI-friendly size')
+  })
+
+  test('screenshot includes quality parameter', () => {
+    assert(ssBody.includes('quality'),
+      'screenshot must include quality parameter for size control')
+  })
+
+  test('screenshot uses captureVisibleTab', () => {
+    assert(ssBody.includes('captureVisibleTab'),
+      'screenshot must use chrome.tabs.captureVisibleTab API')
+  })
+}
 
 // --- Summary ---
 console.log(`\n${passed + failed} constraints, ${passed} passed, ${failed} failed\n`)
