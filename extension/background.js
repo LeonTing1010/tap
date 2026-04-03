@@ -595,6 +595,16 @@ const KEY_MAP = {
 
 const DAEMON_URL = 'http://127.0.0.1:9333'
 
+// Badge: show connection status on extension icon
+function setBadge(connected) {
+  if (connected) {
+    chrome.action.setBadgeText({ text: '' })
+  } else {
+    chrome.action.setBadgeText({ text: '!' })
+    chrome.action.setBadgeBackgroundColor({ color: '#EF4444' })
+  }
+}
+
 async function pollLoop() {
   console.log('[tap] long-poll loop started, daemon:', DAEMON_URL)
   while (true) {
@@ -606,6 +616,7 @@ async function pollLoop() {
         body: '{}',
       })
       const { commands } = await res.json()
+      setBadge(true)
 
       for (const cmd of commands || []) {
         const { id, method: rawMethod, params, tabId: msgTabId } = cmd
@@ -629,7 +640,8 @@ async function pollLoop() {
       }
       // Immediately re-poll — daemon will hold the connection if nothing pending
     } catch {
-      // Daemon not running — wait before retrying
+      // Daemon not running — show disconnected badge, wait before retrying
+      setBadge(false)
       await new Promise(r => setTimeout(r, 3000))
     }
   }
