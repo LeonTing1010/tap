@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy — Tap</title>
+<meta name="description" content="Privacy Policy for the Tap browser extension and CLI.">
+<link rel="canonical" href="https://leonting1010.github.io/tap/privacy.html">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Ccircle cx='256' cy='256' r='240' fill='%234F46E5'/%3E%3Ccircle cx='290' cy='275' r='80' fill='white'/%3E%3Ccircle cx='230' cy='210' r='58' fill='white'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Outfit', sans-serif; background: #0a0a0f; color: #e0e0e0; line-height: 1.7; }
+.container { max-width: 720px; margin: 0 auto; padding: 60px 24px; }
+h1 { font-size: 2rem; font-weight: 600; color: #fff; margin-bottom: 8px; }
+h2 { font-size: 1.25rem; font-weight: 500; color: #fff; margin-top: 36px; margin-bottom: 12px; }
+p, li { font-size: 0.95rem; color: #b0b0b0; margin-bottom: 12px; }
+ul { padding-left: 20px; }
+li { margin-bottom: 6px; }
+a { color: #818cf8; text-decoration: none; }
+a:hover { text-decoration: underline; }
+.date { font-size: 0.85rem; color: #666; margin-bottom: 32px; }
+.back { display: inline-block; margin-bottom: 24px; font-size: 0.9rem; }
+code { background: #1a1a2e; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+</style>
+</head>
+<body>
+<div class="container">
+<a href="./" class="back">← Back to Tap</a>
+<h1>Privacy Policy</h1>
+<p class="date">Effective date: April 3, 2026</p>
+
+<h2>Overview</h2>
+<p>Tap is an open-source browser automation runtime. It consists of a CLI tool and a Chrome extension that work together locally on your machine. <strong>Tap does not collect, transmit, or store any personal data.</strong></p>
+
+<h2>What Tap Does</h2>
+<p>Tap executes deterministic automation scripts (".tap.js" files) in your browser. The Chrome extension acts as a local runtime — it receives commands from the CLI via a localhost-only WebSocket connection (<code>ws://127.0.0.1:9333</code>) and executes them in the browser.</p>
+
+<h2>Data Collection</h2>
+<p>Tap collects <strong>no user data</strong>. Specifically:</p>
+<ul>
+  <li><strong>No analytics or telemetry.</strong> Tap does not phone home.</li>
+  <li><strong>No personal information.</strong> No names, emails, or identifiers are collected.</li>
+  <li><strong>No browsing history.</strong> Tap does not track which sites you visit.</li>
+  <li><strong>No cookies or credentials.</strong> While Tap can read cookies for script execution (e.g., authenticated API requests), this data stays entirely on your local machine and is never transmitted externally.</li>
+  <li><strong>No remote servers.</strong> All communication happens locally between the CLI and extension via WebSocket on localhost.</li>
+</ul>
+
+<h2>Permissions Explained</h2>
+<p>The Chrome extension requests several permissions, all used exclusively for local automation:</p>
+<ul>
+  <li><strong>debugger</strong> — Native input simulation (mouse/keyboard events via Chrome DevTools Protocol)</li>
+  <li><strong>activeTab</strong> — Execute scripts in the current tab when a tap command runs</li>
+  <li><strong>tabs</strong> — Tab management: create, navigate, capture screenshots</li>
+  <li><strong>scripting</strong> — Run JavaScript in page context for data extraction and interaction</li>
+  <li><strong>cookies</strong> — Read session cookies for authenticated API requests within taps</li>
+  <li><strong>storage</strong> — Read page localStorage/sessionStorage for client-side state</li>
+  <li><strong>host_permissions (&lt;all_urls&gt;)</strong> — Automate any website the user explicitly targets</li>
+</ul>
+
+<h2>Third-Party Services</h2>
+<p>Tap does not integrate with any third-party analytics, advertising, or tracking services.</p>
+
+<h2>Data Storage</h2>
+<p>Tap stores data only on your local filesystem:</p>
+<ul>
+  <li>Tap scripts in <code>~/.tap/taps/</code></li>
+  <li>Execution logs in <code>~/.tap/logs/</code></li>
+  <li>No cloud storage or sync</li>
+</ul>
+
+<h2>Open Source</h2>
+<p>Tap is fully open source. You can audit the complete source code at <a href="https://github.com/LeonTing1010/tap">github.com/LeonTing1010/tap</a>.</p>
+
+<h2>Changes</h2>
+<p>If this policy changes, the update will be posted here with a new effective date.</p>
+
+<h2>Contact</h2>
+<p>For questions about this privacy policy, open an issue at <a href="https://github.com/LeonTing1010/tap/issues">github.com/LeonTing1010/tap/issues</a>.</p>
+</div>
+</body>
+</html>
