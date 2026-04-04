@@ -9,7 +9,7 @@
 </h4>
 
 <p align="center">
-  <a href="https://leonting1010.github.io/tap/"><b>Homepage</b></a> &nbsp;|&nbsp;
+  <a href="https://taprun.dev/"><b>Homepage</b></a> &nbsp;|&nbsp;
   <a href="https://github.com/LeonTing1010/tap-skills"><b>Community Skills</b></a> &nbsp;|&nbsp;
   <a href="README.zh-CN.md"><b>中文</b></a>
 </p>
@@ -41,7 +41,7 @@ Everything you need: **one binary + one extension.**
 Download from [Releases](https://github.com/LeonTing1010/tap/releases/latest) or run:
 
 ```bash
-curl -fsSL https://leonting1010.github.io/tap/install.sh | sh
+curl -fsSL https://taprun.dev/install.sh | sh
 ```
 
 | Platform | Binary |
@@ -241,7 +241,7 @@ extension/
   manifest.json     Extension manifest (MV3)
   icons/            Extension icons
   test/             Architecture & protocol constraint tests
-docs/               Homepage (leonting1010.github.io/tap)
+docs/               Homepage (taprun.dev)
 ```
 
 ## Development

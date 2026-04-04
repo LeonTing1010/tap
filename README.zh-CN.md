@@ -9,7 +9,7 @@
 </h4>
 
 <p align="center">
-  <a href="https://leonting1010.github.io/tap/"><b>主页</b></a> &nbsp;|&nbsp;
+  <a href="https://taprun.dev/"><b>主页</b></a> &nbsp;|&nbsp;
   <a href="https://github.com/LeonTing1010/tap-skills"><b>社区 Skills</b></a> &nbsp;|&nbsp;
   <a href="README.md"><b>English</b></a>
 </p>
@@ -41,7 +41,7 @@ AI 做一次难的部分（理解页面），然后生成一个 `.tap.js` 程序
 从 [Releases](https://github.com/LeonTing1010/tap/releases/latest) 下载，或运行：
 
 ```bash
-curl -fsSL https://leonting1010.github.io/tap/install.sh | sh
+curl -fsSL https://taprun.dev/install.sh | sh
 ```
 
 | 平台 | 二进制 |
@@ -257,7 +257,7 @@ extension/
   manifest.json     扩展清单（MV3）
   icons/            扩展图标
   test/             架构与协议约束测试
-docs/               主页 (leonting1010.github.io/tap)
+docs/               主页 (taprun.dev)
 ```
 
 ## 开发
