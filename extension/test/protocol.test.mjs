@@ -163,24 +163,33 @@ console.log('\n  -- Rule 4: Capabilities Declaration --\n')
 }
 
 // ═══════════════════════════════════════════════════════════
-// Rule 5: Inspect Tools NOT in Extension
-// Why: eval-based inspect tools (a11y, dom, page, element, etc.)
+// Rule 5: Eval-based Inspect Tools NOT in Extension
+// Why: eval-based inspect tools (a11y, dom, element, globals, etc.)
 // live in Deno src/inspect.ts, not in the extension.
+// Exception: inspect.page, inspect.network* need Chrome APIs (tabs.get, CDP Network).
 // ═══════════════════════════════════════════════════════════
 
-console.log('\n  -- Rule 5: Inspect Tools NOT in Extension --\n')
+console.log('\n  -- Rule 5: Eval-based Inspect Tools NOT in Extension --\n')
 
 {
-  const INSPECT_TOOLS = [
-    'inspect.page', 'inspect.element', 'inspect.a11y', 'inspect.dom',
+  // These must stay in Deno — they only need eval, not Chrome APIs
+  const DENO_ONLY_INSPECT = [
+    'inspect.element', 'inspect.a11y', 'inspect.dom',
     'inspect.globals', 'inspect.download', 'inspect.apiLog', 'inspect.toasts',
-    'inspect.networkStart', 'inspect.networkDump'
   ]
 
-  test('no inspect tool cases in background.js', () => {
-    const found = INSPECT_TOOLS.filter(t => BG_SRC.includes(`case '${t}':`))
+  test('eval-based inspect tools not in background.js', () => {
+    const found = DENO_ONLY_INSPECT.filter(t => BG_SRC.includes(`case '${t}':`))
     assert.equal(found.length, 0,
-      `found inspect tools in extension: ${found.join(', ')} -- these must live in Deno inspect.ts`)
+      `found eval-based inspect tools in extension: ${found.join(', ')} -- these must live in Deno inspect.ts`)
+  })
+
+  // These correctly live in extension — they need Chrome APIs
+  test('Chrome-API inspect tools are in extension', () => {
+    const EXTENSION_INSPECT = ['inspect.page', 'inspect.networkStart', 'inspect.networkDump', 'inspect.networkStop']
+    const found = EXTENSION_INSPECT.filter(t => BG_SRC.includes(`case '${t}':`))
+    assert.equal(found.length, EXTENSION_INSPECT.length,
+      `extension must implement Chrome-API inspect tools: ${EXTENSION_INSPECT.join(', ')}`)
   })
 }
 

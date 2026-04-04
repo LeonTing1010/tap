@@ -40,7 +40,7 @@ console.log('\n  -- Rule 1: Tab Routing --\n')
 {
   const rtStart = BG_SRC.indexOf('async function resolveTab(')
   assert(rtStart !== -1, 'resolveTab function must exist')
-  const rtBody = BG_SRC.substring(rtStart, rtStart + 500)
+  const rtBody = BG_SRC.substring(rtStart, rtStart + 1000)
 
   test('resolveTab uses params.tabId for routing', () => {
     assert(rtBody.includes('params.tabId'),
@@ -162,7 +162,7 @@ test('let activeTabId exists as fallback', () => {
 
 test('resolveTab sets activeTabId on auto-create', () => {
   const rtStart = BG_SRC.indexOf('async function resolveTab(')
-  const rtBody = BG_SRC.substring(rtStart, rtStart + 500)
+  const rtBody = BG_SRC.substring(rtStart, rtStart + 1000)
   const autoCreate = rtBody.indexOf('chrome.tabs.create')
   const context = rtBody.substring(autoCreate, autoCreate + 200)
   assert(context.includes('activeTabId = tabId') || context.includes('activeTabId ='),
@@ -171,7 +171,7 @@ test('resolveTab sets activeTabId on auto-create', () => {
 
 test('params.tabId takes priority over activeTabId', () => {
   const rtStart = BG_SRC.indexOf('async function resolveTab(')
-  const rtBody = BG_SRC.substring(rtStart, rtStart + 500)
+  const rtBody = BG_SRC.substring(rtStart, rtStart + 1000)
   assert(rtBody.includes('params.tabId'),
     'resolveTab must check params.tabId first before falling back to activeTabId')
   const tabIdIdx = rtBody.indexOf('params.tabId')

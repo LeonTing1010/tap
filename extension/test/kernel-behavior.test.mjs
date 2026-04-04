@@ -203,7 +203,7 @@ console.log('\n  -- Rule 5: Tab Recovery --\n')
 {
   const rtStart = BG_SRC.indexOf('async function resolveTab(')
   assert(rtStart !== -1, 'resolveTab function must exist')
-  const rtBody = BG_SRC.substring(rtStart, rtStart + 500)
+  const rtBody = BG_SRC.substring(rtStart, rtStart + 1000)
 
   test('resolveTab validates tab exists via chrome.tabs.get', () => {
     assert(rtBody.includes('chrome.tabs.get'),
@@ -304,8 +304,9 @@ console.log('\n  -- Rule 9: Dialog JS Override --\n')
 
 {
   const dialogStart = BG_SRC.indexOf("case 'dialog':")
-  const dialogEnd = BG_SRC.indexOf("default:", dialogStart)
-  const dialogBody = BG_SRC.substring(dialogStart, dialogEnd)
+  // Find next case after dialog (not default: — other cases may follow)
+  const dialogEnd = BG_SRC.indexOf("\n    case ", dialogStart + 1)
+  const dialogBody = BG_SRC.substring(dialogStart, dialogEnd > 0 ? dialogEnd : dialogStart + 500)
 
   test('dialog uses execFunc (JS override), not CDP', () => {
     // Why: execFunc injects function that overrides window.confirm etc.

@@ -16,10 +16,14 @@ console.log('[tap] extension runtime ready')
 let activeTabId = null
 const debuggerSessions = new Map()
 
+// Network capture state (per-tab)
+const networkCaptures = new Map() // tabId → { entries: [], listening: boolean }
+
 chrome.tabs.onRemoved.addListener((tabId) => {
   const session = debuggerSessions.get(tabId)
   if (session?.detachTimer) clearTimeout(session.detachTimer)
   debuggerSessions.delete(tabId)
+  networkCaptures.delete(tabId)
   if (tabId === activeTabId) activeTabId = null
 })
 
@@ -102,13 +106,24 @@ async function execFunc(tabId, func, ...args) {
 async function resolveTab(params) {
   let tabId = params.tabId ? Number(params.tabId) : activeTabId
   if (tabId) {
-    try { await chrome.tabs.get(tabId) }
-    catch { tabId = null }
+    try {
+      const tab = await chrome.tabs.get(tabId)
+      // Skip chrome:// tabs — can't run scripts on them
+      if (tab.url?.startsWith('chrome://') || tab.url?.startsWith('chrome-extension://')) {
+        tabId = null
+      }
+    } catch { tabId = null }
   }
+  // If no valid tab, try to find an existing http/https tab before creating one
   if (!tabId) {
-    // Auto-create a tab when no valid tabId is available
-    const tab = await chrome.tabs.create({ active: true })
-    tabId = tab.id
+    const tabs = await chrome.tabs.query({ currentWindow: true })
+    const httpTab = tabs.find(t => t.url?.startsWith('http'))
+    if (httpTab) {
+      tabId = httpTab.id
+    } else {
+      const tab = await chrome.tabs.create({ active: true })
+      tabId = tab.id
+    }
     activeTabId = tabId
   }
   return tabId
@@ -175,8 +190,8 @@ async function handleMethod(method, params = {}, senderTabId = null) {
       const wrapped = result?.result
       if (wrapped?.__ok) return wrapped.value
 
-      // CSP fallback: string eval blocked → use CDP
-      if (wrapped?.error?.includes('Content Security Policy') || wrapped?.error?.includes('unsafe-eval')) {
+      // CSP/Trusted Types fallback: string eval blocked → use CDP
+      if (wrapped?.error?.includes('Content Security Policy') || wrapped?.error?.includes('unsafe-eval') || wrapped?.error?.includes('Trusted Type')) {
         const cdpExpr = '(async () => { return (0, eval)(' + JSON.stringify(safeExpr) + ') })()'
         await ensureDebugger(tabId)
         const r = await Promise.race([
@@ -250,7 +265,9 @@ async function handleMethod(method, params = {}, senderTabId = null) {
         }
       }
       await waitForTabLoad(activeTabId, params.url)
-      return { frameId: 'main', tabId: activeTabId }
+      // Return final URL (after redirects) — session URL tracking depends on this
+      const finalTab = await chrome.tabs.get(activeTabId)
+      return { frameId: 'main', tabId: activeTabId, url: finalTab.url || params.url }
     }
 
     case 'wait':
@@ -276,13 +293,15 @@ async function handleMethod(method, params = {}, senderTabId = null) {
 
     case 'capabilities':
       return {
-        runtime: 'extension', version: '0.6.0',
+        runtime: 'extension', version: '0.6.5',
         supports: [
           'eval', 'pointer', 'keyboard', 'nav', 'wait', 'screenshot', 'cookies', 'storage',
           'click', 'type', 'fill', 'hover', 'scroll', 'pressKey', 'select',
           'fetch', 'find', 'download', 'waitFor', 'waitForNetwork', 'ssrState', 'copyAll',
           'upload', 'dialog', 'extract',
-          'tab.new', 'tab.list', 'tab.close'
+          'tab.new', 'tab.list', 'tab.close',
+          'inspect.page', 'inspect.networkStart', 'inspect.networkDump', 'inspect.networkStop',
+          'intercept.on', 'intercept.off'
         ]
       }
 
@@ -556,6 +575,82 @@ async function handleMethod(method, params = {}, senderTabId = null) {
       return {}
     }
 
+    // ========== INSPECT TOOLS ==========
+
+    case 'inspect.page': {
+      const tab = await chrome.tabs.get(tabId)
+      const meta = await execFunc(tabId, () => ({
+        title: document.title,
+        description: document.querySelector('meta[name="description"]')?.content || '',
+        charset: document.characterSet,
+        lang: document.documentElement.lang,
+        canonical: document.querySelector('link[rel="canonical"]')?.href || '',
+        og_title: document.querySelector('meta[property="og:title"]')?.content || '',
+        viewport_height: window.innerHeight,
+        scroll_height: document.documentElement.scrollHeight,
+        ready_state: document.readyState,
+      })).catch(() => ({}))
+      return { url: tab.url, title: tab.title, ...meta }
+    }
+
+    case 'inspect.networkStart': {
+      // Start capturing network requests via CDP Network domain
+      await ensureDebugger(tabId)
+      const capture = { entries: [], listening: true }
+      networkCaptures.set(tabId, capture)
+      await chrome.debugger.sendCommand({ tabId }, 'Network.enable')
+      // Clear detach timer — keep debugger alive for capture
+      const session = debuggerSessions.get(tabId)
+      if (session?.detachTimer) { clearTimeout(session.detachTimer); session.detachTimer = null }
+      return {}
+    }
+
+    case 'inspect.networkDump': {
+      const capture = networkCaptures.get(tabId)
+      if (!capture) return { entries: [] }
+      // Wait briefly for in-flight requests to complete
+      await new Promise(r => setTimeout(r, Math.min(params.wait_ms || 500, 3000)))
+      const entries = capture.entries.filter(e => {
+        if (params.url_filter && !e.url?.includes(params.url_filter)) return false
+        return true
+      })
+      // Optionally fetch response bodies
+      if (params.bodies) {
+        for (const entry of entries) {
+          if (!entry.requestId || entry.responseBody !== undefined) continue
+          try {
+            const body = await chrome.debugger.sendCommand({ tabId }, 'Network.getResponseBody', { requestId: entry.requestId })
+            entry.responseBody = body?.body?.substring(0, 10000) || ''
+          } catch { /* body not available */ }
+        }
+      }
+      return { count: entries.length, entries }
+    }
+
+    case 'inspect.networkStop': {
+      const cap = networkCaptures.get(tabId)
+      if (cap) cap.listening = false
+      networkCaptures.delete(tabId)
+      try { await chrome.debugger.sendCommand({ tabId }, 'Network.disable') } catch {}
+      scheduleDetach(tabId)
+      return {}
+    }
+
+    case 'intercept.on': {
+      await ensureDebugger(tabId)
+      const patterns = (params.patterns || ['*']).map(p => ({ urlPattern: p }))
+      await chrome.debugger.sendCommand({ tabId }, 'Fetch.enable', { patterns })
+      const session2 = debuggerSessions.get(tabId)
+      if (session2?.detachTimer) { clearTimeout(session2.detachTimer); session2.detachTimer = null }
+      return {}
+    }
+
+    case 'intercept.off': {
+      try { await chrome.debugger.sendCommand({ tabId }, 'Fetch.disable') } catch {}
+      scheduleDetach(tabId)
+      return {}
+    }
+
     // ========== TAB MANAGEMENT ==========
 
     case 'tab.new': {
@@ -599,6 +694,31 @@ const KEY_MAP = {
   PageUp: { key: 'PageUp', code: 'PageUp', windowsVirtualKeyCode: 33 },
   PageDown: { key: 'PageDown', code: 'PageDown', windowsVirtualKeyCode: 34 },
 }
+
+// --- CDP Network Event Listener (for inspect.networkStart/networkDump) ---
+
+chrome.debugger.onEvent.addListener((source, method, params) => {
+  const tabId = source.tabId
+  const capture = networkCaptures.get(tabId)
+  if (!capture?.listening) return
+
+  if (method === 'Network.responseReceived') {
+    const { response, requestId } = params
+    if (!response?.url) return
+    // Only capture API-like requests (JSON, XHR, fetch)
+    const ct = response.headers?.['content-type'] || response.headers?.['Content-Type'] || ''
+    const isApi = ct.includes('json') || ct.includes('xml') || response.mimeType?.includes('json')
+    const isDoc = ct.includes('html') || ct.includes('css') || ct.includes('javascript') || ct.includes('image') || ct.includes('font')
+    if (isDoc && !isApi) return
+    capture.entries.push({
+      url: response.url,
+      method: params.type || 'GET',
+      status: response.status,
+      type: response.mimeType || ct.split(';')[0],
+      requestId,
+    })
+  }
+})
 
 // --- HTTP Polling to Daemon ---
 
