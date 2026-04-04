@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  extension:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Protocol contract
+        run: node extension/test/protocol.test.mjs
+      - name: Architecture
+        run: node extension/test/architecture.test.mjs
+      - name: Multi-tab routing
+        run: node extension/test/multi-tab.test.mjs
+      - name: Clone tap-skills
+        run: git clone --depth 1 https://github.com/LeonTing1010/tap-skills.git /tmp/tap-skills
+      - name: Tap format
+        run: node extension/test/tap-format.test.mjs /tmp/tap-skills
