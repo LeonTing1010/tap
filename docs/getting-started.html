@@ -89,16 +89,16 @@ pre .flag { color: #fbbf24; }
 <span class="cmd">tap</span> config set ai.key <span class="flag">sk-ant-xxx</span>
 
 <span class="comment"># Forge a tap from plain English</span>
-<span class="cmd">tap</span> forge <span class="flag">"scrape the trending topics from Google Trends"</span>
-<span class="output">&#9737; Inspecting https://trends.google.com...</span>
+<span class="cmd">tap</span> forge <span class="flag">"scrape Hacker News front page with rank, title, score"</span>
+<span class="output">&#9737; Inspecting https://news.ycombinator.com...</span>
 <span class="output">&#9737; AI analyzing page structure...</span>
 <span class="output">&#9737; Writing tap code...</span>
-<span class="output">&#10004; Verified: 20 rows, score=1.0</span>
-<span class="output">&#10004; Saved: google/trends.tap.js</span>
+<span class="output">&#10004; Verified: 30 rows, score=1.0</span>
+<span class="output">&#10004; Saved: hackernews/hot.tap.js</span>
 
 <span class="comment"># Run it forever at $0</span>
-<span class="cmd">tap</span> google trends
-<span class="output">20 rows (1.2s) Cost: $0.00</span></pre>
+<span class="cmd">tap</span> hackernews hot
+<span class="output">30 rows (0.8s) Cost: $0.00</span></pre>
 
 <div class="tip"><strong>Pro plan:</strong> AI is built in &mdash; no key needed. Just <code>tap forge "..."</code> and go.</div>
 
@@ -110,7 +110,7 @@ pre .flag { color: #fbbf24; }
 <span class="cmd">tap</span> doctor <span class="flag">--auto</span>
 
 <span class="comment"># Watch for changes every hour</span>
-<span class="cmd">tap</span> watch google trends <span class="flag">--every 1h</span></pre>
+<span class="cmd">tap</span> watch hackernews hot <span class="flag">--every 1h</span></pre>
 
 <h2><span class="step">6</span> Use with AI Agents (Optional)</h2>
 <p>Tappy works as an MCP server. Add it to Claude Code, Cursor, or any MCP client:</p>
