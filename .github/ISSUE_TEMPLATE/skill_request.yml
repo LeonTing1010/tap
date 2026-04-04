@@ -1,0 +1,46 @@
+name: Skill Request
+description: Request a new tap skill for a website or API
+labels: ["skill-request", "good first issue"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Can't find a skill for a site you need? Request it here!
+        Community contributors or AI forge can pick it up.
+  - type: input
+    id: site
+    attributes:
+      label: Website / API
+      placeholder: "e.g. linkedin, notion, shopify"
+    validations:
+      required: true
+  - type: input
+    id: url
+    attributes:
+      label: URL
+      placeholder: "https://..."
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What data or action?
+      description: "What should the tap extract or do?"
+      placeholder: "e.g. Get trending posts, extract product prices, publish a post"
+    validations:
+      required: true
+  - type: dropdown
+    id: type
+    attributes:
+      label: Type
+      options:
+        - Read (extract data)
+        - Write (perform action)
+        - Both
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: "Auth needed? API docs? Similar existing tools?"
