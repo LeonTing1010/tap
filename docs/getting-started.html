@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Getting Started — Tappy</title>
+<meta name="description" content="Install Tappy, activate your license, and forge your first automation in 5 minutes.">
+<link rel="canonical" href="https://leonting1010.github.io/tap/getting-started.html">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Ccircle cx='256' cy='256' r='240' fill='%234F46E5'/%3E%3Ccircle cx='290' cy='275' r='80' fill='white'/%3E%3Ccircle cx='230' cy='210' r='58' fill='white'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Outfit', sans-serif; background: #0a0a0f; color: #e0e0e0; line-height: 1.7; }
+.container { max-width: 720px; margin: 0 auto; padding: 60px 24px; }
+h1 { font-size: 2rem; font-weight: 600; color: #fff; margin-bottom: 8px; }
+h2 { font-size: 1.25rem; font-weight: 500; color: #fff; margin-top: 48px; margin-bottom: 12px; }
+h2 .step { display: inline-block; width: 28px; height: 28px; background: #4F46E5; color: #fff; border-radius: 50%; text-align: center; line-height: 28px; font-size: 0.85rem; margin-right: 8px; }
+p, li { font-size: 0.95rem; color: #b0b0b0; margin-bottom: 12px; }
+ul { padding-left: 20px; }
+a { color: #818cf8; text-decoration: none; }
+a:hover { text-decoration: underline; }
+.subtitle { font-size: 0.9rem; color: #666; margin-bottom: 40px; }
+.back { display: inline-block; margin-bottom: 24px; font-size: 0.9rem; }
+code { background: #1a1a2e; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; font-family: 'DM Mono', monospace; }
+pre { background: #111118; border: 1px solid #222; border-radius: 8px; padding: 16px 20px; overflow-x: auto; margin: 16px 0; font-family: 'DM Mono', monospace; font-size: 0.9rem; line-height: 1.6; color: #c8c8d0; }
+pre .comment { color: #555; }
+pre .cmd { color: #818cf8; }
+pre .output { color: #6ee7b7; }
+pre .flag { color: #fbbf24; }
+.tip { background: rgba(79,70,229,0.08); border-left: 3px solid #4F46E5; padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 16px 0; font-size: 0.9rem; color: #b0b0b0; }
+.tip strong { color: #818cf8; }
+.next { margin-top: 48px; padding: 24px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; }
+.next h3 { color: #fff; font-size: 1.1rem; margin-bottom: 12px; }
+.next a { display: block; margin-bottom: 6px; }
+</style>
+</head>
+<body>
+<div class="container">
+<a href="./" class="back">&larr; Back to Tappy</a>
+<h1>Getting Started</h1>
+<p class="subtitle">From install to your first automation in 5 minutes.</p>
+
+<h2><span class="step">1</span> Install Tappy</h2>
+<pre><span class="comment"># macOS / Linux</span>
+<span class="cmd">curl</span> -fsSL https://leonting1010.github.io/tap/install.sh | sh
+
+<span class="comment"># Verify</span>
+<span class="cmd">tap</span> --version
+<span class="output">tap 0.5.0</span></pre>
+<p>This installs the <code>tap</code> CLI binary and the Chrome Extension files to <code>~/.tap/</code>.</p>
+
+<h2><span class="step">2</span> Install Chrome Extension</h2>
+<p>The extension lets Tappy observe web pages during forge (one-time setup).</p>
+<ol style="padding-left: 20px; color: #b0b0b0;">
+<li>Open Chrome and go to <code>chrome://extensions/</code></li>
+<li>Enable <strong style="color:#fff">Developer mode</strong> (top right toggle)</li>
+<li>Click <strong style="color:#fff">Load unpacked</strong></li>
+<li>Select the folder: <code>~/.tap/extension/</code></li>
+<li>Pin the Tap icon to your toolbar</li>
+</ol>
+<div class="tip"><strong>Tip:</strong> If the icon shows a red <code>!</code>, the daemon isn't running. Run <code>tap daemon</code> in another terminal.</div>
+
+<h2><span class="step">3</span> Activate License (Paid Plans)</h2>
+<pre><span class="comment"># After purchasing Hacker or Pro plan</span>
+<span class="cmd">tap</span> auth login
+<span class="output">Enter license key: ****-****-****</span>
+<span class="output">&#10004; License activated (Hacker plan)</span></pre>
+<div class="tip"><strong>Free plan?</strong> Skip this step. You get 5 forges/month and unlimited runs with no license needed.</div>
+
+<h2><span class="step">4</span> Try a Pre-built Tap</h2>
+<p>185+ taps are ready to use. No forge needed, no AI needed:</p>
+<pre><span class="comment"># Install community skills</span>
+<span class="cmd">tap</span> update
+
+<span class="comment"># Run a tap</span>
+<span class="cmd">tap</span> run hackernews hot
+<span class="output">&#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9516;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9516;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;</span>
+<span class="output">&#9474; rank &#9474; title                          &#9474; score &#9474;</span>
+<span class="output">&#9474; 1    &#9474; Show HN: Tappy                 &#9474;   342 &#9474;</span>
+<span class="output">&#9474; 2    &#9474; Rust is eating Go              &#9474;   287 &#9474;</span>
+<span class="output">&#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9524;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9524;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;</span>
+<span class="output">30 rows (245ms) Cost: $0.00</span></pre>
+
+<h2><span class="step">5</span> Forge Your First Tap</h2>
+<p>Open the target website in Chrome, then:</p>
+<pre><span class="comment"># Describe what you want in plain English</span>
+<span class="cmd">tappy</span> forge <span class="flag">"scrape the trending topics from Google Trends"</span>
+
+<span class="output">&#9737; Inspecting https://trends.google.com...</span>
+<span class="output">&#9737; AI analyzing page structure...</span>
+<span class="output">&#9737; Writing tap code...</span>
+<span class="output">&#10004; Verified: 20 rows, score=1.0</span>
+<span class="output">&#10004; Saved: google/trends.tap.js</span>
+
+<span class="comment"># Now run it forever at $0</span>
+<span class="cmd">tap</span> run google trends
+<span class="output">20 rows (1.2s) Cost: $0.00</span></pre>
+
+<div class="tip"><strong>Hacker plan:</strong> Use your own AI key with <code>tap config set ai.key sk-ant-xxx</code><br><strong>Pro plan:</strong> AI is built in, no key needed.</div>
+
+<h2><span class="step">6</span> Set Up Self-Healing</h2>
+<p>Check if your taps are healthy. Fix broken ones automatically:</p>
+<pre><span class="comment"># Check all your taps</span>
+<span class="cmd">tap</span> doctor
+
+<span class="comment"># Auto-heal broken taps (Hacker/Pro)</span>
+<span class="cmd">tap</span> doctor <span class="flag">--auto</span>
+<span class="output">&#128295; Auto-heal: 1 tap(s) with diagnostics</span>
+<span class="output">  google/trends:</span>
+<span class="output">    issue: min_rows: expected 5, got 0</span>
+<span class="output">    fix: selector changed, re-forging...</span>
+<span class="output">&#10004; Healed google/trends</span></pre>
+
+<h2><span class="step">7</span> Schedule Recurring Runs</h2>
+<p>Use cron, launchd, or any scheduler. Tappy is just a CLI:</p>
+<pre><span class="comment"># Run every morning at 9am</span>
+<span class="cmd">crontab</span> -e
+<span class="flag">0 9 * * * tap run google trends >> ~/trends.log</span>
+
+<span class="comment"># Or use tap watch for change detection</span>
+<span class="cmd">tap</span> watch google trends <span class="flag">--every 1h</span></pre>
+
+<h2><span class="step">8</span> Use with Claude (Optional)</h2>
+<p>Tappy works as an MCP server. Add it to Claude Code or Claude Desktop:</p>
+<pre><span class="comment"># Claude Code</span>
+<span class="cmd">claude</span> mcp add tap -- tap mcp
+
+<span class="comment"># Now just talk to Claude:</span>
+<span class="comment"># "Help me scrape Reddit for AI automation posts"</span>
+<span class="comment"># Claude will call forge.inspect, forge.verify, forge.save automatically</span></pre>
+
+<div class="next">
+<h3>What's Next?</h3>
+<a href="https://github.com/LeonTing1010/tap">Browse 185+ community taps</a>
+<a href="protocol.html">Learn the Tap protocol (8 core + 17 built-in)</a>
+<a href="#" onclick="history.back()">Back to home</a>
+</div>
+
+</div>
+</body>
+</html>
