@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question / Discussion
+    url: https://github.com/LeonTing1010/tap/discussions
+    about: Ask questions, share tips, or show what you've built
+  - name: Tap Skills
+    url: https://github.com/LeonTing1010/tap-skills
+    about: Browse 133 community skills across 58 sites
