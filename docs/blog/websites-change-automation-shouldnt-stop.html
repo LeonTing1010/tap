@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Websites Change. Your Automation Shouldn't Stop. — Tappy Blog</title>
+<meta name="description" content="The self-healing automation loop: watch for changes, detect breakage, auto-heal, continue. Never miss a data update again.">
+<link rel="canonical" href="https://taprun.dev/blog/websites-change-automation-shouldnt-stop.html">
+<meta property="og:title" content="Websites Change. Your Automation Shouldn't Stop.">
+<meta property="og:description" content="The self-healing loop: watch → detect → heal → continue. Never miss a data update.">
+<meta property="og:url" content="https://taprun.dev/blog/websites-change-automation-shouldnt-stop.html">
+<meta property="og:type" content="article">
+<meta property="article:published_time" content="2026-04-04">
+<meta property="article:author" content="Leon Ting">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Ccircle cx='256' cy='256' r='240' fill='%234F46E5'/%3E%3Ccircle cx='290' cy='275' r='80' fill='white'/%3E%3Ccircle cx='230' cy='210' r='58' fill='white'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Outfit', sans-serif; background: #0a0a0f; color: #e0e0e0; line-height: 1.8; }
+.container { max-width: 720px; margin: 0 auto; padding: 60px 24px; }
+h1 { font-size: 2rem; font-weight: 600; color: #fff; margin-bottom: 8px; line-height: 1.3; }
+h2 { font-size: 1.35rem; font-weight: 500; color: #fff; margin-top: 48px; margin-bottom: 16px; }
+p, li { font-size: 0.95rem; color: #b0b0b0; margin-bottom: 16px; }
+ul, ol { padding-left: 24px; }
+a { color: #818cf8; text-decoration: none; }
+a:hover { text-decoration: underline; }
+.meta { font-size: 0.85rem; color: #666; margin-bottom: 40px; }
+.back { display: inline-block; margin-bottom: 24px; font-size: 0.9rem; }
+code { background: #1a1a2e; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; font-family: 'DM Mono', monospace; }
+pre { background: #111118; border: 1px solid #222; border-radius: 8px; padding: 16px 20px; overflow-x: auto; margin: 20px 0; font-family: 'DM Mono', monospace; font-size: 0.9rem; line-height: 1.6; color: #c8c8d0; }
+pre .comment { color: #555; }
+pre .cmd { color: #818cf8; }
+pre .output { color: #6ee7b7; }
+pre .flag { color: #fbbf24; }
+pre .warn { color: #fbbf24; }
+blockquote { border-left: 3px solid #4F46E5; padding: 12px 16px; margin: 20px 0; background: rgba(79,70,229,0.06); border-radius: 0 8px 8px 0; }
+blockquote p { color: #a0a0b0; margin-bottom: 0; font-style: italic; }
+blockquote cite { display: block; margin-top: 8px; font-size: 0.85rem; color: #666; font-style: normal; }
+.loop { background: #111118; border: 1px solid #333; border-radius: 12px; padding: 24px; margin: 24px 0; text-align: center; }
+.loop code { font-size: 1rem; color: #818cf8; background: none; }
+.cta { margin-top: 48px; padding: 24px; background: rgba(79,70,229,0.08); border: 1px solid rgba(79,70,229,0.2); border-radius: 12px; }
+.cta h3 { color: #fff; font-size: 1.1rem; margin-bottom: 12px; margin-top: 0; }
+.cta pre { margin-bottom: 0; }
+hr { border: none; border-top: 1px solid #222; margin: 48px 0; }
+</style>
+</head>
+<body>
+<div class="container">
+<a href="../" class="back">&larr; Tappy</a> &middot; <a href="./" class="back">Blog</a>
+<h1>Websites Change. Your Automation Shouldn't Stop.</h1>
+<p class="meta">April 4, 2026 &middot; Leon Ting &middot; 5 min read</p>
+
+<p>Websites change. It's not a bug &mdash; it's the nature of the web. Designs get refreshed. APIs get versioned. Selectors shift. Components get renamed.</p>
+
+<p>The question isn't "how do I stop websites from changing?" It's: <strong>"how do I keep my automations running when they do?"</strong></p>
+
+<h2>The Stories We've All Heard</h2>
+
+<blockquote>
+<p>"I built Site Spy after missing a visa appointment slot because a government page changed and I didn't notice for two weeks."</p>
+<cite>&mdash; vkuprin, Hacker News</cite>
+</blockquote>
+
+<blockquote>
+<p>"I'd use it to track when state wildlife agencies update their regulation pages &mdash; those change once a year with no announcement and I always miss it."</p>
+<cite>&mdash; Hauk307, Hacker News</cite>
+</blockquote>
+
+<blockquote>
+<p>"I currently use Wachete, but since over a year, it triggers rate limits on a specific website and I just can't monitor German laws anymore."</p>
+<cite>&mdash; nicbou, Hacker News</cite>
+</blockquote>
+
+<p>Three different users, three different needs, the same problem: <strong>websites change, and there's no reliable way to know when or adapt automatically.</strong></p>
+
+<h2>Two Types of Change</h2>
+
+<p>Not all website changes are the same:</p>
+
+<p><strong>1. Data changes</strong> &mdash; new content, updated prices, new posts. This is what you <em>want</em> to track. Your automation should detect and report these.</p>
+
+<p><strong>2. Structure changes</strong> &mdash; redesigned layout, renamed CSS classes, new API version. This is what <em>breaks</em> your automation. Your automation should survive these.</p>
+
+<p>Most tools conflate the two. <code>tap watch</code> and <code>tap doctor</code> handle them separately.</p>
+
+<h2>Watch: Track Data Changes</h2>
+
+<pre><span class="cmd">$</span> tap watch hackernews hot <span class="flag">--every 10m</span>
+<span class="output">2026-04-04T10:00  +added   "Show HN: Tap"  score=342</span>
+<span class="output">2026-04-04T10:10  +added   "Rust 2.0 announced"  score=128</span>
+<span class="output">2026-04-04T10:10  -removed "Old post fell off"  score=12</span>
+<span class="output">2026-04-04T10:20  ~changed "Show HN: Tap"  score: 342→487</span></pre>
+
+<p><code>tap watch</code> runs your program on an interval, diffs the results, and outputs only what changed. It's built on Unix primitives &mdash; <code>while + sleep + diff</code>. No database. No scheduler service.</p>
+
+<p>Pipe it anywhere:</p>
+
+<pre><span class="comment"># Append to a log file</span>
+<span class="cmd">$</span> tap watch github trending <span class="flag">--every 1h</span> >> ~/trending.log
+
+<span class="comment"># Send to Slack via webhook</span>
+<span class="cmd">$</span> tap watch reddit hot <span class="flag">--every 30m</span> | curl -X POST -d @- $SLACK_WEBHOOK
+
+<span class="comment"># Feed into another program</span>
+<span class="cmd">$</span> tap watch competitor prices <span class="flag">--every 6h</span> | tap filter <span class="flag">--where "change > 10%"</span></pre>
+
+<h2>Doctor: Detect Structure Breakage</h2>
+
+<p>When a website redesigns and your selectors break, <code>watch</code> won't show changes &mdash; it'll show <strong>nothing</strong>. That's where <a href="your-scraper-is-broken.html">health contracts</a> come in.</p>
+
+<pre><span class="comment"># Every tap has a health contract</span>
+health: {
+  min_rows: 5,           <span class="comment">// must return &ge;5 results</span>
+  non_empty: ["title"]   <span class="comment">// title must never be empty</span>
+}</pre>
+
+<pre><span class="cmd">$</span> tap doctor
+<span class="output">hackernews/hot    &#10004; ok     30 rows  (245ms)</span>
+<span class="warn">bbc/news          &#10008; fail   0 rows   min_rows: expected &ge;5, got 0</span>
+<span class="output">github/trending   &#10004; ok     25 rows  (1.2s)</span></pre>
+
+<p><code>bbc/news</code> is broken. The site changed its layout. Before your data went bad, <code>doctor</code> caught it.</p>
+
+<h2>Auto-Heal: Fix and Continue</h2>
+
+<pre><span class="cmd">$</span> tap doctor <span class="flag">--auto</span>
+<span class="warn">bbc/news: 0 rows (min_rows: 5)</span>
+<span class="output">  &#9737; Re-inspecting https://www.bbc.com/news...</span>
+<span class="output">  &#9737; AI analyzing new page structure...</span>
+<span class="output">  &#10004; Healed: bbc/news.tap.js updated</span>
+<span class="output">  &#10004; Verified: 12 rows, score=1.0</span></pre>
+
+<p>AI re-inspects the page, writes a new program, verifies it works, and saves. One AI call. Then <a href="automation-costs-one-dollar.html">$0 per run again</a>.</p>
+
+<h2>The Self-Healing Loop</h2>
+
+<div class="loop">
+<code>forge &rarr; run &rarr; watch &rarr; doctor &rarr; heal &rarr; run &rarr; ...</code>
+</div>
+
+<pre><span class="comment"># Set it up once</span>
+<span class="cmd">$</span> tap forge <span class="flag">"track competitor pricing"</span>      <span class="comment"># AI writes program</span>
+<span class="cmd">$</span> tap watch competitor prices <span class="flag">--every 6h</span>  <span class="comment"># monitor changes</span>
+<span class="cmd">$</span> tap doctor <span class="flag">--schedule "0 6 * * *"</span>       <span class="comment"># daily health check</span></pre>
+
+<p>You configure it once. The loop runs itself:</p>
+
+<ul>
+<li><strong>Data changes?</strong> &rarr; <code>watch</code> reports them in real-time</li>
+<li><strong>Site breaks your program?</strong> &rarr; <code>doctor</code> detects via health contract</li>
+<li><strong>Need a fix?</strong> &rarr; <code>doctor --auto</code> re-forges with one AI call</li>
+<li><strong>Back to normal</strong> &rarr; $0 per run until the next change</li>
+</ul>
+
+<p>You sleep. Your automations don't stop.</p>
+
+<hr>
+
+<p><strong>Read more:</strong> <a href="your-scraper-is-broken.html">Your Scraper Is Broken Right Now</a> &middot; <a href="automation-costs-one-dollar.html">Your Automation Costs $1 Per Run</a></p>
+
+<div class="cta">
+<h3>Try the self-healing loop</h3>
+<pre><span class="cmd">curl</span> -fsSL https://taprun.dev/install.sh | sh
+<span class="cmd">tap</span> update && <span class="cmd">tap</span> hackernews hot
+<span class="cmd">tap</span> watch hackernews hot <span class="flag">--every 10m</span>
+<span class="cmd">tap</span> doctor</pre>
+<p style="margin-top: 16px; margin-bottom: 0;"><a href="https://taprun.dev/getting-started.html">Getting started</a> &middot; <a href="https://github.com/LeonTing1010/tap">GitHub</a> &middot; 195+ community taps</p>
+</div>
+
+</div>
+</body>
+</html>
