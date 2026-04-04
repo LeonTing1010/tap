@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your Scraper Is Broken Right Now. You Just Don't Know It Yet. — Tappy Blog</title>
+<meta name="description" content="Most scrapers fail silently — returning empty arrays for days before anyone notices. Here's how health contracts and deterministic programs fix this.">
+<link rel="canonical" href="https://taprun.dev/blog/your-scraper-is-broken.html">
+<meta property="og:title" content="Your Scraper Is Broken Right Now">
+<meta property="og:description" content="Most scrapers fail silently. Health contracts catch failures before your data rots.">
+<meta property="og:url" content="https://taprun.dev/blog/your-scraper-is-broken.html">
+<meta property="og:type" content="article">
+<meta property="article:published_time" content="2026-04-04">
+<meta property="article:author" content="Leon Ting">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Ccircle cx='256' cy='256' r='240' fill='%234F46E5'/%3E%3Ccircle cx='290' cy='275' r='80' fill='white'/%3E%3Ccircle cx='230' cy='210' r='58' fill='white'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Outfit', sans-serif; background: #0a0a0f; color: #e0e0e0; line-height: 1.8; }
+.container { max-width: 720px; margin: 0 auto; padding: 60px 24px; }
+h1 { font-size: 2rem; font-weight: 600; color: #fff; margin-bottom: 8px; line-height: 1.3; }
+h2 { font-size: 1.35rem; font-weight: 500; color: #fff; margin-top: 48px; margin-bottom: 16px; }
+h3 { font-size: 1.1rem; font-weight: 500; color: #fff; margin-top: 32px; margin-bottom: 12px; }
+p, li { font-size: 0.95rem; color: #b0b0b0; margin-bottom: 16px; }
+ul, ol { padding-left: 24px; }
+a { color: #818cf8; text-decoration: none; }
+a:hover { text-decoration: underline; }
+.meta { font-size: 0.85rem; color: #666; margin-bottom: 40px; }
+.back { display: inline-block; margin-bottom: 24px; font-size: 0.9rem; }
+code { background: #1a1a2e; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; font-family: 'DM Mono', monospace; }
+pre { background: #111118; border: 1px solid #222; border-radius: 8px; padding: 16px 20px; overflow-x: auto; margin: 20px 0; font-family: 'DM Mono', monospace; font-size: 0.9rem; line-height: 1.6; color: #c8c8d0; }
+pre .comment { color: #555; }
+pre .cmd { color: #818cf8; }
+pre .output { color: #6ee7b7; }
+pre .flag { color: #fbbf24; }
+pre .err { color: #f87171; }
+blockquote { border-left: 3px solid #4F46E5; padding: 12px 16px; margin: 20px 0; background: rgba(79,70,229,0.06); border-radius: 0 8px 8px 0; }
+blockquote p { color: #a0a0b0; margin-bottom: 0; font-style: italic; }
+blockquote cite { display: block; margin-top: 8px; font-size: 0.85rem; color: #666; font-style: normal; }
+.cta { margin-top: 48px; padding: 24px; background: rgba(79,70,229,0.08); border: 1px solid rgba(79,70,229,0.2); border-radius: 12px; }
+.cta h3 { margin-top: 0; }
+.cta pre { margin-bottom: 0; }
+.separator { border: none; border-top: 1px solid #222; margin: 48px 0; }
+</style>
+</head>
+<body>
+<div class="container">
+<a href="../" class="back">&larr; Tappy</a> &middot; <a href="./" class="back">Blog</a>
+<h1>Your Scraper Is Broken Right Now. You Just Don't Know It Yet.</h1>
+<p class="meta">April 4, 2026 &middot; Leon Ting &middot; 5 min read</p>
+
+<p>Somewhere in your infrastructure, a scraper is returning empty arrays. Your dashboard shows stale numbers. A report your team relies on has been wrong since Tuesday.</p>
+
+<p>You won't find out until someone complains.</p>
+
+<h2>The Silent Failure Problem</h2>
+
+<p>Most scrapers don't crash loudly. They fail quietly.</p>
+
+<blockquote>
+<p>"Instead of throwing an error when a page structure changes, they return empty arrays... A scraper that fails silently poisons your data for days or weeks before anyone notices."</p>
+<cite>&mdash; BinaryBits</cite>
+</blockquote>
+
+<p>This happens because scrapers have no <strong>health contract</strong>. They extract whatever they find &mdash; and when the site changes, "whatever they find" is nothing. No error. No alert. Just empty data flowing downstream.</p>
+
+<h2>The Maintenance Tax</h2>
+
+<p>When you do notice, you're back to fixing selectors. Again.</p>
+
+<blockquote>
+<p>"Every time a website redesigns or updates their layout, I'm manually fixing selectors and rewriting parts of the workflow. It's eating up hours every month."</p>
+<cite>&mdash; ByteForge, Latenode Community</cite>
+</blockquote>
+
+<blockquote>
+<p>"Maintaining tests can take up to 50% of the time for QA test automation engineers."</p>
+<cite>&mdash; davert, Dev.to</cite>
+</blockquote>
+
+<p>The loop is always the same: build automation &rarr; site changes &rarr; selectors break &rarr; spend hours fixing &rarr; repeat. And the worst part &mdash; you're fixing the <em>presentation layer</em> (DOM/CSS), not the data itself.</p>
+
+<h2>The AI Agent Tax</h2>
+
+<p>AI browser agents (Browser Use, Stagehand, etc.) promise to solve this by re-interpreting the page every run. But they introduce two new problems:</p>
+
+<p><strong>1. Cost compounds.</strong></p>
+
+<blockquote>
+<p>"The program cost $1.05 to run. So doing it at any scale quickly becomes a little bit silly."</p>
+<cite>&mdash; rozap, Hacker News</cite>
+</blockquote>
+
+<p><strong>2. Reliability degrades at each step.</strong></p>
+
+<blockquote>
+<p>"If each step has a .95 chance of completing successfully, after not very many steps you have a pretty small overall probability of success."</p>
+<cite>&mdash; rozap, Hacker News</cite>
+</blockquote>
+
+<p>95% per step sounds great. But a 10-step workflow is 60% overall. A 20-step workflow is 36%. AI agents trade one problem (brittle selectors) for another (probabilistic failure).</p>
+
+<h2>A Different Approach: Health Contracts + Deterministic Programs</h2>
+
+<p>What if your automation had a <strong>contract</strong> that defined what "healthy" looks like?</p>
+
+<pre><span class="comment">// Built into every tap program</span>
+health: {
+  min_rows: 5,          <span class="comment">// must return at least 5 results</span>
+  non_empty: ["title"]   <span class="comment">// "title" field must never be empty</span>
+}</pre>
+
+<p>Now instead of silently returning empty arrays, the system <em>knows</em> when something is wrong.</p>
+
+<pre><span class="cmd">$</span> tap doctor
+<span class="output">hackernews/hot    &#10004; ok     30 rows  (245ms)</span>
+<span class="err">google/trends     &#10008; fail   0 rows   min_rows: expected &ge;5, got 0</span>
+<span class="output">github/trending   &#10004; ok     25 rows  (1.2s)</span>
+<span class="output">reddit/hot        &#10004; ok     25 rows  (890ms)</span>
+<span class="err">bbc/news          &#10008; fail   3 rows   min_rows: expected &ge;5, got 3</span></pre>
+
+<p>Two failures caught. Before your data went bad. Before anyone complained.</p>
+
+<h2>Watch: Real-Time Change Detection</h2>
+
+<p>Health checks catch breakage. But what about legitimate changes?</p>
+
+<blockquote>
+<p>"I built Site Spy after missing a visa appointment slot because a government page changed and I didn't notice for two weeks."</p>
+<cite>&mdash; vkuprin, Hacker News</cite>
+</blockquote>
+
+<pre><span class="cmd">$</span> tap watch hackernews hot <span class="flag">--every 10m</span>
+<span class="output">2026-04-04T10:00  +added   "Show HN: Tap"  score=342</span>
+<span class="output">2026-04-04T10:10  +added   "Rust 2.0 announced"  score=128</span>
+<span class="output">2026-04-04T10:10  -removed "Old post fell off"  score=12</span></pre>
+
+<p><code>tap watch</code> runs your program on an interval, diffs the results, and outputs only what changed. Pipe it to a file, Slack webhook, or another program. Unix philosophy &mdash; no database, no service, just <code>while + sleep + diff</code>.</p>
+
+<h2>The Self-Healing Loop</h2>
+
+<p>Put it all together:</p>
+
+<pre><span class="comment"># 1. Forge once — AI writes a deterministic program</span>
+<span class="cmd">$</span> tap forge <span class="flag">"scrape Hacker News top stories"</span>
+<span class="output">&#10004; Saved: hackernews/hot.tap.js</span>
+
+<span class="comment"># 2. Run forever at $0</span>
+<span class="cmd">$</span> tap hackernews hot
+<span class="output">30 rows (245ms) Cost: $0.00</span>
+
+<span class="comment"># 3. Watch for changes</span>
+<span class="cmd">$</span> tap watch hackernews hot <span class="flag">--every 1h</span>
+
+<span class="comment"># 4. Daily health check</span>
+<span class="cmd">$</span> tap doctor <span class="flag">--schedule "0 6 * * *"</span>
+
+<span class="comment"># 5. Auto-heal when something breaks</span>
+<span class="cmd">$</span> tap doctor <span class="flag">--auto</span></pre>
+
+<p>The loop: <strong>forge &rarr; run &rarr; watch &rarr; doctor &rarr; heal &rarr; run</strong>. You sleep. Tap doesn't.</p>
+
+<h2>Why This Works</h2>
+
+<p>The key insight: <strong>AI should run at authoring time, not at runtime.</strong></p>
+
+<ul>
+<li><strong>Forge</strong> uses AI once to write a deterministic .tap.js program</li>
+<li><strong>Run</strong> executes the program with zero AI &mdash; $0 per execution, 100% deterministic</li>
+<li><strong>Doctor</strong> detects breakage via health contracts &mdash; no AI needed</li>
+<li><strong>Heal</strong> re-invokes AI only when the site actually changes</li>
+</ul>
+
+<p>99% of runs need zero AI. You only pay for intelligence when the world changes.</p>
+
+<hr class="separator">
+
+<div class="cta">
+<h3>Try it now</h3>
+<pre><span class="comment"># Install (macOS / Linux)</span>
+<span class="cmd">curl</span> -fsSL https://taprun.dev/install.sh | sh
+
+<span class="comment"># Run your first tap</span>
+<span class="cmd">tap</span> update && <span class="cmd">tap</span> hackernews hot
+
+<span class="comment"># Check health of all your automations</span>
+<span class="cmd">tap</span> doctor</pre>
+<p style="margin-top: 16px; margin-bottom: 0;"><a href="https://taprun.dev/getting-started.html">Getting started guide</a> &middot; <a href="https://github.com/LeonTing1010/tap">GitHub</a> &middot; 195+ community taps included</p>
+</div>
+
+</div>
+</body>
+</html>
