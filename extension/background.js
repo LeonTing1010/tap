@@ -634,6 +634,26 @@ chrome.alarms.onAlarm.addListener(() => {
   }
 })
 
+// Handle a command and send result back — runs concurrently with poll loop.
+// This keeps the poll fetch always active (service worker stays alive).
+async function handleAndReport(id, method, params) {
+  let response
+  try {
+    const result = await handleMethod(method, params, null)
+    response = { id, result }
+  } catch (error) {
+    console.error(`[tap] ${method}:`, error.message)
+    response = { id, error: { code: -32000, message: error.message } }
+  }
+  try {
+    await fetch(`${DAEMON_URL}/result`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(response),
+    })
+  } catch { /* daemon gone — next poll will reconnect */ }
+}
+
 function startPoll() {
   if (polling) return
   polling = true
@@ -669,29 +689,17 @@ async function pollLoop() {
       const commands = body.commands || []
       setBadge(true)
 
+      // Process commands concurrently — don't block the poll loop.
+      // If we await handleMethod here, there's no active fetch during
+      // command execution, and Chrome kills the service worker.
       for (const cmd of commands) {
         const { id, method: rawMethod, params, tabId: msgTabId } = cmd
         const method = rawMethod?.replace?.('tap.', '') || rawMethod
         const resolvedParams = { ...(params || {}) }
         if (msgTabId && !resolvedParams.tabId) resolvedParams.tabId = msgTabId
 
-        let response
-        try {
-          const result = await handleMethod(method, resolvedParams, null)
-          response = { id, result }
-        } catch (error) {
-          console.error(`[tap] ${method}:`, error.message)
-          response = { id, error: { code: -32000, message: error.message } }
-        }
-
-        // Send result back — ignore errors (daemon may have restarted)
-        try {
-          await fetch(`${DAEMON_URL}/result`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(response),
-          })
-        } catch { /* daemon gone — next poll will reconnect */ }
+        // Fire-and-forget: handle + report result asynchronously
+        handleAndReport(id, method, resolvedParams)
       }
     } catch {
       // Bad response — retry
