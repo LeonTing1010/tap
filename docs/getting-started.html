@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Getting Started — Tappy</title>
-<meta name="description" content="Install Tappy, activate your license, and forge your first automation in 5 minutes.">
+<meta name="description" content="Install Tappy, run your first tap in 2 minutes, then forge your own automation.">
 <link rel="canonical" href="https://taprun.dev/getting-started.html">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Ccircle cx='256' cy='256' r='240' fill='%234F46E5'/%3E%3Ccircle cx='290' cy='275' r='80' fill='white'/%3E%3Ccircle cx='230' cy='210' r='58' fill='white'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -40,7 +40,7 @@ pre .flag { color: #fbbf24; }
 <div class="container">
 <a href="./" class="back">&larr; Back to Tappy</a>
 <h1>Getting Started</h1>
-<p class="subtitle">From install to your first automation in 5 minutes.</p>
+<p class="subtitle">Install to first result in 2 minutes.</p>
 
 <h2><span class="step">1</span> Install Tappy</h2>
 <pre><span class="comment"># macOS / Linux</span>
@@ -48,11 +48,11 @@ pre .flag { color: #fbbf24; }
 
 <span class="comment"># Verify</span>
 <span class="cmd">tap</span> --version
-<span class="output">tap 0.5.0</span></pre>
-<p>This installs the <code>tap</code> CLI binary and the Chrome Extension files to <code>~/.tap/</code>.</p>
+<span class="output">tap 0.6.2</span></pre>
+<p>This installs the <code>tap</code> CLI binary to <code>/usr/local/bin/</code> and the Chrome Extension to <code>~/.tap/extension/</code>.</p>
 
-<h2><span class="step">2</span> Install Chrome Extension</h2>
-<p>The extension lets Tappy observe web pages during forge (one-time setup).</p>
+<h2><span class="step">2</span> Load Chrome Extension</h2>
+<p>The extension lets Tappy observe and control web pages (one-time setup).</p>
 <ol style="padding-left: 20px; color: #b0b0b0;">
 <li>Open Chrome and go to <code>chrome://extensions/</code></li>
 <li>Enable <strong style="color:#fff">Developer mode</strong> (top right toggle)</li>
@@ -62,80 +62,68 @@ pre .flag { color: #fbbf24; }
 </ol>
 <div class="tip"><strong>Tip:</strong> If the icon shows a red <code>!</code>, the daemon isn't running. Run <code>tap daemon</code> in another terminal.</div>
 
-<h2><span class="step">3</span> Activate License (Paid Plans)</h2>
-<pre><span class="comment"># After purchasing Hacker or Pro plan</span>
-<span class="cmd">tap</span> auth login
-<span class="output">Enter license key: ****-****-****</span>
-<span class="output">&#10004; License activated (Hacker plan)</span></pre>
-<div class="tip"><strong>Free plan?</strong> Skip this step. You get 5 forges/month and unlimited runs with no license needed.</div>
-
-<h2><span class="step">4</span> Try a Pre-built Tap</h2>
-<p>185+ taps are ready to use. No forge needed, no AI needed:</p>
-<pre><span class="comment"># Install community skills</span>
+<h2><span class="step">3</span> Run Your First Tap</h2>
+<p>No AI, no key, no setup &mdash; just run:</p>
+<pre><span class="comment"># Install 185+ community taps</span>
 <span class="cmd">tap</span> update
 
-<span class="comment"># Run a tap</span>
-<span class="cmd">tap</span> run hackernews hot
+<span class="comment"># Scrape Hacker News top stories</span>
+<span class="cmd">tap</span> hackernews hot
 <span class="output">&#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9516;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9516;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;</span>
 <span class="output">&#9474; rank &#9474; title                          &#9474; score &#9474;</span>
 <span class="output">&#9474; 1    &#9474; Show HN: Tappy                 &#9474;   342 &#9474;</span>
 <span class="output">&#9474; 2    &#9474; Rust is eating Go              &#9474;   287 &#9474;</span>
 <span class="output">&#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9524;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9524;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;</span>
 <span class="output">30 rows (245ms) Cost: $0.00</span></pre>
+<p>That's it. You just ran a deterministic program &mdash; zero AI, zero cost, runs forever.</p>
 
-<h2><span class="step">5</span> Forge Your First Tap</h2>
-<p>Open the target website in Chrome, then:</p>
-<pre><span class="comment"># Describe what you want in plain English</span>
-<span class="cmd">tappy</span> forge <span class="flag">"scrape the trending topics from Google Trends"</span>
+<div class="tip"><strong>Try more:</strong> <code>tap github trending</code>, <code>tap weibo hot</code>, <code>tap list</code> to see all available taps.</div>
 
+<h2><span class="step">4</span> Forge Your Own Tap (Hacker/Pro)</h2>
+<p>Activate your license, then forge custom automations from natural language:</p>
+<pre><span class="comment"># Activate license (key from your Creem purchase email)</span>
+<span class="cmd">tap</span> auth login <span class="flag">your-license-key</span>
+<span class="output">&#10004; License activated (Hacker plan)</span>
+
+<span class="comment"># Set up AI key (Hacker plan — bring your own key)</span>
+<span class="cmd">tap</span> config set ai.key <span class="flag">sk-ant-xxx</span>
+
+<span class="comment"># Forge a tap from plain English</span>
+<span class="cmd">tap</span> forge <span class="flag">"scrape the trending topics from Google Trends"</span>
 <span class="output">&#9737; Inspecting https://trends.google.com...</span>
 <span class="output">&#9737; AI analyzing page structure...</span>
 <span class="output">&#9737; Writing tap code...</span>
 <span class="output">&#10004; Verified: 20 rows, score=1.0</span>
 <span class="output">&#10004; Saved: google/trends.tap.js</span>
 
-<span class="comment"># Now run it forever at $0</span>
-<span class="cmd">tap</span> run google trends
+<span class="comment"># Run it forever at $0</span>
+<span class="cmd">tap</span> google trends
 <span class="output">20 rows (1.2s) Cost: $0.00</span></pre>
 
-<div class="tip"><strong>Hacker plan:</strong> Use your own AI key with <code>tap config set ai.key sk-ant-xxx</code><br><strong>Pro plan:</strong> AI is built in, no key needed.</div>
+<div class="tip"><strong>Pro plan:</strong> AI is built in &mdash; no key needed. Just <code>tap forge "..."</code> and go.</div>
 
-<h2><span class="step">6</span> Set Up Self-Healing</h2>
-<p>Check if your taps are healthy. Fix broken ones automatically:</p>
-<pre><span class="comment"># Check all your taps</span>
+<h2><span class="step">5</span> Self-Healing &amp; Scheduling</h2>
+<pre><span class="comment"># Check all your taps are healthy</span>
 <span class="cmd">tap</span> doctor
 
 <span class="comment"># Auto-heal broken taps (Hacker/Pro)</span>
 <span class="cmd">tap</span> doctor <span class="flag">--auto</span>
-<span class="output">&#128295; Auto-heal: 1 tap(s) with diagnostics</span>
-<span class="output">  google/trends:</span>
-<span class="output">    issue: min_rows: expected 5, got 0</span>
-<span class="output">    fix: selector changed, re-forging...</span>
-<span class="output">&#10004; Healed google/trends</span></pre>
 
-<h2><span class="step">7</span> Schedule Recurring Runs</h2>
-<p>Use cron, launchd, or any scheduler. Tappy is just a CLI:</p>
-<pre><span class="comment"># Run every morning at 9am</span>
-<span class="cmd">crontab</span> -e
-<span class="flag">0 9 * * * tap run google trends >> ~/trends.log</span>
-
-<span class="comment"># Or use tap watch for change detection</span>
+<span class="comment"># Watch for changes every hour</span>
 <span class="cmd">tap</span> watch google trends <span class="flag">--every 1h</span></pre>
 
-<h2><span class="step">8</span> Use with Claude (Optional)</h2>
-<p>Tappy works as an MCP server. Add it to Claude Code or Claude Desktop:</p>
+<h2><span class="step">6</span> Use with AI Agents (Optional)</h2>
+<p>Tappy works as an MCP server. Add it to Claude Code, Cursor, or any MCP client:</p>
 <pre><span class="comment"># Claude Code</span>
 <span class="cmd">claude</span> mcp add tap -- tap mcp
 
-<span class="comment"># Now just talk to Claude:</span>
-<span class="comment"># "Help me scrape Reddit for AI automation posts"</span>
-<span class="comment"># Claude will call forge.inspect, forge.verify, forge.save automatically</span></pre>
+<span class="comment"># Now Claude can forge, run, and heal taps for you</span></pre>
 
 <div class="next">
 <h3>What's Next?</h3>
-<a href="https://github.com/LeonTing1010/tap">Browse 185+ community taps</a>
+<a href="https://github.com/LeonTing1010/tap-skills">Browse 185+ community taps</a>
 <a href="protocol.html">Learn the Tap protocol (8 core + 17 built-in)</a>
-<a href="#" onclick="history.back()">Back to home</a>
+<a href="./">Back to home</a>
 </div>
 
 </div>

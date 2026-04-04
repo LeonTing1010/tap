@@ -44,9 +44,9 @@
       "@context": "https://schema.org",
       "@type": "FAQPage",
       "mainEntity": [
-        {"@type": "Question", "name": "Do I need to be a developer to use Tappy?", "acceptedAnswer": {"@type": "Answer", "text": "Tappy is a CLI tool. The core workflow is two commands: tappy forge and tappy run. <a href='https://github.com/LeonTing1010/tap-skills'>185+ pre-built taps</a> work with zero setup."}},
+        {"@type": "Question", "name": "Do I need to be a developer to use Tappy?", "acceptedAnswer": {"@type": "Answer", "text": "Tappy is a CLI tool. The core workflow is two commands: tap forge and tap &lt;site&gt; &lt;name&gt;. <a href='https://github.com/LeonTing1010/tap-skills'>185+ pre-built taps</a> work with zero setup."}},
         {"@type": "Question", "name": "Is my data safe?", "acceptedAnswer": {"@type": "Answer", "text": "Tappy programs run in a sandboxed Worker with zero permissions. Your data never leaves your machine. Everything is local and open source."}},
-        {"@type": "Question", "name": "What happens when a website changes?", "acceptedAnswer": {"@type": "Answer", "text": "tappy doctor --auto detects breakage and re-forges the program automatically. Self-healing automation."}},
+        {"@type": "Question", "name": "What happens when a website changes?", "acceptedAnswer": {"@type": "Answer", "text": "tap doctor --auto detects breakage and re-forges the program automatically. Self-healing automation."}},
         {"@type": "Question", "name": "How is Tappy different from Zapier?", "acceptedAnswer": {"@type": "Answer", "text": "Zapier charges per task — at scale that is $40K+ per year. Tappy has zero per-execution cost. AI runs once, program runs forever."}},
         {"@type": "Question", "name": "Do I own the programs Tappy creates?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Every .tap.js file is yours. No lock-in. Cancel and your programs keep running forever."}}
       ]
@@ -447,7 +447,7 @@
       <article class="card">
         <div class="card-num">03</div>
         <h3>Heal</h3>
-        <p>Most automation breaks in 2 weeks. With Tappy, <code>tappy doctor --auto</code> detects breakage, diagnoses the root cause, and re-forges the program.</p>
+        <p>Most automation breaks in 2 weeks. With Tappy, <code>tap doctor --auto</code> detects breakage, diagnoses the root cause, and re-forges the program.</p>
         <span class="tag">Self-repairing</span>
       </article>
     </div>
@@ -495,7 +495,7 @@
           <tr><td class="feature-name">AI tokens per run</td><td class="highlight"><span class="yes">0</span></td><td>N/A</td><td>N/A</td><td><span class="no">Thousands</span></td></tr>
           <tr><td class="feature-name">Deterministic output</td><td class="highlight"><span class="yes">Always</span></td><td><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td><td><span class="no">No</span></td></tr>
           <tr><td class="feature-name">Handles any website</td><td class="highlight"><span class="yes">Yes</span></td><td><span class="no">API only</span></td><td><span class="partial">Partial</span></td><td><span class="yes">Yes</span></td></tr>
-          <tr><td class="feature-name">Self-healing</td><td class="highlight"><span class="yes">tappy doctor</span></td><td><span class="no">No</span></td><td><span class="no">No</span></td><td><span class="partial">Retries</span></td></tr>
+          <tr><td class="feature-name">Self-healing</td><td class="highlight"><span class="yes">tap doctor</span></td><td><span class="no">No</span></td><td><span class="no">No</span></td><td><span class="partial">Retries</span></td></tr>
           <tr><td class="feature-name">Open source</td><td class="highlight"><span class="yes">Yes</span></td><td><span class="no">No</span></td><td><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td></tr>
           <tr><td class="feature-name">Sandboxed execution</td><td class="highlight"><span class="yes">Zero permissions</span></td><td><span class="partial">Cloud only</span></td><td><span class="no">Full access</span></td><td><span class="no">Full access</span></td></tr>
           <tr><td class="feature-name">Runs offline</td><td class="highlight"><span class="yes">Yes</span></td><td><span class="no">No</span></td><td><span class="yes">Yes</span></td><td><span class="no">No</span></td></tr>
@@ -578,7 +578,7 @@
     <div style="display:flex; flex-direction:column; gap:12px;">
       <details>
         <summary>Do I need to be a developer to use Tappy?</summary>
-        <p>Tappy is a CLI tool, so basic terminal familiarity helps. The core workflow is just two commands: <code>tappy forge "what you want"</code> and <code>tappy run site name</code>. The <a href='https://github.com/LeonTing1010/tap-skills'>185+ pre-built taps</a> work with zero setup.</p>
+        <p>Tappy is a CLI tool, so basic terminal familiarity helps. The core workflow is just two commands: <code>tap forge "what you want"</code> and <code>tap site name</code>. The <a href='https://github.com/LeonTing1010/tap-skills'>185+ pre-built taps</a> work with zero setup.</p>
       </details>
       <details>
         <summary>Is my data safe? What does Tappy access?</summary>
@@ -586,7 +586,7 @@
       </details>
       <details>
         <summary>What happens when a website changes?</summary>
-        <p><code>tappy doctor --auto</code> runs health checks against declared contracts. When a tap breaks, it diagnoses the issue and re-forges the program automatically. Most fixes happen without you noticing.</p>
+        <p><code>tap doctor --auto</code> runs health checks against declared contracts. When a tap breaks, it diagnoses the issue and re-forges the program automatically. Most fixes happen without you noticing.</p>
       </details>
       <details>
         <summary>How is this different from Zapier or n8n?</summary>
@@ -594,7 +594,7 @@
       </details>
       <details>
         <summary>Can I use my own AI key?</summary>
-        <p>Yes. <code>tappy config set ai.key sk-ant-xxx</code> lets you bring your own Claude or OpenAI key. The Hacker plan unlocks forge with your own key. Pro includes AI built-in.</p>
+        <p>Yes. <code>tap config set ai.key sk-ant-xxx</code> lets you bring your own Claude or OpenAI key. The Hacker plan unlocks forge with your own key. Pro includes AI built-in.</p>
       </details>
       <details>
         <summary>Do I own the programs Tappy creates?</summary>
@@ -647,12 +647,12 @@
 
   // Terminal typewriter
   var lines = [
-    { text: '<span class="prompt">$</span> <span class="cmd">tappy forge</span> <span class="flag">"scrape Hacker News top stories"</span>', delay: 0 },
+    { text: '<span class="prompt">$</span> <span class="cmd">tap forge</span> <span class="flag">"scrape Hacker News top stories"</span>', delay: 0 },
     { text: '<span class="spinner">&bull;</span> <span class="muted">Inspecting https://news.ycombinator.com...</span>', delay: 700 },
     { text: '<span class="spinner">&bull;</span> <span class="muted">AI writing tap code...</span>', delay: 1400 },
     { text: '<span class="check">&#10004;</span> <span class="cmd">Saved hackernews/hot.tap.js</span>', delay: 2100 },
     { text: '', delay: 2600 },
-    { text: '<span class="prompt">$</span> <span class="cmd">tappy run</span> hackernews hot', delay: 3000 },
+    { text: '<span class="prompt">$</span> <span class="cmd">tap</span> hackernews hot', delay: 3000 },
     { text: '<span class="table-border">&#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9516;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9516;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;</span>', delay: 3500 },
     { text: '<span class="table-border">&#9474;</span> rank <span class="table-border">&#9474;</span> title                <span class="table-border">&#9474;</span> score <span class="table-border">&#9474;</span>', delay: 3500 },
     { text: '<span class="table-border">&#9500;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9508;</span>', delay: 3500 },
