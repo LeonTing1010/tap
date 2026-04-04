@@ -1,0 +1,56 @@
+{
+  "version": "1.0",
+  "name": "Tap",
+  "description": "AI forges browser automations once, programs run forever at $0. Protocol + toolchain for deterministic interface automation.",
+  "homepage": "https://taprun.dev",
+
+  "data": [
+    {
+      "name": "community-taps",
+      "description": "195+ pre-built automation programs for popular websites",
+      "endpoint": "https://api.github.com/repos/LeonTing1010/tap-skills/contents",
+      "method": "GET",
+      "format": "json",
+      "auth": "none",
+      "fields": {
+        "name": "string — site directory name",
+        "type": "string — 'dir' for site folders",
+        "path": "string — relative path"
+      }
+    },
+    {
+      "name": "releases",
+      "description": "Tap CLI binary releases for all platforms",
+      "endpoint": "https://api.github.com/repos/LeonTing1010/tap/releases/latest",
+      "method": "GET",
+      "format": "json",
+      "auth": "none",
+      "fields": {
+        "tag_name": "string — version tag (e.g. v0.6.3)",
+        "assets": "array — platform binaries and extension zip"
+      }
+    }
+  ],
+
+  "actions": [
+    {
+      "name": "install",
+      "description": "Install Tap CLI via shell script",
+      "endpoint": "https://taprun.dev/install.sh",
+      "method": "GET",
+      "format": "text",
+      "auth": "none"
+    }
+  ],
+
+  "specs": {
+    "llms_txt": "https://taprun.dev/llms.txt"
+  },
+
+  "policies": {
+    "automation_allowed": true,
+    "rate_limit": "60 req/min",
+    "requires_attribution": false,
+    "contact": "leon@taprun.dev"
+  }
+}
