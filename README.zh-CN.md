@@ -75,7 +75,7 @@ curl -fsSL https://taprun.dev/install.sh | sh
 tap github trending             # GitHub 热门仓库
 tap hackernews hot               # HackerNews 首页
 tap zhihu hot                    # 知乎热榜
-tap github trending | tap tap/filter --field stars --gt 1000  # Unix 管道
+tap github trending | tap filter --field stars --gt 1000  # Unix 管道
 ```
 
 或让 AI Agent 操作：
@@ -188,7 +188,7 @@ tap watch hackernews hot --every 10m
 **组合** — 像 Unix 命令一样串联
 
 ```bash
-tap github trending | tap tap/filter --field stars --gt 500 | tap tap/pick --fields repo,stars
+tap github trending | tap filter --field stars --gt 500 | tap pick --fields repo,stars
 ```
 
 **锻造** — 用 AI 创建新的自动化

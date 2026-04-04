@@ -75,7 +75,7 @@ Add to Claude Code, Cursor, Windsurf, or any MCP-compatible agent:
 tap github trending             # GitHub trending repos
 tap hackernews hot               # HackerNews front page
 tap zhihu hot                    # Zhihu trending topics
-tap github trending | tap tap/filter --field stars --gt 1000  # Unix pipes
+tap github trending | tap filter --field stars --gt 1000  # Unix pipes
 ```
 
 Or ask your AI agent:
@@ -169,7 +169,7 @@ tap watch hackernews hot --every 10m
 **Compose** — Chain taps like Unix commands
 
 ```bash
-tap github trending | tap tap/filter --field stars --gt 500 | tap tap/pick --fields repo,stars
+tap github trending | tap filter --field stars --gt 500 | tap pick --fields repo,stars
 ```
 
 **Forge** — Create new automations with AI
@@ -231,7 +231,7 @@ Tap ships as **one binary + one extension**. No package manager, no dependencies
 |-----------|------|--------|
 | `tap` binary | CLI, MCP server, executor, all runtimes | [Releases](https://github.com/LeonTing1010/tap/releases/latest) |
 | Chrome Extension | Runtime #1 — your real browser | [Releases](https://github.com/LeonTing1010/tap/releases/latest) / [source](extension/) |
-| Community Skills | 55+ sites, open source | [tap-skills](https://github.com/LeonTing1010/tap-skills) |
+| Community Skills | 133 taps across 58 sites, open source | [tap-skills](https://github.com/LeonTing1010/tap-skills) |
 
 ### This Repository
 
