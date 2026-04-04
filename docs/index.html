@@ -3,6 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {"@type": "Question", "name": "Do I need to be a developer to use Tappy?", "acceptedAnswer": {"@type": "Answer", "text": "Tappy is a CLI tool, so basic terminal familiarity helps. The core workflow is two commands: tappy forge and tappy run. 185+ pre-built taps work with zero setup."}},
+      {"@type": "Question", "name": "Is my data safe?", "acceptedAnswer": {"@type": "Answer", "text": "Tappy programs run in a sandboxed Worker with zero permissions. Your data never leaves your machine. Everything is local and open source."}},
+      {"@type": "Question", "name": "What happens when a website changes?", "acceptedAnswer": {"@type": "Answer", "text": "tappy doctor --auto detects breakage and re-forges the program automatically. Self-healing automation that fixes itself."}},
+      {"@type": "Question", "name": "How is Tappy different from Zapier?", "acceptedAnswer": {"@type": "Answer", "text": "Zapier charges per task. At scale that is $40K+ per year. Tappy has zero per-execution cost. AI runs once, program runs forever for free."}},
+      {"@type": "Question", "name": "Do I own the programs Tappy creates?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Every .tap.js file is yours. No lock-in, no cloud dependency. Cancel and your programs keep running forever."}}
+    ]
+  }
+  </script>
   <title>Tappy — AI Compiles Once. Programs Run Forever.</title>
   <meta name="description" content="Stop paying per automation task. Tappy's AI forges deterministic programs that run forever at $0 per execution.">
   <meta property="og:title" content="Tappy — Stop Paying Per Automation Task">
@@ -928,6 +941,80 @@
   </div>
 </section>
 
+<!-- Social Proof -->
+<section id="proof" style="padding:80px 0; text-align:center;">
+  <div class="container reveal">
+    <div style="display:flex; justify-content:center; gap:64px; flex-wrap:wrap;">
+      <div>
+        <div style="font-size:3rem; font-weight:700; color:var(--text);">185+</div>
+        <div style="color:var(--text-muted); font-size:0.9rem;">Pre-built taps</div>
+      </div>
+      <div>
+        <div style="font-size:3rem; font-weight:700; color:var(--text);">8+17</div>
+        <div style="color:var(--text-muted); font-size:0.9rem;">Protocol operations</div>
+      </div>
+      <div>
+        <div style="font-size:3rem; font-weight:700; color:var(--text);">3</div>
+        <div style="color:var(--text-muted); font-size:0.9rem;">Runtimes (Chrome, Playwright, macOS)</div>
+      </div>
+      <div>
+        <div style="font-size:3rem; font-weight:700; color:var(--text);">$0</div>
+        <div style="color:var(--text-muted); font-size:0.9rem;">Per execution, forever</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq" style="padding:80px 0; border-top:1px solid rgba(255,255,255,0.06);">
+  <div class="container reveal" style="max-width:720px;">
+    <div style="text-align:center; margin-bottom:48px;">
+      <div class="section-label">FAQ</div>
+      <h2 class="section-title">Common questions</h2>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:24px;">
+      <details style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:20px 24px; cursor:pointer;">
+        <summary style="font-weight:500; color:var(--text); font-size:1.05rem;">Do I need to be a developer to use Tappy?</summary>
+        <p style="margin-top:12px; color:var(--text-muted); line-height:1.7;">Tappy is a CLI tool, so basic terminal familiarity helps. But the core workflow is just two commands: <code>tappy forge "what you want"</code> and <code>tappy run site name</code>. If you can type in a terminal, you can use Tappy. The 185+ pre-built taps work with zero setup.</p>
+      </details>
+      <details style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:20px 24px; cursor:pointer;">
+        <summary style="font-weight:500; color:var(--text); font-size:1.05rem;">Is my data safe? What does Tappy access?</summary>
+        <p style="margin-top:12px; color:var(--text-muted); line-height:1.7;">Tappy programs run in a sandboxed Worker with zero permissions &mdash; no filesystem, no network, no subprocess access. The Chrome Extension only activates when you forge (observe a page). Your data never leaves your machine. Everything is local and open source.</p>
+      </details>
+      <details style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:20px 24px; cursor:pointer;">
+        <summary style="font-weight:500; color:var(--text); font-size:1.05rem;">What happens when a website changes its layout?</summary>
+        <p style="margin-top:12px; color:var(--text-muted); line-height:1.7;">Tappy's doctor runs health checks against declared contracts. When a tap breaks, <code>tappy doctor --auto</code> diagnoses the issue (changed selectors, moved APIs, new auth) and re-forges the program automatically. Most fixes happen without you noticing.</p>
+      </details>
+      <details style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:20px 24px; cursor:pointer;">
+        <summary style="font-weight:500; color:var(--text); font-size:1.05rem;">How is this different from Zapier or n8n?</summary>
+        <p style="margin-top:12px; color:var(--text-muted); line-height:1.7;">Zapier charges per task ($0.01&ndash;$0.05 each). At scale, that's $40K+/year. n8n is free but needs DevOps to self-host. Tappy has zero per-execution cost &mdash; AI runs once to create the program, then it runs forever for free. No servers, no billing surprises.</p>
+      </details>
+      <details style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:20px 24px; cursor:pointer;">
+        <summary style="font-weight:500; color:var(--text); font-size:1.05rem;">Can I use my own AI key instead of paying for Pro?</summary>
+        <p style="margin-top:12px; color:var(--text-muted); line-height:1.7;">Yes. <code>tappy config set ai.key sk-ant-xxx</code> lets you bring your own Claude or OpenAI key. The Hacker plan ($9/mo) unlocks forge with your own key. The Pro plan ($29/mo) includes AI &mdash; no key needed.</p>
+      </details>
+      <details style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:20px 24px; cursor:pointer;">
+        <summary style="font-weight:500; color:var(--text); font-size:1.05rem;">Do I own the programs Tappy creates?</summary>
+        <p style="margin-top:12px; color:var(--text-muted); line-height:1.7;">Yes. Every <code>.tap.js</code> file is a plain JavaScript program on your disk. No lock-in, no cloud dependency. Cancel your subscription and your programs keep running forever. You can even read and edit them by hand.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- Final CTA -->
+<section style="padding:100px 0; text-align:center; background:linear-gradient(180deg, transparent, rgba(79,70,229,0.08));">
+  <div class="container reveal">
+    <h2 class="section-title" style="margin-bottom:16px;">Stop renting automation.<br>Start owning it.</h2>
+    <p class="section-desc" style="margin:0 auto 32px; max-width:500px;">
+      185 pre-built taps. Zero cost per run. Self-healing when sites change.
+    </p>
+    <div style="display:flex; gap:16px; justify-content:center; flex-wrap:wrap;">
+      <a href="https://github.com/LeonTing1010/tap" class="btn btn-primary" style="font-size:1.05rem; padding:14px 32px;">Get Started Free</a>
+      <a href="#pricing" class="btn btn-secondary" style="font-size:1.05rem; padding:14px 32px;">View Pricing</a>
+    </div>
+  </div>
+</section>
+
 <!-- Footer -->
 <footer>
   <div class="footer-inner">
@@ -937,7 +1024,11 @@
     <ul class="footer-links">
       <li><a href="https://github.com/LeonTing1010/tap" target="_blank" rel="noopener">GitHub</a></li>
       <li><a href="#features">Features</a></li>
+      <li><a href="#comparison">Compare</a></li>
+      <li><a href="#faq">FAQ</a></li>
       <li><a href="#pricing">Pricing</a></li>
+      <li><a href="privacy.html">Privacy</a></li>
+      <li><a href="protocol.html">Protocol</a></li>
     </ul>
   </div>
 </footer>
