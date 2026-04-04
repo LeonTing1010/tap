@@ -3,725 +3,402 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    "mainEntity": [
-      {"@type": "Question", "name": "Do I need to be a developer to use Tappy?", "acceptedAnswer": {"@type": "Answer", "text": "Tappy is a CLI tool, so basic terminal familiarity helps. The core workflow is two commands: tappy forge and tappy run. 185+ pre-built taps work with zero setup."}},
-      {"@type": "Question", "name": "Is my data safe?", "acceptedAnswer": {"@type": "Answer", "text": "Tappy programs run in a sandboxed Worker with zero permissions. Your data never leaves your machine. Everything is local and open source."}},
-      {"@type": "Question", "name": "What happens when a website changes?", "acceptedAnswer": {"@type": "Answer", "text": "tappy doctor --auto detects breakage and re-forges the program automatically. Self-healing automation that fixes itself."}},
-      {"@type": "Question", "name": "How is Tappy different from Zapier?", "acceptedAnswer": {"@type": "Answer", "text": "Zapier charges per task. At scale that is $40K+ per year. Tappy has zero per-execution cost. AI runs once, program runs forever for free."}},
-      {"@type": "Question", "name": "Do I own the programs Tappy creates?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Every .tap.js file is yours. No lock-in, no cloud dependency. Cancel and your programs keep running forever."}}
-    ]
-  }
-  </script>
-  <title>Tappy — AI Compiles Once. Programs Run Forever.</title>
-  <meta name="description" content="Stop paying per automation task. Tappy's AI forges deterministic programs that run forever at $0 per execution.">
+  <title>Tappy — AI Compiles Once. Programs Run Forever. $0/execution.</title>
+  <meta name="description" content="Stop paying per automation task. Tappy forges deterministic programs from natural language. AI runs once, your automation runs forever at $0 per execution. Open source Zapier alternative.">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
   <meta property="og:title" content="Tappy — Stop Paying Per Automation Task">
-  <meta property="og:description" content="AI compiles once. Programs run forever. $0 per execution.">
+  <meta property="og:description" content="AI compiles once. Programs run forever. $0 per execution. Self-healing automation that fixes itself.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://taprun.dev/">
   <meta property="og:image" content="https://taprun.dev/social-preview.svg">
+  <meta property="og:image:width" content="1280">
+  <meta property="og:image:height" content="640">
+  <meta property="og:site_name" content="Tappy">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Tappy — Stop Paying Per Automation Task">
   <meta name="twitter:description" content="AI compiles once. Programs run forever. $0 per execution.">
-  <meta name="keywords" content="automation, Zapier alternative, browser automation, AI compiler, deterministic programs, tappy, tap, MCP">
+  <meta name="twitter:image" content="https://taprun.dev/social-preview.svg">
+  <meta name="keywords" content="automation, Zapier alternative, browser automation, AI compiler, deterministic programs, tappy, tap, MCP, self-healing automation, open source, n8n alternative">
+  <meta name="author" content="Tappy">
+  <meta name="theme-color" content="#0b0b0e">
   <link rel="canonical" href="https://taprun.dev/">
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Ccircle cx='256' cy='256' r='240' fill='%234F46E5'/%3E%3Ccircle cx='290' cy='275' r='80' fill='white'/%3E%3Ccircle cx='230' cy='210' r='58' fill='white'/%3E%3C/svg%3E">
-  <style>
-    *, *::before, *::after {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23d97706'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-size='18' font-weight='700' fill='%230b0b0e' font-family='monospace'%3Et%3C/text%3E%3C/svg%3E">
+  <script type="application/ld+json">
+  [
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Tappy",
+      "description": "AI compiles natural language into deterministic browser automation programs. Zero cost per execution. Self-healing.",
+      "url": "https://taprun.dev",
+      "downloadUrl": "https://github.com/LeonTing1010/tap/releases/latest",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "macOS, Linux, Windows",
+      "offers": [
+        {"@type": "Offer", "price": "0", "priceCurrency": "USD", "description": "Free tier with 5 forges/month"},
+        {"@type": "Offer", "price": "9", "priceCurrency": "USD", "description": "Hacker plan — 50 forges/month + auto-heal"},
+        {"@type": "Offer", "price": "29", "priceCurrency": "USD", "description": "Pro plan — unlimited forges + built-in AI"}
+      ]
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {"@type": "Question", "name": "Do I need to be a developer to use Tappy?", "acceptedAnswer": {"@type": "Answer", "text": "Tappy is a CLI tool. The core workflow is two commands: tappy forge and tappy run. 185+ pre-built taps work with zero setup."}},
+        {"@type": "Question", "name": "Is my data safe?", "acceptedAnswer": {"@type": "Answer", "text": "Tappy programs run in a sandboxed Worker with zero permissions. Your data never leaves your machine. Everything is local and open source."}},
+        {"@type": "Question", "name": "What happens when a website changes?", "acceptedAnswer": {"@type": "Answer", "text": "tappy doctor --auto detects breakage and re-forges the program automatically. Self-healing automation."}},
+        {"@type": "Question", "name": "How is Tappy different from Zapier?", "acceptedAnswer": {"@type": "Answer", "text": "Zapier charges per task — at scale that is $40K+ per year. Tappy has zero per-execution cost. AI runs once, program runs forever."}},
+        {"@type": "Question", "name": "Do I own the programs Tappy creates?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Every .tap.js file is yours. No lock-in. Cancel and your programs keep running forever."}}
+      ]
     }
+  ]
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
     :root {
-      --bg: #0a0a0b;
-      --bg-card: #18181b;
-      --border: #27272a;
-      --border-hover: #3f3f46;
-      --text: #fafafa;
-      --text-muted: #a1a1aa;
-      --accent-start: #6366f1;
-      --accent-end: #8b5cf6;
-      --success: #22c55e;
-      --radius: 12px;
-      --radius-lg: 16px;
-      --max-w: 1120px;
+      --bg: #0b0b0e;
+      --bg-raised: #131316;
+      --bg-card: #16161a;
+      --border: #1e1e24;
+      --border-bright: #2a2a33;
+      --text: #e8e8ed;
+      --text-dim: #8b8b9e;
+      --text-faint: #55556a;
+      --amber: #d97706;
+      --amber-dim: #92400e;
+      --amber-glow: rgba(217, 119, 6, 0.08);
+      --green: #16a34a;
+      --green-dim: rgba(22, 163, 74, 0.15);
+      --red: #dc2626;
+      --mono: 'JetBrains Mono', 'SF Mono', 'Cascadia Code', monospace;
+      --sans: 'Plus Jakarta Sans', -apple-system, system-ui, sans-serif;
+      --max-w: 1080px;
+      --radius: 10px;
     }
 
-    html {
-      scroll-behavior: smooth;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
+    html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+      font-family: var(--sans);
       background: var(--bg);
       color: var(--text);
       line-height: 1.6;
       overflow-x: hidden;
     }
 
-    a {
-      color: inherit;
-      text-decoration: none;
-    }
+    a { color: inherit; text-decoration: none; }
 
-    body::before {
+    /* Grain */
+    body::after {
       content: '';
       position: fixed;
       inset: 0;
-      background: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      background: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
       pointer-events: none;
-      z-index: 0;
+      z-index: 9999;
     }
 
-    /* Nav */
+    /* ── NAV ── */
     nav {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 100;
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
       padding: 0 24px;
-      backdrop-filter: blur(16px) saturate(180%);
-      -webkit-backdrop-filter: blur(16px) saturate(180%);
-      background: rgba(10, 10, 11, 0.8);
+      background: rgba(11, 11, 14, 0.85);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
       border-bottom: 1px solid var(--border);
     }
-
     .nav-inner {
-      max-width: var(--max-w);
-      margin: 0 auto;
-      height: 64px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      max-width: var(--max-w); margin: 0 auto; height: 56px;
+      display: flex; align-items: center; justify-content: space-between;
     }
-
     .logo {
-      font-size: 1.35rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      font-family: var(--mono); font-size: 1rem; font-weight: 700;
+      color: var(--amber); letter-spacing: -0.02em;
     }
-
-    .nav-links {
-      display: flex;
-      align-items: center;
-      gap: 32px;
-      list-style: none;
+    .logo::before { content: '> '; color: var(--text-faint); }
+    .nav-links { display: flex; align-items: center; gap: 28px; list-style: none; }
+    .nav-links a { font-size: 0.82rem; color: var(--text-dim); transition: color 0.15s; font-weight: 500; }
+    .nav-links a:hover { color: var(--text); }
+    .btn-nav {
+      padding: 7px 18px; border-radius: 6px; font-family: var(--mono);
+      background: var(--amber); color: var(--bg); font-weight: 700;
+      font-size: 0.78rem; letter-spacing: 0.02em; transition: opacity 0.15s;
     }
+    .btn-nav:hover { opacity: 0.85; }
 
-    .nav-links a {
-      font-size: 0.9rem;
-      color: var(--text-muted);
-      transition: color 0.2s;
-    }
+    /* ── SECTIONS ── */
+    section { position: relative; z-index: 1; padding: 100px 24px; }
+    .container { max-width: var(--max-w); margin: 0 auto; }
 
-    .nav-links a:hover {
-      color: var(--text);
-    }
-
-    .nav-links .btn-nav {
-      padding: 8px 20px;
-      border-radius: 8px;
-      background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
-      color: white;
-      font-weight: 600;
-      font-size: 0.85rem;
-      transition: opacity 0.2s;
-    }
-
-    .nav-links .btn-nav:hover {
-      opacity: 0.9;
-    }
-
-    /* Sections */
-    section {
-      position: relative;
-      z-index: 1;
-      padding: 100px 24px;
-    }
-
-    .container {
-      max-width: var(--max-w);
-      margin: 0 auto;
-    }
-
-    /* Hero */
-    .hero {
-      padding-top: 160px;
-      padding-bottom: 80px;
-      text-align: center;
-    }
-
+    /* ── HERO ── */
+    .hero { padding-top: 140px; padding-bottom: 60px; }
     .hero-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 16px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      background: var(--bg-card);
-      font-size: 0.82rem;
-      color: var(--text-muted);
-      margin-bottom: 32px;
-      animation: fadeUp 0.6s ease-out;
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 5px 14px; border-radius: 4px; border: 1px solid var(--border);
+      font-family: var(--mono); font-size: 0.72rem; font-weight: 500;
+      color: var(--text-dim); margin-bottom: 28px;
+      animation: fadeIn 0.5s ease-out;
     }
-
     .hero-badge .dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--success);
-      animation: pulse 2s ease-in-out infinite;
+      width: 5px; height: 5px; border-radius: 50%;
+      background: var(--green); animation: pulse 2s ease-in-out infinite;
     }
-
     .hero h1 {
-      font-size: clamp(2.5rem, 6vw, 4rem);
-      font-weight: 800;
-      line-height: 1.1;
-      letter-spacing: -0.03em;
-      margin-bottom: 24px;
-      animation: fadeUp 0.6s ease-out 0.1s both;
+      font-family: var(--mono); font-size: clamp(2rem, 5.5vw, 3.4rem);
+      font-weight: 800; line-height: 1.15; letter-spacing: -0.04em;
+      margin-bottom: 20px; animation: fadeIn 0.5s ease-out 0.05s both;
     }
-
-    .hero h1 .gradient {
-      background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+    .hero h1 .highlight {
+      color: var(--amber);
+      text-decoration: underline;
+      text-decoration-color: var(--amber-dim);
+      text-underline-offset: 6px;
+      text-decoration-thickness: 3px;
     }
-
     .hero .subtitle {
-      font-size: clamp(1.05rem, 2.2vw, 1.25rem);
-      color: var(--text-muted);
-      max-width: 580px;
-      margin: 0 auto 40px;
-      animation: fadeUp 0.6s ease-out 0.2s both;
+      font-size: clamp(0.95rem, 2vw, 1.1rem); color: var(--text-dim);
+      max-width: 560px; line-height: 1.7; font-weight: 400;
+      animation: fadeIn 0.5s ease-out 0.1s both;
     }
-
+    .hero .subtitle strong { color: var(--text); font-weight: 600; }
     .hero-ctas {
-      display: flex;
-      gap: 16px;
-      justify-content: center;
-      flex-wrap: wrap;
-      animation: fadeUp 0.6s ease-out 0.3s both;
+      display: flex; gap: 12px; margin-top: 36px; flex-wrap: wrap;
+      animation: fadeIn 0.5s ease-out 0.15s both;
     }
-
     .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 14px 28px;
-      border-radius: 10px;
-      font-size: 0.95rem;
-      font-weight: 600;
-      cursor: pointer;
-      border: none;
-      transition: all 0.2s;
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 24px; border-radius: 6px; font-size: 0.88rem;
+      font-weight: 600; cursor: pointer; border: none; transition: all 0.15s;
+      font-family: var(--sans);
     }
-
     .btn-primary {
-      background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
-      color: white;
-      box-shadow: 0 0 40px rgba(99, 102, 241, 0.25);
+      background: var(--amber); color: var(--bg);
+      box-shadow: 0 0 40px var(--amber-glow), 0 1px 2px rgba(0,0,0,0.4);
     }
-
-    .btn-primary:hover {
-      box-shadow: 0 0 60px rgba(99, 102, 241, 0.35);
-      transform: translateY(-1px);
-    }
-
+    .btn-primary:hover { box-shadow: 0 0 60px rgba(217,119,6,0.15), 0 2px 8px rgba(0,0,0,0.5); transform: translateY(-1px); }
     .btn-secondary {
-      background: var(--bg-card);
-      color: var(--text);
-      border: 1px solid var(--border);
+      background: var(--bg-raised); color: var(--text); border: 1px solid var(--border);
     }
-
-    .btn-secondary:hover {
-      border-color: var(--border-hover);
-      background: #1f1f23;
-    }
+    .btn-secondary:hover { border-color: var(--border-bright); }
 
     .hero::before {
-      content: '';
-      position: absolute;
-      top: 80px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 600px;
-      height: 600px;
-      background: radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, transparent 70%);
-      pointer-events: none;
-      z-index: -1;
+      content: ''; position: absolute; top: 60px; left: 50%; transform: translateX(-60%);
+      width: 700px; height: 500px;
+      background: radial-gradient(ellipse, rgba(217,119,6,0.04) 0%, transparent 70%);
+      pointer-events: none; z-index: -1;
     }
 
-    /* Section headers */
+    /* ── SECTION LABELS ── */
     .section-label {
-      text-transform: uppercase;
-      font-size: 0.78rem;
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      font-family: var(--mono); text-transform: uppercase; font-size: 0.7rem;
+      font-weight: 700; letter-spacing: 0.14em; color: var(--amber);
       margin-bottom: 12px;
     }
-
     .section-title {
-      font-size: clamp(1.8rem, 4vw, 2.5rem);
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      margin-bottom: 16px;
+      font-family: var(--mono); font-size: clamp(1.5rem, 3.5vw, 2.2rem);
+      font-weight: 800; letter-spacing: -0.03em; margin-bottom: 14px; line-height: 1.2;
     }
-
     .section-desc {
-      color: var(--text-muted);
-      max-width: 540px;
-      font-size: 1.05rem;
-      margin-bottom: 56px;
+      color: var(--text-dim); max-width: 520px; font-size: 0.98rem; line-height: 1.7;
     }
 
-    /* Cards grid */
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 24px;
-    }
-
+    /* ── CARDS ── */
+    .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); }
     .card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 36px 28px;
-      transition: border-color 0.25s, transform 0.25s;
+      background: var(--bg-card); padding: 36px 28px;
+      transition: background 0.2s;
     }
-
-    .card:hover {
-      border-color: var(--border-hover);
-      transform: translateY(-4px);
+    .card:hover { background: var(--bg-raised); }
+    .card-num {
+      font-family: var(--mono); font-size: 0.72rem; font-weight: 700;
+      color: var(--amber); margin-bottom: 16px;
+      padding: 4px 10px; border-radius: 4px;
+      background: var(--amber-glow); display: inline-block;
+      border: 1px solid rgba(217,119,6,0.15);
     }
-
-    .card-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.4rem;
-      font-weight: 800;
-      margin-bottom: 20px;
-      background: rgba(99, 102, 241, 0.1);
-      border: 1px solid rgba(99, 102, 241, 0.2);
-      color: var(--accent-start);
-    }
-
-    .card h3 {
-      font-size: 1.2rem;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-
-    .card p {
-      color: var(--text-muted);
-      font-size: 0.95rem;
-      line-height: 1.65;
-    }
-
+    .card h3 { font-family: var(--mono); font-size: 1.05rem; font-weight: 700; margin-bottom: 10px; }
+    .card p { color: var(--text-dim); font-size: 0.9rem; line-height: 1.65; }
     .card .tag {
-      display: inline-block;
-      margin-top: 16px;
-      padding: 4px 12px;
-      border-radius: 6px;
-      font-size: 0.78rem;
-      font-weight: 600;
-      background: rgba(34, 197, 94, 0.1);
-      color: var(--success);
-      border: 1px solid rgba(34, 197, 94, 0.2);
+      display: inline-block; margin-top: 14px; padding: 3px 10px; border-radius: 4px;
+      font-family: var(--mono); font-size: 0.7rem; font-weight: 600;
+      background: var(--green-dim); color: var(--green); border: 1px solid rgba(22,163,74,0.2);
     }
+    .card code { font-family: var(--mono); color: var(--amber); font-size: 0.85rem; }
 
-    /* Terminal */
-    .demo-section {
-      background: linear-gradient(180deg, transparent 0%, rgba(99, 102, 241, 0.03) 50%, transparent 100%);
-    }
-
+    /* ── TERMINAL ── */
+    .demo-section { padding-top: 80px; padding-bottom: 80px; }
     .terminal {
-      background: #0c0c0e;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      overflow: hidden;
-      max-width: 720px;
-      margin: 0 auto;
-      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+      background: #09090b; border: 1px solid var(--border); border-radius: var(--radius);
+      overflow: hidden; max-width: 680px; margin: 0 auto;
+      box-shadow: 0 40px 100px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.02);
     }
-
     .terminal-bar {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 14px 18px;
-      background: #111113;
-      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 7px;
+      padding: 12px 16px; border-bottom: 1px solid var(--border);
     }
-
-    .terminal-dot {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-    }
-
-    .terminal-dot:nth-child(1) { background: #ef4444; }
-    .terminal-dot:nth-child(2) { background: #eab308; }
-    .terminal-dot:nth-child(3) { background: #22c55e; }
-
+    .terminal-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .terminal-dot:nth-child(1) { background: #3b3b42; }
+    .terminal-dot:nth-child(2) { background: #3b3b42; }
+    .terminal-dot:nth-child(3) { background: #3b3b42; }
     .terminal-title {
-      flex: 1;
-      text-align: center;
-      font-size: 0.78rem;
-      color: var(--text-muted);
+      flex: 1; text-align: center; font-family: var(--mono);
+      font-size: 0.7rem; color: var(--text-faint);
     }
-
     .terminal-body {
-      padding: 24px;
-      font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', 'JetBrains Mono', Menlo, Consolas, monospace;
-      font-size: 0.85rem;
-      line-height: 1.8;
-      overflow-x: auto;
-      min-height: 340px;
+      padding: 24px; font-family: var(--mono); font-size: 0.82rem;
+      line-height: 1.9; overflow-x: auto; min-height: 320px;
     }
+    .terminal-body .prompt { color: var(--text-dim); }
+    .terminal-body .cmd { color: var(--text); font-weight: 600; }
+    .terminal-body .flag { color: var(--amber); }
+    .terminal-body .spinner { color: var(--text-faint); }
+    .terminal-body .check { color: var(--green); }
+    .terminal-body .muted { color: var(--text-faint); }
+    .terminal-body .table-border { color: #2a2a33; }
+    .terminal-body .cost { color: var(--green); font-weight: 700; }
 
-    .terminal-body .prompt { color: var(--success); }
-    .terminal-body .cmd { color: var(--text); }
-    .terminal-body .flag { color: #f59e0b; }
-    .terminal-body .spinner { color: var(--accent-start); }
-    .terminal-body .check { color: var(--success); }
-    .terminal-body .muted { color: var(--text-muted); }
-    .terminal-body .table-border { color: #3f3f46; }
-    .terminal-body .cost { color: var(--success); font-weight: 600; }
-
-    /* Comparison table */
+    /* ── COMPARISON ── */
     .comparison-table {
-      width: 100%;
-      border-collapse: separate;
-      border-spacing: 0;
-      border-radius: var(--radius-lg);
-      overflow: hidden;
-      border: 1px solid var(--border);
-      font-size: 0.92rem;
+      width: 100%; border-collapse: separate; border-spacing: 0;
+      border-radius: var(--radius); overflow: hidden;
+      border: 1px solid var(--border); font-size: 0.88rem;
     }
-
-    .comparison-table thead {
-      background: #111113;
-    }
-
+    .comparison-table thead { background: var(--bg-raised); }
     .comparison-table th {
-      padding: 18px 24px;
-      text-align: left;
-      font-weight: 700;
-      font-size: 0.85rem;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--text-muted);
+      padding: 16px 22px; text-align: left; font-family: var(--mono);
+      font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.08em; color: var(--text-faint);
       border-bottom: 1px solid var(--border);
     }
-
-    .comparison-table th:first-child {
-      color: var(--text);
-    }
-
-    .comparison-table th.highlight {
-      background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.15));
-      color: var(--text);
-    }
-
+    .comparison-table th.highlight { color: var(--amber); }
     .comparison-table td {
-      padding: 16px 24px;
-      border-bottom: 1px solid var(--border);
-      background: var(--bg-card);
+      padding: 14px 22px; border-bottom: 1px solid var(--border);
+      background: var(--bg-card); color: var(--text-dim);
     }
+    .comparison-table tr:last-child td { border-bottom: none; }
+    .comparison-table td.highlight { background: rgba(217,119,6,0.02); }
+    .comparison-table .feature-name { font-weight: 600; color: var(--text); }
+    .yes { color: var(--green); font-weight: 600; }
+    .no { color: var(--red); opacity: 0.7; }
+    .partial { color: var(--amber); opacity: 0.8; }
 
-    .comparison-table tr:last-child td {
-      border-bottom: none;
-    }
-
-    .comparison-table td.highlight {
-      background: rgba(99, 102, 241, 0.05);
-    }
-
-    .comparison-table .feature-name {
-      font-weight: 600;
-      color: var(--text);
-    }
-
-    .yes { color: var(--success); font-weight: 600; }
-    .no { color: #ef4444; }
-    .partial { color: #eab308; }
-
-    /* Pricing */
-    .pricing-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 24px;
-      align-items: start;
-    }
-
-    .price-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 40px 32px;
-      transition: border-color 0.25s, transform 0.25s;
-    }
-
-    .price-card:hover {
-      transform: translateY(-4px);
-    }
-
-    .price-card.featured {
-      border-color: var(--accent-start);
-      position: relative;
-      box-shadow: 0 0 60px rgba(99, 102, 241, 0.1);
-    }
-
-    .price-card.featured::before {
-      content: 'MOST POPULAR';
-      position: absolute;
-      top: -12px;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 4px 16px;
-      border-radius: 999px;
-      font-size: 0.72rem;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
-      color: white;
-    }
-
+    /* ── PRICING ── */
+    .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); }
+    .price-card { background: var(--bg-card); padding: 40px 30px; }
+    .price-card.featured { background: var(--bg-raised); }
+    .price-card.featured .price-tier { color: var(--amber); }
     .price-tier {
-      font-size: 0.85rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--text-muted);
-      margin-bottom: 8px;
+      font-family: var(--mono); font-size: 0.72rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--text-faint); margin-bottom: 8px;
     }
-
-    .price-amount {
-      font-size: 3rem;
-      font-weight: 800;
-      letter-spacing: -0.03em;
-      margin-bottom: 4px;
-    }
-
-    .price-amount .currency {
-      font-size: 1.5rem;
-      vertical-align: super;
-      color: var(--text-muted);
-    }
-
-    .price-period {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      margin-bottom: 28px;
-    }
-
-    .price-features {
-      list-style: none;
-      margin-bottom: 32px;
-    }
-
+    .price-amount { font-family: var(--mono); font-size: 2.8rem; font-weight: 800; letter-spacing: -0.04em; margin-bottom: 4px; }
+    .price-amount .currency { font-size: 1.2rem; color: var(--text-faint); vertical-align: super; }
+    .price-period { font-size: 0.82rem; color: var(--text-faint); margin-bottom: 28px; }
+    .price-features { list-style: none; margin-bottom: 28px; }
     .price-features li {
-      padding: 8px 0;
-      font-size: 0.9rem;
-      color: var(--text-muted);
-      display: flex;
-      align-items: center;
-      gap: 10px;
+      padding: 6px 0; font-size: 0.85rem; color: var(--text-dim);
+      display: flex; align-items: center; gap: 10px;
     }
-
     .price-features li::before {
-      content: '';
-      width: 18px;
-      height: 18px;
-      flex-shrink: 0;
-      border-radius: 50%;
-      background: rgba(34, 197, 94, 0.15);
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='%2322c55e' viewBox='0 0 16 16'%3E%3Cpath d='M13.485 1.929a.75.75 0 010 1.06l-7.78 7.78a.75.75 0 01-1.06 0L1.414 7.54a.75.75 0 111.06-1.06l2.7 2.7 7.25-7.25a.75.75 0 011.06 0z'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: center;
+      content: '+'; font-family: var(--mono); font-weight: 700;
+      color: var(--text-faint); font-size: 0.8rem; width: 16px; text-align: center;
     }
-
     .btn-price {
-      display: block;
-      width: 100%;
-      text-align: center;
-      padding: 14px;
-      border-radius: 10px;
-      font-size: 0.9rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
+      display: block; width: 100%; text-align: center; padding: 12px;
+      border-radius: 6px; font-size: 0.85rem; font-weight: 600;
+      cursor: pointer; transition: all 0.15s; font-family: var(--mono);
     }
-
     .btn-price-outline {
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--text);
+      background: transparent; border: 1px solid var(--border); color: var(--text-dim);
     }
-
-    .btn-price-outline:hover {
-      border-color: var(--border-hover);
-      background: rgba(255, 255, 255, 0.03);
-    }
-
+    .btn-price-outline:hover { border-color: var(--border-bright); color: var(--text); }
     .btn-price-primary {
-      background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
-      border: none;
-      color: white;
-      box-shadow: 0 0 30px rgba(99, 102, 241, 0.2);
+      background: var(--amber); border: 1px solid var(--amber); color: var(--bg);
+      font-weight: 700;
     }
+    .btn-price-primary:hover { opacity: 0.9; }
 
-    .btn-price-primary:hover {
-      box-shadow: 0 0 50px rgba(99, 102, 241, 0.3);
+    /* ── STATS ── */
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); }
+    .stat {
+      background: var(--bg-card); padding: 32px 24px; text-align: center;
     }
+    .stat-num { font-family: var(--mono); font-size: 2rem; font-weight: 800; color: var(--text); letter-spacing: -0.03em; }
+    .stat-label { font-size: 0.78rem; color: var(--text-faint); margin-top: 4px; }
 
-    /* Footer */
+    /* ── FAQ ── */
+    details {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 18px 22px; cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    details:hover { border-color: var(--border-bright); }
+    details[open] { border-color: var(--amber-dim); }
+    summary {
+      font-weight: 600; color: var(--text); font-size: 0.95rem;
+      list-style: none; display: flex; align-items: center; justify-content: space-between;
+    }
+    summary::after {
+      content: '+'; font-family: var(--mono); font-size: 1.1rem;
+      color: var(--text-faint); transition: transform 0.2s;
+    }
+    details[open] summary::after { content: '-'; color: var(--amber); }
+    summary::-webkit-details-marker { display: none; }
+    details p { margin-top: 14px; color: var(--text-dim); line-height: 1.75; font-size: 0.9rem; }
+    details code { font-family: var(--mono); color: var(--amber); font-size: 0.85em; background: var(--amber-glow); padding: 1px 6px; border-radius: 3px; }
+
+    /* ── FOOTER ── */
     footer {
-      position: relative;
-      z-index: 1;
-      border-top: 1px solid var(--border);
-      padding: 40px 24px;
+      position: relative; z-index: 1; border-top: 1px solid var(--border);
+      padding: 32px 24px;
     }
-
     .footer-inner {
-      max-width: var(--max-w);
-      margin: 0 auto;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 16px;
+      max-width: var(--max-w); margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 16px;
     }
+    .footer-left { font-family: var(--mono); font-size: 0.75rem; color: var(--text-faint); }
+    .footer-links { display: flex; gap: 20px; list-style: none; flex-wrap: wrap; }
+    .footer-links a { font-size: 0.78rem; color: var(--text-faint); transition: color 0.15s; }
+    .footer-links a:hover { color: var(--text-dim); }
 
-    .footer-left {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-    }
+    /* ── ANIMATIONS ── */
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
 
-    .footer-links {
-      display: flex;
-      gap: 24px;
-      list-style: none;
-    }
-
-    .footer-links a {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      transition: color 0.2s;
-    }
-
-    .footer-links a:hover {
-      color: var(--text);
-    }
-
-    /* Animations */
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50%      { opacity: 0.4; }
-    }
-
-    .reveal {
-      opacity: 0;
-      transform: translateY(30px);
-      transition: opacity 0.7s ease-out, transform 0.7s ease-out;
-    }
-
-    .reveal.visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    /* Responsive */
+    /* ── RESPONSIVE ── */
     @media (max-width: 900px) {
-      .cards,
-      .pricing-grid {
-        grid-template-columns: 1fr;
-        max-width: 480px;
-        margin-left: auto;
-        margin-right: auto;
-      }
-
-      .comparison-table {
-        font-size: 0.8rem;
-      }
-
-      .comparison-table th,
-      .comparison-table td {
-        padding: 12px 14px;
-      }
+      .cards, .pricing-grid { grid-template-columns: 1fr; max-width: 440px; margin-left: auto; margin-right: auto; background: none; border: none; gap: 12px; }
+      .card, .price-card { border-radius: var(--radius); border: 1px solid var(--border); }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .comparison-table { font-size: 0.78rem; }
+      .comparison-table th, .comparison-table td { padding: 10px 12px; }
     }
-
     @media (max-width: 600px) {
-      section {
-        padding: 64px 16px;
-      }
-
-      .hero {
-        padding-top: 120px;
-      }
-
-      .nav-links .hide-mobile {
-        display: none;
-      }
-
-      .hero-ctas {
-        flex-direction: column;
-        align-items: center;
-      }
-
-      .btn {
-        width: 100%;
-        justify-content: center;
-      }
-
-      .comparison-wrapper {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-      }
-
-      .comparison-table {
-        min-width: 600px;
-      }
-
-      .terminal-body {
-        font-size: 0.75rem;
-        padding: 16px;
-      }
+      section { padding: 64px 16px; }
+      .hero { padding-top: 110px; }
+      .nav-links .hide-mobile { display: none; }
+      .hero-ctas { flex-direction: column; }
+      .btn { width: 100%; justify-content: center; }
+      .comparison-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      .comparison-table { min-width: 580px; }
+      .terminal-body { font-size: 0.72rem; padding: 16px; }
+      .stats { grid-template-columns: 1fr 1fr; }
     }
   </style>
 </head>
 <body>
 
-<!-- Nav -->
 <nav>
   <div class="nav-inner">
-    <a href="#" class="logo">Tappy</a>
+    <a href="#" class="logo">tappy</a>
     <ul class="nav-links">
       <li><a href="#features" class="hide-mobile">Features</a></li>
       <li><a href="#pricing" class="hide-mobile">Pricing</a></li>
@@ -731,59 +408,52 @@
   </div>
 </nav>
 
-<!-- Hero -->
 <section class="hero">
   <div class="container">
     <div class="hero-badge">
       <span class="dot"></span>
       Open source &middot; Self-hosted &middot; Zero lock-in
     </div>
-    <h1>
-      Stop paying per<br><span class="gradient">automation task</span>
-    </h1>
+    <h1>Stop paying per<br><span class="highlight">automation task</span></h1>
     <p class="subtitle">
-      AI compiles once. Programs run forever. <strong style="color: var(--text)">$0 per execution.</strong><br>
+      AI compiles once. Programs run forever. <strong>$0 per execution.</strong><br>
       Tappy forges deterministic browser programs from natural language.
     </p>
     <div class="hero-ctas">
       <a href="#pricing" class="btn btn-primary">Start Free</a>
-      <a href="#demo" class="btn btn-secondary">See It Work</a>
+      <a href="#demo" class="btn btn-secondary">See It Work &darr;</a>
     </div>
   </div>
 </section>
 
-<!-- How It Works -->
 <section id="features">
   <div class="container reveal">
     <div class="section-label">How It Works</div>
     <h2 class="section-title">Three steps. Then zero AI cost.</h2>
-    <p class="section-desc">
-      Tappy uses AI once to compile your intent into a deterministic program. After that, it runs forever without AI.
-    </p>
-    <div class="cards">
-      <div class="card">
-        <div class="card-icon">1</div>
+    <p class="section-desc">Tappy uses AI once to compile your intent into a deterministic program. After that, it runs forever without AI.</p>
+    <div class="cards" style="margin-top:48px;">
+      <article class="card">
+        <div class="card-num">01</div>
         <h3>Forge</h3>
-        <p>Describe what you want in plain English. AI inspects the page, observes network traffic, and writes a deterministic program.</p>
+        <p>Describe what you want in plain English. AI inspects the page, discovers APIs, and writes a deterministic <code>.tap.js</code> program.</p>
         <span class="tag">One-time AI cost</span>
-      </div>
-      <div class="card">
-        <div class="card-icon">2</div>
+      </article>
+      <article class="card">
+        <div class="card-num">02</div>
         <h3>Run</h3>
         <p>Execute the forged program instantly. No AI involved. No tokens consumed. Pure deterministic replay, every single time.</p>
         <span class="tag">$0 forever</span>
-      </div>
-      <div class="card">
-        <div class="card-icon">3</div>
+      </article>
+      <article class="card">
+        <div class="card-num">03</div>
         <h3>Heal</h3>
-        <p>Most automation breaks in 2 weeks. With Tappy, <code style="color:var(--accent-start)">tappy doctor --auto</code> detects breakage, diagnoses the root cause, and re-forges the program. Your automations fix themselves.</p>
+        <p>Most automation breaks in 2 weeks. With Tappy, <code>tappy doctor --auto</code> detects breakage, diagnoses the root cause, and re-forges the program.</p>
         <span class="tag">Self-repairing</span>
-      </div>
+      </article>
     </div>
   </div>
 </section>
 
-<!-- Code Demo -->
 <section class="demo-section" id="demo">
   <div class="container reveal">
     <div style="text-align:center; margin-bottom:48px;">
@@ -795,15 +465,14 @@
         <span class="terminal-dot"></span>
         <span class="terminal-dot"></span>
         <span class="terminal-dot"></span>
-        <span class="terminal-title">tappy &mdash; zsh</span>
-        <span style="width:36px"></span>
+        <span class="terminal-title">tappy</span>
+        <span style="width:30px"></span>
       </div>
       <div class="terminal-body" id="terminal-output"></div>
     </div>
   </div>
 </section>
 
-<!-- Comparison -->
 <section id="comparison">
   <div class="container reveal">
     <div style="text-align:center; margin-bottom:48px;">
@@ -822,77 +491,26 @@
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td class="feature-name">Cost per run</td>
-            <td class="highlight"><span class="yes">$0</span></td>
-            <td>$0.01&ndash;0.05</td>
-            <td>Self-host</td>
-            <td>$0.02&ndash;0.10</td>
-          </tr>
-          <tr>
-            <td class="feature-name">AI tokens per run</td>
-            <td class="highlight"><span class="yes">0</span></td>
-            <td>N/A</td>
-            <td>N/A</td>
-            <td><span class="no">Thousands</span></td>
-          </tr>
-          <tr>
-            <td class="feature-name">Deterministic output</td>
-            <td class="highlight"><span class="yes">Always</span></td>
-            <td><span class="yes">Yes</span></td>
-            <td><span class="yes">Yes</span></td>
-            <td><span class="no">No</span></td>
-          </tr>
-          <tr>
-            <td class="feature-name">Handles any website</td>
-            <td class="highlight"><span class="yes">Yes</span></td>
-            <td><span class="no">API only</span></td>
-            <td><span class="partial">Partial</span></td>
-            <td><span class="yes">Yes</span></td>
-          </tr>
-          <tr>
-            <td class="feature-name">Self-healing</td>
-            <td class="highlight"><span class="yes">tappy doctor</span></td>
-            <td><span class="no">No</span></td>
-            <td><span class="no">No</span></td>
-            <td><span class="partial">Retries</span></td>
-          </tr>
-          <tr>
-            <td class="feature-name">Open source</td>
-            <td class="highlight"><span class="yes">Yes</span></td>
-            <td><span class="no">No</span></td>
-            <td><span class="yes">Yes</span></td>
-            <td><span class="yes">Yes</span></td>
-          </tr>
-          <tr>
-            <td class="feature-name">Sandboxed execution</td>
-            <td class="highlight"><span class="yes">Zero permissions</span></td>
-            <td><span class="partial">Cloud only</span></td>
-            <td><span class="no">Full access</span></td>
-            <td><span class="no">Full access</span></td>
-          </tr>
-          <tr>
-            <td class="feature-name">Runs offline</td>
-            <td class="highlight"><span class="yes">Yes</span></td>
-            <td><span class="no">No</span></td>
-            <td><span class="yes">Yes</span></td>
-            <td><span class="no">No</span></td>
-          </tr>
+          <tr><td class="feature-name">Cost per run</td><td class="highlight"><span class="yes">$0</span></td><td>$0.01&ndash;0.05</td><td>Self-host</td><td>$0.02&ndash;0.10</td></tr>
+          <tr><td class="feature-name">AI tokens per run</td><td class="highlight"><span class="yes">0</span></td><td>N/A</td><td>N/A</td><td><span class="no">Thousands</span></td></tr>
+          <tr><td class="feature-name">Deterministic output</td><td class="highlight"><span class="yes">Always</span></td><td><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td><td><span class="no">No</span></td></tr>
+          <tr><td class="feature-name">Handles any website</td><td class="highlight"><span class="yes">Yes</span></td><td><span class="no">API only</span></td><td><span class="partial">Partial</span></td><td><span class="yes">Yes</span></td></tr>
+          <tr><td class="feature-name">Self-healing</td><td class="highlight"><span class="yes">tappy doctor</span></td><td><span class="no">No</span></td><td><span class="no">No</span></td><td><span class="partial">Retries</span></td></tr>
+          <tr><td class="feature-name">Open source</td><td class="highlight"><span class="yes">Yes</span></td><td><span class="no">No</span></td><td><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td></tr>
+          <tr><td class="feature-name">Sandboxed execution</td><td class="highlight"><span class="yes">Zero permissions</span></td><td><span class="partial">Cloud only</span></td><td><span class="no">Full access</span></td><td><span class="no">Full access</span></td></tr>
+          <tr><td class="feature-name">Runs offline</td><td class="highlight"><span class="yes">Yes</span></td><td><span class="no">No</span></td><td><span class="yes">Yes</span></td><td><span class="no">No</span></td></tr>
         </tbody>
       </table>
     </div>
   </div>
 </section>
 
-<!-- Pricing -->
 <section id="pricing">
   <div class="container reveal">
-    <div style="text-align:center; margin-bottom:56px;">
+    <div style="text-align:center; margin-bottom:48px;">
       <div class="section-label">Pricing</div>
       <h2 class="section-title">Free forever. Pay only for power.</h2>
-      <p class="section-desc" style="margin:12px auto 0;">
-        Every plan includes unlimited runs at $0. You only pay for forge capacity and premium features.
-      </p>
+      <p class="section-desc" style="margin:12px auto 0;">Every plan includes unlimited runs at $0. You only pay for forge capacity.</p>
     </div>
     <div class="pricing-grid">
       <div class="price-card">
@@ -902,20 +520,20 @@
         <ul class="price-features">
           <li>5 forges per month</li>
           <li>Unlimited runs at $0</li>
-          <li>Community skills library</li>
-          <li>Chrome + Playwright runtimes</li>
+          <li>185+ community taps</li>
+          <li>Chrome + Playwright</li>
           <li>CLI + MCP server</li>
         </ul>
         <a href="getting-started.html" class="btn-price btn-price-outline">Get Started</a>
       </div>
       <div class="price-card featured">
         <div class="price-tier">Hacker</div>
-        <div class="price-amount"><span class="currency">$</span>9<span style="font-size:1rem;color:var(--text-muted)">/mo</span></div>
+        <div class="price-amount"><span class="currency">$</span>9<span style="font-size:0.9rem;color:var(--text-faint)">/mo</span></div>
         <div class="price-period">billed monthly</div>
         <ul class="price-features">
           <li>50 forges per month</li>
           <li>Unlimited runs at $0</li>
-          <li>Auto-heal with tappy doctor</li>
+          <li>Auto-heal (doctor --auto)</li>
           <li>macOS native runtime</li>
           <li>Priority forge queue</li>
           <li>Plugin system</li>
@@ -924,16 +542,15 @@
       </div>
       <div class="price-card">
         <div class="price-tier">Pro</div>
-        <div class="price-amount"><span class="currency">$</span>29<span style="font-size:1rem;color:var(--text-muted)">/mo</span></div>
+        <div class="price-amount"><span class="currency">$</span>29<span style="font-size:0.9rem;color:var(--text-faint)">/mo</span></div>
         <div class="price-period">billed monthly</div>
         <ul class="price-features">
           <li>Unlimited forges</li>
           <li>Unlimited runs at $0</li>
-          <li>Team sharing &amp; collaboration</li>
-          <li>All runtimes (Chrome, Playwright, macOS)</li>
-          <li>Scheduled runs &amp; webhooks</li>
+          <li>Built-in AI (no key needed)</li>
+          <li>All runtimes</li>
+          <li>Scheduled runs + webhooks</li>
           <li>Priority support</li>
-          <li>Custom plugins</li>
         </ul>
         <a href="https://creem.io/product/prod_PuGOPlylFnnwMBterYASO" class="btn-price btn-price-outline">Get Pro</a>
       </div>
@@ -941,86 +558,66 @@
   </div>
 </section>
 
-<!-- Social Proof -->
-<section id="proof" style="padding:80px 0; text-align:center;">
+<section id="proof" style="padding:72px 24px;">
   <div class="container reveal">
-    <div style="display:flex; justify-content:center; gap:64px; flex-wrap:wrap;">
-      <div>
-        <div style="font-size:3rem; font-weight:700; color:var(--text);">185+</div>
-        <div style="color:var(--text-muted); font-size:0.9rem;">Pre-built taps</div>
-      </div>
-      <div>
-        <div style="font-size:3rem; font-weight:700; color:var(--text);">8+17</div>
-        <div style="color:var(--text-muted); font-size:0.9rem;">Protocol operations</div>
-      </div>
-      <div>
-        <div style="font-size:3rem; font-weight:700; color:var(--text);">3</div>
-        <div style="color:var(--text-muted); font-size:0.9rem;">Runtimes (Chrome, Playwright, macOS)</div>
-      </div>
-      <div>
-        <div style="font-size:3rem; font-weight:700; color:var(--text);">$0</div>
-        <div style="color:var(--text-muted); font-size:0.9rem;">Per execution, forever</div>
-      </div>
+    <div class="stats">
+      <div class="stat"><div class="stat-num">185+</div><div class="stat-label">Pre-built taps</div></div>
+      <div class="stat"><div class="stat-num">25</div><div class="stat-label">Protocol operations</div></div>
+      <div class="stat"><div class="stat-num">3</div><div class="stat-label">Runtimes</div></div>
+      <div class="stat"><div class="stat-num">$0</div><div class="stat-label">Per run, forever</div></div>
     </div>
   </div>
 </section>
 
-<!-- FAQ -->
-<section id="faq" style="padding:80px 0; border-top:1px solid rgba(255,255,255,0.06);">
-  <div class="container reveal" style="max-width:720px;">
+<section id="faq" style="padding:80px 24px;">
+  <div class="container reveal" style="max-width:680px;">
     <div style="text-align:center; margin-bottom:48px;">
       <div class="section-label">FAQ</div>
       <h2 class="section-title">Common questions</h2>
     </div>
-    <div style="display:flex; flex-direction:column; gap:24px;">
-      <details style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:20px 24px; cursor:pointer;">
-        <summary style="font-weight:500; color:var(--text); font-size:1.05rem;">Do I need to be a developer to use Tappy?</summary>
-        <p style="margin-top:12px; color:var(--text-muted); line-height:1.7;">Tappy is a CLI tool, so basic terminal familiarity helps. But the core workflow is just two commands: <code>tappy forge "what you want"</code> and <code>tappy run site name</code>. If you can type in a terminal, you can use Tappy. The 185+ pre-built taps work with zero setup.</p>
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <details>
+        <summary>Do I need to be a developer to use Tappy?</summary>
+        <p>Tappy is a CLI tool, so basic terminal familiarity helps. The core workflow is just two commands: <code>tappy forge "what you want"</code> and <code>tappy run site name</code>. The 185+ pre-built taps work with zero setup.</p>
       </details>
-      <details style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:20px 24px; cursor:pointer;">
-        <summary style="font-weight:500; color:var(--text); font-size:1.05rem;">Is my data safe? What does Tappy access?</summary>
-        <p style="margin-top:12px; color:var(--text-muted); line-height:1.7;">Tappy programs run in a sandboxed Worker with zero permissions &mdash; no filesystem, no network, no subprocess access. The Chrome Extension only activates when you forge (observe a page). Your data never leaves your machine. Everything is local and open source.</p>
+      <details>
+        <summary>Is my data safe? What does Tappy access?</summary>
+        <p>Tappy programs run in a sandboxed Worker with zero permissions &mdash; no filesystem, no network, no subprocess access. The Chrome Extension only activates when you forge. Your data never leaves your machine.</p>
       </details>
-      <details style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:20px 24px; cursor:pointer;">
-        <summary style="font-weight:500; color:var(--text); font-size:1.05rem;">What happens when a website changes its layout?</summary>
-        <p style="margin-top:12px; color:var(--text-muted); line-height:1.7;">Tappy's doctor runs health checks against declared contracts. When a tap breaks, <code>tappy doctor --auto</code> diagnoses the issue (changed selectors, moved APIs, new auth) and re-forges the program automatically. Most fixes happen without you noticing.</p>
+      <details>
+        <summary>What happens when a website changes?</summary>
+        <p><code>tappy doctor --auto</code> runs health checks against declared contracts. When a tap breaks, it diagnoses the issue and re-forges the program automatically. Most fixes happen without you noticing.</p>
       </details>
-      <details style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:20px 24px; cursor:pointer;">
-        <summary style="font-weight:500; color:var(--text); font-size:1.05rem;">How is this different from Zapier or n8n?</summary>
-        <p style="margin-top:12px; color:var(--text-muted); line-height:1.7;">Zapier charges per task ($0.01&ndash;$0.05 each). At scale, that's $40K+/year. n8n is free but needs DevOps to self-host. Tappy has zero per-execution cost &mdash; AI runs once to create the program, then it runs forever for free. No servers, no billing surprises.</p>
+      <details>
+        <summary>How is this different from Zapier or n8n?</summary>
+        <p>Zapier charges per task ($0.01&ndash;$0.05 each). At scale, that's $40K+/year. n8n is free but needs DevOps. Tappy has zero per-execution cost &mdash; AI runs once, program runs forever for free.</p>
       </details>
-      <details style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:20px 24px; cursor:pointer;">
-        <summary style="font-weight:500; color:var(--text); font-size:1.05rem;">Can I use my own AI key instead of paying for Pro?</summary>
-        <p style="margin-top:12px; color:var(--text-muted); line-height:1.7;">Yes. <code>tappy config set ai.key sk-ant-xxx</code> lets you bring your own Claude or OpenAI key. The Hacker plan ($9/mo) unlocks forge with your own key. The Pro plan ($29/mo) includes AI &mdash; no key needed.</p>
+      <details>
+        <summary>Can I use my own AI key?</summary>
+        <p>Yes. <code>tappy config set ai.key sk-ant-xxx</code> lets you bring your own Claude or OpenAI key. The Hacker plan unlocks forge with your own key. Pro includes AI built-in.</p>
       </details>
-      <details style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:20px 24px; cursor:pointer;">
-        <summary style="font-weight:500; color:var(--text); font-size:1.05rem;">Do I own the programs Tappy creates?</summary>
-        <p style="margin-top:12px; color:var(--text-muted); line-height:1.7;">Yes. Every <code>.tap.js</code> file is a plain JavaScript program on your disk. No lock-in, no cloud dependency. Cancel your subscription and your programs keep running forever. You can even read and edit them by hand.</p>
+      <details>
+        <summary>Do I own the programs Tappy creates?</summary>
+        <p>Yes. Every <code>.tap.js</code> file is a plain JavaScript program on your disk. No lock-in, no cloud dependency. Cancel and your programs keep running forever.</p>
       </details>
     </div>
   </div>
 </section>
 
-<!-- Final CTA -->
-<section style="padding:100px 0; text-align:center; background:linear-gradient(180deg, transparent, rgba(79,70,229,0.08));">
+<section style="padding:80px 24px; text-align:center;">
   <div class="container reveal">
-    <h2 class="section-title" style="margin-bottom:16px;">Stop renting automation.<br>Start owning it.</h2>
-    <p class="section-desc" style="margin:0 auto 32px; max-width:500px;">
-      185 pre-built taps. Zero cost per run. Self-healing when sites change.
-    </p>
-    <div style="display:flex; gap:16px; justify-content:center; flex-wrap:wrap;">
-      <a href="getting-started.html" class="btn btn-primary" style="font-size:1.05rem; padding:14px 32px;">Get Started Free</a>
-      <a href="#pricing" class="btn btn-secondary" style="font-size:1.05rem; padding:14px 32px;">View Pricing</a>
+    <h2 class="section-title">Stop renting automation.<br>Start owning it.</h2>
+    <p class="section-desc" style="margin:0 auto 28px;">185 pre-built taps. Zero cost per run. Self-healing when sites change.</p>
+    <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+      <a href="getting-started.html" class="btn btn-primary">Get Started Free</a>
+      <a href="#pricing" class="btn btn-secondary">View Pricing</a>
     </div>
   </div>
 </section>
 
-<!-- Footer -->
 <footer>
   <div class="footer-inner">
-    <div class="footer-left">
-      &copy; 2026 Tappy. Programs beat prompts.
-    </div>
+    <div class="footer-left">&copy; 2026 Tappy. Programs beat prompts.</div>
     <ul class="footer-links">
       <li><a href="https://github.com/LeonTing1010/tap" target="_blank" rel="noopener">GitHub</a></li>
       <li><a href="getting-started.html">Docs</a></li>
@@ -1045,30 +642,28 @@
         observer.unobserve(entry.target);
       }
     });
-  }, { threshold: 0.12 });
-
+  }, { threshold: 0.1 });
   reveals.forEach(function(el) { observer.observe(el); });
 
   // Terminal typewriter
   var lines = [
     { text: '<span class="prompt">$</span> <span class="cmd">tappy forge</span> <span class="flag">"scrape Hacker News top stories"</span>', delay: 0 },
-    { text: '<span class="spinner">&#9737;</span> <span class="muted">Inspecting https://news.ycombinator.com...</span>', delay: 600 },
-    { text: '<span class="spinner">&#9737;</span> <span class="muted">AI writing tap code...</span>', delay: 1200 },
-    { text: '<span class="check">&#10004;</span> <span class="cmd">Saved hackernews/hot.tap.js</span>', delay: 1800 },
-    { text: '', delay: 2200 },
-    { text: '<span class="prompt">$</span> <span class="cmd">tappy run hackernews hot</span>', delay: 2600 },
-    { text: '<span class="table-border">&#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9516;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9516;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;</span>', delay: 3200 },
-    { text: '<span class="table-border">&#9474;</span> rank <span class="table-border">&#9474;</span> title                <span class="table-border">&#9474;</span> score <span class="table-border">&#9474;</span>', delay: 3200 },
-    { text: '<span class="table-border">&#9500;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9508;</span>', delay: 3200 },
-    { text: '<span class="table-border">&#9474;</span> 1    <span class="table-border">&#9474;</span> Show HN: Tappy       <span class="table-border">&#9474;</span>   342 <span class="table-border">&#9474;</span>', delay: 3400 },
-    { text: '<span class="table-border">&#9474;</span> 2    <span class="table-border">&#9474;</span> Rust is eating Go    <span class="table-border">&#9474;</span>   287 <span class="table-border">&#9474;</span>', delay: 3600 },
-    { text: '<span class="table-border">&#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9524;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9524;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;</span>', delay: 3800 },
-    { text: '<span class="cost">Cost: $0.00</span> <span class="muted">(run #847)</span>', delay: 4200 }
+    { text: '<span class="spinner">&bull;</span> <span class="muted">Inspecting https://news.ycombinator.com...</span>', delay: 700 },
+    { text: '<span class="spinner">&bull;</span> <span class="muted">AI writing tap code...</span>', delay: 1400 },
+    { text: '<span class="check">&#10004;</span> <span class="cmd">Saved hackernews/hot.tap.js</span>', delay: 2100 },
+    { text: '', delay: 2600 },
+    { text: '<span class="prompt">$</span> <span class="cmd">tappy run</span> hackernews hot', delay: 3000 },
+    { text: '<span class="table-border">&#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9516;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9516;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;</span>', delay: 3500 },
+    { text: '<span class="table-border">&#9474;</span> rank <span class="table-border">&#9474;</span> title                <span class="table-border">&#9474;</span> score <span class="table-border">&#9474;</span>', delay: 3500 },
+    { text: '<span class="table-border">&#9500;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9508;</span>', delay: 3500 },
+    { text: '<span class="table-border">&#9474;</span> 1    <span class="table-border">&#9474;</span> Show HN: Tappy       <span class="table-border">&#9474;</span>   342 <span class="table-border">&#9474;</span>', delay: 3700 },
+    { text: '<span class="table-border">&#9474;</span> 2    <span class="table-border">&#9474;</span> Rust is eating Go    <span class="table-border">&#9474;</span>   287 <span class="table-border">&#9474;</span>', delay: 3900 },
+    { text: '<span class="table-border">&#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9524;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9524;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;</span>', delay: 4100 },
+    { text: '<span class="cost">Cost: $0.00</span> <span class="muted">(run #847 &mdash; zero AI tokens)</span>', delay: 4500 }
   ];
 
   var terminalEl = document.getElementById('terminal-output');
   var started = false;
-
   var termObserver = new IntersectionObserver(function(entries) {
     entries.forEach(function(entry) {
       if (entry.isIntersecting && !started) {
@@ -1078,8 +673,8 @@
             var div = document.createElement('div');
             div.innerHTML = line.text || '&nbsp;';
             div.style.opacity = '0';
-            div.style.transform = 'translateY(8px)';
-            div.style.transition = 'opacity 0.3s, transform 0.3s';
+            div.style.transform = 'translateY(6px)';
+            div.style.transition = 'opacity 0.25s, transform 0.25s';
             terminalEl.appendChild(div);
             requestAnimationFrame(function() {
               div.style.opacity = '1';
@@ -1091,17 +686,13 @@
       }
     });
   }, { threshold: 0.3 });
-
   termObserver.observe(terminalEl.closest('.terminal'));
 
-  // Smooth scroll for anchor links
+  // Smooth scroll
   document.querySelectorAll('a[href^="#"]').forEach(function(link) {
     link.addEventListener('click', function(e) {
       var target = document.querySelector(link.getAttribute('href'));
-      if (target) {
-        e.preventDefault();
-        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
+      if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
     });
   });
 </script>
