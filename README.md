@@ -231,7 +231,7 @@ Tap ships as **one binary + one extension**. No package manager, no dependencies
 |-----------|------|--------|
 | `tap` binary | CLI, MCP server, executor, all runtimes | [Releases](https://github.com/LeonTing1010/tap/releases/latest) |
 | Chrome Extension | Runtime #1 — your real browser | [Releases](https://github.com/LeonTing1010/tap/releases/latest) / [source](extension/) |
-| Community Skills | 133 taps across 58 sites, open source | [tap-skills](https://github.com/LeonTing1010/tap-skills) |
+| Community Skills | 140+ skills across 65+ sites, open source | [tap-skills](https://github.com/LeonTing1010/tap-skills) |
 
 ### This Repository
 
@@ -262,7 +262,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). The easiest way to contribute: **forge a
 
 ## Roadmap
 
-- [x] Community skills across 55+ sites
+- [x] Community skills across 65+ sites
 - [x] 3 runtimes — Chrome Extension, Playwright, macOS
 - [x] Unix pipes — `tap A | tap B`
 - [x] Watch mode — `tap watch site name --every 5m`
@@ -270,7 +270,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). The easiest way to contribute: **forge a
 - [x] Doctor — self-healing health checks
 - [ ] Android runtime (AccessibilityService)
 - [ ] iOS runtime (XCUITest)
-- [ ] `tap doctor --auto` — re-forge broken taps automatically
+- [x] `tap doctor --auto` — re-forge broken taps automatically
 
 ## License
 
