@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Getting Started — Tappy</title>
-<meta name="description" content="Install Tappy, run your first tap in 2 minutes, then forge your own automation.">
+<title>Getting Started — Tap</title>
+<meta name="description" content="Install Tap, run your first tap in 2 minutes, then forge your own automation.">
 <link rel="canonical" href="https://taprun.dev/getting-started.html">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Ccircle cx='256' cy='256' r='240' fill='%234F46E5'/%3E%3Ccircle cx='290' cy='275' r='80' fill='white'/%3E%3Ccircle cx='230' cy='210' r='58' fill='white'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -38,11 +38,11 @@ pre .flag { color: #fbbf24; }
 </head>
 <body>
 <div class="container">
-<a href="./" class="back">&larr; Back to Tappy</a>
+<a href="./" class="back">&larr; Back to Tap</a>
 <h1>Getting Started</h1>
 <p class="subtitle">Install to first result in 2 minutes.</p>
 
-<h2><span class="step">1</span> Install Tappy</h2>
+<h2><span class="step">1</span> Install Tap</h2>
 <pre><span class="comment"># macOS / Linux</span>
 <span class="cmd">curl</span> -fsSL https://taprun.dev/install.sh | sh
 
@@ -52,7 +52,7 @@ pre .flag { color: #fbbf24; }
 <p>This installs the <code>tap</code> CLI binary to <code>/usr/local/bin/</code> and the Chrome Extension to <code>~/.tap/extension/</code>.</p>
 
 <h2><span class="step">2</span> Load Chrome Extension</h2>
-<p>The extension lets Tappy observe and control web pages (one-time setup).</p>
+<p>The extension lets Tap observe and control web pages (one-time setup).</p>
 <ol style="padding-left: 20px; color: #b0b0b0;">
 <li>Open Chrome and go to <code>chrome://extensions/</code></li>
 <li>Enable <strong style="color:#fff">Developer mode</strong> (top right toggle)</li>
@@ -71,7 +71,7 @@ pre .flag { color: #fbbf24; }
 <span class="cmd">tap</span> hackernews hot
 <span class="output">&#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9516;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9516;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;</span>
 <span class="output">&#9474; rank &#9474; title                          &#9474; score &#9474;</span>
-<span class="output">&#9474; 1    &#9474; Show HN: Tappy                 &#9474;   342 &#9474;</span>
+<span class="output">&#9474; 1    &#9474; Show HN: Tap                 &#9474;   342 &#9474;</span>
 <span class="output">&#9474; 2    &#9474; Rust is eating Go              &#9474;   287 &#9474;</span>
 <span class="output">&#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9524;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9524;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;</span>
 <span class="output">30 rows (245ms) Cost: $0.00</span></pre>
@@ -113,7 +113,7 @@ pre .flag { color: #fbbf24; }
 <span class="cmd">tap</span> watch hackernews hot <span class="flag">--every 1h</span></pre>
 
 <h2><span class="step">6</span> Use with AI Agents (Optional)</h2>
-<p>Tappy works as an MCP server. Add it to Claude Code, Cursor, or any MCP client:</p>
+<p>Tap works as an MCP server. Add it to Claude Code, Cursor, or any MCP client:</p>
 <pre><span class="comment"># Claude Code</span>
 <span class="cmd">claude</span> mcp add tap -- tap mcp
 
