@@ -1570,15 +1570,9 @@ h2 .hl {
               <ellipse cx="103" cy="35" rx="10" ry="16" fill="#B91C1C"/>
               <animateTransform attributeName="transform" type="rotate" values="-2,85,50;3,85,50;-2,85,50" dur="2s" repeatCount="indefinite"/>
             </g>
-            <!-- Beak — open/close -->
-            <g>
-              <path d="M 55 68 L 8 75 L 55 78 Z" fill="#FBBF24"/>
-              <animateTransform attributeName="transform" type="rotate" values="0,55,75;-4,55,75;0,55,75" dur="3s" repeatCount="indefinite"/>
-            </g>
-            <g>
-              <path d="M 55 78 L 8 75 L 55 85 Z" fill="#D97706"/>
-              <animateTransform attributeName="transform" type="rotate" values="0,55,75;3,55,75;0,55,75" dur="3s" repeatCount="indefinite"/>
-            </g>
+            <!-- Beak -->
+            <path d="M 55 68 L 8 75 L 55 85 Z" fill="#FBBF24"/>
+            <path d="M 55 85 L 8 75 L 12 82 Z" fill="#D97706"/>
             <!-- Eye -->
             <circle cx="70" cy="65" r="14" fill="#1F2937"/>
             <circle cx="66" cy="61" r="5" fill="#FFFFFF"/>
@@ -1604,22 +1598,10 @@ h2 .hl {
               <path d="M 150 145 L 180 190 L 162 185 L 148 150 Z" fill="#6366F1"/>
               <animateTransform attributeName="transform" type="rotate" values="-3,145,145;5,145,145;-3,145,145" dur="1.8s" repeatCount="indefinite"/>
             </g>
-            <!-- Tap ripples — pulse -->
-            <g opacity="0.9">
-              <path d="M 5 65 A 25 25 0 0 1 5 90" fill="none" stroke="#6366F1" stroke-width="4" stroke-linecap="round">
-                <animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite"/>
-              </path>
-            </g>
-            <g opacity="0.7">
-              <path d="M -12 55 A 40 40 0 0 1 -12 100" fill="none" stroke="#6366F1" stroke-width="3.5" stroke-linecap="round">
-                <animate attributeName="opacity" values="0.7;0.1;0.7" dur="2s" begin="0.3s" repeatCount="indefinite"/>
-              </path>
-            </g>
-            <g opacity="0.45">
-              <path d="M -28 42 A 55 55 0 0 1 -28 112" fill="none" stroke="#6366F1" stroke-width="3" stroke-linecap="round">
-                <animate attributeName="opacity" values="0.45;0;0.45" dur="2s" begin="0.6s" repeatCount="indefinite"/>
-              </path>
-            </g>
+            <!-- Tap ripples — static -->
+            <path d="M 5 65 A 25 25 0 0 1 5 90" fill="none" stroke="#6366F1" stroke-width="4" stroke-linecap="round"/>
+            <path d="M -12 55 A 40 40 0 0 1 -12 100" fill="none" stroke="#6366F1" stroke-width="3.5" stroke-linecap="round" opacity="0.7"/>
+            <path d="M -28 42 A 55 55 0 0 1 -28 112" fill="none" stroke="#6366F1" stroke-width="3" stroke-linecap="round" opacity="0.45"/>
           </svg>
         </div>
         <div class="hero-terminal">
