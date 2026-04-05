@@ -103,15 +103,15 @@ async function execFunc(tabId, func, ...args) {
 
 // --- Tab Resolution ---
 
-async function resolveTab(params) {
+async function resolveTab(params, { allowUnscriptable = false } = {}) {
   const explicitTabId = params.tabId ? Number(params.tabId) : null
   let tabId = explicitTabId || activeTabId
 
   if (tabId) {
     try {
       const tab = await chrome.tabs.get(tabId)
-      // Skip chrome:// tabs — can't run scripts on them
-      if (tab.url?.startsWith('chrome://') || tab.url?.startsWith('chrome-extension://')) {
+      // Skip chrome:// tabs — can't run scripts on them (unless caller handles it, e.g. nav)
+      if (!allowUnscriptable && (tab.url?.startsWith('chrome://') || tab.url?.startsWith('chrome-extension://'))) {
         // If explicitly requested tab is unscriptable, fail — don't silently switch tabs
         if (explicitTabId) throw new Error(`Tab ${tabId} is not scriptable (${tab.url})`)
         tabId = null
@@ -149,7 +149,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 })
 
 async function handleMethod(method, params = {}, senderTabId = null) {
-  let tabId = await resolveTab(params)
+  // nav handles chrome:// tabs itself (replaces with new tab) — let it through
+  const allowUnscriptable = method === 'nav'
+  let tabId = await resolveTab(params, { allowUnscriptable })
 
   // nav and tab.new can work without an existing tab — they create one
   if (!tabId && method !== 'nav' && method !== 'tab.new' && method !== 'tab.list' && method !== 'capabilities') {
