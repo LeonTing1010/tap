@@ -19,11 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
----
-
-## Tap Binary
-
-The `tap` CLI binary distributed via GitHub Releases is provided as a
-free-to-use proprietary binary. It is not covered by this MIT license.
-You may use it freely, but its source code is not included in this repository.
