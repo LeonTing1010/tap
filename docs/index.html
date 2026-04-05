@@ -231,6 +231,41 @@ nav .container {
 .terminal-body .cmd { color: var(--white); font-weight: 500; }
 .terminal-body .comment { color: var(--text-muted); }
 
+/* Terminal typing animation */
+.terminal-body .line {
+  opacity: 0;
+  animation: typeLine 0.3s ease forwards;
+}
+.terminal-body .line:nth-child(1) { animation-delay: 0.2s; }
+.terminal-body .line:nth-child(2) { animation-delay: 0.6s; }
+.terminal-body .line:nth-child(3) { animation-delay: 1.0s; }
+.terminal-body .line:nth-child(4) { animation-delay: 1.4s; }
+.terminal-body .line:nth-child(5) { animation-delay: 1.8s; }
+.terminal-body .line:nth-child(6) { animation-delay: 2.4s; }
+.terminal-body .line:nth-child(7) { animation-delay: 2.8s; }
+.terminal-body .line:nth-child(8) { animation-delay: 3.2s; }
+.terminal-body .line:nth-child(9) { animation-delay: 3.6s; }
+.terminal-body .line:nth-child(10) { animation-delay: 4.0s; }
+.terminal-body .line:nth-child(11) { animation-delay: 4.4s; }
+.terminal-body .line:nth-child(12) { animation-delay: 4.8s; }
+.terminal-body .line:nth-child(13) { animation-delay: 5.2s; }
+
+@keyframes typeLine {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Restart animation every 12s */
+.terminal-body {
+  animation: resetTerminal 12s infinite;
+}
+@keyframes resetTerminal {
+  0%, 5% { opacity: 1; }
+  90% { opacity: 1; }
+  95% { opacity: 0; }
+  100% { opacity: 0; }
+}
+
 /* ─── Hero ─── */
 .hero {
   min-height: 100vh;
@@ -1141,23 +1176,19 @@ footer {
         <div class="hero-terminal">
           <div class="terminal-bar"><span class="terminal-dot" style="background:#EF4444"></span><span class="terminal-dot" style="background:#FBBF24"></span><span class="terminal-dot" style="background:#22C55E"></span><span style="color:var(--text-muted);font-size:12px;margin-left:8px">terminal</span></div>
           <div class="terminal-body">
-<span class="comment"># Step 1: Tell AI what you want</span>
-<span class="prompt">$</span> <span class="cmd">tap forge</span> <span style="color:#FBBF24">"get Hacker News top stories"</span>
-  <span style="color:#22C55E">&#10004;</span> Inspecting page...
-  <span style="color:#22C55E">&#10004;</span> AI writing program...
-  <span style="color:#22C55E">&#10004;</span> Verified &#8212; 30 stories found
-  <span style="color:#22C55E">&#10004;</span> Saved. <span style="color:var(--text-muted)">Run it anytime, zero AI cost.</span>
-
-<span class="comment"># Step 2: Run it forever &#8212; instant, free, deterministic</span>
-<span class="prompt">$</span> <span class="cmd">tap hackernews top-stories</span>
-  <span style="color:var(--text-dim)">rank  title                         points
-  1     Show HN: Build a GPU          734
-  2     PostgreSQL perf halved...      591
-  3     Apple approves Nvidia eGPU     427</span>
-  <span style="color:var(--text-muted)">&#8230; 27 more rows (52ms)</span>
-
-<span class="comment"># Works with pipes, JSON, and 200+ built-in sites</span>
-<span class="prompt">$</span> <span class="cmd">tap weibo hot</span> <span style="color:var(--text-muted)">| tap github trending | tap reddit hot</span>
+<div class="line"><span class="comment"># Step 1: Tell AI what you want</span></div>
+<div class="line"><span class="prompt">$</span> <span class="cmd">tap forge</span> <span style="color:#FBBF24">"get Hacker News top stories"</span></div>
+<div class="line">  <span style="color:#22C55E">&#10004;</span> Inspecting page...</div>
+<div class="line">  <span style="color:#22C55E">&#10004;</span> AI writing program...</div>
+<div class="line">  <span style="color:#22C55E">&#10004;</span> Verified &#8212; 30 stories found</div>
+<div class="line">  <span style="color:#22C55E">&#10004;</span> Saved. <span style="color:var(--text-muted)">Run anytime, $0.</span></div>
+<div class="line">&nbsp;</div>
+<div class="line"><span class="comment"># Step 2: Run forever &#8212; instant, free</span></div>
+<div class="line"><span class="prompt">$</span> <span class="cmd">tap hackernews top-stories</span></div>
+<div class="line"><span style="color:var(--text-dim)">  rank  title                         points</span></div>
+<div class="line"><span style="color:var(--text-dim)">  1     Show HN: Build a GPU          734</span></div>
+<div class="line"><span style="color:var(--text-dim)">  2     PostgreSQL perf halved...      591</span></div>
+<div class="line"><span style="color:var(--text-muted)">  &#8230; 27 more rows (52ms)</span></div>
           </div>
         </div>
       </div>
