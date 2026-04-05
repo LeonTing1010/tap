@@ -1,6 +1,11 @@
 # Smithery configuration for Tap MCP server
 # https://smithery.ai/docs/config#smitheryyaml
 
+# Option 1: Remote server (zero install — connect via URL)
+# Users connect to: https://taprun.dev/mcp
+# 208 pre-built taps, 100 free calls/day, API key for more.
+
+# Option 2: Local server (full power — runs on user's machine)
 startCommand:
   type: stdio
   configSchema:
