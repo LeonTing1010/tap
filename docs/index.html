@@ -231,39 +231,15 @@ nav .container {
 .terminal-body .cmd { color: var(--white); font-weight: 500; }
 .terminal-body .comment { color: var(--text-muted); }
 
-/* Terminal typing animation */
+/* Terminal typing animation — controlled by JS for proper looping */
 .terminal-body .line {
   opacity: 0;
-  animation: typeLine 0.3s ease forwards;
+  transform: translateY(4px);
+  transition: opacity 0.3s, transform 0.3s;
 }
-.terminal-body .line:nth-child(1) { animation-delay: 0.2s; }
-.terminal-body .line:nth-child(2) { animation-delay: 0.6s; }
-.terminal-body .line:nth-child(3) { animation-delay: 1.0s; }
-.terminal-body .line:nth-child(4) { animation-delay: 1.4s; }
-.terminal-body .line:nth-child(5) { animation-delay: 1.8s; }
-.terminal-body .line:nth-child(6) { animation-delay: 2.4s; }
-.terminal-body .line:nth-child(7) { animation-delay: 2.8s; }
-.terminal-body .line:nth-child(8) { animation-delay: 3.2s; }
-.terminal-body .line:nth-child(9) { animation-delay: 3.6s; }
-.terminal-body .line:nth-child(10) { animation-delay: 4.0s; }
-.terminal-body .line:nth-child(11) { animation-delay: 4.4s; }
-.terminal-body .line:nth-child(12) { animation-delay: 4.8s; }
-.terminal-body .line:nth-child(13) { animation-delay: 5.2s; }
-
-@keyframes typeLine {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* Restart animation every 12s */
-.terminal-body {
-  animation: resetTerminal 12s infinite;
-}
-@keyframes resetTerminal {
-  0%, 5% { opacity: 1; }
-  90% { opacity: 1; }
-  95% { opacity: 0; }
-  100% { opacity: 0; }
+.terminal-body .line.visible {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 /* ─── Hero ─── */
@@ -1139,7 +1115,7 @@ footer {
 <nav>
   <div class="container">
     <a href="#" class="nav-brand">
-      <svg viewBox="0 0 512 512" width="32" height="32"><defs><linearGradient id="nav-bg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#4F46E5"/><stop offset="100%" stop-color="#818CF8"/></linearGradient></defs><circle cx="256" cy="256" r="240" fill="url(#nav-bg)"/><circle cx="290" cy="275" r="80" fill="white"/><circle cx="230" cy="210" r="58" fill="white"/><path d="M 200 250 Q 230 280 270 270 Q 260 230 240 215 Q 215 235 200 250 Z" fill="white"/></svg>
+      <svg viewBox="0 0 64 64" width="28" height="28"><rect width="64" height="64" rx="12" fill="#D97706"/><text x="32" y="44" text-anchor="middle" font-size="38" font-weight="800" fill="#0b0b0e" font-family="monospace">t</text></svg>
       tap
     </a>
     <ul class="nav-links">
@@ -1677,7 +1653,7 @@ footer {
   <div class="container">
     <div class="footer-inner">
       <div class="footer-brand">
-        <svg viewBox="0 0 512 512" width="24" height="24"><circle cx="256" cy="256" r="240" fill="#4F46E5"/><circle cx="290" cy="275" r="80" fill="white"/><circle cx="230" cy="210" r="58" fill="white"/><path d="M 200 250 Q 230 280 270 270 Q 260 230 240 215 Q 215 235 200 250 Z" fill="white"/></svg>
+        <svg viewBox="0 0 64 64" width="22" height="22"><rect width="64" height="64" rx="12" fill="#D97706"/><text x="32" y="44" text-anchor="middle" font-size="38" font-weight="800" fill="#0b0b0e" font-family="monospace">t</text></svg>
         Tap &mdash; Automate any website
       </div>
       <ul class="footer-links">
@@ -1711,6 +1687,28 @@ window.addEventListener('scroll', () => {
     ? 'rgba(10, 9, 24, 0.95)'
     : 'rgba(10, 9, 24, 0.8)';
 }, { passive: true });
+
+// Terminal typing animation — loop forever
+(function() {
+  const lines = document.querySelectorAll('.terminal-body .line');
+  if (!lines.length) return;
+  const delays = [200, 400, 300, 300, 300, 300, 200, 400, 300, 300, 300, 300, 300];
+  function playOnce() {
+    lines.forEach(l => l.classList.remove('visible'));
+    let i = 0;
+    function showNext() {
+      if (i >= lines.length) {
+        setTimeout(playOnce, 3000); // pause 3s then restart
+        return;
+      }
+      lines[i].classList.add('visible');
+      i++;
+      setTimeout(showNext, delays[i - 1] || 300);
+    }
+    setTimeout(showNext, 500);
+  }
+  playOnce();
+})();
 </script>
 
 </body>
