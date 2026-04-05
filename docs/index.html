@@ -37,7 +37,12 @@
     "url": "https://github.com/LeonTing1010"
   },
   "codeRepository": "https://github.com/LeonTing1010/tap",
-  "keywords": ["AI agents", "MCP", "tap protocol", "forge", "deterministic automation", "Chrome extension", "Playwright", "sandbox", "self-healing"]
+  "keywords": ["AI agents", "MCP", "tap protocol", "forge", "deterministic automation", "Chrome extension", "Playwright", "sandbox", "self-healing"],
+  "offers": [
+    {"@type": "Offer", "price": "0", "priceCurrency": "USD", "description": "Free — unlimited runs, 200+ skills, CLI forge"},
+    {"@type": "Offer", "price": "9", "priceCurrency": "USD", "description": "Hacker — MCP forge, auto-heal, watch, plugins"},
+    {"@type": "Offer", "price": "29", "priceCurrency": "USD", "description": "Pro — built-in AI, scheduled runs, priority support"}
+  ]
 }
 </script>
 <script type="application/ld+json">
@@ -1105,6 +1110,7 @@ footer {
     <ul class="nav-links">
       <li><a href="#protocol">Protocol</a></li>
       <li><a href="#skills">Skills</a></li>
+      <li><a href="#pricing">Pricing</a></li>
       <li><a href="https://taprun.dev/blog/">Blog</a></li>
       <li><a href="#faq">FAQ</a></li>
       <li><a href="https://github.com/LeonTing1010/tap">GitHub</a></li>
@@ -1532,6 +1538,57 @@ footer {
           <p>Add to your MCP config (Claude Code, Cursor, Windsurf, etc.) and start tapping.</p>
           <div class="code-block"><span class="hl-dim">{</span> <span class="cmd">"mcpServers"</span><span class="hl-dim">:</span> <span class="hl-dim">{</span> <span class="cmd">"tap"</span><span class="hl-dim">:</span> <span class="hl-dim">{</span> <span class="cmd">"command"</span><span class="hl-dim">:</span> <span style="color:var(--gold)">"tap"</span><span class="hl-dim">,</span> <span class="cmd">"args"</span><span class="hl-dim">:</span> <span class="hl-dim">[</span><span style="color:var(--gold)">"mcp"</span><span class="hl-dim">]</span> <span class="hl-dim">} } }</span></div>
         </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Pricing ─── -->
+<section id="pricing" style="padding:80px 0;">
+  <div class="container reveal">
+    <div style="text-align:center; margin-bottom:48px;">
+      <h2 style="font-family:var(--font-display); font-size:36px; color:var(--white);">Free forever. Pay only for power.</h2>
+      <p style="color:var(--text-dim); margin-top:12px;">Every plan includes unlimited runs at $0. Forge is free for everyone.</p>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:1px; background:rgba(255,255,255,0.06); border-radius:12px; overflow:hidden; border:1px solid rgba(255,255,255,0.06);">
+      <div style="background:var(--bg-card); padding:40px 30px;">
+        <div style="font-family:var(--font-mono); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-muted); margin-bottom:8px;">Free</div>
+        <div style="font-family:var(--font-mono); font-size:2.8rem; font-weight:800; letter-spacing:-0.04em;"><span style="font-size:1.2rem; color:var(--text-muted); vertical-align:super;">$</span>0</div>
+        <div style="font-size:13px; color:var(--text-muted); margin-bottom:28px;">forever</div>
+        <ul style="list-style:none; margin-bottom:28px; font-size:14px; color:var(--text-dim); line-height:2.2;">
+          <li>+ Unlimited runs at $0</li>
+          <li>+ 200+ community skills</li>
+          <li>+ CLI forge (BYOK)</li>
+          <li>+ Doctor health checks</li>
+          <li>+ Chrome + Playwright</li>
+        </ul>
+        <a href="#install" style="display:block; text-align:center; padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); color:var(--text-dim); text-decoration:none; font-size:14px; font-weight:600;">Get Started</a>
+      </div>
+      <div style="background:var(--bg-surface); padding:40px 30px;">
+        <div style="font-family:var(--font-mono); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--gold); margin-bottom:8px;">Hacker</div>
+        <div style="font-family:var(--font-mono); font-size:2.8rem; font-weight:800; letter-spacing:-0.04em;"><span style="font-size:1.2rem; color:var(--text-muted); vertical-align:super;">$</span>9<span style="font-size:14px; color:var(--text-muted);">/mo</span></div>
+        <div style="font-size:13px; color:var(--text-muted); margin-bottom:28px;">for creators</div>
+        <ul style="list-style:none; margin-bottom:28px; font-size:14px; color:var(--text-dim); line-height:2.2;">
+          <li>+ Everything in Free</li>
+          <li>+ MCP forge (full agent)</li>
+          <li>+ Auto-heal broken taps</li>
+          <li>+ Watch for changes</li>
+          <li>+ Plugin extensions</li>
+          <li>+ macOS native runtime</li>
+        </ul>
+        <a href="https://taprun.dev/api/checkout?plan=hacker" style="display:block; text-align:center; padding:12px; border-radius:8px; background:var(--gold); color:var(--bg-deep); text-decoration:none; font-size:14px; font-weight:700;">Start Hacking</a>
+      </div>
+      <div style="background:var(--bg-card); padding:40px 30px;">
+        <div style="font-family:var(--font-mono); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-muted); margin-bottom:8px;">Pro</div>
+        <div style="font-family:var(--font-mono); font-size:2.8rem; font-weight:800; letter-spacing:-0.04em;"><span style="font-size:1.2rem; color:var(--text-muted); vertical-align:super;">$</span>29<span style="font-size:14px; color:var(--text-muted);">/mo</span></div>
+        <div style="font-size:13px; color:var(--text-muted); margin-bottom:28px;">for production</div>
+        <ul style="list-style:none; margin-bottom:28px; font-size:14px; color:var(--text-dim); line-height:2.2;">
+          <li>+ Everything in Hacker</li>
+          <li>+ Built-in AI (no key needed)</li>
+          <li>+ Scheduled runs</li>
+          <li>+ Priority support</li>
+        </ul>
+        <span style="display:block; text-align:center; padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); color:var(--text-muted); font-size:14px; font-weight:600; opacity:0.5;">Coming Soon</span>
       </div>
     </div>
   </div>
