@@ -130,7 +130,7 @@ async function resolveTab(params, { allowUnscriptable = false } = {}) {
     if (httpTab) {
       tabId = httpTab.id
     } else {
-      const tab = await chrome.tabs.create({ active: true })
+      const tab = await chrome.tabs.create({ active: false })
       tabId = tab.id
     }
     activeTabId = tabId
@@ -260,14 +260,14 @@ async function handleMethod(method, params = {}, senderTabId = null) {
 
     case 'nav': {
       if (!tabId) {
-        // No tab exists yet — create one with the target URL
-        const tab = await chrome.tabs.create({ url: params.url })
+        // No tab exists yet — create one with the target URL (background, don't steal focus)
+        const tab = await chrome.tabs.create({ url: params.url, active: false })
         tabId = tab.id
         activeTabId = tab.id
       } else {
         const current = await chrome.tabs.get(tabId)
         if (current.url?.startsWith('chrome://') || current.url?.startsWith('data:')) {
-          const tab = await chrome.tabs.create({ url: params.url })
+          const tab = await chrome.tabs.create({ url: params.url, active: false })
           tabId = tab.id
           activeTabId = tab.id
         } else {
@@ -671,7 +671,7 @@ async function handleMethod(method, params = {}, senderTabId = null) {
 
     case 'tab.new': {
       const url = params.url || undefined
-      const tab = await chrome.tabs.create(url ? { url } : {})
+      const tab = await chrome.tabs.create(url ? { url, active: false } : { active: false })
       activeTabId = tab.id
       return { tabId: tab.id, url: tab.url || '' }
     }
