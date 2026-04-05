@@ -203,7 +203,8 @@ console.log('\n  -- Rule 5: Tab Recovery --\n')
 {
   const rtStart = BG_SRC.indexOf('async function resolveTab(')
   assert(rtStart !== -1, 'resolveTab function must exist')
-  const rtBody = BG_SRC.substring(rtStart, rtStart + 1000)
+  const rtEnd = BG_SRC.indexOf('\n}', rtStart + 10)
+  const rtBody = BG_SRC.substring(rtStart, rtEnd + 2)
 
   test('resolveTab validates tab exists via chrome.tabs.get', () => {
     assert(rtBody.includes('chrome.tabs.get'),
@@ -251,9 +252,9 @@ console.log('\n  -- Rule 6: Screenshot Defaults --\n')
       'screenshot must include quality parameter for size control')
   })
 
-  test('screenshot uses captureVisibleTab', () => {
-    assert(ssBody.includes('captureVisibleTab'),
-      'screenshot must use chrome.tabs.captureVisibleTab API')
+  test('screenshot uses CDP Page.captureScreenshot (targets specific tabId)', () => {
+    assert(ssBody.includes('Page.captureScreenshot'),
+      'screenshot must use CDP Page.captureScreenshot to target specific tabId (not captureVisibleTab which grabs foreground tab)')
   })
 }
 

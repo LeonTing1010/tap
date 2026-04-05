@@ -104,17 +104,26 @@ async function execFunc(tabId, func, ...args) {
 // --- Tab Resolution ---
 
 async function resolveTab(params) {
-  let tabId = params.tabId ? Number(params.tabId) : activeTabId
+  const explicitTabId = params.tabId ? Number(params.tabId) : null
+  let tabId = explicitTabId || activeTabId
+
   if (tabId) {
     try {
       const tab = await chrome.tabs.get(tabId)
       // Skip chrome:// tabs — can't run scripts on them
       if (tab.url?.startsWith('chrome://') || tab.url?.startsWith('chrome-extension://')) {
+        // If explicitly requested tab is unscriptable, fail — don't silently switch tabs
+        if (explicitTabId) throw new Error(`Tab ${tabId} is not scriptable (${tab.url})`)
         tabId = null
       }
-    } catch { tabId = null }
+    } catch (e) {
+      // Explicit tabId from session must not silently fallback to another tab
+      if (explicitTabId) throw e
+      tabId = null
+    }
   }
-  // If no valid tab, try to find an existing http/https tab before creating one
+
+  // Auto-discover only when no tab was pinned by session
   if (!tabId) {
     const tabs = await chrome.tabs.query({ currentWindow: true })
     const httpTab = tabs.find(t => t.url?.startsWith('http'))
@@ -275,8 +284,13 @@ async function handleMethod(method, params = {}, senderTabId = null) {
       return {}
 
     case 'screenshot': {
-      const data = await chrome.tabs.captureVisibleTab(tabId, {
-        format: params.format || 'jpeg', quality: params.quality ?? 50
+      const fmt = params.format || 'jpeg'
+      const quality = params.quality ?? 50
+      const data = await withDebugger(tabId, async () => {
+        const result = await chrome.debugger.sendCommand({ tabId }, 'Page.captureScreenshot', {
+          format: fmt, quality,
+        })
+        return `data:image/${fmt};base64,${result.data}`
       })
       return { data }
     }

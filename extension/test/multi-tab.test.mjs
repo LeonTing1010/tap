@@ -40,7 +40,8 @@ console.log('\n  -- Rule 1: Tab Routing --\n')
 {
   const rtStart = BG_SRC.indexOf('async function resolveTab(')
   assert(rtStart !== -1, 'resolveTab function must exist')
-  const rtBody = BG_SRC.substring(rtStart, rtStart + 1000)
+  const rtEnd = BG_SRC.indexOf('\n}', rtStart + 10)
+  const rtBody = BG_SRC.substring(rtStart, rtEnd + 2)
 
   test('resolveTab uses params.tabId for routing', () => {
     assert(rtBody.includes('params.tabId'),
@@ -162,7 +163,8 @@ test('let activeTabId exists as fallback', () => {
 
 test('resolveTab sets activeTabId on auto-create', () => {
   const rtStart = BG_SRC.indexOf('async function resolveTab(')
-  const rtBody = BG_SRC.substring(rtStart, rtStart + 1000)
+  const rtEnd = BG_SRC.indexOf('\n}', rtStart + 10)
+  const rtBody = BG_SRC.substring(rtStart, rtEnd + 2)
   const autoCreate = rtBody.indexOf('chrome.tabs.create')
   const context = rtBody.substring(autoCreate, autoCreate + 200)
   assert(context.includes('activeTabId = tabId') || context.includes('activeTabId ='),
@@ -171,7 +173,8 @@ test('resolveTab sets activeTabId on auto-create', () => {
 
 test('params.tabId takes priority over activeTabId', () => {
   const rtStart = BG_SRC.indexOf('async function resolveTab(')
-  const rtBody = BG_SRC.substring(rtStart, rtStart + 1000)
+  const rtEnd = BG_SRC.indexOf('\n}', rtStart + 10)
+  const rtBody = BG_SRC.substring(rtStart, rtEnd + 2)
   assert(rtBody.includes('params.tabId'),
     'resolveTab must check params.tabId first before falling back to activeTabId')
   const tabIdIdx = rtBody.indexOf('params.tabId')
@@ -191,6 +194,33 @@ test('handleMethod delegates tab resolution to resolveTab', () => {
   const preamble = BG_SRC.substring(hmStart, switchStart)
   assert(preamble.includes('resolveTab'),
     'handleMethod must delegate tab resolution to resolveTab()')
+})
+
+// ═══════════════════════════════════════════════════════════
+// Rule 5: Explicit tabId Never Falls Back
+// Why: when daemon sends a command with tabId (session-pinned),
+// resolveTab must NOT silently switch to another tab if that tab
+// is invalid. This prevents the "tab stealing" bug where tap
+// operations hijack whatever tab the user is looking at.
+// ═══════════════════════════════════════════════════════════
+
+console.log('\n  -- Rule 5: Explicit tabId Never Falls Back --\n')
+
+test('resolveTab distinguishes explicit vs implicit tabId', () => {
+  const rtStart = BG_SRC.indexOf('async function resolveTab(')
+  const rtEnd = BG_SRC.indexOf('\n}', rtStart + 10)
+  const rtBody = BG_SRC.substring(rtStart, rtEnd + 2)
+  assert(rtBody.includes('explicitTabId') || rtBody.includes('explicit'),
+    'resolveTab must track whether tabId was explicitly provided vs defaulted')
+})
+
+test('resolveTab throws on invalid explicit tabId instead of falling back', () => {
+  const rtStart = BG_SRC.indexOf('async function resolveTab(')
+  const rtEnd = BG_SRC.indexOf('\n}', rtStart + 10)
+  const rtBody = BG_SRC.substring(rtStart, rtEnd + 2)
+  // When explicit tabId fails validation, must throw (not silently query for another tab)
+  assert(rtBody.includes('throw') && (rtBody.includes('explicitTabId') || rtBody.includes('explicit')),
+    'resolveTab must throw when an explicit tabId is invalid -- silent fallback causes tab stealing')
 })
 
 // --- Summary ---
