@@ -1,0 +1,19 @@
+# Smithery configuration for Tap MCP server
+# https://smithery.ai/docs/config#smitheryyaml
+
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties:
+      runtime:
+        type: string
+        description: "Browser runtime: extension (default, real Chrome), playwright (headless)"
+        enum: ["extension", "playwright"]
+        default: "extension"
+  commandFunction: |-
+    (config) => ({
+      command: 'tap',
+      args: ['mcp'],
+      env: config.runtime === 'playwright' ? { TAP_RUNTIME: 'playwright' } : {}
+    })
