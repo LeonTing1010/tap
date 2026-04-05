@@ -1562,25 +1562,67 @@ h2 .hl {
       <div class="hero-visual">
         <div class="hero-bird-wrap">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+            <!-- Body -->
             <circle cx="105" cy="115" r="55" fill="#FFFFFF"/>
+            <!-- Head -->
             <circle cx="85" cy="70" r="45" fill="#FFFFFF"/>
-            <ellipse cx="75" cy="32" rx="15" ry="22" fill="#EF4444"/>
-            <ellipse cx="90" cy="30" rx="12" ry="20" fill="#DC2626"/>
-            <ellipse cx="103" cy="35" rx="10" ry="16" fill="#B91C1C"/>
-            <path d="M 55 68 L 8 75 L 55 85 Z" fill="#FBBF24"/>
-            <path d="M 55 85 L 8 75 L 12 82 Z" fill="#D97706"/>
+            <!-- Crest -->
+            <g>
+              <ellipse cx="75" cy="32" rx="15" ry="22" fill="#EF4444"/>
+              <ellipse cx="90" cy="30" rx="12" ry="20" fill="#DC2626"/>
+              <ellipse cx="103" cy="35" rx="10" ry="16" fill="#B91C1C"/>
+              <animateTransform attributeName="transform" type="rotate" values="-2,85,50;3,85,50;-2,85,50" dur="2s" repeatCount="indefinite"/>
+            </g>
+            <!-- Beak — open/close -->
+            <g>
+              <path d="M 55 68 L 8 75 L 55 78 Z" fill="#FBBF24"/>
+              <animateTransform attributeName="transform" type="rotate" values="0,55,75;-4,55,75;0,55,75" dur="3s" repeatCount="indefinite"/>
+            </g>
+            <g>
+              <path d="M 55 78 L 8 75 L 55 85 Z" fill="#D97706"/>
+              <animateTransform attributeName="transform" type="rotate" values="0,55,75;3,55,75;0,55,75" dur="3s" repeatCount="indefinite"/>
+            </g>
+            <!-- Eye -->
             <circle cx="70" cy="65" r="14" fill="#1F2937"/>
             <circle cx="66" cy="61" r="5" fill="#FFFFFF"/>
             <circle cx="74" cy="68" r="2.5" fill="#FFFFFF"/>
+            <!-- Eye blink -->
+            <ellipse cx="70" cy="65" rx="14" ry="14" fill="#FFFFFF" opacity="0">
+              <animate attributeName="opacity" values="0;0;0;0;1;0;0;0;0;0;0;0;0;0;0;0;0;0;0;1;0" dur="4s" repeatCount="indefinite"/>
+              <animate attributeName="ry" values="14;14;14;14;1;14;14;14;14;14;14;14;14;14;14;14;14;14;14;1;14" dur="4s" repeatCount="indefinite"/>
+            </ellipse>
+            <!-- Cheek -->
             <ellipse cx="50" cy="78" rx="8" ry="5" fill="#FECACA" opacity="0.8"/>
-            <ellipse cx="125" cy="115" rx="35" ry="30" fill="#818CF8"/>
-            <ellipse cx="125" cy="115" rx="25" ry="20" fill="#6366F1"/>
+            <!-- Wing — flap -->
+            <g>
+              <ellipse cx="125" cy="115" rx="35" ry="30" fill="#818CF8"/>
+              <ellipse cx="125" cy="115" rx="25" ry="20" fill="#6366F1"/>
+              <animateTransform attributeName="transform" type="rotate" values="0,110,115;-8,110,115;0,110,115;5,110,115;0,110,115" dur="2.5s" repeatCount="indefinite"/>
+            </g>
+            <!-- Belly -->
             <circle cx="95" cy="130" r="25" fill="#F9FAFB"/>
-            <path d="M 145 140 L 175 185 L 155 180 L 140 145 Z" fill="#818CF8"/>
-            <path d="M 150 145 L 180 190 L 162 185 L 148 150 Z" fill="#6366F1"/>
-            <path d="M 5 65 A 25 25 0 0 1 5 90" fill="none" stroke="#6366F1" stroke-width="4" stroke-linecap="round"/>
-            <path d="M -12 55 A 40 40 0 0 1 -12 100" fill="none" stroke="#6366F1" stroke-width="3.5" stroke-linecap="round" opacity="0.7"/>
-            <path d="M -28 42 A 55 55 0 0 1 -28 112" fill="none" stroke="#6366F1" stroke-width="3" stroke-linecap="round" opacity="0.45"/>
+            <!-- Tail — wag -->
+            <g>
+              <path d="M 145 140 L 175 185 L 155 180 L 140 145 Z" fill="#818CF8"/>
+              <path d="M 150 145 L 180 190 L 162 185 L 148 150 Z" fill="#6366F1"/>
+              <animateTransform attributeName="transform" type="rotate" values="-3,145,145;5,145,145;-3,145,145" dur="1.8s" repeatCount="indefinite"/>
+            </g>
+            <!-- Tap ripples — pulse -->
+            <g opacity="0.9">
+              <path d="M 5 65 A 25 25 0 0 1 5 90" fill="none" stroke="#6366F1" stroke-width="4" stroke-linecap="round">
+                <animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite"/>
+              </path>
+            </g>
+            <g opacity="0.7">
+              <path d="M -12 55 A 40 40 0 0 1 -12 100" fill="none" stroke="#6366F1" stroke-width="3.5" stroke-linecap="round">
+                <animate attributeName="opacity" values="0.7;0.1;0.7" dur="2s" begin="0.3s" repeatCount="indefinite"/>
+              </path>
+            </g>
+            <g opacity="0.45">
+              <path d="M -28 42 A 55 55 0 0 1 -28 112" fill="none" stroke="#6366F1" stroke-width="3" stroke-linecap="round">
+                <animate attributeName="opacity" values="0.45;0;0.45" dur="2s" begin="0.6s" repeatCount="indefinite"/>
+              </path>
+            </g>
           </svg>
         </div>
         <div class="hero-terminal">
