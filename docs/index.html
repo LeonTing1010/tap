@@ -397,6 +397,10 @@ section { position: relative; }
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-14px); }
 }
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
 
 /* orbit-spin removed */
 
@@ -2147,44 +2151,71 @@ window.addEventListener('scroll', () => {
   }
 }, { passive: true });
 
-// ===== Terminal animation (scroll-triggered, one-time) =====
+// ===== Terminal animation (scroll-triggered, one-time, char-by-char for commands) =====
 (function() {
+  // type: 'type' = char-by-char typing, 'print' = instant line appear
   var lines = [
-    { text: '<span class="prompt">$</span> <span class="cmd">tap forge</span> <span class="flag">"scrape Hacker News top stories"</span>', delay: 0 },
-    { text: '<span class="spinner">&bull;</span> <span class="muted">Inspecting https://news.ycombinator.com...</span>', delay: 700 },
-    { text: '<span class="spinner">&bull;</span> <span class="muted">AI writing tap code...</span>', delay: 1400 },
-    { text: '<span class="check">&#10004;</span> <span class="cmd">Saved hackernews/hot.tap.js</span>', delay: 2100 },
-    { text: '', delay: 2600 },
-    { text: '<span class="prompt">$</span> <span class="cmd">tap</span> hackernews hot', delay: 3000 },
-    { text: '<span class="table-border">&#x250C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x252C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x252C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2510;</span>', delay: 3500 },
-    { text: '<span class="table-border">&#x2502;</span> rank <span class="table-border">&#x2502;</span> title                <span class="table-border">&#x2502;</span> score <span class="table-border">&#x2502;</span>', delay: 3500 },
-    { text: '<span class="table-border">&#x251C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x253C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x253C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2524;</span>', delay: 3500 },
-    { text: '<span class="table-border">&#x2502;</span> 1    <span class="table-border">&#x2502;</span> Show HN: Tap         <span class="table-border">&#x2502;</span>   342 <span class="table-border">&#x2502;</span>', delay: 3700 },
-    { text: '<span class="table-border">&#x2502;</span> 2    <span class="table-border">&#x2502;</span> Rust is eating Go    <span class="table-border">&#x2502;</span>   287 <span class="table-border">&#x2502;</span>', delay: 3900 },
-    { text: '<span class="table-border">&#x2514;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2534;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2534;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2518;</span>', delay: 4100 },
-    { text: '<span class="cost">Cost: $0.00</span> <span class="muted">(run #847 &mdash; zero AI tokens)</span>', delay: 4500 }
+    { type: 'type', text: '$ tap forge "scrape Hacker News top stories"', delay: 0, speed: 35 },
+    { type: 'print', html: '<span class="spinner">&bull;</span> <span class="muted">Inspecting https://news.ycombinator.com...</span>', delay: 800 },
+    { type: 'print', html: '<span class="spinner">&bull;</span> <span class="muted">AI writing tap code...</span>', delay: 1600 },
+    { type: 'print', html: '<span class="check">&#10004;</span> <span class="cmd">Saved hackernews/hot.tap.js</span>', delay: 2400 },
+    { type: 'print', html: '&nbsp;', delay: 3000 },
+    { type: 'type', text: '$ tap hackernews hot', delay: 3400, speed: 40 },
+    { type: 'print', html: '<span class="table-border">\u250C\u2500\u2500\u2500\u2500\u2500\u2500\u252C\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252C\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510</span>', delay: 4400 },
+    { type: 'print', html: '<span class="table-border">\u2502</span> rank <span class="table-border">\u2502</span> title                <span class="table-border">\u2502</span> score <span class="table-border">\u2502</span>', delay: 4400 },
+    { type: 'print', html: '<span class="table-border">\u251C\u2500\u2500\u2500\u2500\u2500\u2500\u253C\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253C\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524</span>', delay: 4400 },
+    { type: 'print', html: '<span class="table-border">\u2502</span> 1    <span class="table-border">\u2502</span> Show HN: Tap         <span class="table-border">\u2502</span>   342 <span class="table-border">\u2502</span>', delay: 4700 },
+    { type: 'print', html: '<span class="table-border">\u2502</span> 2    <span class="table-border">\u2502</span> Rust is eating Go    <span class="table-border">\u2502</span>   287 <span class="table-border">\u2502</span>', delay: 5000 },
+    { type: 'print', html: '<span class="table-border">\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518</span>', delay: 5300 },
+    { type: 'print', html: '<span class="cost">Cost: $0.00</span> <span class="muted">(run #847 \u2014 zero AI tokens)</span>', delay: 5700 }
   ];
 
   var terminalEl = document.getElementById('terminal-output');
   if (!terminalEl) return;
+
+  function typeText(div, text, speed) {
+    var i = 0;
+    var cursor = document.createElement('span');
+    cursor.textContent = '\u2588';
+    cursor.style.cssText = 'animation:blink 0.7s step-end infinite;color:var(--gold,#FBBF24)';
+    div.appendChild(cursor);
+    function next() {
+      if (i < text.length) {
+        cursor.before(document.createTextNode(text[i]));
+        i++;
+        setTimeout(next, speed + (Math.random() * 20 - 10));
+      } else {
+        cursor.remove();
+      }
+    }
+    next();
+  }
+
+  function printLine(html, delay) {
+    setTimeout(function() {
+      var div = document.createElement('div');
+      div.innerHTML = html;
+      div.style.cssText = 'opacity:0;transform:translateY(4px);transition:opacity 0.2s,transform 0.2s';
+      terminalEl.appendChild(div);
+      requestAnimationFrame(function() { div.style.opacity = '1'; div.style.transform = 'translateY(0)'; });
+    }, delay);
+  }
+
   var started = false;
   var termObserver = new IntersectionObserver(function(entries) {
     entries.forEach(function(entry) {
       if (entry.isIntersecting && !started) {
         started = true;
         lines.forEach(function(line) {
-          setTimeout(function() {
-            var div = document.createElement('div');
-            div.innerHTML = line.text || '&nbsp;';
-            div.style.opacity = '0';
-            div.style.transform = 'translateY(6px)';
-            div.style.transition = 'opacity 0.25s, transform 0.25s';
-            terminalEl.appendChild(div);
-            requestAnimationFrame(function() {
-              div.style.opacity = '1';
-              div.style.transform = 'translateY(0)';
-            });
-          }, line.delay);
+          if (line.type === 'type') {
+            setTimeout(function() {
+              var div = document.createElement('div');
+              terminalEl.appendChild(div);
+              typeText(div, line.text, line.speed || 35);
+            }, line.delay);
+          } else {
+            printLine(line.html, line.delay);
+          }
         });
         termObserver.unobserve(entry.target);
       }
