@@ -103,28 +103,31 @@ async function execFunc(tabId, func, ...args) {
 
 // --- Tab Resolution ---
 
-async function resolveTab(params, { allowUnscriptable = false } = {}) {
+async function resolveTab(params, { allowUnscriptable = false, fromDaemon = false } = {}) {
   const explicitTabId = params.tabId ? Number(params.tabId) : null
-  let tabId = explicitTabId || activeTabId
+  // Daemon commands: ONLY use explicit tabId — never fall back to activeTabId.
+  // This prevents cross-session tab leakage when multiple MCP sessions share the daemon.
+  // activeTabId is only for popup/content-script messages (single-user, no session).
+  let tabId = fromDaemon ? explicitTabId : (explicitTabId || activeTabId)
 
   if (tabId) {
     try {
       const tab = await chrome.tabs.get(tabId)
       // Skip chrome:// tabs — can't run scripts on them (unless caller handles it, e.g. nav)
       if (!allowUnscriptable && (tab.url?.startsWith('chrome://') || tab.url?.startsWith('chrome-extension://'))) {
-        // If explicitly requested tab is unscriptable, fail — don't silently switch tabs
-        if (explicitTabId) throw new Error(`Tab ${tabId} is not scriptable (${tab.url})`)
+        if (explicitTabId || fromDaemon) throw new Error(`Tab ${tabId} is not scriptable (${tab.url})`)
         tabId = null
       }
     } catch (e) {
-      // Explicit tabId from session must not silently fallback to another tab
-      if (explicitTabId) throw e
+      if (explicitTabId || fromDaemon) throw e
       tabId = null
     }
   }
 
-  // Auto-discover only when no tab was pinned by session
+  // Auto-discover: only for non-daemon callers (popup, content script)
+  // Daemon sessions must allocate tabs explicitly via tab.new
   if (!tabId) {
+    if (fromDaemon) throw new Error('No tabId — daemon sessions must allocate via tab.new first')
     const tabs = await chrome.tabs.query({ currentWindow: true })
     const httpTab = tabs.find(t => t.url?.startsWith('http'))
     if (httpTab) {
@@ -148,10 +151,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   return true
 })
 
-async function handleMethod(method, params = {}, senderTabId = null) {
+async function handleMethod(method, params = {}, senderTabId = null, { fromDaemon = false } = {}) {
   // nav handles chrome:// tabs itself (replaces with new tab) — let it through
   const allowUnscriptable = method === 'nav'
-  let tabId = await resolveTab(params, { allowUnscriptable })
+  let tabId = await resolveTab(params, { allowUnscriptable, fromDaemon })
 
   // nav and tab.new can work without an existing tab — they create one
   if (!tabId && method !== 'nav' && method !== 'tab.new' && method !== 'tab.list' && method !== 'capabilities') {
@@ -770,12 +773,13 @@ chrome.alarms.onAlarm.addListener(() => {
   }
 })
 
-// Handle a command and send result back — runs concurrently with poll loop.
-// This keeps the poll fetch always active (service worker stays alive).
+// Handle a command from daemon and send result back — runs concurrently with poll loop.
+// fromDaemon=true: commands ONLY use explicit tabId, never activeTabId fallback.
+// This prevents cross-session tab leakage when multiple MCP sessions share the daemon.
 async function handleAndReport(id, method, params) {
   let response
   try {
-    const result = await handleMethod(method, params, null)
+    const result = await handleMethod(method, params, null, { fromDaemon: true })
     response = { id, result }
   } catch (error) {
     console.error(`[tap] ${method}:`, error.message)

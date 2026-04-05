@@ -223,6 +223,40 @@ test('resolveTab throws on invalid explicit tabId instead of falling back', () =
     'resolveTab must throw when an explicit tabId is invalid -- silent fallback causes tab stealing')
 })
 
+// ═══════════════════════════════════════════════════════════
+// Rule 6: Daemon Session Isolation
+// Why: multiple MCP sessions share the same daemon. Daemon commands
+// must ONLY use their explicit tabId, never fall back to the global
+// activeTabId. Otherwise session A's nav updates activeTabId, and
+// session B's commands leak onto session A's tab.
+// ═══════════════════════════════════════════════════════════
+
+console.log('\n  -- Rule 6: Daemon Session Isolation --\n')
+
+test('resolveTab accepts fromDaemon option', () => {
+  const rtStart = BG_SRC.indexOf('async function resolveTab(')
+  const rtEnd = BG_SRC.indexOf('\n}', rtStart + 10)
+  const rtBody = BG_SRC.substring(rtStart, rtEnd + 2)
+  assert(rtBody.includes('fromDaemon'),
+    'resolveTab must accept fromDaemon flag to distinguish daemon vs popup commands')
+})
+
+test('daemon commands skip activeTabId fallback', () => {
+  const rtStart = BG_SRC.indexOf('async function resolveTab(')
+  const rtEnd = BG_SRC.indexOf('\n}', rtStart + 10)
+  const rtBody = BG_SRC.substring(rtStart, rtEnd + 2)
+  // When fromDaemon is true, tabId must NOT include activeTabId
+  assert(rtBody.includes('fromDaemon') && rtBody.includes('explicitTabId'),
+    'daemon path must use only explicitTabId, never activeTabId — prevents cross-session leakage')
+})
+
+test('handleAndReport passes fromDaemon: true', () => {
+  const fnStart = BG_SRC.indexOf('async function handleAndReport(')
+  const fnBody = BG_SRC.substring(fnStart, fnStart + 500)
+  assert(fnBody.includes('fromDaemon: true') || fnBody.includes('fromDaemon:true'),
+    'handleAndReport (daemon poll handler) must pass fromDaemon: true to handleMethod')
+})
+
 // --- Summary ---
 console.log(`\n${passed + failed} constraints, ${passed} passed, ${failed} failed\n`)
 process.exit(failed > 0 ? 1 : 0)
