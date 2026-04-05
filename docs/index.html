@@ -19,7 +19,7 @@
 <meta name="keywords" content="AI coding agent protocol, MCP, model context protocol, Chrome extension, Playwright, Deno, tap protocol, forge, deterministic automation, sandbox, self-healing, unix pipes, macOS automation, self-distillation">
 <meta name="author" content="LeonTing1010">
 <link rel="canonical" href="https://leonting1010.github.io/tap/">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Ccircle cx='256' cy='256' r='240' fill='%234F46E5'/%3E%3Ccircle cx='290' cy='275' r='80' fill='white'/%3E%3Ccircle cx='230' cy='210' r='58' fill='white'/%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='105' cy='115' r='55' fill='%23FFFFFF'/%3E%3Ccircle cx='85' cy='70' r='45' fill='%23FFFFFF'/%3E%3Cellipse cx='75' cy='32' rx='15' ry='22' fill='%23EF4444'/%3E%3Cellipse cx='90' cy='30' rx='12' ry='20' fill='%23DC2626'/%3E%3Cellipse cx='103' cy='35' rx='10' ry='16' fill='%23B91C1C'/%3E%3Cpath d='M 55 68 L 8 75 L 55 85 Z' fill='%23FBBF24'/%3E%3Cpath d='M 55 85 L 8 75 L 12 82 Z' fill='%23D97706'/%3E%3Ccircle cx='70' cy='65' r='14' fill='%231F2937'/%3E%3Ccircle cx='66' cy='61' r='5' fill='%23FFFFFF'/%3E%3Ccircle cx='74' cy='68' r='2.5' fill='%23FFFFFF'/%3E%3Cellipse cx='50' cy='78' rx='8' ry='5' fill='%23FECACA' opacity='0.8'/%3E%3Cellipse cx='125' cy='115' rx='35' ry='30' fill='%23818CF8'/%3E%3Cellipse cx='125' cy='115' rx='25' ry='20' fill='%236366F1'/%3E%3Ccircle cx='95' cy='130' r='25' fill='%23F9FAFB'/%3E%3Cpath d='M 145 140 L 175 185 L 155 180 L 140 145 Z' fill='%23818CF8'/%3E%3Cpath d='M 150 145 L 180 190 L 162 185 L 148 150 Z' fill='%236366F1'/%3E%3C/svg%3E">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -60,28 +60,36 @@
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-/* ─── Reset & Variables ─── */
+/* ===== Reset & Variables ===== */
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
   --bg-deep: #0a0918;
-  --bg-surface: #110f24;
-  --bg-card: #181536;
-  --indigo: #4F46E5;
+  --bg-surface: #0f0d20;
+  --bg-card: #161333;
+  --bg-card-hover: #1c1840;
+  --indigo: #6366F1;
   --indigo-light: #818CF8;
-  --indigo-glow: rgba(79, 70, 229, 0.15);
+  --indigo-bright: #A5B4FC;
+  --indigo-glow: rgba(99, 102, 241, 0.15);
   --gold: #FBBF24;
   --gold-dim: #D97706;
   --red: #EF4444;
-  --text: #E8E6F0;
-  --text-dim: #9892B0;
+  --red-dark: #DC2626;
+  --green: #10B981;
+  --text: #E2E0EE;
+  --text-dim: #9A94B8;
   --text-muted: #5D5680;
   --white: #FFFFFF;
-  --font-display: 'Instrument Serif', Georgia, serif;
-  --font-body: 'Outfit', system-ui, sans-serif;
-  --font-mono: 'DM Mono', 'SF Mono', monospace;
+  --font-heading: 'Bricolage Grotesque', system-ui, sans-serif;
+  --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
 }
 
 html { scroll-behavior: smooth; }
@@ -92,61 +100,56 @@ body {
   color: var(--text);
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* ─── Grain overlay ─── */
+/* ===== Grain overlay ===== */
 body::before {
   content: '';
   position: fixed;
   inset: 0;
   z-index: 9999;
   pointer-events: none;
-  opacity: 0.03;
+  opacity: 0.025;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-/* ─── Ambient light effects ─── */
-.ambient-orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(120px);
-  pointer-events: none;
-  z-index: 0;
+a { color: inherit; }
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  color: var(--indigo-light);
 }
 
-.ambient-orb--hero-1 {
-  width: 600px; height: 600px;
-  background: radial-gradient(circle, rgba(79, 70, 229, 0.2), transparent 70%);
-  top: -200px; left: -100px;
-}
-.ambient-orb--hero-2 {
-  width: 400px; height: 400px;
-  background: radial-gradient(circle, rgba(251, 191, 36, 0.08), transparent 70%);
-  top: 100px; right: -100px;
-}
-
-/* ─── Section layout ─── */
+/* ===== Layout ===== */
 section { position: relative; }
 
 .container {
-  max-width: 1200px;
+  max-width: 1180px;
   margin: 0 auto;
   padding: 0 24px;
 }
 
-/* ─── Navigation ─── */
-nav {
+/* ===== Navigation ===== */
+.nav {
   position: fixed;
   top: 0; left: 0; right: 0;
   z-index: 100;
-  padding: 16px 0;
-  background: rgba(10, 9, 24, 0.8);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(79, 70, 229, 0.08);
-  transition: background 0.3s;
+  padding: 14px 0;
+  background: rgba(10, 9, 24, 0.7);
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  border-bottom: 1px solid rgba(99, 102, 241, 0.06);
+  transition: background 0.3s, border-color 0.3s;
 }
 
-nav .container {
+.nav.scrolled {
+  background: rgba(10, 9, 24, 0.95);
+  border-bottom-color: rgba(99, 102, 241, 0.12);
+}
+
+.nav .container {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -158,163 +161,171 @@ nav .container {
   gap: 10px;
   text-decoration: none;
   color: var(--white);
-  font-family: var(--font-body);
-  font-weight: 600;
-  font-size: 18px;
-  letter-spacing: -0.02em;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: -0.03em;
 }
 
-.nav-brand svg { width: 32px; height: 32px; }
+.nav-brand svg { width: 34px; height: 34px; }
 
 .nav-links {
   display: flex;
-  gap: 28px;
+  gap: 6px;
   list-style: none;
   align-items: center;
 }
 
 .nav-links a {
-  color: var(--text);
+  color: var(--text-dim);
   text-decoration: none;
   font-size: 14px;
-  font-weight: 400;
+  font-weight: 500;
   transition: color 0.2s;
-  letter-spacing: 0.01em;
-  opacity: 0.75;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
 }
 
-.nav-links a:hover { color: var(--white); opacity: 1; }
+.nav-links a:hover { color: var(--white); }
 
 .nav-cta {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 20px;
-  background: var(--white);
-  color: var(--bg-deep) !important;
-  border-radius: 8px;
+  padding: 8px 20px !important;
+  background: var(--indigo);
+  color: var(--white) !important;
+  border-radius: 100px;
   font-weight: 600 !important;
-  font-size: 14px;
-  transition: background 0.2s, transform 0.15s;
-  opacity: 1 !important;
+  font-size: 14px !important;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
 }
 
-.nav-cta:hover { background: #E8E6F0; transform: translateY(-1px); }
+.nav-cta:hover {
+  background: #7577F5;
+  transform: translateY(-1px);
+  box-shadow: 0 0 30px rgba(99, 102, 241, 0.45);
+}
 
-/* ─── Hero Terminal ─── */
-.hero-terminal {
-  background: #0d0b1a;
-  border: 1px solid rgba(79, 70, 229, 0.2);
-  border-radius: 12px;
-  overflow: hidden;
-  font-family: var(--font-mono);
-  font-size: 13px;
-  line-height: 1.7;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(79,70,229,0.08);
-}
-.terminal-bar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 14px;
-  background: rgba(255,255,255,0.03);
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-}
-.terminal-dot { width: 10px; height: 10px; border-radius: 50%; }
-.terminal-body {
-  padding: 16px 18px;
-  white-space: pre;
+/* mobile nav */
+.nav-toggle {
+  display: none;
+  background: none;
+  border: none;
   color: var(--text);
-  overflow-x: auto;
+  cursor: pointer;
+  padding: 8px;
 }
-.terminal-body .prompt { color: var(--indigo-light); user-select: none; }
-.terminal-body .cmd { color: var(--white); font-weight: 500; }
-.terminal-body .comment { color: var(--text-muted); }
+.nav-toggle svg { width: 24px; height: 24px; }
 
-/* Terminal typing animation — controlled by JS for proper looping */
-.terminal-body .line {
-  opacity: 0;
-  transform: translateY(4px);
-  transition: opacity 0.3s, transform 0.3s;
-}
-.terminal-body .line.visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* ─── Hero ─── */
+/* ===== Hero ===== */
 .hero {
   min-height: 100vh;
   display: flex;
   align-items: center;
-  padding: 120px 0 80px;
+  padding: 140px 0 100px;
+  position: relative;
   overflow: hidden;
+}
+
+/* Ambient glow */
+.hero-glow-1 {
+  position: absolute;
+  width: 700px; height: 700px;
+  top: -200px; left: -150px;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.18), transparent 70%);
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+}
+.hero-glow-2 {
+  position: absolute;
+  width: 500px; height: 500px;
+  bottom: -100px; right: -100px;
+  background: radial-gradient(circle, rgba(251, 191, 36, 0.06), transparent 70%);
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+}
+.hero-glow-3 {
+  position: absolute;
+  width: 400px; height: 400px;
+  top: 40%; right: 10%;
+  background: radial-gradient(circle, rgba(239, 68, 68, 0.06), transparent 70%);
+  border-radius: 50%;
+  filter: blur(100px);
+  pointer-events: none;
 }
 
 .hero-inner {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 80px;
+  gap: 60px;
   align-items: center;
+  position: relative;
+  z-index: 1;
 }
 
-.hero-text { position: relative; z-index: 1; }
+.hero-content { max-width: 560px; }
 
-.hero-eyebrow {
+.hero-badge {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 14px;
-  background: var(--indigo-glow);
-  border: 1px solid rgba(79, 70, 229, 0.2);
+  padding: 6px 16px 6px 10px;
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.18);
   border-radius: 100px;
   font-family: var(--font-mono);
   font-size: 12px;
   color: var(--indigo-light);
-  margin-bottom: 28px;
-  letter-spacing: 0.04em;
+  margin-bottom: 32px;
+  letter-spacing: 0.02em;
 }
 
-.hero-eyebrow::before {
-  content: '';
-  width: 6px; height: 6px;
+.hero-badge-dot {
+  width: 7px; height: 7px;
   background: var(--gold);
   border-radius: 50%;
-  animation: pulse-dot 2s ease-in-out infinite;
+  animation: badge-pulse 2s ease-in-out infinite;
+  box-shadow: 0 0 8px rgba(251, 191, 36, 0.4);
 }
 
-@keyframes pulse-dot {
+@keyframes badge-pulse {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.5; transform: scale(0.7); }
 }
 
-h1 {
-  font-family: var(--font-display);
-  font-size: clamp(48px, 6vw, 72px);
-  font-weight: 400;
-  line-height: 1.05;
+.hero h1 {
+  font-family: var(--font-heading);
+  font-size: clamp(40px, 5.2vw, 64px);
+  font-weight: 800;
+  line-height: 1.08;
   color: var(--white);
   margin-bottom: 24px;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.035em;
 }
 
-h1 em {
-  font-style: italic;
-  color: var(--gold);
+.hero h1 .hl {
+  background: linear-gradient(135deg, var(--gold) 0%, #F59E0B 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .hero-sub {
-  font-size: 18px;
+  font-size: 17px;
   color: var(--text-dim);
-  line-height: 1.7;
-  max-width: 480px;
+  line-height: 1.75;
+  max-width: 460px;
   margin-bottom: 40px;
-  font-weight: 300;
+  font-weight: 400;
 }
 
 .hero-actions {
   display: flex;
-  gap: 16px;
+  gap: 14px;
   flex-wrap: wrap;
 }
 
@@ -323,114 +334,156 @@ h1 em {
   align-items: center;
   gap: 8px;
   padding: 14px 28px;
-  border-radius: 12px;
+  border-radius: 100px;
   font-size: 15px;
-  font-weight: 500;
+  font-weight: 600;
   text-decoration: none;
-  transition: all 0.2s;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   border: none;
   font-family: var(--font-body);
+  letter-spacing: -0.01em;
 }
 
 .btn-primary {
   background: var(--indigo);
   color: var(--white);
-  box-shadow: 0 0 40px rgba(79, 70, 229, 0.3);
+  box-shadow: 0 4px 24px rgba(99, 102, 241, 0.35), 0 0 0 1px rgba(99, 102, 241, 0.1);
 }
 
 .btn-primary:hover {
-  background: #5B52F0;
+  background: #7577F5;
   transform: translateY(-2px);
-  box-shadow: 0 0 60px rgba(79, 70, 229, 0.4);
+  box-shadow: 0 8px 40px rgba(99, 102, 241, 0.45), 0 0 0 1px rgba(99, 102, 241, 0.2);
 }
 
 .btn-ghost {
-  background: transparent;
+  background: rgba(255, 255, 255, 0.04);
   color: var(--text);
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .btn-ghost:hover {
-  border-color: rgba(255,255,255,0.25);
-  background: rgba(255,255,255,0.04);
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.07);
+  transform: translateY(-2px);
 }
 
-/* ─── Hero visual ─── */
+/* ===== Hero right side: bird + terminal ===== */
 .hero-visual {
   position: relative;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  gap: 28px;
 }
 
-.hero-logo-wrap {
+.hero-bird-wrap {
   position: relative;
-  width: 320px;
-  height: 320px;
+  width: 240px;
+  height: 240px;
+  animation: bird-float 4s ease-in-out infinite;
 }
 
-.hero-logo-wrap svg {
+.hero-bird-wrap svg {
   width: 100%;
   height: 100%;
-  filter: drop-shadow(0 0 80px rgba(79, 70, 229, 0.3));
+  filter: drop-shadow(0 20px 60px rgba(99, 102, 241, 0.25));
 }
 
-/* Orbiting ring */
-.orbit-ring {
-  position: absolute;
-  inset: -40px;
-  border: 1px solid rgba(79, 70, 229, 0.15);
-  border-radius: 50%;
-  animation: orbit-spin 30s linear infinite;
+/* Bird orbit rings removed per design direction */
+
+@keyframes bird-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-14px); }
 }
 
-.orbit-ring::before {
-  content: '';
-  position: absolute;
-  top: -4px; left: 50%;
-  width: 8px; height: 8px;
-  background: var(--gold);
-  border-radius: 50%;
-  box-shadow: 0 0 12px var(--gold);
+/* orbit-spin removed */
+
+/* ===== Hero Terminal ===== */
+.hero-terminal {
+  width: 100%;
+  max-width: 460px;
+  background: #0c0a1a;
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.75;
+  box-shadow:
+    0 24px 80px rgba(0,0,0,0.5),
+    0 0 60px rgba(99, 102, 241, 0.06),
+    inset 0 1px 0 rgba(255,255,255,0.03);
 }
 
-.orbit-ring-2 {
-  inset: -80px;
-  border-color: rgba(79, 70, 229, 0.08);
-  animation-duration: 45s;
-  animation-direction: reverse;
+.terminal-bar {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 11px 16px;
+  background: rgba(255,255,255,0.025);
+  border-bottom: 1px solid rgba(255,255,255,0.04);
 }
 
-.orbit-ring-2::before { background: var(--indigo-light); box-shadow: 0 0 12px var(--indigo-light); }
+.terminal-dot { width: 10px; height: 10px; border-radius: 50%; }
+.terminal-title {
+  color: var(--text-muted);
+  font-size: 11px;
+  margin-left: 8px;
+  font-weight: 500;
+}
 
-@keyframes orbit-spin { to { transform: rotate(360deg); } }
+.terminal-body {
+  padding: 16px 18px;
+  white-space: pre;
+  color: var(--text);
+  overflow-x: auto;
+}
 
-/* ─── Stats bar ─── */
+.terminal-body .prompt { color: var(--text-dim); }
+.terminal-body .cmd { color: var(--text); font-weight: 600; }
+.terminal-body .flag { color: var(--gold); }
+.terminal-body .spinner { color: var(--text-muted); }
+.terminal-body .check { color: #22C55E; }
+.terminal-body .muted { color: var(--text-muted); }
+.terminal-body .table-border { color: #2a2a33; }
+.terminal-body .cost { color: #22C55E; font-weight: 700; }
+
+/* ===== Stats Bar ===== */
 .stats-bar {
+  position: relative;
+  z-index: 2;
+  margin-top: -44px;
+}
+
+.stats-inner {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 1px;
-  background: rgba(79, 70, 229, 0.08);
-  border-radius: 16px;
+  background: rgba(99, 102, 241, 0.1);
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  margin-top: -40px;
-  position: relative;
-  z-index: 2;
+  border: 1px solid rgba(99, 102, 241, 0.08);
 }
 
 .stat {
   background: var(--bg-surface);
-  padding: 32px;
+  padding: 36px 24px;
   text-align: center;
+  transition: background 0.3s;
 }
 
+.stat:hover { background: var(--bg-card); }
+
 .stat-value {
-  font-family: var(--font-display);
-  font-size: 40px;
+  font-family: var(--font-heading);
+  font-size: 42px;
+  font-weight: 800;
   color: var(--white);
   line-height: 1;
   margin-bottom: 6px;
+  letter-spacing: -0.04em;
 }
 
 .stat-label {
@@ -438,53 +491,95 @@ h1 em {
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
+  font-weight: 500;
 }
 
-/* ─── Core Idea ─── */
-.core-idea {
-  padding: 140px 0;
-}
-
-.section-label {
+/* ===== Section common ===== */
+.section-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-family: var(--font-mono);
   font-size: 12px;
   color: var(--gold);
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
+  font-weight: 600;
   margin-bottom: 20px;
 }
 
-h2 {
-  font-family: var(--font-display);
-  font-size: clamp(36px, 4.5vw, 56px);
-  font-weight: 400;
-  color: var(--white);
-  line-height: 1.15;
-  letter-spacing: -0.025em;
-  margin-bottom: 24px;
+.section-tag::before {
+  content: '';
+  width: 20px;
+  height: 2px;
+  background: var(--gold);
+  border-radius: 2px;
 }
 
-h2 em { font-style: italic; color: var(--gold); }
+h2 {
+  font-family: var(--font-heading);
+  font-size: clamp(32px, 4.2vw, 52px);
+  font-weight: 800;
+  color: var(--white);
+  line-height: 1.1;
+  letter-spacing: -0.035em;
+  margin-bottom: 20px;
+}
 
-.core-grid {
+h2 .hl {
+  background: linear-gradient(135deg, var(--gold) 0%, #F59E0B 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.section-desc {
+  font-size: 17px;
+  color: var(--text-dim);
+  line-height: 1.7;
+  font-weight: 400;
+  max-width: 560px;
+}
+
+/* ===== How it Works (Core Idea / Forge Flow) ===== */
+.how-it-works {
+  padding: 140px 0;
+  position: relative;
+}
+
+.how-inner {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 60px;
-  margin-top: 60px;
+  gap: 80px;
   align-items: start;
 }
 
-.core-explanation {
-  font-size: 17px;
-  color: var(--text-dim);
-  line-height: 1.8;
-  font-weight: 300;
+.how-text .section-desc {
+  margin-top: 16px;
+}
+
+.how-text .section-desc + .section-desc {
+  margin-top: 16px;
 }
 
 .forge-flow {
   display: flex;
   flex-direction: column;
   gap: 0;
+  position: relative;
+}
+
+/* Vertical connecting line */
+.forge-flow::before {
+  content: '';
+  position: absolute;
+  left: 28px;
+  top: 28px;
+  bottom: 28px;
+  width: 2px;
+  background: linear-gradient(to bottom, var(--indigo), var(--gold));
+  opacity: 0.2;
+  border-radius: 2px;
 }
 
 .forge-step {
@@ -492,59 +587,63 @@ h2 em { font-style: italic; color: var(--gold); }
   grid-template-columns: 56px 1fr;
   gap: 20px;
   padding: 24px 0;
-  border-bottom: 1px solid rgba(255,255,255,0.04);
+  position: relative;
 }
 
-.forge-step:last-child { border-bottom: none; }
-
-.forge-step-icon {
+.forge-step-num {
   width: 56px;
   height: 56px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   font-family: var(--font-mono);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 700;
+  position: relative;
+  z-index: 1;
 }
 
-.forge-step--ai .forge-step-icon {
-  background: rgba(79, 70, 229, 0.15);
+.forge-step--ai .forge-step-num {
+  background: rgba(99, 102, 241, 0.12);
   color: var(--indigo-light);
-  border: 1px solid rgba(79, 70, 229, 0.25);
+  border: 1px solid rgba(99, 102, 241, 0.2);
 }
 
-.forge-step--run .forge-step-icon {
+.forge-step--run .forge-step-num {
   background: rgba(251, 191, 36, 0.1);
   color: var(--gold);
   border: 1px solid rgba(251, 191, 36, 0.2);
 }
 
 .forge-step h4 {
-  font-size: 16px;
-  font-weight: 500;
+  font-family: var(--font-heading);
+  font-size: 17px;
+  font-weight: 700;
   color: var(--white);
   margin-bottom: 4px;
+  letter-spacing: -0.02em;
 }
 
 .forge-step p {
   font-size: 14px;
   color: var(--text-dim);
-  font-weight: 300;
+  font-weight: 400;
+  line-height: 1.6;
 }
 
 .forge-cost {
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 11px;
   padding: 3px 10px;
-  border-radius: 6px;
+  border-radius: 100px;
   display: inline-block;
-  margin-top: 6px;
+  margin-top: 8px;
+  font-weight: 600;
 }
 
 .forge-step--ai .forge-cost {
-  background: rgba(79, 70, 229, 0.1);
+  background: rgba(99, 102, 241, 0.1);
   color: var(--indigo-light);
 }
 
@@ -553,12 +652,12 @@ h2 em { font-style: italic; color: var(--gold); }
   color: var(--gold);
 }
 
-/* ─── Why Tap ─── */
+/* ===== Why Tap ===== */
 .why-tap {
   padding: 140px 0;
   background: var(--bg-surface);
-  border-top: 1px solid rgba(79, 70, 229, 0.06);
-  border-bottom: 1px solid rgba(79, 70, 229, 0.06);
+  border-top: 1px solid rgba(99, 102, 241, 0.05);
+  border-bottom: 1px solid rgba(99, 102, 241, 0.05);
 }
 
 .why-header {
@@ -567,35 +666,31 @@ h2 em { font-style: italic; color: var(--gold); }
   margin: 0 auto 72px;
 }
 
-.why-header p {
-  font-size: 17px;
-  color: var(--text-dim);
-  line-height: 1.7;
-  font-weight: 300;
-  margin-top: 12px;
-}
+.why-header .section-tag { justify-content: center; }
+.why-header .section-desc { margin: 12px auto 0; }
 
 .why-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 24px;
+  gap: 20px;
   max-width: 960px;
   margin: 0 auto;
 }
 
 .why-card {
   background: var(--bg-card);
-  border: 1px solid rgba(79, 70, 229, 0.06);
-  border-radius: 20px;
+  border: 1px solid rgba(99, 102, 241, 0.06);
+  border-radius: var(--radius-xl);
   padding: 40px 36px;
   position: relative;
   overflow: hidden;
-  transition: border-color 0.3s, transform 0.3s;
+  transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
 }
 
 .why-card:hover {
-  border-color: rgba(79, 70, 229, 0.18);
-  transform: translateY(-2px);
+  border-color: rgba(99, 102, 241, 0.15);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.2);
 }
 
 .why-card::before {
@@ -605,10 +700,10 @@ h2 em { font-style: italic; color: var(--gold); }
   height: 2px;
 }
 
-.why-card--safe::before  { background: linear-gradient(90deg, var(--gold), transparent); }
 .why-card--accurate::before { background: linear-gradient(90deg, var(--indigo), transparent); }
-.why-card--cross::before { background: linear-gradient(90deg, var(--indigo-light), transparent); }
-.why-card--cost::before  { background: linear-gradient(90deg, #10B981, transparent); }
+.why-card--safe::before     { background: linear-gradient(90deg, var(--gold), transparent); }
+.why-card--cross::before    { background: linear-gradient(90deg, var(--indigo-light), transparent); }
+.why-card--cost::before     { background: linear-gradient(90deg, var(--green), transparent); }
 
 .why-card-tag {
   display: inline-flex;
@@ -618,35 +713,36 @@ h2 em { font-style: italic; color: var(--gold); }
   border-radius: 100px;
   font-family: var(--font-mono);
   font-size: 11px;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
   margin-bottom: 20px;
+  font-weight: 600;
 }
 
+.why-card--accurate .why-card-tag { background: rgba(99,102,241,0.1); color: var(--indigo-light); border: 1px solid rgba(99,102,241,0.2); }
 .why-card--safe .why-card-tag     { background: rgba(251,191,36,0.1); color: var(--gold); border: 1px solid rgba(251,191,36,0.2); }
-.why-card--accurate .why-card-tag { background: rgba(79,70,229,0.1); color: var(--indigo-light); border: 1px solid rgba(79,70,229,0.2); }
-.why-card--cross .why-card-tag    { background: rgba(129,140,248,0.1); color: var(--indigo-light); border: 1px solid rgba(129,140,248,0.2); }
-.why-card--cost .why-card-tag     { background: rgba(16,185,129,0.1); color: #10B981; border: 1px solid rgba(16,185,129,0.2); }
+.why-card--cross .why-card-tag    { background: rgba(129,140,248,0.1); color: var(--indigo-bright); border: 1px solid rgba(129,140,248,0.2); }
+.why-card--cost .why-card-tag     { background: rgba(16,185,129,0.1); color: var(--green); border: 1px solid rgba(16,185,129,0.2); }
 
 .why-card h3 {
-  font-family: var(--font-display);
-  font-size: 26px;
-  font-weight: 400;
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: 700;
   color: var(--white);
   margin-bottom: 12px;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
+  letter-spacing: -0.025em;
+  line-height: 1.25;
 }
 
-.why-card p {
-  font-size: 15px;
+.why-card > p {
+  font-size: 14.5px;
   color: var(--text-dim);
-  line-height: 1.75;
-  font-weight: 300;
+  line-height: 1.7;
+  font-weight: 400;
   margin-bottom: 20px;
 }
 
 .why-compare {
-  background: var(--bg-deep);
+  background: rgba(10, 9, 24, 0.6);
   border-radius: 10px;
   padding: 14px 16px;
   font-family: var(--font-mono);
@@ -654,7 +750,7 @@ h2 em { font-style: italic; color: var(--gold); }
   line-height: 1.9;
 }
 
-.why-compare .good { color: #10B981; }
+.why-compare .good { color: var(--green); }
 .why-compare .bad  { color: #6B7280; text-decoration: line-through; }
 .why-compare .dim  { color: var(--text-muted); }
 
@@ -680,46 +776,41 @@ h2 em { font-style: italic; color: var(--gold); }
   flex-shrink: 0;
 }
 
-@media (max-width: 700px) {
-  .why-grid { grid-template-columns: 1fr; }
-}
-
-/* ─── Protocol ─── */
+/* ===== Protocol ===== */
 .protocol {
   padding: 140px 0;
-  background: var(--bg-surface);
-  border-top: 1px solid rgba(79, 70, 229, 0.06);
-  border-bottom: 1px solid rgba(79, 70, 229, 0.06);
+  position: relative;
 }
 
 .protocol-header {
   text-align: center;
-  max-width: 640px;
+  max-width: 660px;
   margin: 0 auto 80px;
 }
 
-.protocol-header p {
-  font-size: 17px;
-  color: var(--text-dim);
-  line-height: 1.7;
-  font-weight: 300;
-  margin-top: 12px;
-}
+.protocol-header .section-tag { justify-content: center; }
+.protocol-header .section-desc { margin: 12px auto 0; }
 
 .protocol-layers {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   max-width: 800px;
   margin: 0 auto;
 }
 
 .protocol-layer {
   background: var(--bg-card);
-  border-radius: 16px;
-  padding: 32px 40px;
+  border-radius: var(--radius-md);
+  padding: 30px 36px;
   position: relative;
   overflow: hidden;
+  border: 1px solid rgba(99, 102, 241, 0.04);
+  transition: border-color 0.3s;
+}
+
+.protocol-layer:hover {
+  border-color: rgba(99, 102, 241, 0.12);
 }
 
 .protocol-layer::before {
@@ -730,8 +821,8 @@ h2 em { font-style: italic; color: var(--gold); }
 }
 
 .layer-scripts::before { background: var(--text-dim); }
-.layer-stdlib::before { background: var(--indigo-light); }
-.layer-kernel::before { background: var(--gold); }
+.layer-builtin::before { background: var(--indigo-light); }
+.layer-core::before    { background: var(--gold); }
 .layer-runtime::before { background: var(--red); }
 
 .protocol-layer-head {
@@ -742,17 +833,19 @@ h2 em { font-style: italic; color: var(--gold); }
 }
 
 .protocol-layer h3 {
-  font-family: var(--font-body);
-  font-size: 18px;
-  font-weight: 600;
+  font-family: var(--font-heading);
+  font-size: 17px;
+  font-weight: 700;
   color: var(--white);
+  letter-spacing: -0.02em;
 }
 
 .protocol-layer-count {
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-muted);
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
+  font-weight: 500;
 }
 
 .primitives {
@@ -763,43 +856,47 @@ h2 em { font-style: italic; color: var(--gold); }
 
 .prim {
   font-family: var(--font-mono);
-  font-size: 13px;
-  padding: 6px 14px;
-  border-radius: 8px;
+  font-size: 12.5px;
+  padding: 5px 14px;
+  border-radius: var(--radius-sm);
   background: rgba(255,255,255,0.03);
   color: var(--text-dim);
   border: 1px solid rgba(255,255,255,0.05);
   transition: all 0.2s;
+  font-weight: 500;
 }
 
 .prim:hover {
-  background: rgba(79, 70, 229, 0.1);
-  border-color: rgba(79, 70, 229, 0.3);
+  background: rgba(99, 102, 241, 0.1);
+  border-color: rgba(99, 102, 241, 0.25);
   color: var(--indigo-light);
 }
 
-.layer-kernel .prim {
+.layer-core .prim {
   background: rgba(251, 191, 36, 0.06);
   border-color: rgba(251, 191, 36, 0.12);
   color: var(--gold-dim);
 }
-
-.layer-kernel .prim:hover {
+.layer-core .prim:hover {
   background: rgba(251, 191, 36, 0.12);
-  border-color: rgba(251, 191, 36, 0.3);
+  border-color: rgba(251, 191, 36, 0.25);
   color: var(--gold);
 }
 
 .protocol-arrow {
   text-align: center;
   color: var(--text-muted);
-  font-size: 18px;
-  padding: 4px 0;
+  font-size: 16px;
+  padding: 2px 0;
+  opacity: 0.5;
 }
 
-/* ─── Skills ─── */
+/* ===== Skills ===== */
 .skills {
   padding: 140px 0;
+  background: var(--bg-surface);
+  border-top: 1px solid rgba(99, 102, 241, 0.05);
+  border-bottom: 1px solid rgba(99, 102, 241, 0.05);
 }
 
 .skills-header {
@@ -808,44 +905,49 @@ h2 em { font-style: italic; color: var(--gold); }
   margin: 0 auto 60px;
 }
 
-.skills-header p {
-  font-size: 17px;
-  color: var(--text-dim);
-  line-height: 1.7;
-  font-weight: 300;
-  margin-top: 12px;
-}
+.skills-header .section-tag { justify-content: center; }
+.skills-header .section-desc { margin: 12px auto 0; }
 
 .skills-categories {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+  gap: 14px;
   margin-bottom: 48px;
 }
 
 .skill-cat {
-  background: var(--bg-surface);
-  border: 1px solid rgba(79, 70, 229, 0.06);
-  border-radius: 16px;
+  background: var(--bg-card);
+  border: 1px solid rgba(99, 102, 241, 0.06);
+  border-radius: var(--radius-lg);
   padding: 28px 24px;
   transition: all 0.3s;
 }
 
 .skill-cat:hover {
-  border-color: rgba(79, 70, 229, 0.2);
+  border-color: rgba(99, 102, 241, 0.18);
   transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
 }
 
 .skill-cat-icon {
-  font-size: 24px;
-  margin-bottom: 14px;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(99, 102, 241, 0.08);
+  border-radius: 12px;
+  font-size: 20px;
+  margin-bottom: 16px;
 }
 
 .skill-cat h4 {
+  font-family: var(--font-heading);
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--white);
   margin-bottom: 6px;
+  letter-spacing: -0.02em;
 }
 
 .skill-cat p {
@@ -867,28 +969,27 @@ h2 em { font-style: italic; color: var(--gold); }
   font-family: var(--font-mono);
   font-size: 12px;
   padding: 6px 14px;
-  border-radius: 8px;
-  background: var(--bg-surface);
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,0.025);
   color: var(--text-dim);
   border: 1px solid rgba(255,255,255,0.04);
   transition: all 0.25s;
   text-decoration: none;
   display: inline-block;
+  font-weight: 500;
 }
 
 .site-tag:hover {
-  background: var(--bg-card);
-  border-color: rgba(79, 70, 229, 0.2);
+  background: rgba(99, 102, 241, 0.08);
+  border-color: rgba(99, 102, 241, 0.2);
   color: var(--indigo-light);
   transform: translateY(-1px);
 }
 
-/* ─── Architecture ─── */
+/* ===== Architecture ===== */
 .architecture {
   padding: 140px 0;
-  background: var(--bg-surface);
-  border-top: 1px solid rgba(79, 70, 229, 0.06);
-  border-bottom: 1px solid rgba(79, 70, 229, 0.06);
+  position: relative;
 }
 
 .arch-header {
@@ -897,23 +998,18 @@ h2 em { font-style: italic; color: var(--gold); }
   margin: 0 auto 80px;
 }
 
-.arch-header p {
-  font-size: 17px;
-  color: var(--text-dim);
-  line-height: 1.7;
-  font-weight: 300;
-  margin-top: 12px;
-}
+.arch-header .section-tag { justify-content: center; }
+.arch-header .section-desc { margin: 12px auto 0; }
 
 .arch-diagram {
   max-width: 800px;
   margin: 0 auto;
   background: var(--bg-card);
-  border: 1px solid rgba(79, 70, 229, 0.08);
-  border-radius: 16px;
+  border: 1px solid rgba(99, 102, 241, 0.08);
+  border-radius: var(--radius-lg);
   padding: 48px;
   font-family: var(--font-mono);
-  font-size: 14px;
+  font-size: 13px;
   line-height: 2;
   color: var(--text-dim);
   overflow-x: auto;
@@ -923,43 +1019,53 @@ h2 em { font-style: italic; color: var(--gold); }
 .arch-diagram .hl-indigo { color: var(--indigo-light); }
 .arch-diagram .hl-red { color: var(--red); }
 .arch-diagram .hl-dim { color: var(--text-muted); }
-.arch-diagram .hl-white { color: var(--white); }
+.arch-diagram .hl-white { color: var(--white); font-weight: 600; }
 
 .arch-features {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
-  margin-top: 48px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-top: 40px;
   max-width: 800px;
   margin-left: auto;
   margin-right: auto;
 }
 
 .arch-feat {
-  padding: 24px;
-  border-radius: 12px;
+  padding: 24px 20px;
+  border-radius: var(--radius-md);
   background: var(--bg-card);
-  border: 1px solid rgba(79, 70, 229, 0.06);
+  border: 1px solid rgba(99, 102, 241, 0.06);
+  transition: border-color 0.3s, transform 0.3s;
+}
+
+.arch-feat:hover {
+  border-color: rgba(99, 102, 241, 0.15);
+  transform: translateY(-2px);
 }
 
 .arch-feat h4 {
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 12px;
   color: var(--gold);
   margin-bottom: 8px;
   letter-spacing: 0.02em;
+  font-weight: 600;
 }
 
 .arch-feat p {
-  font-size: 14px;
+  font-size: 13.5px;
   color: var(--text-dim);
   line-height: 1.6;
-  font-weight: 300;
+  font-weight: 400;
 }
 
-/* ─── Install ─── */
+/* ===== Install ===== */
 .install {
   padding: 140px 0;
+  background: var(--bg-surface);
+  border-top: 1px solid rgba(99, 102, 241, 0.05);
+  border-bottom: 1px solid rgba(99, 102, 241, 0.05);
 }
 
 .install-header {
@@ -968,18 +1074,13 @@ h2 em { font-style: italic; color: var(--gold); }
   margin: 0 auto 60px;
 }
 
-.install-header p {
-  font-size: 17px;
-  color: var(--text-dim);
-  line-height: 1.7;
-  font-weight: 300;
-  margin-top: 12px;
-}
+.install-header .section-tag { justify-content: center; }
+.install-header .section-desc { margin: 12px auto 0; }
 
 .install-steps {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
   max-width: 700px;
   margin: 0 auto;
 }
@@ -988,34 +1089,50 @@ h2 em { font-style: italic; color: var(--gold); }
   display: grid;
   grid-template-columns: 56px 1fr;
   gap: 24px;
-  background: var(--bg-surface);
-  border: 1px solid rgba(79, 70, 229, 0.06);
-  border-radius: 16px;
-  padding: 32px 32px;
+  background: var(--bg-card);
+  border: 1px solid rgba(99, 102, 241, 0.06);
+  border-radius: var(--radius-lg);
+  padding: 32px;
   align-items: start;
+  transition: border-color 0.3s;
+}
+
+.install-step:hover {
+  border-color: rgba(99, 102, 241, 0.12);
 }
 
 .install-step-num {
-  font-family: var(--font-display);
-  font-size: 40px;
+  font-family: var(--font-heading);
+  font-size: 38px;
+  font-weight: 800;
   color: var(--indigo);
   line-height: 1;
+  letter-spacing: -0.04em;
 }
 
 .install-step h4 {
+  font-family: var(--font-heading);
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--white);
   margin-bottom: 6px;
+  letter-spacing: -0.02em;
 }
 
 .install-step p {
   font-size: 14px;
   color: var(--text-dim);
   line-height: 1.6;
-  font-weight: 300;
+  font-weight: 400;
   margin-bottom: 12px;
 }
+
+.install-step p a {
+  color: var(--indigo-light);
+  text-decoration: none;
+  font-weight: 500;
+}
+.install-step p a:hover { text-decoration: underline; }
 
 .code-block {
   background: var(--bg-deep);
@@ -1032,13 +1149,264 @@ h2 em { font-style: italic; color: var(--gold); }
 }
 
 .code-block .prompt { color: var(--text-muted); user-select: none; }
-.code-block .cmd { color: var(--indigo-light); }
-.code-block .comment { color: var(--text-muted); }
+.code-block .cmd { color: var(--indigo-light); font-weight: 500; }
+.code-block .hl-dim { color: var(--text-muted); }
 
-/* ─── Footer ─── */
-footer {
-  padding: 60px 0;
-  border-top: 1px solid rgba(79, 70, 229, 0.06);
+/* ===== Pricing ===== */
+.pricing {
+  padding: 120px 0;
+  position: relative;
+}
+
+.pricing-header {
+  text-align: center;
+  max-width: 500px;
+  margin: 0 auto 56px;
+}
+
+.pricing-header .section-tag { justify-content: center; }
+.pricing-header .section-desc { margin: 12px auto 0; }
+
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: rgba(255,255,255,0.04);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.06);
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.price-card {
+  background: var(--bg-card);
+  padding: 44px 32px;
+  position: relative;
+}
+
+.price-card--featured {
+  background: var(--bg-surface);
+}
+
+.price-card--featured::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--gold), var(--gold-dim));
+}
+
+.price-tier {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 10px;
+}
+
+.price-tier--free { color: var(--text-muted); }
+.price-tier--hacker { color: var(--gold); }
+.price-tier--pro { color: var(--text-muted); }
+
+.price-amount {
+  font-family: var(--font-heading);
+  font-size: 52px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: var(--white);
+  line-height: 1;
+}
+
+.price-amount .currency {
+  font-size: 20px;
+  color: var(--text-muted);
+  vertical-align: super;
+  font-weight: 600;
+}
+
+.price-amount .period {
+  font-size: 15px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.price-label {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 28px;
+  margin-top: 4px;
+}
+
+.price-features {
+  list-style: none;
+  margin-bottom: 32px;
+  font-size: 14px;
+  color: var(--text-dim);
+  line-height: 2.2;
+}
+
+.price-btn {
+  display: block;
+  text-align: center;
+  padding: 13px;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: var(--font-body);
+  transition: all 0.2s;
+}
+
+.price-btn--outline {
+  border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text-dim);
+}
+.price-btn--outline:hover {
+  border-color: rgba(255,255,255,0.2);
+  color: var(--white);
+}
+
+.price-btn--gold {
+  background: var(--gold);
+  color: var(--bg-deep);
+  border: none;
+}
+.price-btn--gold:hover {
+  background: #F5B820;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(251, 191, 36, 0.3);
+}
+
+.price-btn--disabled {
+  border: 1px solid rgba(255,255,255,0.08);
+  color: var(--text-muted);
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* ===== FAQ ===== */
+.faq {
+  padding: 120px 0;
+  background: var(--bg-surface);
+  border-top: 1px solid rgba(99, 102, 241, 0.05);
+}
+
+.faq-header {
+  text-align: center;
+  margin-bottom: 56px;
+}
+
+.faq-header .section-tag { justify-content: center; }
+
+.faq-list {
+  max-width: 680px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.faq-item {
+  background: var(--bg-card);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: border-color 0.3s;
+}
+
+.faq-item:hover {
+  border-color: rgba(99, 102, 241, 0.12);
+}
+
+.faq-item summary {
+  padding: 18px 24px;
+  cursor: pointer;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--white);
+  letter-spacing: -0.01em;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.faq-item summary::-webkit-details-marker { display: none; }
+
+.faq-item summary::after {
+  content: '+';
+  font-family: var(--font-mono);
+  font-size: 18px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: transform 0.3s;
+}
+
+.faq-item[open] summary::after {
+  transform: rotate(45deg);
+  color: var(--indigo-light);
+}
+
+.faq-item .faq-answer {
+  padding: 0 24px 20px;
+  color: var(--text-dim);
+  line-height: 1.75;
+  font-size: 14.5px;
+}
+
+/* ===== Final CTA ===== */
+.final-cta {
+  padding: 120px 0;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.final-cta-glow {
+  position: absolute;
+  width: 600px; height: 600px;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.1), transparent 70%);
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+}
+
+.final-cta h2 {
+  position: relative;
+  z-index: 1;
+}
+
+.final-cta .section-desc {
+  margin: 0 auto 36px;
+  position: relative;
+  z-index: 1;
+}
+
+.final-cta .hero-actions {
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+}
+
+.final-cta .bird-small {
+  display: block;
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 24px;
+  opacity: 0.7;
+  animation: bird-float 4s ease-in-out infinite;
+}
+
+/* ===== Footer ===== */
+.footer {
+  padding: 48px 0;
+  border-top: 1px solid rgba(99, 102, 241, 0.06);
 }
 
 .footer-inner {
@@ -1053,31 +1421,33 @@ footer {
   gap: 10px;
   color: var(--text-muted);
   font-size: 14px;
+  font-weight: 500;
 }
 
-.footer-brand svg { width: 24px; height: 24px; opacity: 0.5; }
+.footer-brand svg { width: 26px; height: 26px; opacity: 0.6; }
 
 .footer-links {
   display: flex;
-  gap: 32px;
+  gap: 28px;
   list-style: none;
 }
 
 .footer-links a {
   color: var(--text-muted);
   text-decoration: none;
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: 500;
   transition: color 0.2s;
 }
 
 .footer-links a:hover { color: var(--text); }
 
-/* ─── Scroll reveal ─── */
+/* ===== Scroll reveal ===== */
 .reveal {
   opacity: 0;
-  transform: translateY(24px);
-  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
-              transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateY(28px);
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .reveal.visible {
@@ -1085,37 +1455,67 @@ footer {
   transform: translateY(0);
 }
 
-/* ─── Responsive ─── */
+/* ===== Responsive ===== */
 @media (max-width: 900px) {
-  .hero-inner { grid-template-columns: 1fr; gap: 40px; text-align: center; }
+  .hero-inner {
+    grid-template-columns: 1fr;
+    gap: 40px;
+    text-align: center;
+  }
+  .hero-content { max-width: 100%; margin: 0 auto; }
   .hero-sub { margin: 0 auto 40px; }
   .hero-actions { justify-content: center; }
   .hero-visual { order: -1; }
-  .hero-logo-wrap { width: 220px; height: 220px; }
-  .stats-bar { grid-template-columns: repeat(2, 1fr); margin-top: 0; }
-  .core-grid { grid-template-columns: 1fr; gap: 40px; }
+  .hero-bird-wrap { width: 180px; height: 180px; }
+  .stats-inner { grid-template-columns: repeat(2, 1fr); }
+  .stats-bar { margin-top: 0; }
+  .how-inner { grid-template-columns: 1fr; gap: 48px; }
+  .why-grid { grid-template-columns: 1fr; }
   .skills-categories { grid-template-columns: repeat(2, 1fr); }
   .install-steps { max-width: 100%; }
-  .arch-features { grid-template-columns: 1fr; }
+  .arch-features { grid-template-columns: repeat(2, 1fr); }
+  .pricing-grid { grid-template-columns: 1fr; }
   .nav-links { display: none; }
+  .nav-toggle { display: block; }
 }
 
 @media (max-width: 600px) {
-  .stats-bar { grid-template-columns: 1fr 1fr; }
+  .stats-inner { grid-template-columns: 1fr 1fr; }
   .skills-categories { grid-template-columns: 1fr; }
-  .arch-diagram { padding: 24px; font-size: 12px; }
+  .arch-diagram { padding: 24px 16px; font-size: 11px; }
+  .arch-features { grid-template-columns: 1fr; }
   .footer-inner { flex-direction: column; gap: 24px; text-align: center; }
-  .footer-links { gap: 20px; }
+  .footer-links { gap: 16px; flex-wrap: wrap; justify-content: center; }
+  .hero h1 { font-size: 36px; }
+  .install-step { grid-template-columns: 40px 1fr; gap: 16px; padding: 24px; }
+  .install-step-num { font-size: 28px; }
 }
 </style>
 </head>
 <body>
 
-<!-- ─── Navigation ─── -->
-<nav>
+<!-- ===== Navigation ===== -->
+<nav class="nav" id="nav">
   <div class="container">
     <a href="#" class="nav-brand">
-      <svg viewBox="0 0 64 64" width="28" height="28"><rect width="64" height="64" rx="12" fill="#D97706"/><text x="32" y="44" text-anchor="middle" font-size="38" font-weight="800" fill="#0b0b0e" font-family="monospace">t</text></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="34" height="34">
+        <circle cx="105" cy="115" r="55" fill="#FFFFFF"/>
+        <circle cx="85" cy="70" r="45" fill="#FFFFFF"/>
+        <ellipse cx="75" cy="32" rx="15" ry="22" fill="#EF4444"/>
+        <ellipse cx="90" cy="30" rx="12" ry="20" fill="#DC2626"/>
+        <ellipse cx="103" cy="35" rx="10" ry="16" fill="#B91C1C"/>
+        <path d="M 55 68 L 8 75 L 55 85 Z" fill="#FBBF24"/>
+        <path d="M 55 85 L 8 75 L 12 82 Z" fill="#D97706"/>
+        <circle cx="70" cy="65" r="14" fill="#1F2937"/>
+        <circle cx="66" cy="61" r="5" fill="#FFFFFF"/>
+        <circle cx="74" cy="68" r="2.5" fill="#FFFFFF"/>
+        <ellipse cx="50" cy="78" rx="8" ry="5" fill="#FECACA" opacity="0.8"/>
+        <ellipse cx="125" cy="115" rx="35" ry="30" fill="#818CF8"/>
+        <ellipse cx="125" cy="115" rx="25" ry="20" fill="#6366F1"/>
+        <circle cx="95" cy="130" r="25" fill="#F9FAFB"/>
+        <path d="M 145 140 L 175 185 L 155 180 L 140 145 Z" fill="#818CF8"/>
+        <path d="M 150 145 L 180 190 L 162 185 L 148 150 Z" fill="#6366F1"/>
+      </svg>
       tap
     </a>
     <ul class="nav-links">
@@ -1127,18 +1527,25 @@ footer {
       <li><a href="https://github.com/LeonTing1010/tap">GitHub</a></li>
       <li><a href="#install" class="nav-cta">Get Started</a></li>
     </ul>
+    <button class="nav-toggle" aria-label="Menu" onclick="document.querySelector('.nav-links').classList.toggle('mobile-open')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
   </div>
 </nav>
 
-<!-- ─── Hero ─── -->
+<!-- ===== Hero ===== -->
 <section class="hero">
-  <div class="ambient-orb ambient-orb--hero-1"></div>
-  <div class="ambient-orb ambient-orb--hero-2"></div>
+  <div class="hero-glow-1"></div>
+  <div class="hero-glow-2"></div>
+  <div class="hero-glow-3"></div>
   <div class="container">
     <div class="hero-inner">
-      <div class="hero-text">
-        <div class="hero-eyebrow">200+ sites &mdash; ready to use</div>
-        <h1>Automate any website.<br>AI builds it.<br><em>Runs forever at $0.</em></h1>
+      <div class="hero-content">
+        <div class="hero-badge">
+          <span class="hero-badge-dot"></span>
+          200+ sites &mdash; ready to use
+        </div>
+        <h1>Automate any website.<br>AI builds it.<br><span class="hl">Runs forever at $0.</span></h1>
         <p class="hero-sub">Tell AI what you want. It writes a program that does it &mdash; every time, the same way, for free. No more broken scrapers. No more $1-per-run AI agents. One command, and it just works.</p>
         <div class="hero-actions">
           <a href="#install" class="btn btn-primary">Get Started</a>
@@ -1149,32 +1556,46 @@ footer {
         </div>
       </div>
       <div class="hero-visual">
+        <div class="hero-bird-wrap">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+            <circle cx="105" cy="115" r="55" fill="#FFFFFF"/>
+            <circle cx="85" cy="70" r="45" fill="#FFFFFF"/>
+            <ellipse cx="75" cy="32" rx="15" ry="22" fill="#EF4444"/>
+            <ellipse cx="90" cy="30" rx="12" ry="20" fill="#DC2626"/>
+            <ellipse cx="103" cy="35" rx="10" ry="16" fill="#B91C1C"/>
+            <path d="M 55 68 L 8 75 L 55 85 Z" fill="#FBBF24"/>
+            <path d="M 55 85 L 8 75 L 12 82 Z" fill="#D97706"/>
+            <circle cx="70" cy="65" r="14" fill="#1F2937"/>
+            <circle cx="66" cy="61" r="5" fill="#FFFFFF"/>
+            <circle cx="74" cy="68" r="2.5" fill="#FFFFFF"/>
+            <ellipse cx="50" cy="78" rx="8" ry="5" fill="#FECACA" opacity="0.8"/>
+            <ellipse cx="125" cy="115" rx="35" ry="30" fill="#818CF8"/>
+            <ellipse cx="125" cy="115" rx="25" ry="20" fill="#6366F1"/>
+            <circle cx="95" cy="130" r="25" fill="#F9FAFB"/>
+            <path d="M 145 140 L 175 185 L 155 180 L 140 145 Z" fill="#818CF8"/>
+            <path d="M 150 145 L 180 190 L 162 185 L 148 150 Z" fill="#6366F1"/>
+            <path d="M 5 65 A 25 25 0 0 1 5 90" fill="none" stroke="#6366F1" stroke-width="4" stroke-linecap="round"/>
+            <path d="M -12 55 A 40 40 0 0 1 -12 100" fill="none" stroke="#6366F1" stroke-width="3.5" stroke-linecap="round" opacity="0.7"/>
+            <path d="M -28 42 A 55 55 0 0 1 -28 112" fill="none" stroke="#6366F1" stroke-width="3" stroke-linecap="round" opacity="0.45"/>
+          </svg>
+        </div>
         <div class="hero-terminal">
-          <div class="terminal-bar"><span class="terminal-dot" style="background:#EF4444"></span><span class="terminal-dot" style="background:#FBBF24"></span><span class="terminal-dot" style="background:#22C55E"></span><span style="color:var(--text-muted);font-size:12px;margin-left:8px">terminal</span></div>
-          <div class="terminal-body">
-<div class="line"><span class="comment"># Step 1: Tell AI what you want</span></div>
-<div class="line"><span class="prompt">$</span> <span class="cmd">tap forge</span> <span style="color:#FBBF24">"get Hacker News top stories"</span></div>
-<div class="line">  <span style="color:#22C55E">&#10004;</span> Inspecting page...</div>
-<div class="line">  <span style="color:#22C55E">&#10004;</span> AI writing program...</div>
-<div class="line">  <span style="color:#22C55E">&#10004;</span> Verified &#8212; 30 stories found</div>
-<div class="line">  <span style="color:#22C55E">&#10004;</span> Saved. <span style="color:var(--text-muted)">Run anytime, $0.</span></div>
-<div class="line">&nbsp;</div>
-<div class="line"><span class="comment"># Step 2: Run forever &#8212; instant, free</span></div>
-<div class="line"><span class="prompt">$</span> <span class="cmd">tap hackernews top-stories</span></div>
-<div class="line"><span style="color:var(--text-dim)">  rank  title                         points</span></div>
-<div class="line"><span style="color:var(--text-dim)">  1     Show HN: Build a GPU          734</span></div>
-<div class="line"><span style="color:var(--text-dim)">  2     PostgreSQL perf halved...      591</span></div>
-<div class="line"><span style="color:var(--text-muted)">  &#8230; 27 more rows (52ms)</span></div>
+          <div class="terminal-bar">
+            <span class="terminal-dot" style="background:#EF4444"></span>
+            <span class="terminal-dot" style="background:#FBBF24"></span>
+            <span class="terminal-dot" style="background:#22C55E"></span>
+            <span class="terminal-title">tap</span>
           </div>
+          <div class="terminal-body" id="terminal-output"></div>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ─── Stats ─── -->
-<div class="container">
-  <div class="stats-bar reveal">
+<!-- ===== Stats Bar ===== -->
+<div class="container stats-bar reveal">
+  <div class="stats-inner">
     <div class="stat">
       <div class="stat-value">200+</div>
       <div class="stat-label">Sites Supported</div>
@@ -1194,22 +1615,20 @@ footer {
   </div>
 </div>
 
-<!-- ─── Core Idea ─── -->
-<section class="core-idea" id="idea">
+<!-- ===== How it Works ===== -->
+<section class="how-it-works" id="idea">
   <div class="container">
-    <div class="section-label reveal">The Core Idea</div>
-    <h2 class="reveal">Self-distillation for <em>interfaces.</em></h2>
-    <div class="core-grid">
-      <div class="core-explanation reveal">
-        <p>AI agents spend tokens on every interface interaction &mdash; understanding pages, clicking buttons, extracting data. That's a prompt: expensive, non-deterministic, and fragile at scale.</p>
-        <br>
-        <p>Tap is self-distillation applied to interfaces. AI observes an interface once, distills its understanding into a deterministic <code>.tap.js</code> program, and every subsequent run is pure execution &mdash; zero AI, zero cost, zero variance.</p>
-        <br>
-        <p>Every successful forge makes the next one faster. Community skills compound: 200+ forged programs mean your agent starts with knowledge of 200+ interfaces, no forging needed. The protocol gets smarter without getting more expensive.</p>
+    <div class="how-inner">
+      <div class="how-text">
+        <div class="section-tag reveal">The Core Idea</div>
+        <h2 class="reveal">Self-distillation for <span class="hl">interfaces.</span></h2>
+        <p class="section-desc reveal">AI agents spend tokens on every interface interaction &mdash; understanding pages, clicking buttons, extracting data. That's a prompt: expensive, non-deterministic, and fragile at scale.</p>
+        <p class="section-desc reveal">Tap is self-distillation applied to interfaces. AI observes an interface once, distills its understanding into a deterministic <code>.tap.js</code> program, and every subsequent run is pure execution &mdash; zero AI, zero cost, zero variance.</p>
+        <p class="section-desc reveal">Every successful forge makes the next one faster. Community skills compound: 200+ forged programs mean your agent starts with knowledge of 200+ interfaces, no forging needed. The protocol gets smarter without getting more expensive.</p>
       </div>
       <div class="forge-flow reveal">
         <div class="forge-step forge-step--ai">
-          <div class="forge-step-icon">01</div>
+          <div class="forge-step-num">01</div>
           <div>
             <h4>Inspect</h4>
             <p>Agent analyzes the interface &mdash; structure, APIs, auth, data patterns</p>
@@ -1217,7 +1636,7 @@ footer {
           </div>
         </div>
         <div class="forge-step forge-step--ai">
-          <div class="forge-step-icon">02</div>
+          <div class="forge-step-num">02</div>
           <div>
             <h4>Verify</h4>
             <p>Agent runs the program live, validates results match expectations</p>
@@ -1225,7 +1644,7 @@ footer {
           </div>
         </div>
         <div class="forge-step forge-step--ai">
-          <div class="forge-step-icon">03</div>
+          <div class="forge-step-num">03</div>
           <div>
             <h4>Save</h4>
             <p>Crystallize as .tap.js &mdash; pure JavaScript, deterministic, version-controlled</p>
@@ -1233,7 +1652,7 @@ footer {
           </div>
         </div>
         <div class="forge-step forge-step--run">
-          <div class="forge-step-icon">&infin;</div>
+          <div class="forge-step-num">&infin;</div>
           <div>
             <h4>Run</h4>
             <p>Execute forever. No AI, no tokens, instant results. The program just works.</p>
@@ -1245,59 +1664,55 @@ footer {
   </div>
 </section>
 
-<!-- ─── Why Tap ─── -->
+<!-- ===== Why Tap ===== -->
 <section class="why-tap" id="why">
   <div class="container">
     <div class="why-header">
-      <div class="section-label reveal">Why Tap</div>
-      <h2 class="reveal">Why programs<br>beat <em>prompts</em></h2>
-      <p class="reveal">Deterministic, self-healing, cross-platform, and $0 after the first forge.</p>
+      <div class="section-tag reveal">Why Tap</div>
+      <h2 class="reveal">Why programs beat <span class="hl">prompts</span></h2>
+      <p class="section-desc reveal">Deterministic, self-healing, cross-platform, and $0 after the first forge.</p>
     </div>
     <div class="why-grid">
 
-      <!-- Deterministic -->
       <div class="why-card why-card--accurate reveal">
         <div class="why-card-tag">Deterministic</div>
         <h3>Same input, same output. Every time.</h3>
         <p>Prompts make fresh decisions every run &mdash; results drift, behavior varies. A program runs the same steps identically, 1,000 times. No AI variance, no surprises.</p>
         <div class="why-compare">
-          <div><span class="good">✓ Program</span> <span class="dim">— identical result every run</span></div>
-          <div><span class="bad">✗ Prompt</span> <span class="dim">— decisions vary per run</span></div>
+          <div><span class="good">&#10003; Program</span> <span class="dim">&mdash; identical result every run</span></div>
+          <div><span class="bad">&#10007; Prompt</span> <span class="dim">&mdash; decisions vary per run</span></div>
         </div>
       </div>
 
-      <!-- Self-maintaining -->
       <div class="why-card why-card--safe reveal">
         <div class="why-card-tag">Self-Maintaining</div>
         <h3>Interface changes? Agent re-forges.</h3>
         <p>Hand-coded tools break when websites change. Prompts don't notice. Tap programs detect failure via health contracts and trigger the agent to re-forge automatically.</p>
         <div class="why-compare">
-          <div><span class="good">✓ Tap</span> <span class="dim">— agent re-forges on break</span></div>
-          <div><span class="bad">✗ Hand-coded</span> <span class="dim">— manual fix on every change</span></div>
+          <div><span class="good">&#10003; Tap</span> <span class="dim">&mdash; agent re-forges on break</span></div>
+          <div><span class="bad">&#10007; Hand-coded</span> <span class="dim">&mdash; manual fix on every change</span></div>
         </div>
       </div>
 
-      <!-- Cross-platform -->
       <div class="why-card why-card--cross reveal">
         <div class="why-card-tag">Run Anywhere</div>
         <h3>Real browser, headless server, native apps</h3>
-        <p>Same <code style="font-family:var(--font-mono);font-size:13px;color:var(--indigo-light)">.tap.js</code> runs on all three runtimes. Use your real browser sessions, or run headless on a server.</p>
+        <p>Same <code>.tap.js</code> runs on all three runtimes. Use your real browser sessions, or run headless on a server.</p>
         <div class="why-runtimes">
-          <div class="why-runtime"><span class="why-runtime-dot" style="background:#4F46E5"></span> Chrome Extension — real browser, real sessions, undetectable</div>
-          <div class="why-runtime"><span class="why-runtime-dot" style="background:#818CF8"></span> Playwright — headless, CI/CD, Docker</div>
-          <div class="why-runtime"><span class="why-runtime-dot" style="background:#A5B4FC"></span> macOS — native desktop apps via Accessibility API</div>
+          <div class="why-runtime"><span class="why-runtime-dot" style="background:#6366F1"></span> Chrome Extension &mdash; real browser, real sessions, undetectable</div>
+          <div class="why-runtime"><span class="why-runtime-dot" style="background:#818CF8"></span> Playwright &mdash; headless, CI/CD, Docker</div>
+          <div class="why-runtime"><span class="why-runtime-dot" style="background:#A5B4FC"></span> macOS &mdash; native desktop apps via Accessibility API</div>
         </div>
       </div>
 
-      <!-- Cost -->
       <div class="why-card why-card--cost reveal">
         <div class="why-card-tag">Zero Marginal Cost</div>
         <h3>Understand once. Run free forever.</h3>
         <p>Tokens are spent once &mdash; when the agent comprehends the interface and forges the program. After that, every execution is free. No LLM calls, ever.</p>
         <div class="why-compare">
-          <div><span class="dim">forge (once)   →</span> <span style="color:var(--gold)">AI tokens</span></div>
-          <div><span class="dim">run ×∞        →</span> <span class="good">$0.00 forever</span></div>
-          <div><span class="dim">heal (on break) →</span> <span style="color:var(--gold)">AI tokens (once)</span></div>
+          <div><span class="dim">forge (once)   &rarr;</span> <span style="color:var(--gold)">AI tokens</span></div>
+          <div><span class="dim">run &times;&infin;        &rarr;</span> <span class="good">$0.00 forever</span></div>
+          <div><span class="dim">heal (on break) &rarr;</span> <span style="color:var(--gold)">AI tokens (once)</span></div>
         </div>
       </div>
 
@@ -1305,13 +1720,13 @@ footer {
   </div>
 </section>
 
-<!-- ─── Protocol ─── -->
+<!-- ===== Protocol ===== -->
 <section class="protocol" id="protocol">
   <div class="container">
     <div class="protocol-header">
-      <div class="section-label reveal">The Protocol</div>
-      <h2 class="reveal">8 core ops &rarr; 17 built-in &rarr; <em>any</em> runtime</h2>
-      <p class="reveal">A minimal, complete contract for interface control. Implement 8 core methods for a new runtime and get 17 built-in operations &mdash; plus every existing .tap.js &mdash; for free. That's the protocol.</p>
+      <div class="section-tag reveal">The Protocol</div>
+      <h2 class="reveal">8 core ops &rarr; 17 built-in &rarr; <span class="hl">any</span> runtime</h2>
+      <p class="section-desc reveal">A minimal, complete contract for interface control. Implement 8 core methods for a new runtime and get 17 built-in operations &mdash; plus every existing .tap.js &mdash; for free. That's the protocol.</p>
     </div>
 
     <div class="protocol-layers">
@@ -1330,7 +1745,7 @@ footer {
 
       <div class="protocol-arrow">&darr;</div>
 
-      <div class="protocol-layer layer-stdlib reveal">
+      <div class="protocol-layer layer-builtin reveal">
         <div class="protocol-layer-head">
           <h3>Built-in</h3>
           <span class="protocol-layer-count">17 operations</span>
@@ -1358,7 +1773,7 @@ footer {
 
       <div class="protocol-arrow">&darr;</div>
 
-      <div class="protocol-layer layer-kernel reveal">
+      <div class="protocol-layer layer-core reveal">
         <div class="protocol-layer-head">
           <h3>Core</h3>
           <span class="protocol-layer-count">8 irreducible primitives</span>
@@ -1394,13 +1809,13 @@ footer {
   </div>
 </section>
 
-<!-- ─── Skills ─── -->
+<!-- ===== Skills ===== -->
 <section class="skills" id="skills">
   <div class="container">
     <div class="skills-header">
-      <div class="section-label reveal">Community Skills</div>
-      <h2 class="reveal">200+ skills. <em>Community-forged.</em></h2>
-      <p class="reveal">Every forged skill is a permanent asset. Your agent starts with knowledge of 65+ sites &mdash; no forging needed, just run. The community flywheel: more users forge more skills, every agent benefits.</p>
+      <div class="section-tag reveal">Community Skills</div>
+      <h2 class="reveal">200+ skills. <span class="hl">Community-forged.</span></h2>
+      <p class="section-desc reveal">Every forged skill is a permanent asset. Your agent starts with knowledge of 65+ sites &mdash; no forging needed, just run. The community flywheel: more users forge more skills, every agent benefits.</p>
     </div>
 
     <div class="skills-categories reveal">
@@ -1472,22 +1887,22 @@ footer {
   </div>
 </section>
 
-<!-- ─── Architecture ─── -->
+<!-- ===== Architecture ===== -->
 <section class="architecture" id="architecture">
   <div class="container">
     <div class="arch-header">
-      <div class="section-label reveal">Architecture</div>
-      <h2 class="reveal">~5,500 lines. <em>Zero</em> dependencies.</h2>
-      <p class="reveal">CLI, MCP server, executor, daemon, three runtimes &mdash; pure Deno, zero dependencies. One binary + one extension. That's it.</p>
+      <div class="section-tag reveal">Architecture</div>
+      <h2 class="reveal">~5,500 lines. <span class="hl">Zero</span> dependencies.</h2>
+      <p class="section-desc reveal">CLI, MCP server, executor, daemon, three runtimes &mdash; pure Deno, zero dependencies. One binary + one extension. That's it.</p>
     </div>
 
     <div class="arch-diagram reveal">
 <pre>
-                                        <span class="hl-indigo">Chrome Extension</span> <span class="hl-dim">(chrome.scripting + CDP)</span>
-                                      &#x250C;&#x2500;
+                                    <span class="hl-indigo">Chrome Extension</span> <span class="hl-dim">(chrome.scripting + CDP)</span>
+                                  &#x250C;&#x2500;
 <span class="hl-white">AI Agent</span> &larr;&rarr; <span class="hl-gold">MCP</span> &larr;&rarr; <span class="hl-white">Deno Executor</span> &#x2500;&#x2524;&#x2500; <span class="hl-indigo">Playwright</span> <span class="hl-dim">(pw API)</span>
   <span class="hl-dim">CLI / MCP</span>          <span class="hl-dim">load + run .tap.js</span>  &#x2514;&#x2500;
-                                        <span class="hl-indigo">macOS</span> <span class="hl-dim">(JXA + CGEvent + AX)</span>
+                                    <span class="hl-indigo">macOS</span> <span class="hl-dim">(JXA + CGEvent + AX)</span>
 </pre>
     </div>
 
@@ -1512,13 +1927,13 @@ footer {
   </div>
 </section>
 
-<!-- ─── Install ─── -->
+<!-- ===== Install ===== -->
 <section class="install" id="install">
   <div class="container">
     <div class="install-header">
-      <div class="section-label reveal">Get Started</div>
-      <h2 class="reveal">Up and running in <em>minutes</em></h2>
-      <p class="reveal">One command to install, one extension to load, one line to configure your AI agent.</p>
+      <div class="section-tag reveal">Get Started</div>
+      <h2 class="reveal">Up and running in <span class="hl">minutes</span></h2>
+      <p class="section-desc reveal">One command to install, one extension to load, one line to configure your AI agent.</p>
     </div>
 
     <div class="install-steps">
@@ -1534,7 +1949,7 @@ footer {
         <div class="install-step-num">2</div>
         <div>
           <h4>Load Extension &amp; Skills</h4>
-          <p>Download <a href="https://github.com/LeonTing1010/tap/releases/latest" style="color:var(--indigo-light)">tap-extension.zip</a> from Releases, unzip, load unpacked in Chrome. Then install community skills.</p>
+          <p>Download <a href="https://github.com/LeonTing1010/tap/releases/latest">tap-extension.zip</a> from Releases, unzip, load unpacked in Chrome. Then install community skills.</p>
           <div class="code-block"><span class="prompt">$ </span><span class="cmd">tap update</span></div>
         </div>
       </div>
@@ -1550,32 +1965,34 @@ footer {
   </div>
 </section>
 
-<!-- ─── Pricing ─── -->
-<section id="pricing" style="padding:80px 0;">
-  <div class="container reveal">
-    <div style="text-align:center; margin-bottom:48px;">
-      <h2 style="font-family:var(--font-display); font-size:36px; color:var(--white);">Free forever. Pay only for power.</h2>
-      <p style="color:var(--text-dim); margin-top:12px;">Every plan includes unlimited runs at $0. Forge is free for everyone.</p>
+<!-- ===== Pricing ===== -->
+<section class="pricing" id="pricing">
+  <div class="container">
+    <div class="pricing-header">
+      <div class="section-tag reveal">Pricing</div>
+      <h2 class="reveal">Free forever. Pay only for <span class="hl">power.</span></h2>
+      <p class="section-desc reveal">Every plan includes unlimited runs at $0. Forge is free for everyone.</p>
     </div>
-    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:1px; background:rgba(255,255,255,0.06); border-radius:12px; overflow:hidden; border:1px solid rgba(255,255,255,0.06);">
-      <div style="background:var(--bg-card); padding:40px 30px;">
-        <div style="font-family:var(--font-mono); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-muted); margin-bottom:8px;">Free</div>
-        <div style="font-family:var(--font-mono); font-size:2.8rem; font-weight:800; letter-spacing:-0.04em;"><span style="font-size:1.2rem; color:var(--text-muted); vertical-align:super;">$</span>0</div>
-        <div style="font-size:13px; color:var(--text-muted); margin-bottom:28px;">forever</div>
-        <ul style="list-style:none; margin-bottom:28px; font-size:14px; color:var(--text-dim); line-height:2.2;">
+
+    <div class="pricing-grid reveal">
+      <div class="price-card">
+        <div class="price-tier price-tier--free">Free</div>
+        <div class="price-amount"><span class="currency">$</span>0</div>
+        <div class="price-label">forever</div>
+        <ul class="price-features">
           <li>+ Unlimited runs at $0</li>
           <li>+ 200+ community skills</li>
           <li>+ CLI forge (BYOK)</li>
           <li>+ Doctor health checks</li>
           <li>+ Chrome + Playwright</li>
         </ul>
-        <a href="#install" style="display:block; text-align:center; padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); color:var(--text-dim); text-decoration:none; font-size:14px; font-weight:600;">Get Started</a>
+        <a href="#install" class="price-btn price-btn--outline">Get Started</a>
       </div>
-      <div style="background:var(--bg-surface); padding:40px 30px;">
-        <div style="font-family:var(--font-mono); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--gold); margin-bottom:8px;">Hacker</div>
-        <div style="font-family:var(--font-mono); font-size:2.8rem; font-weight:800; letter-spacing:-0.04em;"><span style="font-size:1.2rem; color:var(--text-muted); vertical-align:super;">$</span>9<span style="font-size:14px; color:var(--text-muted);">/mo</span></div>
-        <div style="font-size:13px; color:var(--text-muted); margin-bottom:28px;">for creators</div>
-        <ul style="list-style:none; margin-bottom:28px; font-size:14px; color:var(--text-dim); line-height:2.2;">
+      <div class="price-card price-card--featured">
+        <div class="price-tier price-tier--hacker">Hacker</div>
+        <div class="price-amount"><span class="currency">$</span>9<span class="period">/mo</span></div>
+        <div class="price-label">for creators</div>
+        <ul class="price-features">
           <li>+ Everything in Free</li>
           <li>+ MCP forge (full agent)</li>
           <li>+ Auto-heal broken taps</li>
@@ -1583,78 +2000,115 @@ footer {
           <li>+ Plugin extensions</li>
           <li>+ macOS native runtime</li>
         </ul>
-        <a href="https://taprun.dev/api/checkout?plan=hacker" style="display:block; text-align:center; padding:12px; border-radius:8px; background:var(--gold); color:var(--bg-deep); text-decoration:none; font-size:14px; font-weight:700;">Start Hacking</a>
+        <a href="https://taprun.dev/api/checkout?plan=hacker" class="price-btn price-btn--gold">Start Hacking</a>
       </div>
-      <div style="background:var(--bg-card); padding:40px 30px;">
-        <div style="font-family:var(--font-mono); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-muted); margin-bottom:8px;">Pro</div>
-        <div style="font-family:var(--font-mono); font-size:2.8rem; font-weight:800; letter-spacing:-0.04em;"><span style="font-size:1.2rem; color:var(--text-muted); vertical-align:super;">$</span>29<span style="font-size:14px; color:var(--text-muted);">/mo</span></div>
-        <div style="font-size:13px; color:var(--text-muted); margin-bottom:28px;">for production</div>
-        <ul style="list-style:none; margin-bottom:28px; font-size:14px; color:var(--text-dim); line-height:2.2;">
+      <div class="price-card">
+        <div class="price-tier price-tier--pro">Pro</div>
+        <div class="price-amount"><span class="currency">$</span>29<span class="period">/mo</span></div>
+        <div class="price-label">for production</div>
+        <ul class="price-features">
           <li>+ Everything in Hacker</li>
           <li>+ Built-in AI (no key needed)</li>
           <li>+ Scheduled runs</li>
           <li>+ Priority support</li>
         </ul>
-        <span style="display:block; text-align:center; padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); color:var(--text-muted); font-size:14px; font-weight:600; opacity:0.5;">Coming Soon</span>
+        <span class="price-btn price-btn--disabled">Coming Soon</span>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ─── FAQ ─── -->
-<section id="faq" style="padding:80px 0;">
-  <div class="container reveal" style="max-width:680px;">
-    <div style="text-align:center; margin-bottom:48px;">
-      <h2 style="font-family:var(--font-display); font-size:36px; color:var(--white);">Common questions</h2>
+<!-- ===== FAQ ===== -->
+<section class="faq" id="faq">
+  <div class="container">
+    <div class="faq-header">
+      <div class="section-tag reveal">FAQ</div>
+      <h2 class="reveal">Common questions</h2>
     </div>
-    <div style="display:flex; flex-direction:column; gap:12px;">
-      <details style="background:var(--bg-card); border:1px solid rgba(255,255,255,0.06); border-radius:10px; padding:16px 20px;">
-        <summary style="cursor:pointer; font-weight:500; color:var(--white);">Do I need to be a developer?</summary>
-        <p style="margin-top:12px; color:var(--text-dim); line-height:1.7;">Basic terminal familiarity helps. The core workflow is two commands: <code>tap forge "what you want"</code> and <code>tap site name</code>. 200+ pre-built taps work with zero setup.</p>
+
+    <div class="faq-list">
+      <details class="faq-item reveal">
+        <summary>Do I need to be a developer?</summary>
+        <div class="faq-answer">Basic terminal familiarity helps. The core workflow is two commands: <code>tap forge "what you want"</code> and <code>tap site name</code>. 200+ pre-built taps work with zero setup.</div>
       </details>
-      <details style="background:var(--bg-card); border:1px solid rgba(255,255,255,0.06); border-radius:10px; padding:16px 20px;">
-        <summary style="cursor:pointer; font-weight:500; color:var(--white);">Is my data safe?</summary>
-        <p style="margin-top:12px; color:var(--text-dim); line-height:1.7;">Tap programs run in a sandboxed Worker with zero permissions &mdash; no filesystem, no network, no subprocess access. Your data never leaves your machine.</p>
+      <details class="faq-item reveal">
+        <summary>Is my data safe?</summary>
+        <div class="faq-answer">Tap programs run in a sandboxed Worker with zero permissions &mdash; no filesystem, no network, no subprocess access. Your data never leaves your machine.</div>
       </details>
-      <details style="background:var(--bg-card); border:1px solid rgba(255,255,255,0.06); border-radius:10px; padding:16px 20px;">
-        <summary style="cursor:pointer; font-weight:500; color:var(--white);">What happens when a website changes?</summary>
-        <p style="margin-top:12px; color:var(--text-dim); line-height:1.7;"><code>tap doctor</code> detects breakage via health contracts. When a tap breaks, it diagnoses the issue. Most fixes happen with one forge command.</p>
+      <details class="faq-item reveal">
+        <summary>What happens when a website changes?</summary>
+        <div class="faq-answer"><code>tap doctor</code> detects breakage via health contracts. When a tap breaks, it diagnoses the issue. Most fixes happen with one forge command.</div>
       </details>
-      <details style="background:var(--bg-card); border:1px solid rgba(255,255,255,0.06); border-radius:10px; padding:16px 20px;">
-        <summary style="cursor:pointer; font-weight:500; color:var(--white);">How is this different from Zapier or n8n?</summary>
-        <p style="margin-top:12px; color:var(--text-dim); line-height:1.7;">Zapier charges per task ($0.01&ndash;$0.05 each). At scale, that's $40K+/year. Tap has zero per-execution cost &mdash; AI runs once, program runs forever for free.</p>
+      <details class="faq-item reveal">
+        <summary>How is this different from Zapier or n8n?</summary>
+        <div class="faq-answer">Zapier charges per task ($0.01&ndash;$0.05 each). At scale, that's $40K+/year. Tap has zero per-execution cost &mdash; AI runs once, program runs forever for free.</div>
       </details>
-      <details style="background:var(--bg-card); border:1px solid rgba(255,255,255,0.06); border-radius:10px; padding:16px 20px;">
-        <summary style="cursor:pointer; font-weight:500; color:var(--white);">Can I use my own AI key?</summary>
-        <p style="margin-top:12px; color:var(--text-dim); line-height:1.7;">Yes. <code>tap config set ai.key sk-ant-xxx</code> lets you bring your own Claude or OpenAI key. Works with any OpenAI-compatible provider (DeepSeek, Ollama, etc.).</p>
+      <details class="faq-item reveal">
+        <summary>Can I use my own AI key?</summary>
+        <div class="faq-answer">Yes. <code>tap config set ai.key sk-ant-xxx</code> lets you bring your own Claude or OpenAI key. Works with any OpenAI-compatible provider (DeepSeek, Ollama, etc.).</div>
       </details>
-      <details style="background:var(--bg-card); border:1px solid rgba(255,255,255,0.06); border-radius:10px; padding:16px 20px;">
-        <summary style="cursor:pointer; font-weight:500; color:var(--white);">Do I own the programs Tap creates?</summary>
-        <p style="margin-top:12px; color:var(--text-dim); line-height:1.7;">Yes. Every <code>.tap.js</code> file is a plain JavaScript program on your disk. No lock-in, no cloud dependency. Cancel and your programs keep running forever.</p>
+      <details class="faq-item reveal">
+        <summary>Do I own the programs Tap creates?</summary>
+        <div class="faq-answer">Yes. Every <code>.tap.js</code> file is a plain JavaScript program on your disk. No lock-in, no cloud dependency. Cancel and your programs keep running forever.</div>
       </details>
     </div>
   </div>
 </section>
 
-<!-- ─── Final CTA ─── -->
-<section style="padding:80px 0; text-align:center;">
+<!-- ===== Final CTA ===== -->
+<section class="final-cta">
+  <div class="final-cta-glow"></div>
   <div class="container reveal">
-    <h2 style="font-family:var(--font-display); font-size:40px; color:var(--white); margin-bottom:16px;">Stop renting automation.<br>Start owning it.</h2>
-    <p style="color:var(--text-dim); font-size:17px; margin-bottom:32px;">200+ sites. Zero cost per run. Self-healing when sites change.</p>
-    <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+    <svg class="bird-small" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+      <circle cx="105" cy="115" r="55" fill="#FFFFFF"/>
+      <circle cx="85" cy="70" r="45" fill="#FFFFFF"/>
+      <ellipse cx="75" cy="32" rx="15" ry="22" fill="#EF4444"/>
+      <ellipse cx="90" cy="30" rx="12" ry="20" fill="#DC2626"/>
+      <ellipse cx="103" cy="35" rx="10" ry="16" fill="#B91C1C"/>
+      <path d="M 55 68 L 8 75 L 55 85 Z" fill="#FBBF24"/>
+      <path d="M 55 85 L 8 75 L 12 82 Z" fill="#D97706"/>
+      <circle cx="70" cy="65" r="14" fill="#1F2937"/>
+      <circle cx="66" cy="61" r="5" fill="#FFFFFF"/>
+      <circle cx="74" cy="68" r="2.5" fill="#FFFFFF"/>
+      <ellipse cx="50" cy="78" rx="8" ry="5" fill="#FECACA" opacity="0.8"/>
+      <ellipse cx="125" cy="115" rx="35" ry="30" fill="#818CF8"/>
+      <ellipse cx="125" cy="115" rx="25" ry="20" fill="#6366F1"/>
+      <circle cx="95" cy="130" r="25" fill="#F9FAFB"/>
+      <path d="M 145 140 L 175 185 L 155 180 L 140 145 Z" fill="#818CF8"/>
+      <path d="M 150 145 L 180 190 L 162 185 L 148 150 Z" fill="#6366F1"/>
+    </svg>
+    <h2>Stop renting automation.<br>Start owning it.</h2>
+    <p class="section-desc">200+ sites. Zero cost per run. Self-healing when sites change.</p>
+    <div class="hero-actions">
       <a href="#install" class="btn btn-primary">Get Started Free</a>
       <a href="https://github.com/LeonTing1010/tap" class="btn btn-ghost">View on GitHub</a>
     </div>
   </div>
 </section>
 
-<!-- ─── Footer ─── -->
-<footer>
+<!-- ===== Footer ===== -->
+<footer class="footer">
   <div class="container">
     <div class="footer-inner">
       <div class="footer-brand">
-        <svg viewBox="0 0 64 64" width="22" height="22"><rect width="64" height="64" rx="12" fill="#D97706"/><text x="32" y="44" text-anchor="middle" font-size="38" font-weight="800" fill="#0b0b0e" font-family="monospace">t</text></svg>
-        Tap &mdash; Automate any website
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="26" height="26">
+          <circle cx="105" cy="115" r="55" fill="#FFFFFF"/>
+          <circle cx="85" cy="70" r="45" fill="#FFFFFF"/>
+          <ellipse cx="75" cy="32" rx="15" ry="22" fill="#EF4444"/>
+          <ellipse cx="90" cy="30" rx="12" ry="20" fill="#DC2626"/>
+          <ellipse cx="103" cy="35" rx="10" ry="16" fill="#B91C1C"/>
+          <path d="M 55 68 L 8 75 L 55 85 Z" fill="#FBBF24"/>
+          <path d="M 55 85 L 8 75 L 12 82 Z" fill="#D97706"/>
+          <circle cx="70" cy="65" r="14" fill="#1F2937"/>
+          <circle cx="66" cy="61" r="5" fill="#FFFFFF"/>
+          <circle cx="74" cy="68" r="2.5" fill="#FFFFFF"/>
+          <ellipse cx="125" cy="115" rx="35" ry="30" fill="#818CF8"/>
+          <ellipse cx="125" cy="115" rx="25" ry="20" fill="#6366F1"/>
+          <circle cx="95" cy="130" r="25" fill="#F9FAFB"/>
+          <path d="M 145 140 L 175 185 L 155 180 L 140 145 Z" fill="#818CF8"/>
+          <path d="M 150 145 L 180 190 L 162 185 L 148 150 Z" fill="#6366F1"/>
+        </svg>
+        tap &mdash; Automate any website
       </div>
       <ul class="footer-links">
         <li><a href="https://github.com/LeonTing1010/tap">GitHub</a></li>
@@ -1668,46 +2122,111 @@ footer {
 </footer>
 
 <script>
-// Scroll reveal
+// ===== Scroll reveal =====
 const observer = new IntersectionObserver((entries) => {
   entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); } });
-}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+}, { threshold: 0.08, rootMargin: '0px 0px -60px 0px' });
 document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
-// Stagger reveals in same section
+// Stagger reveals within each section
 document.querySelectorAll('section, .stats-bar').forEach(section => {
   const reveals = section.querySelectorAll('.reveal');
-  reveals.forEach((el, i) => { el.style.transitionDelay = `${i * 80}ms`; });
+  reveals.forEach((el, i) => { el.style.transitionDelay = `${i * 90}ms`; });
 });
 
-// Nav background on scroll
-const nav = document.querySelector('nav');
+// ===== Nav scroll effect =====
+const nav = document.getElementById('nav');
+let ticking = false;
 window.addEventListener('scroll', () => {
-  nav.style.background = window.scrollY > 50
-    ? 'rgba(10, 9, 24, 0.95)'
-    : 'rgba(10, 9, 24, 0.8)';
+  if (!ticking) {
+    requestAnimationFrame(() => {
+      nav.classList.toggle('scrolled', window.scrollY > 40);
+      ticking = false;
+    });
+    ticking = true;
+  }
 }, { passive: true });
 
-// Terminal typing animation — loop forever
+// ===== Terminal animation (scroll-triggered, one-time) =====
 (function() {
-  const lines = document.querySelectorAll('.terminal-body .line');
-  if (!lines.length) return;
-  const delays = [200, 400, 300, 300, 300, 300, 200, 400, 300, 300, 300, 300, 300];
-  function playOnce() {
-    lines.forEach(l => l.classList.remove('visible'));
-    let i = 0;
-    function showNext() {
-      if (i >= lines.length) {
-        setTimeout(playOnce, 3000); // pause 3s then restart
-        return;
+  var lines = [
+    { text: '<span class="prompt">$</span> <span class="cmd">tap forge</span> <span class="flag">"scrape Hacker News top stories"</span>', delay: 0 },
+    { text: '<span class="spinner">&bull;</span> <span class="muted">Inspecting https://news.ycombinator.com...</span>', delay: 700 },
+    { text: '<span class="spinner">&bull;</span> <span class="muted">AI writing tap code...</span>', delay: 1400 },
+    { text: '<span class="check">&#10004;</span> <span class="cmd">Saved hackernews/hot.tap.js</span>', delay: 2100 },
+    { text: '', delay: 2600 },
+    { text: '<span class="prompt">$</span> <span class="cmd">tap</span> hackernews hot', delay: 3000 },
+    { text: '<span class="table-border">&#x250C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x252C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x252C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2510;</span>', delay: 3500 },
+    { text: '<span class="table-border">&#x2502;</span> rank <span class="table-border">&#x2502;</span> title                <span class="table-border">&#x2502;</span> score <span class="table-border">&#x2502;</span>', delay: 3500 },
+    { text: '<span class="table-border">&#x251C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x253C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x253C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2524;</span>', delay: 3500 },
+    { text: '<span class="table-border">&#x2502;</span> 1    <span class="table-border">&#x2502;</span> Show HN: Tap         <span class="table-border">&#x2502;</span>   342 <span class="table-border">&#x2502;</span>', delay: 3700 },
+    { text: '<span class="table-border">&#x2502;</span> 2    <span class="table-border">&#x2502;</span> Rust is eating Go    <span class="table-border">&#x2502;</span>   287 <span class="table-border">&#x2502;</span>', delay: 3900 },
+    { text: '<span class="table-border">&#x2514;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2534;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2534;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2518;</span>', delay: 4100 },
+    { text: '<span class="cost">Cost: $0.00</span> <span class="muted">(run #847 &mdash; zero AI tokens)</span>', delay: 4500 }
+  ];
+
+  var terminalEl = document.getElementById('terminal-output');
+  if (!terminalEl) return;
+  var started = false;
+  var termObserver = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting && !started) {
+        started = true;
+        lines.forEach(function(line) {
+          setTimeout(function() {
+            var div = document.createElement('div');
+            div.innerHTML = line.text || '&nbsp;';
+            div.style.opacity = '0';
+            div.style.transform = 'translateY(6px)';
+            div.style.transition = 'opacity 0.25s, transform 0.25s';
+            terminalEl.appendChild(div);
+            requestAnimationFrame(function() {
+              div.style.opacity = '1';
+              div.style.transform = 'translateY(0)';
+            });
+          }, line.delay);
+        });
+        termObserver.unobserve(entry.target);
       }
-      lines[i].classList.add('visible');
-      i++;
-      setTimeout(showNext, delays[i - 1] || 300);
+    });
+  }, { threshold: 0.3 });
+  termObserver.observe(terminalEl.closest('.hero-terminal'));
+})();
+
+// ===== Mobile nav =====
+(function() {
+  const style = document.createElement('style');
+  style.textContent = `
+    @media (max-width: 900px) {
+      .nav-links.mobile-open {
+        display: flex !important;
+        flex-direction: column;
+        position: absolute;
+        top: 100%;
+        left: 0; right: 0;
+        background: rgba(10, 9, 24, 0.97);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        padding: 16px 24px 24px;
+        gap: 4px;
+        border-bottom: 1px solid rgba(99, 102, 241, 0.1);
+      }
+      .nav-links.mobile-open a {
+        padding: 12px 16px;
+        font-size: 16px;
+        border-radius: 8px;
+      }
+      .nav-links.mobile-open a:hover {
+        background: rgba(99, 102, 241, 0.08);
+      }
+      .nav-links.mobile-open .nav-cta {
+        margin-top: 8px;
+        text-align: center;
+        justify-content: center;
+      }
     }
-    setTimeout(showNext, 500);
-  }
-  playOnce();
+  `;
+  document.head.appendChild(style);
 })();
 </script>
 
