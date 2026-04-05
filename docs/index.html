@@ -1106,9 +1106,9 @@ footer {
   <div class="container">
     <div class="hero-inner">
       <div class="hero-text">
-        <div class="hero-eyebrow">v0.8.4 &mdash; AI Coding Agent Protocol</div>
-        <h1>8 operations.<br>Any interface.<br><em>Zero AI at runtime.</em></h1>
-        <p class="hero-sub">AI observes an interface once, forges a deterministic <code>.tap.js</code> program, then any agent replays it forever at $0. No tokens, no hallucinations, no drift. 200+ community-forged skills ready to use.</p>
+        <div class="hero-eyebrow">200+ sites &mdash; ready to use</div>
+        <h1>Automate any website.<br>AI builds it.<br><em>Runs forever at $0.</em></h1>
+        <p class="hero-sub">Tell AI what you want. It writes a program that does it &mdash; every time, the same way, for free. No more broken scrapers. No more $1-per-run AI agents. One command, and it just works.</p>
         <div class="hero-actions">
           <a href="#install" class="btn btn-primary">Get Started</a>
           <a href="https://github.com/LeonTing1010/tap" class="btn btn-ghost">
@@ -1121,23 +1121,23 @@ footer {
         <div class="hero-terminal">
           <div class="terminal-bar"><span class="terminal-dot" style="background:#EF4444"></span><span class="terminal-dot" style="background:#FBBF24"></span><span class="terminal-dot" style="background:#22C55E"></span><span style="color:var(--text-muted);font-size:12px;margin-left:8px">terminal</span></div>
           <div class="terminal-body">
-<span class="prompt">$</span> <span class="cmd">tap forge</span> <span class="comment">"get hackernews top stories"</span>
-  <span style="color:#22C55E">&#10004;</span> inspect &#8212; SSR + API detected
-  <span style="color:#22C55E">&#10004;</span> AI writing tap code...
-  <span style="color:#22C55E">&#10004;</span> verify &#8212; score 0.95 (30 rows)
-  <span style="color:#22C55E">&#10004;</span> saved hackernews/top-stories
+<span class="comment"># Step 1: Tell AI what you want</span>
+<span class="prompt">$</span> <span class="cmd">tap forge</span> <span style="color:#FBBF24">"get Hacker News top stories"</span>
+  <span style="color:#22C55E">&#10004;</span> Inspecting page...
+  <span style="color:#22C55E">&#10004;</span> AI writing program...
+  <span style="color:#22C55E">&#10004;</span> Verified &#8212; 30 stories found
+  <span style="color:#22C55E">&#10004;</span> Saved. <span style="color:var(--text-muted)">Run it anytime, zero AI cost.</span>
 
+<span class="comment"># Step 2: Run it forever &#8212; instant, free, deterministic</span>
 <span class="prompt">$</span> <span class="cmd">tap hackernews top-stories</span>
-  <span style="color:var(--text-dim)">[{rank: "1", title: "Show HN: ...", score: "734"},
-   {rank: "2", title: "Self-distillation...", score: "591"},
-   {rank: "3", title: "Components of...", score: "232"}]</span>
+  <span style="color:var(--text-dim)">rank  title                         points
+  1     Show HN: Build a GPU          734
+  2     PostgreSQL perf halved...      591
+  3     Apple approves Nvidia eGPU     427</span>
+  <span style="color:var(--text-muted)">&#8230; 27 more rows (52ms)</span>
 
-<span class="prompt">$</span> <span class="cmd">tap hackernews top-stories</span> <span class="comment">--json | tap limit --n 5 | tap table</span>
-  <span style="color:var(--text-dim)">rank  title                    score
-  &#9472;&#9472;&#9472;&#9472;  &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;  &#9472;&#9472;&#9472;&#9472;&#9472;
-  1     Show HN: Build a GPU     734
-  2     Self-distillation...     591
-  3     Components of Agent      232</span>
+<span class="comment"># Works with pipes, JSON, and 200+ built-in sites</span>
+<span class="prompt">$</span> <span class="cmd">tap weibo hot</span> <span style="color:var(--text-muted)">| tap github trending | tap reddit hot</span>
           </div>
         </div>
       </div>
@@ -1149,20 +1149,20 @@ footer {
 <div class="container">
   <div class="stats-bar reveal">
     <div class="stat">
-      <div class="stat-value">8</div>
-      <div class="stat-label">Core Operations</div>
-    </div>
-    <div class="stat">
-      <div class="stat-value">17</div>
-      <div class="stat-label">Built-in Operations</div>
-    </div>
-    <div class="stat">
-      <div class="stat-value">3</div>
-      <div class="stat-label">Runtimes</div>
-    </div>
-    <div class="stat">
       <div class="stat-value">200+</div>
-      <div class="stat-label">Community Skills</div>
+      <div class="stat-label">Sites Supported</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">$0</div>
+      <div class="stat-label">Per Run</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">&lt;1s</div>
+      <div class="stat-label">Execution Time</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">&infin;</div>
+      <div class="stat-label">Runs, No Limits</div>
     </div>
   </div>
 </div>
