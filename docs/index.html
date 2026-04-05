@@ -40,6 +40,19 @@
   "keywords": ["AI agents", "MCP", "tap protocol", "forge", "deterministic automation", "Chrome extension", "Playwright", "sandbox", "self-healing"]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type": "Question", "name": "Do I need to be a developer to use Tap?", "acceptedAnswer": {"@type": "Answer", "text": "Tap is a CLI tool. The core workflow is two commands: tap forge and tap site name. 200+ pre-built taps work with zero setup."}},
+    {"@type": "Question", "name": "Is my data safe?", "acceptedAnswer": {"@type": "Answer", "text": "Tap programs run in a sandboxed Worker with zero permissions. Your data never leaves your machine. Everything runs locally."}},
+    {"@type": "Question", "name": "What happens when a website changes?", "acceptedAnswer": {"@type": "Answer", "text": "tap doctor detects breakage via health contracts and re-forges the program automatically. Self-healing automation."}},
+    {"@type": "Question", "name": "How is Tap different from Zapier?", "acceptedAnswer": {"@type": "Answer", "text": "Zapier charges per task. At scale that is $40K+ per year. Tap has zero per-execution cost. AI runs once, program runs forever."}},
+    {"@type": "Question", "name": "Do I own the programs Tap creates?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Every .tap.js file is yours. No lock-in. Cancel and your programs keep running forever."}}
+  ]
+}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -1086,13 +1099,14 @@ footer {
 <nav>
   <div class="container">
     <a href="#" class="nav-brand">
-      <svg viewBox="0 0 32 32" width="28" height="28"><rect width="32" height="32" rx="7" fill="#4F46E5"/><text x="16" y="22" text-anchor="middle" fill="white" font-family="system-ui" font-weight="700" font-size="18">t</text></svg>
-      <span style="font-size:20px;letter-spacing:-0.03em">tap</span>
+      <svg viewBox="0 0 512 512" width="32" height="32"><defs><linearGradient id="nav-bg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#4F46E5"/><stop offset="100%" stop-color="#818CF8"/></linearGradient></defs><circle cx="256" cy="256" r="240" fill="url(#nav-bg)"/><circle cx="290" cy="275" r="80" fill="white"/><circle cx="230" cy="210" r="58" fill="white"/><path d="M 200 250 Q 230 280 270 270 Q 260 230 240 215 Q 215 235 200 250 Z" fill="white"/></svg>
+      tap
     </a>
     <ul class="nav-links">
       <li><a href="#protocol">Protocol</a></li>
       <li><a href="#skills">Skills</a></li>
       <li><a href="https://taprun.dev/blog/">Blog</a></li>
+      <li><a href="#faq">FAQ</a></li>
       <li><a href="https://github.com/LeonTing1010/tap">GitHub</a></li>
       <li><a href="#install" class="nav-cta">Get Started</a></li>
     </ul>
@@ -1523,13 +1537,60 @@ footer {
   </div>
 </section>
 
+<!-- ─── FAQ ─── -->
+<section id="faq" style="padding:80px 0;">
+  <div class="container reveal" style="max-width:680px;">
+    <div style="text-align:center; margin-bottom:48px;">
+      <h2 style="font-family:var(--font-display); font-size:36px; color:var(--white);">Common questions</h2>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <details style="background:var(--bg-card); border:1px solid rgba(255,255,255,0.06); border-radius:10px; padding:16px 20px;">
+        <summary style="cursor:pointer; font-weight:500; color:var(--white);">Do I need to be a developer?</summary>
+        <p style="margin-top:12px; color:var(--text-dim); line-height:1.7;">Basic terminal familiarity helps. The core workflow is two commands: <code>tap forge "what you want"</code> and <code>tap site name</code>. 200+ pre-built taps work with zero setup.</p>
+      </details>
+      <details style="background:var(--bg-card); border:1px solid rgba(255,255,255,0.06); border-radius:10px; padding:16px 20px;">
+        <summary style="cursor:pointer; font-weight:500; color:var(--white);">Is my data safe?</summary>
+        <p style="margin-top:12px; color:var(--text-dim); line-height:1.7;">Tap programs run in a sandboxed Worker with zero permissions &mdash; no filesystem, no network, no subprocess access. Your data never leaves your machine.</p>
+      </details>
+      <details style="background:var(--bg-card); border:1px solid rgba(255,255,255,0.06); border-radius:10px; padding:16px 20px;">
+        <summary style="cursor:pointer; font-weight:500; color:var(--white);">What happens when a website changes?</summary>
+        <p style="margin-top:12px; color:var(--text-dim); line-height:1.7;"><code>tap doctor</code> detects breakage via health contracts. When a tap breaks, it diagnoses the issue. Most fixes happen with one forge command.</p>
+      </details>
+      <details style="background:var(--bg-card); border:1px solid rgba(255,255,255,0.06); border-radius:10px; padding:16px 20px;">
+        <summary style="cursor:pointer; font-weight:500; color:var(--white);">How is this different from Zapier or n8n?</summary>
+        <p style="margin-top:12px; color:var(--text-dim); line-height:1.7;">Zapier charges per task ($0.01&ndash;$0.05 each). At scale, that's $40K+/year. Tap has zero per-execution cost &mdash; AI runs once, program runs forever for free.</p>
+      </details>
+      <details style="background:var(--bg-card); border:1px solid rgba(255,255,255,0.06); border-radius:10px; padding:16px 20px;">
+        <summary style="cursor:pointer; font-weight:500; color:var(--white);">Can I use my own AI key?</summary>
+        <p style="margin-top:12px; color:var(--text-dim); line-height:1.7;">Yes. <code>tap config set ai.key sk-ant-xxx</code> lets you bring your own Claude or OpenAI key. Works with any OpenAI-compatible provider (DeepSeek, Ollama, etc.).</p>
+      </details>
+      <details style="background:var(--bg-card); border:1px solid rgba(255,255,255,0.06); border-radius:10px; padding:16px 20px;">
+        <summary style="cursor:pointer; font-weight:500; color:var(--white);">Do I own the programs Tap creates?</summary>
+        <p style="margin-top:12px; color:var(--text-dim); line-height:1.7;">Yes. Every <code>.tap.js</code> file is a plain JavaScript program on your disk. No lock-in, no cloud dependency. Cancel and your programs keep running forever.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Final CTA ─── -->
+<section style="padding:80px 0; text-align:center;">
+  <div class="container reveal">
+    <h2 style="font-family:var(--font-display); font-size:40px; color:var(--white); margin-bottom:16px;">Stop renting automation.<br>Start owning it.</h2>
+    <p style="color:var(--text-dim); font-size:17px; margin-bottom:32px;">200+ sites. Zero cost per run. Self-healing when sites change.</p>
+    <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+      <a href="#install" class="btn btn-primary">Get Started Free</a>
+      <a href="https://github.com/LeonTing1010/tap" class="btn btn-ghost">View on GitHub</a>
+    </div>
+  </div>
+</section>
+
 <!-- ─── Footer ─── -->
 <footer>
   <div class="container">
     <div class="footer-inner">
       <div class="footer-brand">
-        <svg viewBox="0 0 512 512" width="24" height="24"><circle cx="256" cy="256" r="240" fill="#4F46E5"/><circle cx="290" cy="275" r="80" fill="white"/><circle cx="230" cy="210" r="58" fill="white"/></svg>
-        Tap &mdash; AI Coding Agent Protocol
+        <svg viewBox="0 0 512 512" width="24" height="24"><circle cx="256" cy="256" r="240" fill="#4F46E5"/><circle cx="290" cy="275" r="80" fill="white"/><circle cx="230" cy="210" r="58" fill="white"/><path d="M 200 250 Q 230 280 270 270 Q 260 230 240 215 Q 215 235 200 250 Z" fill="white"/></svg>
+        Tap &mdash; Automate any website
       </div>
       <ul class="footer-links">
         <li><a href="https://github.com/LeonTing1010/tap">GitHub</a></li>
