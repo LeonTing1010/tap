@@ -5,7 +5,7 @@
 <h1 align="center">Tap</h1>
 
 <h4 align="center">
-  8 operations. Any interface. Zero AI at runtime.
+  Automate any website. AI compiles it. Runs forever at $0.
 </h4>
 
 <p align="center">
@@ -23,14 +23,14 @@
 
 ---
 
-**Tap is an AI Coding Agent Protocol.** AI observes an interface once, forges a deterministic `.tap.js` program, then any agent replays it forever — no AI, no tokens, no hallucinations. $0 per run.
+**Tap is an AI interface compiler.** AI observes an interface once, forges a deterministic `.tap.js` program, then any agent replays it forever — no AI, no tokens, no hallucinations. $0 per run.
 
 ```
 First run:  AI inspects the interface → forges .tap.js    (one-time cost)
 Every run:  .tap.js replays deterministically              ($0.00, forever)
 ```
 
-The protocol: **8 core operations** → **17 built-in operations** → **any runtime** (Chrome, Playwright, macOS). A new runtime implements 8 methods and gets everything else for free.
+The Tap compiler turns interface knowledge into deterministic programs. 25+ operations, 3 runtimes (Chrome, Playwright, macOS). One binary, zero dependencies.
 
 ## Get Started
 
@@ -90,28 +90,14 @@ Agent: [runs tap x/post] Done. Posted to @YourHandle.
 
 ## The Protocol
 
-8 irreducible operations define every human-computer interaction. Everything else composes from these.
+Tap compiles interface knowledge into deterministic programs. 25+ operations cover every interface interaction.
 
-**8 core operations** — the atoms:
-
-```
-eval · pointer · keyboard · nav · wait · screenshot · run · capabilities
-```
-
-**17 built-in operations** — composed from core, free for every runtime:
-
-```
-click · type · fill · hover · scroll · pressKey · select · upload · dialog
-fetch · find · cookies · download · waitFor · waitForNetwork · ssrState · storage
-```
-
-Implement 8 methods for a new runtime → get 17 built-in operations + every existing tap for free.
 
 ### Architecture
 
 ```
                     ┌─ Chrome Extension  (your real browser)
-AI Agent ←→ MCP ←→ Tap Executor ─┤─ Playwright        (headless, CI/CD)
+AI Agent ←→ MCP ←→ Tap Compiler ─┤─ Playwright        (headless, CI/CD)
                                   └─ macOS             (native apps)
 ```
 
@@ -229,7 +215,7 @@ Community taps are untrusted code. Three layers of defense:
 
 | Layer | What it blocks |
 |-------|---------------|
-| **Deno Worker Sandbox** | File access, network, subprocesses, env vars |
+| **Tap Sandbox** | File access, network, subprocesses, env vars |
 | **Static Analysis (CI)** | eval, Function, base64, WebSocket, import() |
 | **Data Isolation** | Secrets, sessions, API keys never leave your machine |
 
