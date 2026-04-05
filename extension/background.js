@@ -292,7 +292,7 @@ async function handleMethod(method, params = {}, senderTabId = null) {
         const result = await chrome.debugger.sendCommand({ tabId }, 'Page.captureScreenshot', {
           format: fmt, quality,
         })
-        return `data:image/${fmt};base64,${result.data}`
+        return result.data
       })
       return { data }
     }
