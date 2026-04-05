@@ -125,9 +125,10 @@ async function resolveTab(params, { allowUnscriptable = false, fromDaemon = fals
   }
 
   // Auto-discover: only for non-daemon callers (popup, content script)
-  // Daemon sessions must allocate tabs explicitly via tab.new
+  // Daemon sessions return null — handleMethod decides if that's an error
+  // (nav and tab.new can work without a tab, other methods cannot)
   if (!tabId) {
-    if (fromDaemon) throw new Error('No tabId — daemon sessions must allocate via tab.new first')
+    if (fromDaemon) return null
     const tabs = await chrome.tabs.query({ currentWindow: true })
     const httpTab = tabs.find(t => t.url?.startsWith('http'))
     if (httpTab) {
