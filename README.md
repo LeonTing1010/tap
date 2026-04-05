@@ -5,7 +5,7 @@
 <h1 align="center">Tap</h1>
 
 <h4 align="center">
-  The interface protocol for AI agents.
+  8 operations. Any interface. Zero AI at runtime.
 </h4>
 
 <p align="center">
@@ -23,14 +23,14 @@
 
 ---
 
-Tap is a protocol that lets AI agents interact with any user interface — browsers, native apps, mobile devices — through a minimal set of deterministic operations.
-
-AI does the hard part once (understanding the page), then generates a `.tap.js` program that runs forever — no AI, no tokens, no hallucinations.
+**Tap is an AI Coding Agent Protocol.** AI observes an interface once, forges a deterministic `.tap.js` program, then any agent replays it forever — no AI, no tokens, no hallucinations. $0 per run.
 
 ```
-First run:  AI inspects the page → writes .tap.js     (one-time cost)
-Every run:  .tap.js replays deterministically          ($0.00)
+First run:  AI inspects the interface → forges .tap.js    (one-time cost)
+Every run:  .tap.js replays deterministically              ($0.00, forever)
 ```
+
+The protocol: **8 core operations** → **17 built-in operations** → **any runtime** (Chrome, Playwright, macOS). A new runtime implements 8 methods and gets everything else for free.
 
 ## Get Started
 
@@ -90,9 +90,9 @@ Agent: [runs tap x/post] Done. Posted to @YourHandle.
 
 ## The Protocol
 
-Tap defines a minimal, complete contract for interface control.
+8 irreducible operations define every human-computer interaction. Everything else composes from these.
 
-**8 core operations** — the irreducible atoms of all human-computer interaction:
+**8 core operations** — the atoms:
 
 ```
 eval · pointer · keyboard · nav · wait · screenshot · run · capabilities
@@ -105,19 +105,30 @@ click · type · fill · hover · scroll · pressKey · select · upload · dial
 fetch · find · cookies · download · waitFor · waitForNetwork · ssrState · storage
 ```
 
-A new runtime implements 8 methods → gets 17 built-in operations + every existing tap for free.
+Implement 8 methods for a new runtime → get 17 built-in operations + every existing tap for free.
 
 ### Architecture
 
 ```
-AI Agent ←→ MCP ←→ Tap Executor ─┬─ Chrome Extension  (your real browser)
-                                  ├─ Playwright        (headless, CI/CD)
+                    ┌─ Chrome Extension  (your real browser)
+AI Agent ←→ MCP ←→ Tap Executor ─┤─ Playwright        (headless, CI/CD)
                                   └─ macOS             (native apps)
 ```
 
-- **Chrome Extension** — Runtime #1. Real browser, real sessions. No headless detection, no fingerprint spoofing.
+- **Chrome Extension** — Runtime #1. Real browser, real sessions. Undetectable (Extensions API first, CDP only for input).
 - **Playwright** — Runtime #2. Headless mode, no extension needed. Server-side automation.
-- **macOS** — Runtime #3. Native desktop app automation via Accessibility API.
+- **macOS** — Runtime #3. Native desktop app automation via Accessibility API (JXA + CGEvent + AX).
+
+### Self-Distillation
+
+Every successful forge makes the next one faster. The community flywheel:
+
+1. AI observes an interface → forges a `.tap.js` program (one-time AI cost)
+2. Program runs deterministically forever ($0 per run)
+3. Community shares the skill → every agent benefits
+4. More agents → more interfaces covered → more skills for everyone
+
+200+ community-forged skills already cover 65+ sites. Your agent starts with all of them.
 
 ### .tap.js
 
@@ -178,12 +189,12 @@ tap github trending | tap filter --field stars --gt 500 | tap pick --fields repo
 You:   forge.inspect https://example.com
 AI:    Found REST API, recommends fetch strategy
 You:   forge.save example data
-AI:    Saved. Now `tap example data` runs forever.
+AI:    Saved. Now `tap example data` runs forever at $0.
 ```
 
 ## Community Skills
 
-**[tap-skills](https://github.com/LeonTing1010/tap-skills)** — open source, community-maintained.
+**[tap-skills](https://github.com/LeonTing1010/tap-skills)** — 200+ skills, open source, community-forged.
 
 | Category | Sites |
 |----------|-------|
@@ -210,6 +221,7 @@ tap doctor    # Health check your taps
 | **Runtimes** | 3 (Chrome + Playwright + macOS) | 1 | 1 |
 | **Reusable** | .tap.js (shareable) | Ephemeral | Test scripts |
 | **MCP native** | Yes | No | No |
+| **Self-healing** | Yes (doctor + auto re-forge) | No | No |
 
 ## Security
 
@@ -231,7 +243,7 @@ Tap ships as **one binary + one extension**. No package manager, no dependencies
 |-----------|------|--------|
 | `tap` binary | CLI, MCP server, executor, all runtimes | [Releases](https://github.com/LeonTing1010/tap/releases/latest) |
 | Chrome Extension | Runtime #1 — your real browser | [Releases](https://github.com/LeonTing1010/tap/releases/latest) / [source](extension/) |
-| Community Skills | 140+ skills across 65+ sites, open source | [tap-skills](https://github.com/LeonTing1010/tap-skills) |
+| Community Skills | 200+ skills across 65+ sites, open source | [tap-skills](https://github.com/LeonTing1010/tap-skills) |
 
 ### This Repository
 
@@ -262,15 +274,15 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). The easiest way to contribute: **forge a
 
 ## Roadmap
 
-- [x] Community skills across 65+ sites
+- [x] 200+ community skills across 65+ sites
 - [x] 3 runtimes — Chrome Extension, Playwright, macOS
 - [x] Unix pipes — `tap A | tap B`
 - [x] Watch mode — `tap watch site name --every 5m`
 - [x] Sandbox + security CI
 - [x] Doctor — self-healing health checks
+- [x] `tap doctor --auto` — re-forge broken taps automatically
 - [ ] Android runtime (AccessibilityService)
 - [ ] iOS runtime (XCUITest)
-- [x] `tap doctor --auto` — re-forge broken taps automatically
 
 ## License
 
