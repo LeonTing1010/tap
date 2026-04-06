@@ -54,7 +54,9 @@
     {"@type": "Question", "name": "Is my data safe?", "acceptedAnswer": {"@type": "Answer", "text": "Tap programs run in a sandboxed Worker with zero permissions. Your data never leaves your machine. Everything runs locally."}},
     {"@type": "Question", "name": "What happens when a website changes?", "acceptedAnswer": {"@type": "Answer", "text": "tap doctor detects breakage via health contracts and re-forges the program automatically. Self-healing automation."}},
     {"@type": "Question", "name": "How is Tap different from Zapier?", "acceptedAnswer": {"@type": "Answer", "text": "Zapier charges per task. At scale that is $40K+ per year. Tap has zero per-execution cost. AI runs once, program runs forever."}},
-    {"@type": "Question", "name": "Do I own the programs Tap creates?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Every .tap.js file is yours. No lock-in. Cancel and your programs keep running forever."}}
+    {"@type": "Question", "name": "Do I own the programs Tap creates?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Every .tap.js file is yours. No lock-in. Cancel and your programs keep running forever."}},
+    {"@type": "Question", "name": "Does Tap work offline?", "acceptedAnswer": {"@type": "Answer", "text": "Programs run locally with zero AI calls. You only need internet when forging (AI compilation) or when the program accesses a website."}},
+    {"@type": "Question", "name": "How is Tap different from Browser Use or Stagehand?", "acceptedAnswer": {"@type": "Answer", "text": "They call AI every run ($0.50-$2.00 each, 60-95% reliability). Tap compiles once, runs forever at $0 with 100% consistency. 300x cheaper, 20x faster."}}
   ]
 }
 </script>
@@ -1720,6 +1722,26 @@ h2 .hl {
         </div>
       </div>
 
+      <div class="why-card why-card--safe reveal">
+        <div class="why-card-tag">Local-First</div>
+        <h3>Runs on your machine. Works offline.</h3>
+        <p>Programs execute locally &mdash; no cloud API calls, no data leaving your device. Works on a plane, in a cabin, wherever you are. Your thinking environment shouldn't break because a CDN is down.</p>
+        <div class="why-compare">
+          <div><span class="good">&#10003; Tap</span> <span class="dim">&mdash; local execution, zero data leakage</span></div>
+          <div><span class="bad">&#10007; AI agents</span> <span class="dim">&mdash; every run phones home to an API</span></div>
+        </div>
+      </div>
+
+      <div class="why-card why-card--accurate reveal">
+        <div class="why-card-tag">API First</div>
+        <h3>Fetch data, don't scrape pixels.</h3>
+        <p><code>tap.fetch()</code> calls site APIs directly &mdash; faster, stabler, and legally cleaner than DOM scraping. Only falls back to the DOM when no API exists. Less breakage, less legal risk.</p>
+        <div class="why-compare">
+          <div><span class="good">&#10003; API</span> <span class="dim">&mdash; structured data, stable endpoints</span></div>
+          <div><span class="bad">&#10007; DOM</span> <span class="dim">&mdash; brittle selectors, legal gray area</span></div>
+        </div>
+      </div>
+
     </div>
   </div>
 </section>
@@ -2013,6 +2035,18 @@ h2 .hl {
       <details class="faq-item reveal">
         <summary>Do I own the programs Tap creates?</summary>
         <div class="faq-answer">Yes. Every <code>.tap.js</code> file is a plain JavaScript program on your disk. No lock-in, no cloud dependency. Cancel and your programs keep running forever.</div>
+      </details>
+      <details class="faq-item reveal">
+        <summary>Does Tap work offline?</summary>
+        <div class="faq-answer">Programs run locally with zero AI calls &mdash; no internet needed for execution. You only need connectivity when forging a new program (AI compilation) or when the program accesses a website. The programs themselves are plain JavaScript on your disk.</div>
+      </details>
+      <details class="faq-item reveal">
+        <summary>Is web scraping with Tap legal?</summary>
+        <div class="faq-answer">Tap prioritizes <code>tap.fetch()</code> (API calls) over DOM scraping. APIs are structured, stable, and carry less legal risk than screen-scraping. When APIs aren't available, Tap uses standard browser rendering &mdash; the same way a human would access the page. Always check a site's terms of service.</div>
+      </details>
+      <details class="faq-item reveal">
+        <summary>How is Tap different from Browser Use or Stagehand?</summary>
+        <div class="faq-answer">Browser Use and Stagehand call AI on every run &mdash; $0.50&ndash;$2.00 per execution, 60&ndash;95% reliability. Tap uses AI once to compile a deterministic program, then runs it forever at $0 with 100% consistency. 300x cheaper at scale, 20x faster per run.</div>
       </details>
     </div>
   </div>
