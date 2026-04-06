@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Programs Beat Prompts: Why AI Should Write Code, Not Run It — Tap Blog</title>
+<meta name="description" content="AI browser agents burn tokens every run. The better model: AI writes a deterministic program once, then it runs forever at zero cost. Programs beat prompts.">
+<link rel="canonical" href="https://taprun.dev/blog/programs-beat-prompts.html">
+<meta property="og:title" content="Programs Beat Prompts: Why AI Should Write Code, Not Run It">
+<meta property="og:description" content="AI browser agents burn tokens every run. The better model: AI writes a deterministic program once, then it runs forever at zero cost.">
+<meta property="og:url" content="https://taprun.dev/blog/programs-beat-prompts.html">
+<meta property="og:type" content="article">
+<meta property="article:published_time" content="2026-04-06">
+<meta property="article:author" content="Leon Ting">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Ccircle cx='256' cy='256' r='240' fill='%234F46E5'/%3E%3Ccircle cx='290' cy='275' r='80' fill='white'/%3E%3Ccircle cx='230' cy='210' r='58' fill='white'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Outfit', sans-serif; background: #0a0a0f; color: #e0e0e0; line-height: 1.8; }
+.container { max-width: 720px; margin: 0 auto; padding: 60px 24px; }
+h1 { font-size: 2rem; font-weight: 600; color: #fff; margin-bottom: 8px; line-height: 1.3; }
+h2 { font-size: 1.35rem; font-weight: 500; color: #fff; margin-top: 48px; margin-bottom: 16px; }
+h3 { font-size: 1.1rem; font-weight: 500; color: #fff; margin-top: 32px; margin-bottom: 12px; }
+p, li { font-size: 0.95rem; color: #b0b0b0; margin-bottom: 16px; }
+ul, ol { padding-left: 24px; }
+a { color: #818cf8; text-decoration: none; }
+a:hover { text-decoration: underline; }
+.meta { font-size: 0.85rem; color: #666; margin-bottom: 40px; }
+.back { display: inline-block; margin-bottom: 24px; font-size: 0.9rem; }
+code { background: #1a1a2e; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; font-family: 'DM Mono', monospace; }
+pre { background: #111118; border: 1px solid #222; border-radius: 8px; padding: 16px 20px; overflow-x: auto; margin: 20px 0; font-family: 'DM Mono', monospace; font-size: 0.9rem; line-height: 1.6; color: #c8c8d0; }
+pre .comment { color: #555; }
+pre .cmd { color: #818cf8; }
+pre .output { color: #6ee7b7; }
+pre .flag { color: #fbbf24; }
+pre .err { color: #f87171; }
+blockquote { border-left: 3px solid #4F46E5; padding: 12px 16px; margin: 20px 0; background: rgba(79,70,229,0.06); border-radius: 0 8px 8px 0; }
+blockquote p { color: #a0a0b0; margin-bottom: 0; font-style: italic; }
+blockquote cite { display: block; margin-top: 8px; font-size: 0.85rem; color: #666; font-style: normal; }
+.cta { margin-top: 48px; padding: 24px; background: rgba(79,70,229,0.08); border: 1px solid rgba(79,70,229,0.2); border-radius: 12px; }
+.cta h3 { margin-top: 0; }
+.cta pre { margin-bottom: 0; }
+.separator { border: none; border-top: 1px solid #222; margin: 48px 0; }
+table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid #222; font-size: 0.9rem; }
+th { color: #fff; font-weight: 500; }
+td { color: #b0b0b0; }
+</style>
+</head>
+<body>
+<div class="container">
+<a href="../" class="back">&larr; Tap</a> &middot; <a href="./" class="back">Blog</a>
+<h1>Programs Beat Prompts</h1>
+<p class="meta">April 6, 2026 &middot; Leon Ting &middot; 6 min read</p>
+
+<p>Every AI browser agent works the same way: send a prompt, burn tokens, get a result. Next time you need the same result? Send the prompt again. Burn more tokens.</p>
+
+<p>This is the prompt loop, and it's why AI automation is expensive, unreliable, and slow.</p>
+
+<p>There's a better model: <strong>AI writes a program once, then the program runs forever at zero cost.</strong></p>
+
+<h2>The Prompt Loop Problem</h2>
+
+<p>AI browser agents like Browser Use, Stagehand, and computer-use tools are impressive demos. Point an LLM at a website, tell it what to do, watch it click around. Magic.</p>
+
+<p>Until you need it to work reliably. At scale. Every day.</p>
+
+<blockquote>
+<p>"The program cost $1.05 to run. So doing it at any scale quickly becomes a little bit silly."</p>
+<cite>&mdash; rozap, Hacker News</cite>
+</blockquote>
+
+<p>The math is brutal. An AI agent that scrapes one site costs ~$1 per run. Run it daily across 50 sites and you're spending $1,500/month on data collection that a deterministic script would do for free.</p>
+
+<p>But cost isn't even the worst part. <strong>Reliability is.</strong></p>
+
+<blockquote>
+<p>"If each step has a .95 chance of completing successfully, after not very many steps you have a pretty small overall probability of success."</p>
+<cite>&mdash; rozap, Hacker News</cite>
+</blockquote>
+
+<p>95% per step sounds good. A 10-step workflow? 60% overall. Twenty steps? 36%. Every AI call is a coin flip weighted slightly in your favor &mdash; but over enough steps, the house always wins.</p>
+
+<h2>The Compiler Model</h2>
+
+<p>There's a pattern from 60 years of computer science that solves this: <strong>compilation.</strong></p>
+
+<p>A compiler reads high-level code once, produces optimized machine code, and that machine code runs billions of times at zero marginal cost. The compiler is expensive. The output is free.</p>
+
+<p>Apply this to browser automation:</p>
+
+<table>
+<tr><th></th><th>Prompt model (interpreter)</th><th>Program model (compiler)</th></tr>
+<tr><td>AI cost per run</td><td>$0.50 &ndash; $2.00</td><td><strong>$0.00</strong></td></tr>
+<tr><td>Reliability per run</td><td>60 &ndash; 95%</td><td><strong>100% deterministic</strong></td></tr>
+<tr><td>Speed</td><td>30 &ndash; 120s (LLM thinking)</td><td><strong>1 &ndash; 5s (direct execution)</strong></td></tr>
+<tr><td>AI usage</td><td>Every run</td><td><strong>Only at authoring time</strong></td></tr>
+</table>
+
+<p>The insight: <strong>AI is the compiler, not the runtime.</strong> Use AI to understand the interface, write a deterministic program, and then execute that program forever without AI.</p>
+
+<h2>What This Looks Like</h2>
+
+<pre><span class="comment"># Step 1: AI observes the interface (the "compile" step)</span>
+<span class="cmd">$</span> tap forge <span class="flag">"get trending repos from GitHub"</span>
+<span class="output">Inspecting github.com...</span>
+<span class="output">Found API: api.github.com/search/repositories</span>
+<span class="output">Verifying: 25 rows, all fields present</span>
+<span class="output">&#10004; Saved: github/trending.tap.js</span>
+
+<span class="comment"># Step 2: Program runs forever at $0 (the "execute" step)</span>
+<span class="cmd">$</span> tap github trending
+<span class="output">25 rows (890ms) Cost: $0.00</span></pre>
+
+<p>The first command uses AI. Every subsequent run is pure code &mdash; no LLM, no tokens, no variability.</p>
+
+<h2>Why Programs Win</h2>
+
+<h3>1. Deterministic means debuggable</h3>
+
+<p>When a prompt fails, you get "the AI didn't understand the page." When a program fails, you get a stack trace, a line number, and a selector that changed. One is a mystery. The other is a bug you can fix.</p>
+
+<h3>2. Programs compose</h3>
+
+<p>Prompts are isolated. Each one starts fresh, with no memory of what came before. Programs call other programs:</p>
+
+<pre><span class="comment">// This tap calls two other taps and combines the results</span>
+async run(tap) {
+  const repos = await tap.run("github", "trending")
+  const stars = await tap.run("github", "stars", { user: "me" })
+  return repos.filter(r => !stars.includes(r.name))
+}</pre>
+
+<p>Composition is free. No extra tokens. No prompt engineering to maintain context across steps.</p>
+
+<h3>3. Programs have contracts</h3>
+
+<p>A prompt returns whatever the AI decides. A program has a health contract:</p>
+
+<pre>health: {
+  min_rows: 10,          <span class="comment">// must return at least 10 results</span>
+  non_empty: ["title"]   <span class="comment">// title field can't be empty</span>
+}</pre>
+
+<p>When the site changes and the program breaks, the contract catches it immediately. No silent failure. No stale data for days.</p>
+
+<h3>4. Programs version naturally</h3>
+
+<p>A .tap.js file is just JavaScript. It goes in Git. You get diffs, blame, history, rollback. Try doing that with a prompt chain stored in a vector database.</p>
+
+<h2>When You Do Need AI Again</h2>
+
+<p>Programs aren't magic. Websites change. When they do:</p>
+
+<pre><span class="cmd">$</span> tap doctor
+<span class="output">github/trending   &#10004; ok     25 rows</span>
+<span class="err">reddit/hot        &#10008; fail   0 rows  &mdash; selector changed</span>
+
+<span class="comment"># Doctor detected the break. Re-forge just that one:</span>
+<span class="cmd">$</span> tap doctor <span class="flag">--auto</span>
+<span class="output">Re-forging reddit/hot...</span>
+<span class="output">&#10004; Fixed: reddit/hot.tap.js (new selectors)</span></pre>
+
+<p>AI is called once to fix the program. Then it runs at $0 again until the next change. You pay for intelligence only when the world changes &mdash; which is 1% of the time, not 100%.</p>
+
+<h2>The Numbers</h2>
+
+<p>For a real workload of 50 automations running daily:</p>
+
+<table>
+<tr><th></th><th>Prompt-per-run</th><th>Programs</th></tr>
+<tr><td>Daily AI cost</td><td>$50</td><td>$0</td></tr>
+<tr><td>Monthly AI cost</td><td>$1,500</td><td>~$5 (occasional re-forge)</td></tr>
+<tr><td>Annual AI cost</td><td>$18,000</td><td>~$60</td></tr>
+<tr><td>Reliability</td><td>60 &ndash; 95%</td><td>100% (until site changes)</td></tr>
+<tr><td>Speed per run</td><td>30 &ndash; 120s</td><td>1 &ndash; 5s</td></tr>
+</table>
+
+<p>300x cost reduction. 20x faster. Deterministic. The math doesn't require a sales pitch.</p>
+
+<hr class="separator">
+
+<div class="cta">
+<h3>Try it now</h3>
+<pre><span class="comment"># Install (macOS / Linux)</span>
+<span class="cmd">curl</span> -fsSL https://taprun.dev/install.sh | sh
+
+<span class="comment"># Forge your first program</span>
+<span class="cmd">tap</span> forge <span class="flag">"get top stories from Hacker News"</span>
+
+<span class="comment"># Run it forever at $0</span>
+<span class="cmd">tap</span> hackernews hot</pre>
+<p style="margin-top: 16px; margin-bottom: 0;"><a href="https://taprun.dev/getting-started.html">Getting started guide</a> &middot; <a href="https://github.com/LeonTing1010/tap">GitHub</a> &middot; 200+ community taps included</p>
+</div>
+
+</div>
+<script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "91c486def20e49999fa55db9040ec94d"}'></script>
+</body>
+</html>
