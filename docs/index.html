@@ -1728,51 +1728,47 @@ h2 .hl {
 <section class="protocol" id="protocol">
   <div class="container">
     <div class="protocol-header">
-      <div class="section-tag reveal">The Compiler</div>
-      <h2 class="reveal">Two-stage compilation. <span class="hl">AI writes it once. $0 per run forever.</span></h2>
-      <p class="section-desc reveal">Tap is a compiler with two stages. Stage 1: Forge &mdash; AI observes the interface and compiles a <code>.tap.js</code> program (one-time AI cost). Stage 2: Built-in &mdash; each high-level operation compiles down to 8 core primitives at runtime (deterministic, zero AI).</p>
+      <div class="section-tag reveal">How It Works</div>
+      <h2 class="reveal">Tell AI what you want. Tap compiles it. <span class="hl">Run forever.</span></h2>
+      <p class="section-desc reveal">Tap compiles your intent into a deterministic program. 25+ operations covering every interface interaction &mdash; clicks, typing, navigation, data extraction, and more. The compiler handles the complexity so you don't have to.</p>
     </div>
 
     <div class="protocol-layers">
       <div class="protocol-layer layer-scripts reveal">
         <div class="protocol-layer-head">
-          <h3>Forge &mdash; AI compiler</h3>
-          <span class="protocol-layer-count">one-time AI cost</span>
+          <h3>You describe what you want</h3>
+          <span class="protocol-layer-count">natural language</span>
         </div>
         <div class="primitives">
-          <span class="prim">inspect page</span>
-          <span class="prim">detect APIs &amp; SSR</span>
-          <span class="prim">write .tap.js</span>
-          <span class="prim">verify &amp; iterate</span>
-          <span class="prim">save + fingerprint</span>
+          <span class="prim">"scrape trending repos"</span>
+          <span class="prim">"post to Twitter"</span>
+          <span class="prim">"monitor prices daily"</span>
         </div>
       </div>
 
-      <div class="protocol-arrow">&darr; compiled artifact: .tap.js</div>
+      <div class="protocol-arrow">&darr;</div>
 
       <div class="protocol-layer layer-builtin reveal">
         <div class="protocol-layer-head">
-          <h3>ISA &mdash; 8 core + 17 built-in operations</h3>
-          <span class="protocol-layer-count">25 instructions, deterministic</span>
+          <h3>Tap compiles it into a program</h3>
+          <span class="protocol-layer-count">25+ operations</span>
         </div>
         <div class="primitives">
-          <span class="prim">click</span>
-          <span class="prim">type</span>
-          <span class="prim">fetch</span>
-          <span class="prim">find</span>
-          <span class="prim">navigate</span>
-          <span class="prim">eval</span>
-          <span class="prim">wait</span>
-          <span class="prim">compose</span>
+          <span class="prim">fetch data</span>
+          <span class="prim">click buttons</span>
+          <span class="prim">fill forms</span>
+          <span class="prim">navigate pages</span>
+          <span class="prim">extract content</span>
+          <span class="prim">compose workflows</span>
         </div>
       </div>
 
-      <div class="protocol-arrow">&darr; executes on</div>
+      <div class="protocol-arrow">&darr;</div>
 
       <div class="protocol-layer layer-runtime reveal">
         <div class="protocol-layer-head">
-          <h3>Runtime &mdash; the CPU</h3>
-          <span class="protocol-layer-count">same program, any environment</span>
+          <h3>Runs on any runtime</h3>
+          <span class="protocol-layer-count">your choice of environment</span>
         </div>
         <div class="primitives">
           <span class="prim">Chrome Extension</span>
