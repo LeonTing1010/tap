@@ -1,233 +1,303 @@
-# agents.json Specification v1.0
+# agents.json — Schema.org WebAPI Profile
 
 **Status:** Draft
 **Authors:** Leon Ting ([@LeonTing1010](https://github.com/LeonTing1010))
 **Repository:** [github.com/LeonTing1010/agents-json](https://github.com/LeonTing1010/agents-json)
-**Last updated:** 2026-04-04
+**Last updated:** 2026-04-07
 
 ## Abstract
 
-`agents.json` is a machine-readable file that websites publish to declare how AI agents should interact with them. It answers the question: *"What can an AI agent do here, and how?"*
-
-It complements existing standards:
+`agents.json` is a [Schema.org](https://schema.org) JSON-LD document that websites publish to declare how AI agents should interact with them. It uses standard Schema.org types — the same vocabulary Google already indexes for rich search results.
 
 - **robots.txt** says what agents *cannot* do
-- **agents.json** says what agents *can* do, and how to do it well
+- **agents.json** says what agents *can* do, and how
 
-## Motivation
+No new vocabulary. No new standard. Just Schema.org `WebAPI` + `potentialAction` — types that Google, Bing, and every major search engine already understand.
 
-AI agents automate websites by inspecting pages, guessing API endpoints, and reverse-engineering data structures. This is fragile, slow, and adversarial.
+## Why Schema.org
 
-`agents.json` flips the relationship: websites *declare* their automation-friendly interfaces. Agents consume the declaration and skip the guesswork. The result:
+Getting websites to adopt a new file format is nearly impossible. But **35% of websites already publish Schema.org JSON-LD** for Google SEO benefits (rich snippets, sitelinks search box, knowledge panels).
 
-- **For websites:** Control how agents interact with you. Set rate limits, require attribution, block bad actors.
-- **For agents:** Skip page inspection. Go straight to the right API endpoint with correct field names.
-- **For users:** Faster, more reliable automations that don't break when sites redesign.
+agents.json rides on this existing infrastructure:
+
+| Approach | Adoption | Indexed by Google |
+|----------|----------|-------------------|
+| Custom JSON format | ~0% (must evangelize) | No |
+| **Schema.org JSON-LD** | **~35% already have it** | **Yes** |
+
+Website owners already have motivation to publish Schema.org data — it improves their search rankings. agents.json gives them a reason to describe their APIs using the same mechanism.
 
 ## Discovery
 
-Serve the file at:
+Agents discover structured data through existing web standards, in priority order:
 
-```
-/.well-known/agents.json
-```
+1. **JSON-LD in page** — `<script type="application/ld+json">` in any page's `<head>`. Already published by 35% of websites for SEO. Google indexes this.
+2. **Well-known URL** — `GET /.well-known/agents.json` with `Content-Type: application/ld+json`. 3-second timeout.
+3. **Link header/tag** — `<link rel="describedby" type="application/ld+json" href="/agents.json">` in HTML or HTTP `Link` header.
+4. **Sitemap reference** — `<url><loc>/.well-known/agents.json</loc></url>` in sitemap.xml.
 
-Content-Type: `application/json`
-
-Agents should probe this URL with a 3-second timeout. If unavailable, fall back to other discovery methods (OpenAPI, llms.txt, page inspection).
+If none found, fall back to page inspection (forge.inspect).
 
 ## Specification
 
-### Minimal Example (3 fields)
+### Minimal Example
 
 ```json
 {
-  "version": "1.0",
+  "@context": "https://schema.org",
+  "@type": "WebSite",
   "name": "Hacker News",
+  "url": "https://news.ycombinator.com",
   "description": "Tech news aggregator with community voting"
 }
 ```
 
-This is a valid `agents.json`. It tells agents: "This site exists, here's what it is." Agents can use the name and description for intent matching.
+This is a valid agents.json. Google already indexes this format for sitelinks. Agents use `name` and `description` for intent matching.
 
-### Full Example
+### With Search (Google Sitelinks compatible)
 
 ```json
 {
-  "version": "1.0",
+  "@context": "https://schema.org",
+  "@type": "WebSite",
   "name": "Hacker News",
+  "url": "https://news.ycombinator.com",
   "description": "Tech news aggregator with community voting",
-  "homepage": "https://news.ycombinator.com",
-
-  "data": [
-    {
-      "name": "top-stories",
-      "description": "Front page stories ranked by score",
-      "endpoint": "https://hacker-news.firebaseio.com/v0/topstories.json",
-      "method": "GET",
-      "format": "json",
-      "fields": {
-        "id": "number — story ID",
-        "title": "string — story title",
-        "url": "string — link URL",
-        "score": "number — upvote count",
-        "by": "string — author username",
-        "time": "number — unix timestamp"
-      },
-      "auth": "none",
-      "rate_limit": "30 req/min"
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": {
+      "@type": "EntryPoint",
+      "urlTemplate": "https://hn.algolia.com/api/v1/search?query={search_term_string}",
+      "httpMethod": "GET",
+      "contentType": "application/json"
     },
-    {
-      "name": "new-stories",
-      "description": "Newest stories in chronological order",
-      "endpoint": "https://hacker-news.firebaseio.com/v0/newstories.json",
-      "method": "GET",
-      "format": "json",
-      "auth": "none"
-    }
-  ],
-
-  "actions": [
-    {
-      "name": "submit-story",
-      "description": "Submit a new story to Hacker News",
-      "endpoint": "https://news.ycombinator.com/submit",
-      "method": "POST",
-      "auth": "cookie",
-      "fields": {
-        "title": "string — story title (required)",
-        "url": "string — link URL (optional)",
-        "text": "string — text body (optional)"
-      },
-      "requires_confirmation": true
-    }
-  ],
-
-  "specs": {
-    "openapi": "https://api.example.com/openapi.json",
-    "graphql": "https://api.example.com/graphql",
-    "llms_txt": "https://example.com/llms.txt",
-    "rss": "https://example.com/rss"
-  },
-
-  "policies": {
-    "automation_allowed": true,
-    "rate_limit": "60 req/min",
-    "requires_attribution": false,
-    "allowed_agents": [],
-    "blocked_agents": [],
-    "contact": "api@example.com"
+    "query-input": "required name=search_term_string"
   }
 }
 ```
 
-## Field Reference
+This is the exact format Google uses for the sitelinks search box. Already supported by WordPress/Yoast, Shopify, and most CMS platforms.
 
-### Top-level Fields
+### Full Example (WebAPI + Actions)
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `version` | string | **yes** | Spec version. Currently `"1.0"` |
-| `name` | string | **yes** | Human-readable site name |
-| `description` | string | **yes** | One-line description of what this site is |
-| `homepage` | string | no | Site URL |
-| `data` | Data[] | no | Read-only data endpoints |
-| `actions` | Action[] | no | Write/interactive operations |
-| `specs` | Specs | no | Pointers to detailed API specifications |
-| `policies` | Policies | no | Automation rules and rate limits |
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "WebAPI",
+  "name": "Hacker News",
+  "description": "Tech news aggregator with community voting",
+  "url": "https://news.ycombinator.com",
+  "documentation": "https://github.com/HackerNews/API",
+  "termsOfService": "https://www.ycombinator.com/legal#tou",
+  "provider": {
+    "@type": "Organization",
+    "name": "Y Combinator",
+    "url": "https://www.ycombinator.com"
+  },
 
-### Data Object
+  "potentialAction": [
+    {
+      "@type": "ReadAction",
+      "name": "top-stories",
+      "description": "Front page stories ranked by score",
+      "target": {
+        "@type": "EntryPoint",
+        "urlTemplate": "https://hacker-news.firebaseio.com/v0/topstories.json",
+        "httpMethod": "GET",
+        "contentType": "application/json"
+      },
+      "object": {
+        "@type": "ItemList",
+        "itemListElement": {
+          "@type": "ListItem",
+          "additionalProperty": [
+            { "@type": "PropertyValue", "name": "id", "description": "Story ID", "valuePattern": "[0-9]+" },
+            { "@type": "PropertyValue", "name": "title", "description": "Story title" },
+            { "@type": "PropertyValue", "name": "url", "description": "Link URL" },
+            { "@type": "PropertyValue", "name": "score", "description": "Upvote count", "valuePattern": "[0-9]+" },
+            { "@type": "PropertyValue", "name": "by", "description": "Author username" },
+            { "@type": "PropertyValue", "name": "time", "description": "Unix timestamp", "valuePattern": "[0-9]+" }
+          ]
+        }
+      }
+    },
+    {
+      "@type": "ReadAction",
+      "name": "new-stories",
+      "description": "Newest stories in chronological order",
+      "target": {
+        "@type": "EntryPoint",
+        "urlTemplate": "https://hacker-news.firebaseio.com/v0/newstories.json",
+        "httpMethod": "GET",
+        "contentType": "application/json"
+      }
+    },
+    {
+      "@type": "SearchAction",
+      "name": "search",
+      "description": "Full-text search across all stories",
+      "target": {
+        "@type": "EntryPoint",
+        "urlTemplate": "https://hn.algolia.com/api/v1/search?query={search_term_string}&tags=story",
+        "httpMethod": "GET",
+        "contentType": "application/json"
+      },
+      "query-input": "required name=search_term_string"
+    },
+    {
+      "@type": "CreateAction",
+      "name": "submit-story",
+      "description": "Submit a new story to Hacker News",
+      "target": {
+        "@type": "EntryPoint",
+        "urlTemplate": "https://news.ycombinator.com/submit",
+        "httpMethod": "POST",
+        "encodingType": "application/x-www-form-urlencoded"
+      },
+      "object": {
+        "@type": "CreativeWork",
+        "additionalProperty": [
+          { "@type": "PropertyValue", "name": "title", "description": "Story title (required)", "valueRequired": true },
+          { "@type": "PropertyValue", "name": "url", "description": "Link URL (optional)" },
+          { "@type": "PropertyValue", "name": "text", "description": "Text body (optional)" }
+        ]
+      }
+    }
+  ]
+}
+```
 
-A read-only data source that agents can extract from.
+## Type Reference
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `name` | string | **yes** | Identifier (e.g. `"top-stories"`) |
-| `description` | string | **yes** | What this data represents |
-| `endpoint` | string | **yes** | Full URL or relative path |
-| `method` | string | no | HTTP method. Default: `"GET"` |
-| `format` | string | no | Response format: `json`, `html`, `xml`, `rss`, `csv` |
-| `fields` | object | no | Map of field name → `"type — description"` |
-| `auth` | string | no | Auth method: `none`, `cookie`, `bearer`, `api_key` |
-| `rate_limit` | string | no | Human-readable rate limit |
-| `example_response` | any | no | Truncated sample response |
-| `pagination` | object | no | `{ "type": "offset", "param": "page" }` or `"cursor"` |
+### Root Types
 
-### Action Object
+Use `WebSite` for simple sites. Use `WebAPI` when the site exposes API endpoints.
 
-A write operation that agents can perform.
+| Type | When to use | Google indexes? |
+|------|-------------|-----------------|
+| `WebSite` | Any website (name, description, search) | Yes — sitelinks, search box |
+| `WebAPI` | Sites with API endpoints (extends Service) | Yes — as Service |
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `name` | string | **yes** | Identifier (e.g. `"submit-story"`) |
+Both support `potentialAction` for declaring what agents can do.
+
+### Actions (potentialAction)
+
+Each action in `potentialAction[]` represents one thing an agent can do.
+
+| Action Type | Schema.org Type | HTTP Method | Example |
+|-------------|----------------|-------------|---------|
+| Read data | `ReadAction` | GET | Fetch trending stories |
+| Search | `SearchAction` | GET | Full-text search |
+| Create | `CreateAction` | POST | Submit a new post |
+| Update | `UpdateAction` | PUT/PATCH | Edit a comment |
+| Delete | `DeleteAction` | DELETE | Remove a post |
+
+**Action properties:**
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `@type` | string | **yes** | Schema.org action type |
+| `name` | string | **yes** | Machine identifier (e.g. `"top-stories"`) |
 | `description` | string | **yes** | What this action does |
-| `endpoint` | string | **yes** | Full URL or relative path |
-| `method` | string | no | HTTP method. Default: `"POST"` |
-| `auth` | string | no | Auth method required |
-| `fields` | object | no | Map of field name → `"type — description (required/optional)"` |
-| `requires_confirmation` | boolean | no | Agent should confirm with user before executing. Default: `false` |
+| `target` | EntryPoint | **yes** | How to invoke it |
+| `object` | Thing | no | Input/output schema |
+| `query-input` | string | no | For SearchAction: parameter binding (Google format) |
 
-### Specs Object
+### EntryPoint (target)
 
-Pointers to detailed API specifications. Agents use these for comprehensive field mapping.
+Describes how to reach an endpoint.
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `openapi` | string | URL to OpenAPI 3.x JSON/YAML spec |
-| `graphql` | string | URL to GraphQL endpoint (introspection enabled) |
-| `llms_txt` | string | URL to llms.txt file |
-| `rss` | string | URL to RSS/Atom feed |
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `@type` | string | **yes** | `"EntryPoint"` |
+| `urlTemplate` | string | **yes** | URL with RFC 6570 placeholders: `https://api.example.com/items/{id}` |
+| `httpMethod` | string | no | `GET`, `POST`, `PUT`, `DELETE`. Default: `GET` |
+| `contentType` | string | no | Response MIME type. Default: `application/json` |
+| `encodingType` | string | no | Request body encoding |
 
-### Policies Object
+### Fields (PropertyValue)
 
-Rules that agents must follow.
+Describe input/output fields using Schema.org `PropertyValue` inside `additionalProperty`:
 
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `automation_allowed` | boolean | `true` | Whether AI automation is permitted |
-| `rate_limit` | string | none | Global rate limit (e.g. `"60 req/min"`) |
-| `requires_attribution` | boolean | `false` | Must credit source when displaying data |
-| `allowed_agents` | string[] | `[]` | Agent whitelist (empty = all allowed) |
-| `blocked_agents` | string[] | `[]` | Agent blacklist |
-| `contact` | string | none | Email for automation inquiries |
+| Property | Type | Description |
+|----------|------|-------------|
+| `name` | string | Field name |
+| `description` | string | Human-readable description |
+| `valueRequired` | boolean | Is this field required? |
+| `valuePattern` | string | Regex validation pattern |
+| `defaultValue` | string | Default value |
+| `minValue` / `maxValue` | number | Numeric bounds |
 
-## Relationship to Other Standards
+## Relationship to Google SEO
 
-| Standard | Role | How agents.json relates |
-|----------|------|------------------------|
-| `robots.txt` | Deny list | agents.json is the allow list. Both should be respected. |
-| `llms.txt` | LLM-readable site description | agents.json `specs.llms_txt` points to it |
-| OpenAPI | Full API specification | agents.json `specs.openapi` points to it |
-| A2A `agent-card.json` | Agent capability declaration | Complementary. agent-card = "what I can do", agents.json = "what you can do here" |
-| Schema.org | Semantic page data | agents.json describes endpoints; Schema.org describes page content |
+agents.json is a strict superset of what Google already indexes:
+
+| Google Feature | Schema.org Type | agents.json extends with |
+|----------------|----------------|--------------------------|
+| Sitelinks search box | `WebSite` + `SearchAction` | More action types (Read, Create, Update) |
+| Knowledge panel | `Organization` + `WebSite` | API endpoint details |
+| Rich snippets | `Article`, `Product`, etc. | Machine-actionable endpoints |
+| Breadcrumbs | `BreadcrumbList` | — (orthogonal) |
+
+**A valid agents.json is always valid Schema.org JSON-LD.** Google will index it. No special handling needed.
+
+### What websites already publish (and agents.json adds)
+
+```
+What 35% of sites have now:          What agents.json adds:
+─────────────────────────────        ──────────────────────────
+WebSite.name                         WebAPI (@type upgrade)
+WebSite.description                  ReadAction (data endpoints)
+SearchAction (sitelinks)             CreateAction (write operations)
+                                     EntryPoint.httpMethod
+                                     PropertyValue (field schemas)
+```
+
+The transition is incremental: websites keep their existing JSON-LD, add `potentialAction` entries for their API endpoints.
 
 ## Implementation Guide
 
 ### For Websites
 
-1. Create `/.well-known/agents.json` with at minimum `version`, `name`, `description`
-2. Add `data` entries for your public API endpoints
-3. Add `policies` to set rate limits and rules
-4. Optional: add `actions` for write operations
+**Step 1: You probably already have this.** Check if your site has `<script type="application/ld+json">` in the `<head>`. Most CMS platforms (WordPress, Shopify, etc.) add it automatically.
+
+**Step 2: Add API endpoints.** Upgrade `@type` from `WebSite` to `WebAPI`, add `potentialAction` entries for your public endpoints.
+
+**Step 3: Publish at well-known URL.** Copy the JSON-LD to `/.well-known/agents.json` for direct agent discovery.
 
 ### For AI Agents
 
-1. Before inspecting a page, check `/.well-known/agents.json` (3-second timeout)
-2. If found, use `data` endpoints directly — skip page inspection
-3. Respect `policies.rate_limit` and `policies.automation_allowed`
-4. If `requires_confirmation` is true on an action, confirm with the user first
-5. Fall back to page inspection if agents.json is not available
+1. Check `/.well-known/agents.json` (3-second timeout)
+2. If not found, parse `<script type="application/ld+json">` from the page
+3. Look for `potentialAction` with `EntryPoint` targets
+4. Use `urlTemplate` + `httpMethod` to call endpoints directly
+5. Fall back to page inspection if no structured data found
+
+### For Tap
+
+```bash
+# Forge automatically consumes agents.json during inspect
+tap forge "get trending stories from hackernews"
+# → forge.inspect finds agents.json → uses ReadAction endpoint directly
+
+# After forging, generate agents.json for the site
+tap forge --emit-schema github/trending
+# → outputs Schema.org JSON-LD that the site owner can publish
+```
 
 ## FAQ
 
 **Q: How is this different from OpenAPI?**
-A: OpenAPI describes every endpoint in detail (hundreds of lines). agents.json describes the 3-5 most useful endpoints for agents in under 50 lines. Think of it as the TL;DR of your API.
+A: OpenAPI describes every endpoint in exhaustive detail (often thousands of lines). agents.json describes the 3-5 most useful actions in under 50 lines using Schema.org vocabulary. Think of it as the TL;DR for agents — and Google indexes it.
 
-**Q: Why not just use llms.txt?**
-A: llms.txt is markdown — great for LLMs to read, but agents need structured data (endpoint URLs, field names, auth types) that's machine-parseable without AI interpretation.
+**Q: Do I need a new file?**
+A: No. You can embed agents.json as JSON-LD directly in your HTML `<head>` — the same place you put Schema.org data for SEO. Google indexes it from there.
 
-**Q: Do I need to implement all fields?**
-A: No. The minimal valid file is 3 fields. Start small, add more as needed.
+**Q: Will Google actually index the WebAPI/ReadAction parts?**
+A: Google indexes all valid Schema.org JSON-LD, even types it doesn't render as rich results yet. The data is in Google's Knowledge Graph. As AI agents become first-class search consumers, this data will matter more.
 
-**Q: How do I register this as a well-known URI?**
-A: We plan to submit to the IANA well-known URI registry (RFC 8615) once there is sufficient adoption. Current status: community draft.
+**Q: What about robots.txt?**
+A: robots.txt and agents.json are complementary. robots.txt restricts crawling. agents.json declares API interfaces. An agent should respect both: don't crawl disallowed paths, but do use declared API endpoints.
+
+**Q: Can I validate my agents.json?**
+A: Yes — use [Google's Rich Results Test](https://search.google.com/test/rich-results) or [Schema.org Validator](https://validator.schema.org/). Any valid agents.json passes both.
