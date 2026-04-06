@@ -153,8 +153,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 })
 
 async function handleMethod(method, params = {}, senderTabId = null, { fromDaemon = false } = {}) {
-  // nav handles chrome:// tabs itself (replaces with new tab) — let it through
-  const allowUnscriptable = method === 'nav'
+  // nav and tab.close don't need to script the tab — let chrome:// tabs through
+  const allowUnscriptable = method === 'nav' || method === 'tab.close'
   let tabId = await resolveTab(params, { allowUnscriptable, fromDaemon })
 
   // nav and tab.new can work without an existing tab — they create one
