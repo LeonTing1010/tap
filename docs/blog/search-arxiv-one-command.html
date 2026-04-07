@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Search arXiv in One Command — No API Key, No Tokens — Tap Blog</title>
+<meta name="description" content="Search, sort, and display arXiv papers as a Unix pipeline: npx -y @taprun/cli arxiv search --keyword 'LLM' | sort | table. Zero install. Zero tokens.">
+<link rel="canonical" href="https://taprun.dev/blog/search-arxiv-one-command.html">
+<meta property="og:title" content="Search arXiv in One Command — No API Key, No Tokens">
+<meta property="og:description" content="npx -y @taprun/cli arxiv search --keyword 'LLM' | sort --field published | table — that's it. No install, no API key, no AI tokens per search.">
+<meta property="og:url" content="https://taprun.dev/blog/search-arxiv-one-command.html">
+<meta property="og:type" content="article">
+<meta property="article:published_time" content="2026-04-07">
+<meta property="article:author" content="Leon Ting">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Ccircle cx='256' cy='256' r='240' fill='%234F46E5'/%3E%3Ccircle cx='290' cy='275' r='80' fill='white'/%3E%3Ccircle cx='230' cy='210' r='58' fill='white'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Outfit', sans-serif; background: #0a0a0f; color: #e0e0e0; line-height: 1.8; }
+.container { max-width: 720px; margin: 0 auto; padding: 60px 24px; }
+h1 { font-size: 2rem; font-weight: 600; color: #fff; margin-bottom: 8px; line-height: 1.3; }
+h2 { font-size: 1.35rem; font-weight: 500; color: #fff; margin-top: 48px; margin-bottom: 16px; }
+h3 { font-size: 1.1rem; font-weight: 500; color: #fff; margin-top: 32px; margin-bottom: 12px; }
+p, li { font-size: 0.95rem; color: #b0b0b0; margin-bottom: 16px; }
+ul, ol { padding-left: 24px; }
+a { color: #818cf8; text-decoration: none; }
+a:hover { text-decoration: underline; }
+.meta { font-size: 0.85rem; color: #666; margin-bottom: 40px; }
+.back { display: inline-block; margin-bottom: 24px; font-size: 0.9rem; }
+code { background: #1a1a2e; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; font-family: 'DM Mono', monospace; }
+pre { background: #111118; border: 1px solid #222; border-radius: 8px; padding: 16px 20px; overflow-x: auto; margin: 20px 0; font-family: 'DM Mono', monospace; font-size: 0.9rem; line-height: 1.6; color: #c8c8d0; }
+pre .comment { color: #555; }
+pre .cmd { color: #818cf8; }
+pre .output { color: #6ee7b7; }
+pre .flag { color: #fbbf24; }
+pre .err { color: #f87171; }
+blockquote { border-left: 3px solid #4F46E5; padding: 12px 16px; margin: 20px 0; background: rgba(79,70,229,0.06); border-radius: 0 8px 8px 0; }
+blockquote p { color: #a0a0b0; margin-bottom: 0; font-style: italic; }
+.cta { margin-top: 48px; padding: 24px; background: rgba(79,70,229,0.08); border: 1px solid rgba(79,70,229,0.2); border-radius: 12px; }
+.cta h3 { margin-top: 0; }
+.cta pre { margin-bottom: 0; }
+.separator { border: none; border-top: 1px solid #222; margin: 48px 0; }
+table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid #222; font-size: 0.9rem; }
+th { color: #fff; font-weight: 500; }
+td { color: #b0b0b0; }
+.terminal { background: #0d0d14; border: 1px solid #2a2a3a; border-radius: 10px; overflow: hidden; margin: 24px 0; }
+.terminal-bar { background: #1a1a2a; padding: 10px 16px; display: flex; gap: 6px; align-items: center; }
+.dot { width: 12px; height: 12px; border-radius: 50%; }
+.dot-r { background: #ff5f57; }
+.dot-y { background: #febc2e; }
+.dot-g { background: #28c840; }
+.terminal pre { border: none; border-radius: 0; margin: 0; padding: 16px 20px; }
+</style>
+</head>
+<body>
+<div class="container">
+<a href="../" class="back">&larr; Tap</a> &middot; <a href="./" class="back">Blog</a>
+<h1>Search arXiv in One Command — No API Key, No Tokens</h1>
+<p class="meta">April 7, 2026 &middot; Leon Ting &middot; 4 min read</p>
+
+<p>Keeping up with AI research is exhausting. New papers drop daily. Most "paper discovery" tools either require an account, burn API tokens on every search, or give you a bloated interface when all you wanted was a list.</p>
+
+<p>Here's what I use instead:</p>
+
+<div class="terminal">
+  <div class="terminal-bar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span></div>
+  <pre><span class="cmd">$</span> npx -y @taprun/cli arxiv search --keyword "LLM" \
+    | npx -y @taprun/cli sort --field published \
+    | npx -y @taprun/cli table</pre>
+</div>
+
+<p>Output: 20 papers sorted newest-first, with title, authors, published date, abstract, and URL — in under 2 seconds.</p>
+
+<p>No account. No API key. No AI tokens consumed. First run downloads a ~30MB binary and caches it; every subsequent run is instant.</p>
+
+<h2>Why This Matters</h2>
+
+<p>Most developer tools for arXiv are wrappers: they call the same free arXiv API, add a web UI, and charge a subscription. The arXiv Atom/API endpoint is public and has been stable for 15 years. You don't need a middleman.</p>
+
+<p><code>arxiv/search</code> is a <a href="https://github.com/LeonTing1010/tap-skills">Tap skill</a> — a 20-line deterministic program that calls the arXiv API directly:</p>
+
+<pre><span class="comment">// The entire skill — no framework, no dependencies</span>
+async tap(handle, args) {
+  const data = await handle.fetch(
+    `https://export.arxiv.org/api/query?search_query=all:${args.keyword}&max_results=20`
+  );
+  <span class="comment">// parse Atom XML → structured rows</span>
+  return papers.map(p =&gt; ({
+    title: p.title,
+    authors: p.authors,
+    published: p.published.slice(0, 10),
+    abstract: p.abstract.slice(0, 120) + "...",
+    url: p.url
+  }));
+}</pre>
+
+<p>AI wrote this once. It runs forever at $0.</p>
+
+<h2>The Unix Pipeline Model</h2>
+
+<p>The real power isn't the search — it's that every Tap skill is a composable Unix filter. Data flows left to right as JSON:</p>
+
+<pre><span class="comment"># Search</span>
+<span class="cmd">$</span> npx -y @taprun/cli arxiv search --keyword "RAG"
+
+<span class="comment"># Search → sort by date</span>
+<span class="cmd">$</span> npx -y @taprun/cli arxiv search --keyword "RAG" \
+    | npx -y @taprun/cli sort --field published
+
+<span class="comment"># Search → sort → keep only recent ones</span>
+<span class="cmd">$</span> npx -y @taprun/cli arxiv search --keyword "RAG" \
+    | npx -y @taprun/cli sort --field published \
+    | npx -y @taprun/cli filter --field published --gt "2025-01-01"
+
+<span class="comment"># Search → sort → filter → display as table</span>
+<span class="cmd">$</span> npx -y @taprun/cli arxiv search --keyword "RAG" \
+    | npx -y @taprun/cli sort --field published \
+    | npx -y @taprun/cli filter --field published --gt "2025-01-01" \
+    | npx -y @taprun/cli table</pre>
+
+<p>Each command is stateless. Each reads JSON from stdin, writes JSON to stdout — except <code>table</code>, which renders for humans. Exactly how Unix tools work.</p>
+
+<h2>Combine with Other Sources</h2>
+
+<p>Because every skill outputs the same JSON format, you can combine data from different sources in one pipeline:</p>
+
+<pre><span class="comment"># What's trending on GitHub + HackerNews, together</span>
+<span class="cmd">$</span> npx -y @taprun/cli github trending \
+    | npx -y @taprun/cli filter --field language --eq "Python" \
+    | npx -y @taprun/cli sort --field stars \
+    | npx -y @taprun/cli limit --n 5 \
+    | npx -y @taprun/cli table</pre>
+
+<p>No glue code. No schema mapping. The pipeline handles it.</p>
+
+<h2>Use It in CI or Cron</h2>
+
+<p>Because it's a command, it runs anywhere:</p>
+
+<pre><span class="comment"># GitHub Actions — daily paper digest to Slack</span>
+- name: Paper digest
+  run: |
+    npx -y @taprun/cli arxiv search --keyword "LLM agents" \
+      | npx -y @taprun/cli sort --field published \
+      | npx -y @taprun/cli limit --n 5 \
+      > papers.json
+    <span class="comment"># post papers.json to Slack webhook</span></pre>
+
+<p>The binary is cached by npm/npx after the first run, so CI is fast too.</p>
+
+<h2>200+ Skills, Same Pattern</h2>
+
+<p>arXiv is one of 200+ community skills that follow the same pattern: call an API, return structured rows, compose with any other skill.</p>
+
+<table>
+<tr><th>Skill</th><th>What it returns</th></tr>
+<tr><td><code>arxiv/search --keyword X</code></td><td>Papers matching keyword</td></tr>
+<tr><td><code>github/trending</code></td><td>Trending repos today</td></tr>
+<tr><td><code>hackernews/hot</code></td><td>HN front page</td></tr>
+<tr><td><code>reddit/search --keyword X</code></td><td>Posts matching keyword</td></tr>
+<tr><td><code>stackoverflow/hot</code></td><td>Hot questions</td></tr>
+</table>
+
+<p>Each one is a 20&ndash;40 line .tap.js file. <a href="https://github.com/LeonTing1010/tap-skills">Browse and contribute on GitHub.</a></p>
+
+<hr class="separator">
+
+<div class="cta">
+<h3>Try it now</h3>
+<pre><span class="cmd">$</span> npx -y @taprun/cli arxiv search --keyword <span class="flag">"your topic"</span> \
+    | npx -y @taprun/cli sort --field published \
+    | npx -y @taprun/cli table</pre>
+<p style="margin-top:12px;margin-bottom:0;">No install required. Works on any machine with Node.js. &rarr; <a href="https://taprun.dev">taprun.dev</a></p>
+</div>
+
+</div>
+</body>
+</html>
