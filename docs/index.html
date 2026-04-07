@@ -3,18 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tap — Interface Infrastructure for AI. Programs Beat Prompts.</title>
-<meta name="description" content="Tap is interface infrastructure for AI. 40 MCP tools let any AI create deterministic programs. Doctor + fingerprint keep them running. 200+ skills across 65+ sites.">
-<meta property="og:title" content="Tap — AI Compiles Interface Knowledge into Programs. Zero AI at Runtime.">
-<meta property="og:description" content="Interface infrastructure for AI. 40 MCP tools for any AI agent. Create once, run forever at $0. Doctor + fingerprint keep programs alive. 200+ skills, 3 runtimes.">
+<title>Tap — Your AI agent costs $2 per run. It should cost that once.</title>
+<meta name="description" content="Browser-Use and Stagehand call the LLM on every step. Tap lets AI analyze a site once, compile a program, then run it forever — zero AI tokens at runtime. Self-healing when sites change. 200+ ready-to-run skills.">
+<meta property="og:title" content="Tap — Forge once. Run forever. $0 per execution.">
+<meta property="og:description" content="Stop paying $2 every time your AI agent touches a website. Tap compiles AI understanding into deterministic programs that run forever for free — and self-heal when sites change.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://taprun.dev/">
 <meta property="og:image" content="https://taprun.dev/social-preview.svg">
 <meta property="og:image:width" content="1280">
 <meta property="og:image:height" content="640">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Tap — AI Compiles Interface Knowledge into Programs. Zero AI at Runtime.">
-<meta name="twitter:description" content="Interface infrastructure for AI. 40 MCP tools for any AI agent. Create once, run forever at $0. Doctor + fingerprint keep programs alive. 200+ skills, 3 runtimes.">
+<meta name="twitter:title" content="Tap — Forge once. Run forever. $0 per execution.">
+<meta name="twitter:description" content="Stop paying $2 every time your AI agent touches a website. Tap compiles AI understanding into deterministic programs that run forever for free — and self-heal when sites change.">
 <meta name="twitter:image" content="https://taprun.dev/social-preview.svg">
 <meta name="keywords" content="AI coding agent protocol, MCP, model context protocol, Chrome extension, Playwright, tap protocol, forge, deterministic automation, sandbox, self-healing, macOS automation, interface infrastructure, doctor, fingerprint">
 <meta name="author" content="LeonTing1010">
@@ -25,7 +25,7 @@
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
   "name": "Tap",
-  "description": "Interface infrastructure for AI. 40 MCP tools let any AI create deterministic programs. Doctor + fingerprint keep them running. 200+ skills across 65+ sites.",
+  "description": "Tap compiles AI understanding of websites into deterministic programs that run forever for $0 per execution. Self-healing via doctor + fingerprint when sites change. 200+ ready-to-run skills.",
   "url": "https://taprun.dev/",
   "downloadUrl": "https://github.com/LeonTing1010/tap/releases/latest",
   "softwareVersion": "0.8.10",
@@ -320,9 +320,24 @@ section { position: relative; }
   font-size: 17px;
   color: var(--text-dim);
   line-height: 1.75;
-  max-width: 460px;
-  margin-bottom: 40px;
+  max-width: 480px;
+  margin-bottom: 18px;
   font-weight: 400;
+}
+
+.hero-tagline {
+  font-size: 15px;
+  color: var(--text);
+  line-height: 1.65;
+  max-width: 480px;
+  margin-bottom: 32px;
+  padding-left: 14px;
+  border-left: 2px solid var(--indigo);
+}
+
+.hero-tagline strong {
+  color: var(--indigo-bright);
+  font-weight: 700;
 }
 
 .hero-actions {
@@ -1449,7 +1464,8 @@ h2 .hl {
     text-align: center;
   }
   .hero-content { max-width: 100%; margin: 0 auto; }
-  .hero-sub { margin: 0 auto 40px; }
+  .hero-sub { margin: 0 auto 18px; }
+  .hero-tagline { margin: 0 auto 32px; }
   .hero-actions { justify-content: center; }
   .hero-visual { order: -1; }
   .hero-bird-wrap { width: 180px; height: 180px; }
@@ -1527,10 +1543,11 @@ h2 .hl {
           <span class="hero-badge-dot"></span>
           200+ sites &mdash; ready to use
         </div>
-        <h1>AI builds it.<br>Tap keeps it running.<br><span class="hl">$0 per execution, forever.</span></h1>
-        <p class="hero-sub">Interface infrastructure for AI. 40 MCP tools let any AI create deterministic programs. Doctor + fingerprint keep them alive when websites change. No more broken scrapers. No more $1-per-run agents.</p>
+        <h1>You're paying $2 every time<br>your agent touches a website.<br><span class="hl">You should pay that once.</span></h1>
+        <p class="hero-sub">Browser-Use and Stagehand call the LLM on every step. Tap lets AI analyze a site once, compile a program, and run it forever &mdash; zero AI tokens at runtime.</p>
+        <p class="hero-tagline"><strong>Forge once. Run forever. $0 per execution.</strong> Stop renting automation. Start owning it.</p>
         <div class="hero-actions">
-          <a href="#install" class="btn btn-primary">Get Started</a>
+          <a href="#install" class="btn btn-primary">Install Tap &mdash; free</a>
           <a href="https://github.com/LeonTing1010/tap" class="btn btn-ghost">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
             View Source
@@ -1604,19 +1621,19 @@ h2 .hl {
   <div class="stats-inner">
     <div class="stat">
       <div class="stat-value">200+</div>
-      <div class="stat-label">Sites Supported</div>
+      <div class="stat-label">Ready-to-run skills</div>
     </div>
     <div class="stat">
       <div class="stat-value">$0</div>
-      <div class="stat-label">Per Run</div>
+      <div class="stat-label">At runtime, forever</div>
     </div>
     <div class="stat">
       <div class="stat-value">&lt;1s</div>
-      <div class="stat-label">Execution Time</div>
+      <div class="stat-label">Per execution</div>
     </div>
     <div class="stat">
       <div class="stat-value">&infin;</div>
-      <div class="stat-label">Runs, No Limits</div>
+      <div class="stat-label">Runs, no limits</div>
     </div>
   </div>
 </div>
@@ -1626,11 +1643,12 @@ h2 .hl {
   <div class="container">
     <div class="how-inner">
       <div class="how-text">
-        <div class="section-tag reveal">The Core Idea</div>
-        <h2 class="reveal">AI compiles interfaces into <span class="hl">programs.</span></h2>
-        <p class="section-desc reveal">AI agents spend tokens on every interface interaction &mdash; understanding pages, clicking buttons, extracting data. That's a prompt: expensive, non-deterministic, and fragile at scale.</p>
-        <p class="section-desc reveal">Tap is an interface compiler. AI observes an interface once, compiles its understanding into a deterministic <code>.tap.js</code> program, and every subsequent run is pure execution &mdash; zero AI, zero cost, zero variance.</p>
-        <p class="section-desc reveal">Every successful compile makes the next one faster. Community skills compound: 200+ compiled programs mean your agent starts with knowledge of 200+ interfaces, no compiling needed. The system gets smarter without getting more expensive.</p>
+        <div class="section-tag reveal">Do the math</div>
+        <h2 class="reveal">Your AI browser agent costs <span class="hl">more than you think.</span></h2>
+        <p class="section-desc reveal">A 10-step workflow with Browser-Use or Stagehand calls the LLM on every step &mdash; 10 API round-trips, $0.50&ndash;$2.00, every single run.</p>
+        <p class="section-desc reveal">Run it 100&times;/day: <strong>$50&ndash;$200/day.</strong> At production scale: <strong>$3,600/month minimum.</strong></p>
+        <p class="section-desc reveal">The LLM figured out how to use that website once. Why is it figuring it out again on every run?</p>
+        <p class="section-desc reveal" style="color:var(--indigo-bright);font-weight:600;">The first run needs AI. Every run after that doesn't. Tap charges $0 from run 2 onward.</p>
       </div>
       <div class="forge-flow reveal">
         <div class="forge-step forge-step--ai">
@@ -1670,78 +1688,31 @@ h2 .hl {
   </div>
 </section>
 
-<!-- ===== Why Tap ===== -->
-<section class="why-tap" id="why">
+<!-- ===== Reliability ===== -->
+<section class="why-tap" id="reliability">
   <div class="container">
     <div class="why-header">
-      <div class="section-tag reveal">Why Tap</div>
-      <h2 class="reveal">Why compiled programs beat <span class="hl">prompts</span></h2>
-      <p class="section-desc reveal">Deterministic, self-healing, cross-platform, and $0 after the first compilation.</p>
+      <div class="section-tag reveal">And there's a second problem</div>
+      <h2 class="reveal">Your scraper is broken right now. <span class="hl">You just don't know it yet.</span></h2>
+      <p class="section-desc reveal">Websites change their DOM. APIs shift. Selectors silently die. Browser-Use keeps running &mdash; it just returns empty arrays. Nobody notices for days.</p>
     </div>
-    <div class="why-grid">
 
-      <div class="why-card why-card--accurate reveal">
-        <div class="why-card-tag">Deterministic</div>
-        <h3>Same input, same output. Every time.</h3>
-        <p>Prompts make fresh decisions every run &mdash; results drift, behavior varies. A program runs the same steps identically, 1,000 times. No AI variance, no surprises.</p>
-        <div class="why-compare">
-          <div><span class="good">&#10003; Program</span> <span class="dim">&mdash; identical result every run</span></div>
-          <div><span class="bad">&#10007; Prompt</span> <span class="dim">&mdash; decisions vary per run</span></div>
-        </div>
-      </div>
-
+    <div class="why-grid" style="grid-template-columns:1fr;max-width:760px;margin:0 auto;">
       <div class="why-card why-card--safe reveal">
-        <div class="why-card-tag">Self-Maintaining</div>
-        <h3>Interface changes? Agent re-forges.</h3>
-        <p>Hand-coded tools break when websites change. Prompts don't notice. Tap programs detect failure via health contracts and trigger the agent to re-forge automatically.</p>
-        <div class="why-compare">
-          <div><span class="good">&#10003; Tap</span> <span class="dim">&mdash; agent re-forges on break</span></div>
-          <div><span class="bad">&#10007; Hand-coded</span> <span class="dim">&mdash; manual fix on every change</span></div>
+        <div class="why-card-tag">Self-healing</div>
+        <h3>Tap's doctor catches breakage within the hour.</h3>
+        <p>After every execution, <code>tap doctor</code> runs health contracts. Fingerprint diff tells you exactly what changed &mdash; not just "0 rows," but the precise selector that disappeared and the API schema that shifted. Auto-heal fixes most breaks automatically.</p>
+        <div class="code-block" style="margin-top:18px;">
+          <span class="hl-dim">$ </span><span class="cmd">tap doctor github trending</span><br>
+          <span style="color:var(--red)">&#10007;</span> <span class="dim">selector</span> <code>h2.repo-name</code> <span class="dim">&mdash; gone since last run</span><br>
+          <span style="color:var(--gold)">&#9888;</span> <span class="dim">fingerprint diff:</span> <span style="color:var(--gold)">&uarr; 3 structural changes</span><br>
+          <span style="color:var(--green)">&#10003;</span> <span class="dim">auto-heal queued &mdash; agent re-forging now</span>
+        </div>
+        <div class="why-compare" style="margin-top:18px;">
+          <div><span class="good">&#10003; Tap</span> <span class="dim">&mdash; you know within the hour, fixed automatically</span></div>
+          <div><span class="bad">&#10007; Browser-Use</span> <span class="dim">&mdash; empty arrays, three days of garbage data</span></div>
         </div>
       </div>
-
-      <div class="why-card why-card--cross reveal">
-        <div class="why-card-tag">Run Anywhere</div>
-        <h3>Real browser, headless server, native apps</h3>
-        <p>Same <code>.tap.js</code> runs on all three runtimes. Use your real browser sessions, or run headless on a server.</p>
-        <div class="why-runtimes">
-          <div class="why-runtime"><span class="why-runtime-dot" style="background:#6366F1"></span> Chrome Extension &mdash; real browser, real sessions, undetectable</div>
-          <div class="why-runtime"><span class="why-runtime-dot" style="background:#818CF8"></span> Playwright &mdash; headless, CI/CD, Docker</div>
-          <div class="why-runtime"><span class="why-runtime-dot" style="background:#A5B4FC"></span> macOS &mdash; native desktop apps via Accessibility API</div>
-        </div>
-      </div>
-
-      <div class="why-card why-card--cost reveal">
-        <div class="why-card-tag">Zero Marginal Cost</div>
-        <h3>Understand once. Run free forever.</h3>
-        <p>Tokens are spent once &mdash; when the agent comprehends the interface and forges the program. After that, every execution is free. No LLM calls, ever.</p>
-        <div class="why-compare">
-          <div><span class="dim">forge (once)   &rarr;</span> <span style="color:var(--gold)">~16K tokens / ~$0.15</span></div>
-          <div><span class="dim">run &times;&infin;        &rarr;</span> <span class="good">0 tokens / $0.00 forever</span></div>
-          <div><span class="dim">heal (on break) &rarr;</span> <span style="color:var(--gold)">~10K tokens / ~$0.10</span></div>
-        </div>
-      </div>
-
-      <div class="why-card why-card--safe reveal">
-        <div class="why-card-tag">Local-First</div>
-        <h3>Runs on your machine. Works offline.</h3>
-        <p>Programs execute locally &mdash; no cloud API calls, no data leaving your device. Works on a plane, in a cabin, wherever you are. Your thinking environment shouldn't break because a CDN is down.</p>
-        <div class="why-compare">
-          <div><span class="good">&#10003; Tap</span> <span class="dim">&mdash; local execution, zero data leakage</span></div>
-          <div><span class="bad">&#10007; AI agents</span> <span class="dim">&mdash; every run phones home to an API</span></div>
-        </div>
-      </div>
-
-      <div class="why-card why-card--accurate reveal">
-        <div class="why-card-tag">API First</div>
-        <h3>Fetch data, don't scrape pixels.</h3>
-        <p><code>tap.fetch()</code> calls site APIs directly &mdash; faster, stabler, and legally cleaner than DOM scraping. Only falls back to the DOM when no API exists. Less breakage, less legal risk.</p>
-        <div class="why-compare">
-          <div><span class="good">&#10003; API</span> <span class="dim">&mdash; structured data, stable endpoints</span></div>
-          <div><span class="bad">&#10007; DOM</span> <span class="dim">&mdash; brittle selectors, legal gray area</span></div>
-        </div>
-      </div>
-
     </div>
   </div>
 </section>
@@ -1750,21 +1721,22 @@ h2 .hl {
 <section class="protocol" id="protocol">
   <div class="container">
     <div class="protocol-header">
-      <div class="section-tag reveal">How It Works</div>
-      <h2 class="reveal">Tell AI what you want. Tap compiles it. <span class="hl">Run forever.</span></h2>
-      <p class="section-desc reveal">Tap compiles your intent into a deterministic program. 25+ operations covering every interface interaction &mdash; clicks, typing, navigation, data extraction, and more. The compiler handles the complexity so you don't have to.</p>
+      <div class="section-tag reveal">How it works</div>
+      <h2 class="reveal">AI does the hard part once. <span class="hl">Then it never has to again.</span></h2>
+      <p class="section-desc reveal">Three steps. One time. After that, your task runs forever for free.</p>
     </div>
 
     <div class="protocol-layers">
       <div class="protocol-layer layer-scripts reveal">
         <div class="protocol-layer-head">
-          <h3>You describe what you want</h3>
-          <span class="protocol-layer-count">natural language</span>
+          <h3>1. Forge &mdash; AI inspects the site once</h3>
+          <span class="protocol-layer-count">~5 minutes, one time</span>
         </div>
         <div class="primitives">
-          <span class="prim">"scrape trending repos"</span>
-          <span class="prim">"post to Twitter"</span>
-          <span class="prim">"monitor prices daily"</span>
+          <span class="prim">DOM structure</span>
+          <span class="prim">API endpoints</span>
+          <span class="prim">auth strategy</span>
+          <span class="prim">data patterns</span>
         </div>
       </div>
 
@@ -1772,16 +1744,14 @@ h2 .hl {
 
       <div class="protocol-layer layer-builtin reveal">
         <div class="protocol-layer-head">
-          <h3>Tap compiles it into a program</h3>
-          <span class="protocol-layer-count">25+ operations</span>
+          <h3>2. Compile &mdash; AI writes a deterministic <code>.tap.js</code></h3>
+          <span class="protocol-layer-count">verified + fingerprinted</span>
         </div>
         <div class="primitives">
-          <span class="prim">fetch data</span>
-          <span class="prim">click buttons</span>
-          <span class="prim">fill forms</span>
-          <span class="prim">navigate pages</span>
-          <span class="prim">extract content</span>
-          <span class="prim">compose workflows</span>
+          <span class="prim">pure JavaScript</span>
+          <span class="prim">version-controlled</span>
+          <span class="prim">runs on your disk</span>
+          <span class="prim">no lock-in</span>
         </div>
       </div>
 
@@ -1789,18 +1759,19 @@ h2 .hl {
 
       <div class="protocol-layer layer-runtime reveal">
         <div class="protocol-layer-head">
-          <h3>Runs on any runtime</h3>
-          <span class="protocol-layer-count">your choice of environment</span>
+          <h3>3. Run &mdash; <code>tap.run</code> executes the program forever</h3>
+          <span class="protocol-layer-count">no LLM &middot; no tokens &middot; &lt;1s</span>
         </div>
         <div class="primitives">
-          <span class="prim">Chrome Extension</span>
-          <span class="prim">Playwright (headless)</span>
-          <span class="prim">macOS (native apps)</span>
-          <span class="prim" style="opacity:0.4">Android (future)</span>
-          <span class="prim" style="opacity:0.4">iOS (future)</span>
+          <span class="prim">$0 per run</span>
+          <span class="prim">100% deterministic</span>
+          <span class="prim">offline-capable</span>
+          <span class="prim">same result every time</span>
         </div>
       </div>
     </div>
+
+    <p class="section-desc reveal" style="text-align:center;margin-top:32px;max-width:600px;margin-left:auto;margin-right:auto;">When the site changes, doctor detects it. AI fixes the tap. Back to step 3. <strong style="color:var(--indigo-bright);">You didn't touch anything.</strong></p>
   </div>
 </section>
 
@@ -1808,9 +1779,9 @@ h2 .hl {
 <section class="skills" id="skills">
   <div class="container">
     <div class="skills-header">
-      <div class="section-tag reveal">Community Skills</div>
-      <h2 class="reveal">200+ skills. <span class="hl">Community-forged.</span></h2>
-      <p class="section-desc reveal">Every forged skill is a permanent asset. Your agent starts with knowledge of 65+ sites &mdash; no forging needed, just run. The community flywheel: more users forge more skills, every agent benefits.</p>
+      <div class="section-tag reveal">Skills gallery</div>
+      <h2 class="reveal">200+ taps, <span class="hl">ready to run right now.</span></h2>
+      <p class="section-desc reveal">GitHub trending. Reddit front page. Hacker News top posts. X profiles. arXiv papers. 65+ sites and growing &mdash; no forging needed, just run.</p>
     </div>
 
     <div class="skills-categories reveal">
@@ -1882,43 +1853,13 @@ h2 .hl {
   </div>
 </section>
 
-<!-- ===== Architecture ===== -->
-<section class="architecture" id="architecture">
-  <div class="container">
-    <div class="arch-header">
-      <div class="section-tag reveal">Architecture</div>
-      <h2 class="reveal">Compiler architecture. <span class="hl">Three runtimes.</span> Zero dependencies.</h2>
-      <p class="section-desc reveal">Forge is the compiler frontend (AI observes &amp; generates code). Built-in + Core is the ISA (25 deterministic operations). Runtimes are the CPUs. Doctor is the test suite. Fingerprints are ABI compatibility checks.</p>
-    </div>
-
-    <div class="arch-features reveal">
-      <div class="arch-feat">
-        <h4>Chrome Extension</h4>
-        <p>Your real browser with real login sessions. Undetectable. Use your existing cookies and auth.</p>
-      </div>
-      <div class="arch-feat">
-        <h4>Playwright</h4>
-        <p>Headless capable, no extension needed. Perfect for CI/CD, servers, and Docker.</p>
-      </div>
-      <div class="arch-feat">
-        <h4>macOS</h4>
-        <p>Native desktop apps via Accessibility API. Automate any app, not just browsers.</p>
-      </div>
-      <div class="arch-feat">
-        <h4>MCP Native</h4>
-        <p>30+ tools. Works with Claude Code, Cursor, Windsurf, and any MCP-compatible agent.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
 <!-- ===== Install ===== -->
 <section class="install" id="install">
   <div class="container">
     <div class="install-header">
       <div class="section-tag reveal">Get Started</div>
-      <h2 class="reveal">Up and running in <span class="hl">minutes</span></h2>
-      <p class="section-desc reveal">One command to install, one extension to load, one line to configure your AI agent.</p>
+      <h2 class="reveal">Forge your first tap in <span class="hl">5 minutes</span></h2>
+      <p class="section-desc reveal">One command to install, one extension to load, one line to add to your MCP config. Your AI agent does the rest.</p>
     </div>
 
     <div class="install-steps">
@@ -1956,7 +1897,7 @@ h2 .hl {
     <div class="pricing-header">
       <div class="section-tag reveal">Pricing</div>
       <h2 class="reveal">Create free. Pay for <span class="hl">reliability.</span></h2>
-      <p class="section-desc reveal">Every plan includes unlimited runs at $0. Forge + inspect are free &mdash; pay when you need continuous monitoring and auto-repair.</p>
+      <p class="section-desc reveal">Free forever for most users. Paid plans add continuous monitoring &mdash; the part that pays for itself the first time a website changes.</p>
     </div>
 
     <div class="pricing-grid reveal">
@@ -2013,25 +1954,21 @@ h2 .hl {
     </div>
 
     <div class="faq-list">
-      <details class="faq-item reveal">
-        <summary>Do I need to be a developer?</summary>
-        <div class="faq-answer">Basic terminal familiarity helps. The core workflow is two commands: <code>tap forge "what you want"</code> and <code>tap site name</code>. 200+ pre-built taps work with zero setup.</div>
-      </details>
-      <details class="faq-item reveal">
-        <summary>Is my data safe?</summary>
-        <div class="faq-answer">Tap programs run in a sandboxed Worker with zero permissions &mdash; no filesystem, no network, no subprocess access. Your data never leaves your machine.</div>
+      <details class="faq-item reveal" open>
+        <summary>How is Tap different from Browser Use or Stagehand?</summary>
+        <div class="faq-answer">Browser Use and Stagehand call AI on every run &mdash; $0.50&ndash;$2.00 per execution, 60&ndash;95% reliability. Tap uses AI once to create a deterministic program, then runs it forever at $0. More importantly, when websites change, <code>tap doctor</code> detects breakage and fingerprint diff tells you exactly what changed &mdash; not just "0 rows" but "the h2 a selector is gone." Tap is infrastructure, not just a tool.</div>
       </details>
       <details class="faq-item reveal">
         <summary>What happens when a website changes?</summary>
         <div class="faq-answer"><code>tap doctor</code> detects breakage via health contracts. Fingerprint diff shows exactly what changed &mdash; which selectors disappeared, which API schemas shifted. Auto-heal can fix most breaks automatically. This is Tap's core value: not just creating programs, but keeping them running.</div>
       </details>
       <details class="faq-item reveal">
-        <summary>How is this different from Zapier or n8n?</summary>
-        <div class="faq-answer">Zapier charges per task ($0.01&ndash;$0.05 each). At scale, that's $40K+/year. Tap has zero per-execution cost &mdash; AI runs once, program runs forever for free.</div>
-      </details>
-      <details class="faq-item reveal">
         <summary>Can I use my own AI key?</summary>
         <div class="faq-answer">Yes. <code>tap config set ai.key sk-ant-xxx</code> lets you bring your own Claude or OpenAI key. Works with any OpenAI-compatible provider (DeepSeek, Ollama, etc.).</div>
+      </details>
+      <details class="faq-item reveal">
+        <summary>How is this different from Zapier or n8n?</summary>
+        <div class="faq-answer">Zapier charges per task ($0.01&ndash;$0.05 each). At scale, that's $40K+/year. Tap has zero per-execution cost &mdash; AI runs once, program runs forever for free.</div>
       </details>
       <details class="faq-item reveal">
         <summary>Do I own the programs Tap creates?</summary>
@@ -2042,12 +1979,16 @@ h2 .hl {
         <div class="faq-answer">Programs run locally with zero AI calls &mdash; no internet needed for execution. You only need connectivity when forging a new program (AI compilation) or when the program accesses a website. The programs themselves are plain JavaScript on your disk.</div>
       </details>
       <details class="faq-item reveal">
+        <summary>Is my data safe?</summary>
+        <div class="faq-answer">Tap programs run in a sandboxed Worker with zero permissions &mdash; no filesystem, no network, no subprocess access. Your data never leaves your machine.</div>
+      </details>
+      <details class="faq-item reveal">
         <summary>Is web scraping with Tap legal?</summary>
         <div class="faq-answer">Tap prioritizes <code>tap.fetch()</code> (API calls) over DOM scraping. APIs are structured, stable, and carry less legal risk than screen-scraping. When APIs aren't available, Tap uses standard browser rendering &mdash; the same way a human would access the page. Always check a site's terms of service.</div>
       </details>
       <details class="faq-item reveal">
-        <summary>How is Tap different from Browser Use or Stagehand?</summary>
-        <div class="faq-answer">Browser Use and Stagehand call AI on every run &mdash; $0.50&ndash;$2.00 per execution, 60&ndash;95% reliability. Tap uses AI once to create a deterministic program, then runs it forever at $0. More importantly, when websites change, <code>tap doctor</code> detects breakage and fingerprint diff tells you exactly what changed &mdash; not just "0 rows" but "the h2 a selector is gone." Tap is infrastructure, not just a tool.</div>
+        <summary>Do I need to be a developer?</summary>
+        <div class="faq-answer">Basic terminal familiarity helps. The core workflow is two commands: <code>tap forge "what you want"</code> and <code>tap site name</code>. 200+ pre-built taps work with zero setup.</div>
       </details>
     </div>
   </div>
@@ -2075,10 +2016,10 @@ h2 .hl {
       <path d="M 145 140 L 175 185 L 155 180 L 140 145 Z" fill="#818CF8"/>
       <path d="M 150 145 L 180 190 L 162 185 L 148 150 Z" fill="#6366F1"/>
     </svg>
-    <h2>Stop renting automation.<br>Start owning it.</h2>
-    <p class="section-desc">200+ sites. Zero cost per run. Self-healing when sites change.</p>
+    <h2>Forge once. Run forever.<br><span class="hl">$0 per execution.</span></h2>
+    <p class="section-desc">200+ sites ready to run. Self-healing when websites change. Your programs, on your disk, forever.</p>
     <div class="hero-actions">
-      <a href="#install" class="btn btn-primary">Get Started Free</a>
+      <a href="#install" class="btn btn-primary">Install Tap &mdash; free</a>
       <a href="https://github.com/LeonTing1010/tap" class="btn btn-ghost">View on GitHub</a>
     </div>
   </div>
