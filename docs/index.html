@@ -1545,12 +1545,12 @@ h2 .hl {
         </div>
         <h1>You're paying $2 every time<br>your agent touches a website.<br><span class="hl">You should pay that once.</span></h1>
         <p class="hero-sub">Browser-Use and Stagehand call the LLM on every step. Tap lets AI analyze a site once, compile a program, and run it forever &mdash; zero AI tokens at runtime.</p>
-        <p class="hero-tagline"><strong>Forge once. Run forever. $0 per execution.</strong> Stop renting automation. Start owning it.</p>
+        <p class="hero-tagline"><strong>Stop renting automation.</strong> Start owning it &mdash; your .tap.js files live on your disk, run forever, no lock-in.</p>
         <div class="hero-actions">
           <a href="#install" class="btn btn-primary">Install Tap &mdash; free</a>
           <a href="https://github.com/LeonTing1010/tap" class="btn btn-ghost">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-            View Source
+            View on GitHub
           </a>
         </div>
       </div>
@@ -1697,7 +1697,7 @@ h2 .hl {
       <p class="section-desc reveal">Websites change their DOM. APIs shift. Selectors silently die. Browser-Use keeps running &mdash; it just returns empty arrays. Nobody notices for days.</p>
     </div>
 
-    <div class="why-grid" style="grid-template-columns:1fr;max-width:760px;margin:0 auto;">
+    <div class="why-grid">
       <div class="why-card why-card--safe reveal">
         <div class="why-card-tag">Self-healing</div>
         <h3>Tap's doctor catches breakage within the hour.</h3>
@@ -1712,6 +1712,17 @@ h2 .hl {
           <div><span class="good">&#10003; Tap</span> <span class="dim">&mdash; you know within the hour, fixed automatically</span></div>
           <div><span class="bad">&#10007; Browser-Use</span> <span class="dim">&mdash; empty arrays, three days of garbage data</span></div>
         </div>
+      </div>
+      <div class="why-card why-card--accurate reveal">
+        <div class="why-card-tag">Deterministic</div>
+        <h3>100% consistent results. Not 60–95%.</h3>
+        <p>Browser-Use and Stagehand re-interpret the page on every run &mdash; the same page, the same task, different results each time. A compiled tap is deterministic code: the same input always produces the same output.</p>
+        <div class="why-compare" style="margin-top:20px;">
+          <div><span class="good">&#10003; Tap</span> <span class="dim">&mdash; 100% consistency, deterministic program</span></div>
+          <div><span class="bad">&#10007; Browser-Use</span> <span class="dim">&mdash; 60&ndash;95% reliability, AI decides each time</span></div>
+          <div><span class="bad">&#10007; Stagehand</span> <span class="dim">&mdash; same reliability floor, same per-run cost</span></div>
+        </div>
+        <p style="margin-top:20px;font-size:13px;color:var(--text-muted);">Tap programs are plain JavaScript. No AI at runtime means no hallucinations, no timeouts, no unpredictable behavior. It either works or it doesn't &mdash; and <code>tap doctor</code> tells you which.</p>
       </div>
     </div>
   </div>
@@ -1882,8 +1893,8 @@ h2 .hl {
       <div class="install-step reveal">
         <div class="install-step-num">3</div>
         <div>
-          <h4>Connect Your AI Agent</h4>
-          <p>Add to your MCP config (Claude Code, Cursor, Windsurf, etc.) and start tapping.</p>
+          <h4>Connect Your AI Agent <span style="font-family:var(--font-mono);font-size:11px;color:var(--gold);font-weight:600;margin-left:6px;">Hacker+</span></h4>
+          <p>Add to your MCP config (Claude Code, Cursor, Windsurf, etc.) and start tapping. MCP integration requires the <a href="#pricing" style="color:var(--indigo-bright);text-decoration:underline;">Hacker tier</a> ($9/mo). Free users can use all 200+ skills via the CLI.</p>
           <div class="code-block"><span class="hl-dim">{</span> <span class="cmd">"mcpServers"</span><span class="hl-dim">:</span> <span class="hl-dim">{</span> <span class="cmd">"tap"</span><span class="hl-dim">:</span> <span class="hl-dim">{</span> <span class="cmd">"command"</span><span class="hl-dim">:</span> <span style="color:var(--gold)">"tap"</span><span class="hl-dim">,</span> <span class="cmd">"args"</span><span class="hl-dim">:</span> <span class="hl-dim">[</span><span style="color:var(--gold)">"mcp"</span><span class="hl-dim">]</span> <span class="hl-dim">} } }</span></div>
         </div>
       </div>
@@ -1907,7 +1918,7 @@ h2 .hl {
         <div class="price-label">You run it</div>
         <ul class="price-features">
           <li>+ Run 200+ community skills instantly, zero setup</li>
-          <li>+ Forge your own tap with your AI key (one-shot)</li>
+          <li>+ Inspect any site with AI &mdash; map structure, APIs, and auth (<code>forge.inspect</code>)</li>
           <li>+ Diagnose breakage on demand with <code>tap doctor</code></li>
           <li>+ Chrome + Playwright runtimes</li>
           <li>&mdash; CLI only &mdash; no MCP, no agent integration</li>
@@ -1939,7 +1950,7 @@ h2 .hl {
           <li>+ Built-in AI included (no API key needed)</li>
           <li>+ REST API access (coming soon)</li>
         </ul>
-        <span class="price-btn price-btn--disabled">Coming Soon</span>
+        <a href="mailto:support@taprun.dev?subject=Pro+Waitlist" class="price-btn price-btn--outline">Join Waitlist &rarr;</a>
       </div>
     </div>
   </div>
