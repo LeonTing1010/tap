@@ -755,11 +755,11 @@ function setBadge(ok) {
   chrome.action.setTitle({ title: ok ? 'Tap — connected' : 'Tap — disconnected (daemon not running)' })
 }
 
-// Click icon: show status or reconnect
+// Click icon: open install guide if disconnected, otherwise no-op
 chrome.action.onClicked.addListener(async () => {
   if (connected) return
-  // Disconnected — try immediate reconnect
-  setBadge(false)
+  // Disconnected — open install guide so user knows what to do
+  chrome.tabs.create({ url: 'https://taprun.dev/install' })
   if (!polling) pollLoop()
 })
 

@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Install Tap CLI — Get Started in 2 Minutes</title>
+<meta name="description" content="Install the Tap CLI companion app to activate your Chrome extension. 3 steps: install, start daemon, you're done.">
+<link rel="canonical" href="https://taprun.dev/install">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='105' cy='115' r='55' fill='%23FFFFFF'/%3E%3Ccircle cx='85' cy='70' r='45' fill='%23FFFFFF'/%3E%3Cellipse cx='75' cy='32' rx='15' ry='22' fill='%23EF4444'/%3E%3Cellipse cx='90' cy='30' rx='12' ry='20' fill='%23DC2626'/%3E%3Cellipse cx='103' cy='35' rx='10' ry='16' fill='%23B91C1C'/%3E%3Cpath d='M 55 68 L 8 75 L 55 85 Z' fill='%23FBBF24'/%3E%3Cpath d='M 55 85 L 8 75 L 12 82 Z' fill='%23D97706'/%3E%3Ccircle cx='70' cy='65' r='14' fill='%231F2937'/%3E%3Ccircle cx='66' cy='61' r='5' fill='%23FFFFFF'/%3E%3Ccircle cx='74' cy='68' r='2.5' fill='%23FFFFFF'/%3E%3Cellipse cx='50' cy='78' rx='8' ry='5' fill='%23FECACA' opacity='0.8'/%3E%3Cellipse cx='125' cy='115' rx='35' ry='30' fill='%23818CF8'/%3E%3Cellipse cx='125' cy='115' rx='25' ry='20' fill='%236366F1'/%3E%3Ccircle cx='95' cy='130' r='25' fill='%23F9FAFB'/%3E%3Cpath d='M 145 140 L 175 185 L 155 180 L 140 145 Z' fill='%23818CF8'/%3E%3Cpath d='M 150 145 L 180 190 L 162 185 L 148 150 Z' fill='%236366F1'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg: #0a0918;
+  --bg-card: #161333;
+  --indigo: #6366F1;
+  --indigo-light: #818CF8;
+  --indigo-bright: #A5B4FC;
+  --gold: #FBBF24;
+  --text: #F1F0FF;
+  --text-dim: #9896B8;
+  --green: #34D399;
+  --red: #EF4444;
+  --mono: 'JetBrains Mono', monospace;
+  --body: 'Plus Jakarta Sans', sans-serif;
+}
+body {
+  font-family: var(--body);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 48px 24px 80px;
+}
+a { color: var(--indigo-light); text-decoration: none; }
+a:hover { color: var(--indigo-bright); text-decoration: underline; }
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 48px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.logo-dot { color: var(--indigo); }
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #FCA5A5;
+  padding: 8px 16px;
+  border-radius: 100px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 32px;
+}
+.status-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--red);
+  animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+h1 {
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.2;
+  margin-bottom: 16px;
+  max-width: 560px;
+}
+.subtitle {
+  color: var(--text-dim);
+  text-align: center;
+  font-size: 1.05rem;
+  max-width: 480px;
+  margin-bottom: 56px;
+  line-height: 1.6;
+}
+
+.steps {
+  width: 100%;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.step {
+  background: var(--bg-card);
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  border-radius: 16px;
+  padding: 28px 32px;
+}
+.step-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+.step-num {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--indigo);
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.step-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+.step-desc {
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+.code-block {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 14px 18px;
+  font-family: var(--mono);
+  font-size: 0.88rem;
+  color: var(--indigo-bright);
+  position: relative;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.code-block:hover { border-color: rgba(99, 102, 241, 0.35); }
+.code-block .copy-hint {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.code-block:hover .copy-hint { opacity: 1; }
+.code-block .prompt { color: var(--text-dim); user-select: none; }
+.code-block .cmd { color: var(--indigo-bright); }
+.code-block .comment { color: var(--text-dim); }
+
+.platform-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.tab-btn {
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.tab-btn.active {
+  background: var(--indigo);
+  color: white;
+  border-color: var(--indigo);
+}
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+.or-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  margin: 12px 0;
+}
+.or-divider::before, .or-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.verify-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: rgba(52, 211, 153, 0.08);
+  border: 1px solid rgba(52, 211, 153, 0.2);
+  border-radius: 10px;
+  padding: 14px 16px;
+  font-size: 0.85rem;
+  color: #6EE7B7;
+  line-height: 1.5;
+  margin-top: 4px;
+}
+.verify-note svg { flex-shrink: 0; margin-top: 1px; }
+
+.cta-section {
+  margin-top: 48px;
+  text-align: center;
+}
+.cta-section p {
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  margin-bottom: 16px;
+}
+.btn {
+  display: inline-block;
+  padding: 12px 28px;
+  background: var(--indigo);
+  color: white;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border-radius: 10px;
+  transition: background 0.15s, transform 0.1s;
+}
+.btn:hover { background: #7577F5; transform: translateY(-1px); text-decoration: none; color: white; }
+
+.footer-links {
+  margin-top: 48px;
+  display: flex;
+  gap: 24px;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+</style>
+</head>
+<body>
+
+<div class="logo">tap<span class="logo-dot">.</span></div>
+
+<div class="status-badge">
+  <div class="status-dot"></div>
+  Extension not connected
+</div>
+
+<h1>One more step to activate</h1>
+<p class="subtitle">The Tap Chrome extension is a runtime — it needs the Tap CLI daemon running on your machine to receive commands.</p>
+
+<div class="steps">
+
+  <!-- Step 1: Install CLI -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">1</div>
+      <div class="step-title">Install the Tap CLI</div>
+    </div>
+    <p class="step-desc">The CLI starts the local daemon that the extension connects to. Choose your preferred install method:</p>
+
+    <div class="platform-tabs">
+      <button class="tab-btn active" onclick="switchTab(this, 'npm')">npm / npx</button>
+      <button class="tab-btn" onclick="switchTab(this, 'mac')">macOS</button>
+      <button class="tab-btn" onclick="switchTab(this, 'linux')">Linux</button>
+    </div>
+
+    <div id="tab-npm" class="tab-content active">
+      <div class="code-block" onclick="copyCode(this)">
+        <span class="prompt">$ </span><span class="cmd">npx @taprun/cli list</span>
+        <span class="copy-hint">click to copy</span>
+      </div>
+      <div class="or-divider">or install globally</div>
+      <div class="code-block" onclick="copyCode(this)">
+        <span class="prompt">$ </span><span class="cmd">npm install -g @taprun/cli</span>
+        <span class="copy-hint">click to copy</span>
+      </div>
+    </div>
+
+    <div id="tab-mac" class="tab-content">
+      <div class="code-block" onclick="copyCode(this)">
+        <span class="prompt">$ </span><span class="cmd">curl -fsSL taprun.dev/install.sh | sh</span>
+        <span class="copy-hint">click to copy</span>
+      </div>
+    </div>
+
+    <div id="tab-linux" class="tab-content">
+      <div class="code-block" onclick="copyCode(this)">
+        <span class="prompt">$ </span><span class="cmd">curl -fsSL taprun.dev/install.sh | sh</span>
+        <span class="copy-hint">click to copy</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 2: Start daemon -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">2</div>
+      <div class="step-title">Start the daemon</div>
+    </div>
+    <p class="step-desc">Run this once — it starts the local HTTP broker that the extension connects to on port 9333.</p>
+    <div class="code-block" onclick="copyCode(this)">
+      <span class="prompt">$ </span><span class="cmd">tap daemon</span>
+      <span class="copy-hint">click to copy</span>
+    </div>
+    <div class="verify-note" style="margin-top:14px">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="#34D399" stroke-width="1.5"/><path d="M5 8l2 2 4-4" stroke="#34D399" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      The CLI daemon starts automatically when you run any <code style="font-family:var(--mono);color:var(--indigo-bright)">tap</code> command. You don't need to keep a terminal open.
+    </div>
+  </div>
+
+  <!-- Step 3: Verify -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">3</div>
+      <div class="step-title">Check the connection</div>
+    </div>
+    <p class="step-desc">Run any tap command — the extension badge should turn green (or disappear) once the daemon is reachable.</p>
+    <div class="code-block" onclick="copyCode(this)">
+      <span class="prompt">$ </span><span class="cmd">tap list</span>
+      <span class="comment">  # lists available taps — confirms daemon is running</span>
+      <span class="copy-hint">click to copy</span>
+    </div>
+    <div class="verify-note" style="margin-top:14px">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="#34D399" stroke-width="1.5"/><path d="M5 8l2 2 4-4" stroke="#34D399" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Once connected, click the Tap icon in your toolbar — it will show <strong>Tap — connected</strong> and the red badge will clear.
+    </div>
+  </div>
+
+</div>
+
+<div class="cta-section">
+  <p>New to Tap? Read the quick-start guide.</p>
+  <a class="btn" href="https://taprun.dev/#quickstart">Get started →</a>
+</div>
+
+<div class="footer-links">
+  <a href="https://taprun.dev">Home</a>
+  <a href="https://github.com/LeonTing1010/tap/releases/latest">Download binary</a>
+  <a href="https://github.com/LeonTing1010/tap/issues">Help</a>
+</div>
+
+<script>
+function switchTab(btn, id) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'))
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'))
+  btn.classList.add('active')
+  document.getElementById('tab-' + id).classList.add('active')
+}
+
+function copyCode(el) {
+  const text = el.innerText.replace(/click to copy$/, '').replace(/^\$\s+/, '').trim()
+  navigator.clipboard.writeText(text).catch(() => {})
+  const hint = el.querySelector('.copy-hint')
+  if (hint) { hint.textContent = 'copied!'; setTimeout(() => hint.textContent = 'click to copy', 1500) }
+}
+</script>
+</body>
+</html>
