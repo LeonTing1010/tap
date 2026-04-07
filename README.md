@@ -175,16 +175,6 @@ tap doctor    # Health check your taps
 
 See [SECURITY.md](SECURITY.md) for details.
 
-## Pricing
-
-| Plan | Price | What you get |
-|------|-------|-------------|
-| **Free** | $0 | Run 200+ skills, forge with your own AI key, health checks |
-| **Hacker** | $9/mo | Auto-healing, change monitoring, plugins, macOS runtime |
-| **Pro** | $29/mo | Built-in AI (no key needed), scheduled runs, priority support |
-
-Every plan: unlimited runs at $0. See [taprun.dev](https://taprun.dev/#pricing).
-
 ## Contributing
 
 The easiest way to contribute: **forge a new tap.** One `.tap.js` file is all it takes.
