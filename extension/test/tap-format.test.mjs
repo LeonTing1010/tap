@@ -2,7 +2,10 @@
  * Constraint: .tap.js format contract
  * Classification: safety / what — invalid format = runtime crash
  *
- * Three formats:
+ * Four formats:
+ *   tap-format (v0.9+): { site, name, description, tap(handle, args) }
+ *     - Unified single entry point. Full tap.* API on handle.
+ *
  *   extract-format: { site, name, description, url, extract() }
  *     - Runtime handles nav, wait, limit, columns inference, health defaults
  *
@@ -91,7 +94,8 @@ for (const { site, name, path } of tapFiles) {
   const hasRun = typeof tap.run === 'function'
   const hasExtract = typeof tap.extract === 'function'
   const hasTransform = typeof tap.transform === 'function'
-  const format = hasTransform ? 'transform' : hasExtract ? 'extract' : 'run'
+  const hasTap = typeof tap.tap === 'function'
+  const format = hasTap ? 'tap' : hasTransform ? 'transform' : hasExtract ? 'extract' : 'run'
 
   // ===== COMMON CONSTRAINTS (both formats) =====
 
@@ -115,9 +119,13 @@ for (const { site, name, path } of tapFiles) {
     assert.equal(tap.name, name)
   })
 
-  test(`  [common] has exactly one of run(), extract(), or transform()`, () => {
-    const count = [hasRun, hasExtract, hasTransform].filter(Boolean).length
-    assert(count === 1, `must have exactly one of run()/extract()/transform(), found ${count}`)
+  test(`  [common] has exactly one entry point (tap(), run(), extract(), or transform())`, () => {
+    const legacyCount = [hasRun, hasExtract, hasTransform].filter(Boolean).length
+    if (hasTap) {
+      assert(legacyCount === 0, `tap-format must not have run()/extract()/transform() alongside tap()`)
+    } else {
+      assert(legacyCount === 1, `must have exactly one of tap()/run()/extract()/transform(), found ${legacyCount}`)
+    }
   })
 
   // args validation (both formats)
@@ -159,7 +167,7 @@ for (const { site, name, path } of tapFiles) {
   }
 
   // Safety: taps must only use the tap handle, not escape the sandbox
-  const checkFn = tap.run || tap.extract || tap.transform
+  const checkFn = tap.tap || tap.run || tap.extract || tap.transform
   const fnSrc = checkFn.toString()
 
   test(`  [safety] ${format}() must not reference chrome.* directly`, () => {
@@ -239,6 +247,20 @@ for (const { site, name, path } of tapFiles) {
         const exists = existsSync(refPath)
         assert(exists,
           `tap.run("${refSite}", "${refName}") references non-existent tap at ${refPath} — composition requires all sub-taps to exist on disk`)
+      })
+    }
+  }
+
+  // Composition constraint for tap-format: handle.run() references must resolve to existing taps
+  if (hasTap) {
+    const body = tap.tap.toString()
+    const handleCalls = [...body.matchAll(/handle\.run\(\s*["']([^"']+)["']\s*,\s*["']([^"']+)["']/g)]
+    for (const [, refSite, refName] of handleCalls) {
+      test(`  [composition] handle.run("${refSite}", "${refName}") references existing tap`, () => {
+        const refPath = join(TAPS_DIR, refSite, `${refName}.tap.js`)
+        const exists = existsSync(refPath)
+        assert(exists,
+          `handle.run("${refSite}", "${refName}") references non-existent tap at ${refPath} — composition requires all sub-taps to exist on disk`)
       })
     }
   }
