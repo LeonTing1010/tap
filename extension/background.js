@@ -783,8 +783,8 @@ async function handleAndReport(id, method, params) {
     const result = await handleMethod(method, params, null, { fromDaemon: true })
     response = { id, result }
   } catch (error) {
-    console.error(`[tap] ${method}:`, error.message)
-    response = { id, error: { code: -32000, message: error.message } }
+    const msg = error.message || ''
+    response = { id, error: { code: -32000, message: msg } }
   }
   try {
     await fetch(`${DAEMON_URL}/result`, {
@@ -803,6 +803,7 @@ function startPoll() {
 
 async function pollLoop() {
   console.log('[tap] long-poll loop started, daemon:', DAEMON_URL)
+  let backoff = 3000
   while (true) {
     let res
     try {
@@ -817,13 +818,16 @@ async function pollLoop() {
     } catch (e) {
       if (e?.name === 'TimeoutError') {
         // AbortSignal timeout — daemon is alive but slow, just re-poll immediately
+        backoff = 3000
         continue
       }
-      // Daemon not running — badge + backoff + retry (don't exit loop)
+      // Daemon not running — badge + exponential backoff + retry (don't exit loop)
       setBadge(false)
-      await new Promise(r => setTimeout(r, 3000))
+      await new Promise(r => setTimeout(r, backoff))
+      backoff = Math.min(backoff * 2, 60000)
       continue
     }
+    backoff = 3000  // successful connection — reset backoff
 
     try {
       const body = await res.json()
