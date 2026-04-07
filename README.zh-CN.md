@@ -38,7 +38,15 @@ AI 做一次难的部分（理解页面），然后生成一个 `.tap.js` 程序
 
 ### 第 1 步：安装
 
-从 [Releases](https://github.com/LeonTing1010/tap/releases/latest) 下载，或运行：
+**零安装** —— 任何装了 Node 的机器都能直接跑：
+
+```bash
+npx -y @taprun/cli --version
+```
+
+第一次会自动下载对应平台的二进制（~30MB）并缓存，之后每次秒启动。
+
+**永久安装** —— macOS / Linux 一行命令：
 
 ```bash
 curl -fsSL https://taprun.dev/install.sh | sh
@@ -46,8 +54,10 @@ curl -fsSL https://taprun.dev/install.sh | sh
 
 | 平台 | 二进制 |
 |------|--------|
-| macOS (Apple Silicon) | `tap-aarch64-apple-darwin.tar.gz` |
-| macOS (Intel) | `tap-x86_64-apple-darwin.tar.gz` |
+| macOS (Apple Silicon) | `tap-macos-arm64` |
+| macOS (Intel) | `tap-macos-x64` |
+| Linux | `tap-linux-x64` |
+| Windows | `tap-windows-x64.exe` |
 
 `tap` 二进制包含一切：CLI、MCP 服务器、执行器、所有运行时。零依赖。
 

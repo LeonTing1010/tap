@@ -37,6 +37,16 @@ Every run:  The program runs instantly, same result every time     ($0.00, forev
 
 ### 1. Install
 
+**Zero-install** via npx (any machine with Node):
+
+```bash
+npx -y @taprun/cli --version
+```
+
+The first run downloads the matching platform binary (~30MB) and caches it. Subsequent calls are instant.
+
+**Permanent install** via curl (macOS / Linux):
+
 ```bash
 curl -fsSL https://taprun.dev/install.sh | sh
 ```
@@ -46,6 +56,7 @@ curl -fsSL https://taprun.dev/install.sh | sh
 | macOS (Apple Silicon) | [tap-macos-arm64](https://github.com/LeonTing1010/tap/releases/latest) |
 | macOS (Intel) | [tap-macos-x64](https://github.com/LeonTing1010/tap/releases/latest) |
 | Linux | [tap-linux-x64](https://github.com/LeonTing1010/tap/releases/latest) |
+| Windows | [tap-windows-x64.exe](https://github.com/LeonTing1010/tap/releases/latest) |
 
 ### 2. Load Chrome Extension
 
