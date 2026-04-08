@@ -17,13 +17,27 @@ let activeTabId = null
 const debuggerSessions = new Map()
 
 // Network capture state (per-tab)
-const networkCaptures = new Map() // tabId → { entries: [], listening: boolean }
+// Each capture: { entries: [], listening: boolean, pendingBodies: Set<Promise> }
+// pendingBodies tracks in-flight Network.getResponseBody calls so networkDump
+// can await them before returning — see comment on the listener below.
+const networkCaptures = new Map()
+
+// Per-tab in-flight request metadata, captured at Network.requestWillBeSent time.
+// Maps tabId → Map<requestId, {method, url, hasPostData, postData}>
+//
+// Why we need this: Network.responseReceived doesn't carry the HTTP method
+// (it has CDP ResourceType — "Fetch"/"XHR"/"Document" — which is NOT the same).
+// We have to grab the method from requestWillBeSent and merge it in later.
+// We also grab the inline postData here because it's already in the event params
+// (Chrome inlines it for payloads up to ~640KB+) — no second CDP call needed.
+const requestMeta = new Map()
 
 chrome.tabs.onRemoved.addListener((tabId) => {
   const session = debuggerSessions.get(tabId)
   if (session?.detachTimer) clearTimeout(session.detachTimer)
   debuggerSessions.delete(tabId)
   networkCaptures.delete(tabId)
+  requestMeta.delete(tabId)
   if (tabId === activeTabId) activeTabId = null
 })
 
@@ -616,8 +630,9 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
     case 'inspect.networkStart': {
       // Start capturing network requests via CDP Network domain
       await ensureDebugger(tabId)
-      const capture = { entries: [], listening: true }
+      const capture = { entries: [], listening: true, pendingBodies: new Set() }
       networkCaptures.set(tabId, capture)
+      requestMeta.set(tabId, new Map())
       await chrome.debugger.sendCommand({ tabId }, 'Network.enable')
       // Clear detach timer — keep debugger alive for capture
       const session = debuggerSessions.get(tabId)
@@ -630,20 +645,18 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       if (!capture) return { entries: [] }
       // Wait briefly for in-flight requests to complete
       await new Promise(r => setTimeout(r, Math.min(params.wait_ms || 500, 3000)))
+      // Wait for any in-flight body fetches kicked off by the loadingFinished
+      // handler. Bodies are captured eagerly inside the listener (see comment
+      // there) — networkDump just awaits the pending promises before returning.
+      // The `params.bodies` flag is preserved for backward compat but is now a no-op:
+      // bodies are always captured eagerly, regardless of the flag.
+      if (capture.pendingBodies.size > 0) {
+        await Promise.allSettled([...capture.pendingBodies])
+      }
       const entries = capture.entries.filter(e => {
         if (params.url_filter && !e.url?.includes(params.url_filter)) return false
         return true
       })
-      // Optionally fetch response bodies
-      if (params.bodies) {
-        for (const entry of entries) {
-          if (!entry.requestId || entry.responseBody !== undefined) continue
-          try {
-            const body = await chrome.debugger.sendCommand({ tabId }, 'Network.getResponseBody', { requestId: entry.requestId })
-            entry.responseBody = body?.body?.substring(0, 10000) || ''
-          } catch { /* body not available */ }
-        }
-      }
       return { count: entries.length, entries }
     }
 
@@ -651,6 +664,7 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       const cap = networkCaptures.get(tabId)
       if (cap) cap.listening = false
       networkCaptures.delete(tabId)
+      requestMeta.delete(tabId)
       try { await chrome.debugger.sendCommand({ tabId }, 'Network.disable') } catch {}
       scheduleDetach(tabId)
       return {}
@@ -716,11 +730,67 @@ const KEY_MAP = {
 }
 
 // --- CDP Network Event Listener (for inspect.networkStart/networkDump) ---
+//
+// LOAD-BEARING DESIGN RULE: capture data inline, never defer.
+//
+// MV3 service workers go idle between CDP events and user-triggered MCP commands.
+// When the SW is idle, Chrome reclaims the debugger session — even though no
+// detach was explicit and our debuggerSessions Map still says attached:true.
+// Any chrome.debugger.sendCommand call that runs from a user command (rather
+// than synchronously from inside an event listener) is at risk of failing with
+// "Debugger is not attached to the tab with id: NNNN".
+//
+// This is why:
+//   - HTTP method must come from Network.requestWillBeSent (we cache it in
+//     requestMeta), not from Network.responseReceived (which only carries
+//     CDP ResourceType).
+//   - Request body must come from params.request.postData inline (Chrome
+//     inlines it for payloads at least 640KB), not from a deferred
+//     Network.getRequestPostData call.
+//   - Response body must be fetched inside the Network.loadingFinished
+//     handler, not later from inspect.networkDump's body-fetch loop.
+//     (That loop existed for years and silently failed on every call —
+//     its catch block was eating "Debugger is not attached" errors.)
+//
+// Don't defer CDP work to a separate command. Capture eagerly inside the
+// listener, store on the entry / in requestMeta, let networkDump just read.
 
 chrome.debugger.onEvent.addListener((source, method, params) => {
   const tabId = source.tabId
   const capture = networkCaptures.get(tabId)
   if (!capture?.listening) return
+
+  if (method === 'Network.requestWillBeSent') {
+    let metaMap = requestMeta.get(tabId)
+    if (!metaMap) { metaMap = new Map(); requestMeta.set(tabId, metaMap) }
+    metaMap.set(params.requestId, {
+      method: params.request?.method || 'GET',
+      url: params.request?.url || '',
+      hasPostData: params.request?.hasPostData || false,
+      postData: params.request?.postData || null,
+    })
+    return
+  }
+
+  if (method === 'Network.loadingFinished') {
+    const entry = capture.entries.find(e => e.requestId === params.requestId)
+    if (entry && entry.responseBody === undefined) {
+      // Eager body fetch — must run inside this handler, see top comment.
+      // Track the promise so networkDump can await it before returning.
+      const p = chrome.debugger.sendCommand({ tabId }, 'Network.getResponseBody', { requestId: params.requestId })
+        .then(body => { entry.responseBody = body?.body?.substring(0, 10000) || '' })
+        .catch(e => { entry.responseBodyError = String(e?.message || e) })
+        .finally(() => { capture.pendingBodies.delete(p) })
+      capture.pendingBodies.add(p)
+    }
+    requestMeta.get(tabId)?.delete(params.requestId)
+    return
+  }
+
+  if (method === 'Network.loadingFailed') {
+    requestMeta.get(tabId)?.delete(params.requestId)
+    return
+  }
 
   if (method === 'Network.responseReceived') {
     const { response, requestId } = params
@@ -730,9 +800,14 @@ chrome.debugger.onEvent.addListener((source, method, params) => {
     const isApi = ct.includes('json') || ct.includes('xml') || response.mimeType?.includes('json')
     const isDoc = ct.includes('html') || ct.includes('css') || ct.includes('javascript') || ct.includes('image') || ct.includes('font')
     if (isDoc && !isApi) return
+    // Merge in HTTP method + inline post data from the meta map (captured at requestWillBeSent).
+    const meta = requestMeta.get(tabId)?.get(requestId)
     capture.entries.push({
       url: response.url,
-      method: params.type || 'GET',
+      method: meta?.method || 'GET',           // Real HTTP method from requestWillBeSent
+      resourceType: params.type,               // CDP ResourceType — kept separately for diagnostics
+      hasPostData: meta?.hasPostData || false,
+      requestBody: meta?.postData || undefined, // Inline body, undefined for GETs and >~640KB POSTs
       status: response.status,
       type: response.mimeType || ct.split(';')[0],
       requestId,
