@@ -232,24 +232,6 @@ section { position: relative; }
   font-weight: 800;
 }
 
-.nav-version {
-  font-size: 10px;
-  font-family: var(--font-mono);
-  font-weight: 500;
-  color: var(--indigo-light);
-  background: rgba(99, 102, 241, 0.15);
-  padding: 2px 8px;
-  border-radius: 100px;
-  letter-spacing: 0;
-  border: 1px solid rgba(99, 102, 241, 0.2);
-  animation: versionPulse 3s ease-in-out infinite;
-}
-
-@keyframes versionPulse {
-  0%, 100% { opacity: 0.8; }
-  50% { opacity: 1; }
-}
-
 .nav-links {
   display: flex;
   gap: 4px;
@@ -290,18 +272,6 @@ section { position: relative; }
 .nav-links a:focus-visible {
   outline: 2px solid var(--indigo);
   outline-offset: 2px;
-}
-
-.nav-links a[href="#pricing"],
-.nav-links a[href="#how-it-works"] {
-  display: none;
-}
-
-@media (min-width: 768px) {
-  .nav-links a[href="#pricing"],
-  .nav-links a[href="#how-it-works"] {
-    display: block;
-  }
 }
 
 .nav-cta {
@@ -1849,11 +1819,8 @@ h2 .hl {
         <path d="M 150 145 L 180 190 L 162 185 L 148 150 Z" fill="#6366F1"/>
       </svg>
       <span class="nav-brand-text">tap</span>
-      <span class="nav-version" aria-label="Version 0.9">v0.9</span>
     </a>
     <ul class="nav-links" role="list">
-      <li><a href="#how-it-works">How It Works</a></li>
-      <li><a href="/skills/">Skills</a></li>
       <li><a href="#pricing">Pricing</a></li>
       <li><a href="https://taprun.dev/blog/" rel="noopener">Blog</a></li>
       <li><a href="https://github.com/LeonTing1010/tap" target="_blank" rel="noopener noreferrer">GitHub</a></li>
