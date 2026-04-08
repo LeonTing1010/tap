@@ -32,12 +32,28 @@ const networkCaptures = new Map()
 // (Chrome inlines it for payloads up to ~640KB+) — no second CDP call needed.
 const requestMeta = new Map()
 
+// Per-tab intercept state for the Fetch domain (Phase B).
+// Each state: { mode: "record" | "abort_writes", captured: [], listening: boolean }
+//
+// Unlike networkCaptures (Network domain, observation-only), interceptStates
+// drives the Fetch domain which can BLOCK requests. The Fetch.requestPaused
+// listener consults this state on every paused request to decide whether to
+// continueRequest (record mode) or failRequest with errorReason:Aborted
+// (abort_writes mode for write methods).
+//
+// CRITICAL: Fetch.enable WITHOUT a paired Fetch.requestPaused handler hangs
+// every matching request indefinitely. The handler MUST always call either
+// continueRequest or failRequest within the same handler invocation, or the
+// page becomes unusable. The intercept.off cleanup must clear this state.
+const interceptStates = new Map()
+
 chrome.tabs.onRemoved.addListener((tabId) => {
   const session = debuggerSessions.get(tabId)
   if (session?.detachTimer) clearTimeout(session.detachTimer)
   debuggerSessions.delete(tabId)
   networkCaptures.delete(tabId)
   requestMeta.delete(tabId)
+  interceptStates.delete(tabId)
   if (tabId === activeTabId) activeTabId = null
 })
 
@@ -672,7 +688,19 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
 
     case 'intercept.on': {
       await ensureDebugger(tabId)
-      const patterns = (params.patterns || ['*']).map(p => ({ urlPattern: p }))
+      // Patterns must include requestStage:"Request" so we pause BEFORE the
+      // request is sent. Without explicit stage, CDP defaults to Request, but
+      // being explicit avoids surprise from future CDP changes.
+      const patterns = (params.patterns || ['*']).map(p => ({
+        urlPattern: p,
+        requestStage: 'Request',
+      }))
+      // Set state BEFORE Fetch.enable so the listener sees it on first paused event
+      interceptStates.set(tabId, {
+        mode: params.mode === 'abort_writes' ? 'abort_writes' : 'record',
+        captured: [],
+        listening: true,
+      })
       await chrome.debugger.sendCommand({ tabId }, 'Fetch.enable', { patterns })
       const session2 = debuggerSessions.get(tabId)
       if (session2?.detachTimer) { clearTimeout(session2.detachTimer); session2.detachTimer = null }
@@ -680,9 +708,25 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
     }
 
     case 'intercept.off': {
+      // Mark listening:false BEFORE Fetch.disable so any in-flight events that
+      // arrive after disable but before delete don't get into a weird state.
+      const state = interceptStates.get(tabId)
+      if (state) state.listening = false
       try { await chrome.debugger.sendCommand({ tabId }, 'Fetch.disable') } catch {}
+      interceptStates.delete(tabId)
       scheduleDetach(tabId)
       return {}
+    }
+
+    case 'intercept.dump': {
+      const state = interceptStates.get(tabId)
+      if (!state) return { count: 0, captured: [] }
+      const captured = state.captured.filter(e => {
+        if (params.url_filter && !e.url?.includes(params.url_filter)) return false
+        if (params.method_filter && String(e.method).toUpperCase() !== String(params.method_filter).toUpperCase()) return false
+        return true
+      })
+      return { count: captured.length, captured }
     }
 
     // ========== TAB MANAGEMENT ==========
@@ -812,6 +856,81 @@ chrome.debugger.onEvent.addListener((source, method, params) => {
       type: response.mimeType || ct.split(';')[0],
       requestId,
     })
+  }
+})
+
+// --- CDP Fetch Domain Listener (for intercept.on / abort_writes mode — Phase B) ---
+//
+// Separate from the Network listener above because:
+//   1. Fetch.requestPaused MUST always call continueRequest or failRequest,
+//      otherwise the page hangs. The Network listener can early-return on
+//      irrelevant events; the Fetch listener cannot.
+//   2. interceptStates and networkCaptures are independent — a tab can have
+//      one without the other (e.g., probe_actions enables intercept without
+//      network capture).
+//
+// Same load-bearing rule as the Network listener: all CDP work happens
+// synchronously inside this handler. The MV3 SW idle constraint means
+// chrome.debugger.sendCommand calls deferred to a later command will fail
+// with "Debugger is not attached". Inside this handler, the debugger is
+// guaranteed attached because the event delivery itself proves it.
+//
+// The async handler is fine in MV3 — Chrome keeps the SW alive while a
+// listener promise is pending, which is exactly when we're awaiting CDP.
+
+chrome.debugger.onEvent.addListener(async (source, method, params) => {
+  if (method !== 'Fetch.requestPaused') return
+  const tabId = source.tabId
+  const state = interceptStates.get(tabId)
+
+  // Defensive: if no state (intercept.off race or stale event), unblock the
+  // request rather than letting it hang. This should be rare but the cost of
+  // a hang is much worse than the cost of an extra continueRequest call.
+  if (!state?.listening) {
+    try {
+      await chrome.debugger.sendCommand({ tabId }, 'Fetch.continueRequest', {
+        requestId: params.requestId,
+      })
+    } catch { /* request may have been canceled by page navigation */ }
+    return
+  }
+
+  const { requestId, request } = params
+  const httpMethod = String(request?.method || 'GET').toUpperCase()
+  const isWrite = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(httpMethod)
+
+  // Capture metadata BEFORE deciding what to do — record both kept and
+  // aborted requests so the caller can see what was probed.
+  state.captured.push({
+    url: request?.url || '',
+    method: httpMethod,
+    headers: request?.headers || {},
+    body: request?.postData || null,
+    timestamp: Date.now(),
+    action: state.mode === 'abort_writes' && isWrite ? 'aborted' : 'continued',
+  })
+
+  // Decide
+  if (state.mode === 'abort_writes' && isWrite) {
+    try {
+      await chrome.debugger.sendCommand({ tabId }, 'Fetch.failRequest', {
+        requestId,
+        errorReason: 'Aborted',
+      })
+    } catch (e) {
+      // failRequest can fail if the page navigated away mid-request.
+      // Try a fallback continue to avoid leaving the request hung.
+      console.warn('[tap] Fetch.failRequest failed, falling back to continue:', e?.message)
+      try { await chrome.debugger.sendCommand({ tabId }, 'Fetch.continueRequest', { requestId }) } catch {}
+    }
+    return
+  }
+
+  // record mode (default) — let it through
+  try {
+    await chrome.debugger.sendCommand({ tabId }, 'Fetch.continueRequest', { requestId })
+  } catch (e) {
+    console.warn('[tap] Fetch.continueRequest failed:', e?.message)
   }
 })
 
