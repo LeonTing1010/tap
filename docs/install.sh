@@ -39,6 +39,22 @@ TMP=$(mktemp -d)
 curl -fsSL "${BASE_URL}/${BINARY}" -o "${TMP}/tap"
 chmod +x "${TMP}/tap"
 
+# Verify checksum
+echo "  verifying checksum..."
+curl -fsSL "${BASE_URL}/SHA256SUMS" -o "${TMP}/SHA256SUMS"
+EXPECTED_SHA=$(grep "${BINARY}" "${TMP}/SHA256SUMS" | awk '{print $1}')
+if [ -z "$EXPECTED_SHA" ]; then
+  echo "Error: checksum not found for ${BINARY} in SHA256SUMS"
+  exit 1
+fi
+ACTUAL_SHA=$(shasum -a 256 "${TMP}/tap" | awk '{print $1}')
+if [ "$EXPECTED_SHA" != "$ACTUAL_SHA" ]; then
+  echo "Error: checksum mismatch for ${BINARY}"
+  echo "  expected: ${EXPECTED_SHA}"
+  echo "  actual:   ${ACTUAL_SHA}"
+  exit 1
+fi
+
 # Install binary
 if [ -w "$BIN_DIR" ]; then
   mv "${TMP}/tap" "${BIN_DIR}/tap"
@@ -50,6 +66,16 @@ fi
 # Download and install extension
 echo "  downloading extension..."
 curl -fsSL "${BASE_URL}/${EXTENSION}" -o "${TMP}/${EXTENSION}"
+# Verify extension checksum
+curl -fsSL "${BASE_URL}/SHA256SUMS" -o "${TMP}/SHA256SUMS"
+EXPECTED_SHA=$(grep "${EXTENSION}" "${TMP}/SHA256SUMS" | awk '{print $1}')
+if [ -n "$EXPECTED_SHA" ]; then
+  ACTUAL_SHA=$(shasum -a 256 "${TMP}/${EXTENSION}" | awk '{print $1}')
+  if [ "$EXPECTED_SHA" != "$ACTUAL_SHA" ]; then
+    echo "Error: checksum mismatch for ${EXTENSION}"
+    exit 1
+  fi
+fi
 unzip -qo "${TMP}/${EXTENSION}" -d "$INSTALL_DIR/extension"
 
 # Cleanup
