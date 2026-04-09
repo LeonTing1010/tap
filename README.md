@@ -129,7 +129,19 @@ tap github trending | tap filter --field stars --gt 500 | tap table
 **Forge** — Create new automations with AI
 
 ```bash
-tap forge "get Hacker News top stories"
+tap forge "get Hacker News top stories"           # BYOK Claude / GPT
+tap forge https://news.ycombinator.com            # Tier 0 compiler — no AI needed
+```
+
+Bring your own model — works with Claude, OpenAI, DeepSeek, or any
+OpenAI-compatible endpoint including **local Ollama / LM Studio** for
+fully offline forge:
+
+```bash
+tap config set ai.baseUrl http://localhost:11434/v1
+tap config set ai.key ollama
+tap config set ai.model llama3.1
+tap forge "scrape arxiv recent papers"            # 0 bytes leave your machine
 ```
 
 ## How It Works
