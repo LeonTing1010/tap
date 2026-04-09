@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tap — Your AI agent costs $2 per run. It should cost that once.</title>
-<meta name="description" content="Browser-Use and Stagehand call the LLM on every step. Tap lets AI analyze a site once, compile a program, then run it forever — zero AI tokens at runtime. Self-healing when sites change. 300+ ready-to-run skills.">
+<meta name="description" content="Browser-Use and Stagehand call the LLM on every step. Tap lets AI analyze a site once, compile a program, then run it forever — zero AI tokens at runtime. Self-healing when sites change. 140+ ready-to-run skills.">
 <meta property="og:title" content="Tap — Forge once. Run forever. $0 per execution.">
 <meta property="og:description" content="Stop paying $2 every time your AI agent touches a website. Tap compiles AI understanding into deterministic programs that run forever for free — and self-heal when sites change.">
 <meta property="og:type" content="website">
@@ -27,10 +27,10 @@
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
   "name": "Tap",
-  "description": "Tap compiles AI understanding of websites into deterministic programs that run forever for $0 per execution. Self-healing via doctor + fingerprint when sites change. 300+ ready-to-run skills.",
+  "description": "Tap compiles AI understanding of websites into deterministic programs that run forever for $0 per execution. Self-healing via doctor + fingerprint when sites change. 140+ ready-to-run skills.",
   "url": "https://taprun.dev/",
   "downloadUrl": "https://github.com/LeonTing1010/tap/releases/latest",
-  "softwareVersion": "0.9.0",
+  "softwareVersion": "0.10.0",
   "operatingSystem": "macOS, Linux, Windows",
   "applicationCategory": "DeveloperApplication",
   "author": {
@@ -41,7 +41,7 @@
   "codeRepository": "https://github.com/LeonTing1010/tap",
   "keywords": ["AI agents", "MCP", "tap protocol", "forge", "deterministic automation", "Chrome extension", "Playwright", "sandbox", "self-healing", "doctor", "fingerprint", "Tier 0 compiler"],
   "offers": [
-    {"@type": "Offer", "price": "0", "priceCurrency": "USD", "description": "Free — unlimited runs, 300+ skills, Tier 0 forge (no AI for sites with API/JSON-LD/RSS), doctor with diagnostics, watch"},
+    {"@type": "Offer", "price": "0", "priceCurrency": "USD", "description": "Free — unlimited runs, 140+ skills, Tier 0 forge (no AI for sites with API/JSON-LD/RSS), doctor with diagnostics, watch"},
     {"@type": "Offer", "price": "9", "priceCurrency": "USD", "description": "Hacker — Tap inside any MCP host (Claude Code, Cursor, Windsurf, Codex). Full forge pipeline through your AI agent."},
     {"@type": "Offer", "price": "29", "priceCurrency": "USD", "description": "Pro — Tap on a server you own. Cron-driven Playwright daemon (headless, no Chrome window), MCP HTTP mode for multi-client, Slack/webhook routing. 100% local-first, no Tap-hosted AI proxy."}
   ]
@@ -62,7 +62,7 @@
     },
     "itemListElement": [
       {"@type": "SiteNavigationElement", "name": "How It Works", "description": "Learn how Tap works", "url": "https://taprun.dev/#how-it-works"},
-      {"@type": "SiteNavigationElement", "name": "Skills", "description": "Browse 300+ ready-to-run skills", "url": "https://taprun.dev/skills/"},
+      {"@type": "SiteNavigationElement", "name": "Skills", "description": "Browse 140+ ready-to-run skills", "url": "https://taprun.dev/skills/"},
       {"@type": "SiteNavigationElement", "name": "Pricing", "description": "View pricing plans", "url": "https://taprun.dev/#pricing"},
       {"@type": "SiteNavigationElement", "name": "Blog", "description": "Read our blog", "url": "https://taprun.dev/blog/"},
       {"@type": "SiteNavigationElement", "name": "GitHub", "description": "View source on GitHub", "url": "https://github.com/LeonTing1010/tap"}
@@ -75,9 +75,9 @@
   "@context": "https://schema.org",
   "@type": "FAQPage",
   "mainEntity": [
-    {"@type": "Question", "name": "Do I need to be a developer to use Tap?", "acceptedAnswer": {"@type": "Answer", "text": "Tap is a CLI tool. The core workflow is two commands: tap forge and tap site name. 300+ pre-built taps work with zero setup."}},
+    {"@type": "Question", "name": "Do I need to be a developer to use Tap?", "acceptedAnswer": {"@type": "Answer", "text": "Tap is a CLI tool. The core workflow is two commands: tap forge and tap site name. 140+ pre-built taps work with zero setup."}},
     {"@type": "Question", "name": "Is my data safe?", "acceptedAnswer": {"@type": "Answer", "text": "Tap programs run in a sandboxed Worker with zero permissions. Your data never leaves your machine. Everything runs locally."}},
-    {"@type": "Question", "name": "What happens when a website changes?", "acceptedAnswer": {"@type": "Answer", "text": "tap doctor --auto detects the breakage and packages diagnostics: current code, fingerprint diff, the last 3 commits to the tap, and a fresh page inspection. Free users hand that bundle to their AI (Claude Code, Cursor, BYOK forge). Pro users let Tap's built-in AI patch and ship the fix automatically on cron."}},
+    {"@type": "Question", "name": "What happens when a website changes?", "acceptedAnswer": {"@type": "Answer", "text": "tap doctor --auto detects the breakage and packages diagnostics: current code, fingerprint diff, the last 3 commits to the tap, and a fresh page inspection. Free users hand that bundle to their AI (Claude Code, Cursor, BYOK forge). Pro users let their AI (BYOK) patch and ship the fix automatically on cron."}},
     {"@type": "Question", "name": "How is Tap different from Zapier?", "acceptedAnswer": {"@type": "Answer", "text": "Zapier charges per task. At scale that is $40K+ per year. Tap has zero per-execution cost. AI runs once, program runs forever."}},
     {"@type": "Question", "name": "Do I own the programs Tap creates?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Every .tap.js file is yours. No lock-in. Cancel and your programs keep running forever."}},
     {"@type": "Question", "name": "Does Tap work offline?", "acceptedAnswer": {"@type": "Answer", "text": "Programs run locally with zero AI calls. You only need internet when forging (AI compilation) or when the program accesses a website."}},
@@ -1861,7 +1861,7 @@ h2 .hl {
       <div class="hero-content">
         <div class="hero-badge">
           <span class="hero-badge-dot"></span>
-          v0.9 just shipped &nbsp;·&nbsp; 300+ skills, 0 setup
+          v0.10 just shipped &nbsp;·&nbsp; 140+ skills, 0 setup
         </div>
         <h1>You're paying $2 every time<br>your agent touches a website.<br><span class="hl">You should pay that once.</span></h1>
         <p class="hero-sub">Browser-Use and Stagehand call the LLM on every step. Tap lets AI analyze a site once, compile a program, and run it forever &mdash; zero AI tokens at runtime.</p>
@@ -1941,7 +1941,7 @@ h2 .hl {
 <div class="container stats-bar reveal">
   <div class="stats-inner">
     <div class="stat">
-      <div class="stat-value">300+</div>
+      <div class="stat-value">140+</div>
       <div class="stat-label">Ready-to-run skills</div>
     </div>
     <div class="stat">
@@ -2022,7 +2022,7 @@ h2 .hl {
       <div class="why-card why-card--safe reveal">
         <div class="why-card-tag">Self-healing</div>
         <h3>Tap's doctor catches breakage within the hour.</h3>
-        <p>After every execution, <code>tap doctor</code> runs health contracts. Fingerprint diff (semantic, ARIA-based &mdash; survives CSS-in-JS rebuilds) tells you exactly what changed &mdash; not just "0 rows," but the precise selector that disappeared and the API schema that shifted. <code>--auto</code> packages everything an AI needs to fix it.</p>
+        <p>After every execution, <code>tap doctor</code> runs health contracts. Fingerprint diff (semantic, ARIA-based &mdash; survives CSS-in-JS rebuilds) tells you exactly what changed &mdash; not just "0 rows," but the precise selector that disappeared and the API schema that shifted. <code>--auto</code> packages everything an AI needs to fix it. Doctor detects the breakage, your AI reads the diagnostics and patches the tap.</p>
         <div class="code-block" style="margin-top:18px;">
           <span class="hl-dim">$ </span><span class="cmd">tap doctor --auto github trending</span><br>
           <span style="color:var(--red)">&#10007;</span> <span class="dim">selector</span> <code>h2.repo-name</code> <span class="dim">&mdash; gone since last run</span><br>
@@ -2112,8 +2112,8 @@ h2 .hl {
   <div class="container">
     <div class="skills-header">
       <div class="section-tag reveal">Skills gallery</div>
-      <h2 class="reveal">300+ taps, <span class="hl">ready to run right now.</span></h2>
-      <p class="section-desc reveal">GitHub trending. Reddit front page. Hacker News top posts. X profiles. arXiv papers. 80+ sites and growing &mdash; no forging needed, just run.</p>
+      <h2 class="reveal">140+ taps, <span class="hl">ready to run right now.</span></h2>
+      <p class="section-desc reveal">GitHub trending. Reddit front page. Hacker News top posts. X profiles. arXiv papers. 68+ sites and growing &mdash; no forging needed, just run.</p>
     </div>
 
     <div class="skills-categories reveal">
@@ -2216,7 +2216,7 @@ h2 .hl {
         <div class="install-step-num">3</div>
         <div>
           <h4>Connect Your AI Agent <span style="font-family:var(--font-mono);font-size:11px;color:var(--gold);font-weight:600;margin-left:6px;">Hacker+</span></h4>
-          <p>Add to your MCP config (Claude Code, Cursor, Windsurf, Codex, any MCP host) and start tapping. MCP integration requires the <a href="#pricing" style="color:var(--indigo-bright);text-decoration:underline;">Hacker tier</a> ($9/mo). Free users get the full CLI &mdash; 300+ skills, <code>tap forge &lt;url&gt;</code> Tier 0 compiler, <code>tap doctor --auto</code> diagnostics, <code>tap watch</code>.</p>
+          <p>Add to your MCP config (Claude Code, Cursor, Windsurf, Codex, any MCP host) and start tapping. MCP integration requires the <a href="#pricing" style="color:var(--indigo-bright);text-decoration:underline;">Hacker tier</a> ($9/mo). Free users get the full CLI &mdash; 140+ skills, <code>tap forge &lt;url&gt;</code> Tier 0 compiler, <code>tap doctor --auto</code> diagnostics, <code>tap watch</code>.</p>
           <div class="code-block"><span class="hl-dim">{</span> <span class="cmd">"mcpServers"</span><span class="hl-dim">:</span> <span class="hl-dim">{</span> <span class="cmd">"tap"</span><span class="hl-dim">:</span> <span class="hl-dim">{</span> <span class="cmd">"command"</span><span class="hl-dim">:</span> <span style="color:var(--gold)">"tap"</span><span class="hl-dim">,</span> <span class="cmd">"args"</span><span class="hl-dim">:</span> <span class="hl-dim">[</span><span style="color:var(--gold)">"mcp"</span><span class="hl-dim">]</span> <span class="hl-dim">} } }</span></div>
         </div>
       </div>
@@ -2246,11 +2246,12 @@ h2 .hl {
         <p class="price-poem">The terminal on your laptop. Type the command, Tap runs the tap. Forever.</p>
         <div class="price-divider"></div>
         <ul class="price-features">
-          <li><span class="bullet">+</span> <strong>300+ community skills</strong>, instant install</li>
+          <li><span class="bullet">+</span> <strong>140+ community skills</strong>, instant install</li>
           <li><span class="bullet">+</span> <code>tap forge &lt;url&gt;</code> &mdash; <strong>Tier 0 compiler</strong>: any site with an API, JSON-LD, or RSS compiles to a tap with <em>zero AI</em></li>
           <li><span class="bullet">+</span> <code>tap forge "..."</code> &mdash; AI agent loop, BYOK: Claude, GPT, DeepSeek, or <strong>local Ollama / LM Studio</strong> for fully offline forge</li>
           <li><span class="bullet">+</span> <code>tap doctor --auto</code> &mdash; diagnostics + fingerprint diff + git history for any broken tap</li>
           <li><span class="bullet">+</span> <code>tap watch</code> &mdash; deterministic diff loop, pipe to anywhere</li>
+          <li><span class="bullet">+</span> <code>tap value</code> &mdash; savings dashboard, see what Tap saves you vs paid alternatives</li>
           <li><span class="bullet">+</span> Chrome extension <em>and</em> Playwright runtimes</li>
           <li><span class="bullet bullet--minus">&minus;</span> Terminal only &mdash; no MCP, no agent integration</li>
         </ul>
@@ -2271,7 +2272,7 @@ h2 .hl {
         <ul class="price-features">
           <li><span class="bullet">+</span> Everything in Free</li>
           <li><span class="bullet">+</span> <strong>40+ MCP tools</strong> &mdash; Claude Code, Cursor, Windsurf, Codex, any MCP host</li>
-          <li><span class="bullet">+</span> <strong>Full forge through the agent:</strong> <code>forge.inspect → draft → verify → save</code> in one conversation, no terminal switching</li>
+          <li><span class="bullet">+</span> <strong>Full forge through the agent:</strong> <code>forge.inspect → verify → save</code> in one conversation, no terminal switching</li>
           <li><span class="bullet">+</span> Heal-from-diagnostics: when a tap fails, your AI reads <code>doctor --auto</code> output (current code, fingerprint diff, git history, live page) and patches the tap in place</li>
           <li><span class="bullet">+</span> <code>intent:&nbsp;write</code> safety &mdash; doctor never clicks publish by accident</li>
           <li><span class="bullet">+</span> BYOK &mdash; Claude, GPT, DeepSeek, anything OpenAI-compatible</li>
@@ -2302,7 +2303,7 @@ h2 .hl {
     </div>
 
     <p class="pricing-proof reveal">
-      <code>tap-skills v0.9</code><span class="proof-sep">·</span>303 skills migrated<span class="proof-sep">·</span>deterministic execution<span class="proof-sep">·</span><code>$0</code>/run
+      <code>tap-skills v0.10</code><span class="proof-sep">·</span>deterministic execution<span class="proof-sep">·</span><code>$0</code>/run
     </p>
   </div>
 </section>
@@ -2322,7 +2323,7 @@ h2 .hl {
       </details>
       <details class="faq-item reveal">
         <summary>What happens when a website changes?</summary>
-        <div class="faq-answer"><code>tap doctor --auto</code> detects breakage via health contracts and packages everything an AI needs to fix it: the current tap source, fingerprint diff (which selectors disappeared, which API schemas shifted), the last 3 commits to the tap, and a fresh page inspection. <strong>Free</strong> users hand that bundle to their AI (Claude Code, Cursor, or <code>tap forge</code> BYOK). <strong>Pro</strong> users put it on cron and Tap's built-in AI patches and ships the fix overnight, with Slack alerts on success.</div>
+        <div class="faq-answer"><code>tap doctor --auto</code> detects breakage via health contracts and packages everything an AI needs to fix it: the current tap source, fingerprint diff (which selectors disappeared, which API schemas shifted), the last 3 commits to the tap, and a fresh page inspection. <strong>Free</strong> users hand that bundle to their AI (Claude Code, Cursor, or <code>tap forge</code> BYOK). <strong>Pro</strong> users put it on cron and their AI (BYOK) patches and ships the fix overnight, with Slack alerts on success.</div>
       </details>
       <details class="faq-item reveal">
         <summary>Can I use my own AI key?</summary>
@@ -2350,7 +2351,7 @@ h2 .hl {
       </details>
       <details class="faq-item reveal">
         <summary>Do I need to be a developer?</summary>
-        <div class="faq-answer">Basic terminal familiarity helps. The core workflow is two commands: <code>tap forge "what you want"</code> and <code>tap site name</code>. 300+ pre-built taps work with zero setup.</div>
+        <div class="faq-answer">Basic terminal familiarity helps. The core workflow is two commands: <code>tap forge "what you want"</code> and <code>tap site name</code>. 140+ pre-built taps work with zero setup.</div>
       </details>
     </div>
   </div>
@@ -2379,7 +2380,7 @@ h2 .hl {
       <path d="M 150 145 L 180 190 L 162 185 L 148 150 Z" fill="#6366F1"/>
     </svg>
     <h2>Forge once. Run forever.<br><span class="hl">$0 per execution.</span></h2>
-    <p class="section-desc">300+ skills ready to run. Self-healing when websites change. Your programs, on your disk, forever.</p>
+    <p class="section-desc">140+ skills ready to run. Self-healing when websites change. Your programs, on your disk, forever.</p>
     <div class="hero-actions">
       <a href="#install" class="btn btn-primary">Start Free &mdash; $0/Run Forever</a>
       <a href="https://github.com/LeonTing1010/tap" class="btn btn-ghost">View on GitHub</a>
