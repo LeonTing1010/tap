@@ -43,7 +43,7 @@
   "offers": [
     {"@type": "Offer", "price": "0", "priceCurrency": "USD", "description": "Free — unlimited runs, 300+ skills, Tier 0 forge (no AI for sites with API/JSON-LD/RSS), doctor with diagnostics, watch"},
     {"@type": "Offer", "price": "9", "priceCurrency": "USD", "description": "Hacker — Tap inside any MCP host (Claude Code, Cursor, Windsurf, Codex). Full forge pipeline through your AI agent."},
-    {"@type": "Offer", "price": "29", "priceCurrency": "USD", "description": "Pro — Always-on reliability. Scheduled doctor + auto-heal via built-in AI, MCP HTTP mode, Slack/webhook alerts."}
+    {"@type": "Offer", "price": "29", "priceCurrency": "USD", "description": "Pro — Tap on a server you own. Cron-driven Playwright daemon (headless, no Chrome window), MCP HTTP mode for multi-client, Slack/webhook routing. 100% local-first, no Tap-hosted AI proxy."}
   ]
 }
 </script>
@@ -2229,8 +2229,8 @@ h2 .hl {
   <div class="container">
     <div class="pricing-header">
       <div class="section-tag reveal">Pricing</div>
-      <h2 class="reveal">From manual to <span class="hl">autonomous.</span></h2>
-      <p class="section-desc reveal">Free if you babysit it. $9 if your AI does. $29 if it babysits itself. Each rung removes one human from the loop.</p>
+      <h2 class="reveal">From terminal to <span class="hl">your own server.</span></h2>
+      <p class="section-desc reveal">Free in your terminal. $9 inside your AI agent. $29 on a server you own &mdash; not ours. Each rung shifts where Tap runs, never where your data goes.</p>
     </div>
 
     <div class="pricing-grid reveal">
@@ -2286,16 +2286,16 @@ h2 .hl {
           <span class="rung-label">Pro</span>
         </div>
         <div class="price-amount"><span class="currency">$</span>29<span class="period">/mo</span></div>
-        <div class="price-label">It runs itself.</div>
-        <p class="price-poem">Cron schedule. Built-in AI. Sites change at 3am, your taps re-forge before sunrise &mdash; no human in the loop.</p>
+        <div class="price-label">Tap on a server you own.</div>
+        <p class="price-poem">Run Tap unattended on a VPS, NAS, Mac mini, or CI runner. No Chrome window, no babysitting &mdash; <strong>and no Tap-hosted servers in the loop</strong>.</p>
         <div class="price-divider"></div>
         <ul class="price-features">
           <li><span class="bullet">+</span> Everything in Hacker</li>
-          <li><span class="bullet">+</span> <code>tap schedule</code> &mdash; cron-driven doctor + auto-heal, runs in the background</li>
-          <li><span class="bullet">+</span> <strong>Built-in AI heal loop</strong> &mdash; Tap-managed token pool drives forge to convergence when a tap breaks. No BYOK, no babysitting.</li>
-          <li><span class="bullet">+</span> <strong>MCP over HTTP</strong> &mdash; production server, any client, any host</li>
-          <li><span class="bullet">+</span> <strong>Slack + webhook alerts</strong> on drift detection and successful heals</li>
-          <li><span class="bullet">+</span> REST API access &mdash; <em>coming Q2</em></li>
+          <li><span class="bullet">+</span> <code>tap schedule</code> &mdash; cron-driven Playwright daemon, fully headless, no Chrome window required</li>
+          <li><span class="bullet">+</span> <strong>MCP over HTTP</strong> &mdash; multiple local clients (Claude Desktop + Cursor + n8n) on one Tap daemon, binds <code>127.0.0.1</code> by default</li>
+          <li><span class="bullet">+</span> <strong>Slack + webhook routing</strong> on doctor failures and successful heals</li>
+          <li><span class="bullet">+</span> Bring your own AI &mdash; Claude, GPT, or <strong>local Ollama / LM Studio</strong> for fully offline forge + heal</li>
+          <li><span class="bullet">+</span> <strong>100% local-first</strong> &mdash; Tap never executes code from our servers in your browser. <a href="https://github.com/LeonTing1010/tap/blob/main/SECURITY.md" style="color:var(--indigo-bright);text-decoration:underline;">read our security policy</a></li>
         </ul>
         <a href="mailto:support@taprun.dev?subject=Pro+Waitlist" class="price-btn price-btn--outline">Join Waitlist &rarr;</a>
       </div>
