@@ -7,7 +7,7 @@
   "data": [
     {
       "name": "community-taps",
-      "description": "195+ pre-built automation programs for popular websites",
+      "description": "140+ pre-built automation programs for popular websites",
       "endpoint": "https://api.github.com/repos/LeonTing1010/tap-skills/contents",
       "method": "GET",
       "format": "json",

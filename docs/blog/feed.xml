@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<channel>
+<title>Tap Blog</title>
+<link>https://taprun.dev/blog/</link>
+<description>Engineering insights on browser automation, AI agents, and deterministic programs.</description>
+<language>en-us</language>
+<atom:link href="https://taprun.dev/blog/feed.xml" rel="self" type="application/rss+xml"/>
+<lastBuildDate>Wed, 09 Apr 2026 00:00:00 +0000</lastBuildDate>
+
+<item>
+<title>Stagehand vs Tap: AI Browser Automation Compared</title>
+<link>https://taprun.dev/blog/stagehand-vs-tap.html</link>
+<description>Stagehand calls the LLM on every step — same cost per run, same reliability floor as Browser Use. Tap compiles AI understanding into deterministic programs that run forever at $0.</description>
+<pubDate>Wed, 09 Apr 2026 00:00:00 +0000</pubDate>
+<guid>https://taprun.dev/blog/stagehand-vs-tap.html</guid>
+</item>
+
+<item>
+<title>Deterministic vs AI Browser Automation: Why Programs Beat Prompts</title>
+<link>https://taprun.dev/blog/deterministic-vs-ai-browser-automation.html</link>
+<description>AI browser automation is non-deterministic — same task, different results every run. Deterministic programs compile AI understanding once, then run forever with 100% consistency.</description>
+<pubDate>Wed, 09 Apr 2026 00:00:00 +0000</pubDate>
+<guid>https://taprun.dev/blog/deterministic-vs-ai-browser-automation.html</guid>
+</item>
+
+<item>
+<title>Browser Use Alternative: Free, Deterministic, No Tokens Per Run</title>
+<link>https://taprun.dev/blog/browser-use-alternative-free.html</link>
+<description>Browser Use costs $0.50–$2.00 per run. Tap compiles AI understanding into a deterministic program that runs forever at $0. Same browser, zero tokens at runtime.</description>
+<pubDate>Wed, 09 Apr 2026 00:00:00 +0000</pubDate>
+<guid>https://taprun.dev/blog/browser-use-alternative-free.html</guid>
+</item>
+
+<item>
+<title>How Do Companies Keep Scrapers Reliable? I Asked the Internet.</title>
+<link>https://taprun.dev/blog/how-companies-keep-scrapers-reliable.html</link>
+<description>A r/webscraping thread asked the question. Six independent builders converged on the same five principles.</description>
+<pubDate>Mon, 07 Apr 2026 00:00:00 +0000</pubDate>
+<guid>https://taprun.dev/blog/how-companies-keep-scrapers-reliable.html</guid>
+</item>
+
+<item>
+<title>Search arXiv in One Command — No API Key, No Tokens</title>
+<link>https://taprun.dev/blog/search-arxiv-one-command.html</link>
+<description>Search, sort, and display arXiv papers as a Unix pipeline. Zero install. Zero tokens.</description>
+<pubDate>Mon, 07 Apr 2026 00:00:00 +0000</pubDate>
+<guid>https://taprun.dev/blog/search-arxiv-one-command.html</guid>
+</item>
+
+<item>
+<title>16 Comments, 6 Insights: Using HN and Reddit as a Positioning Lab</title>
+<link>https://taprun.dev/blog/comments-as-ab-tests.html</link>
+<description>Community comments are the cheapest A/B test for product positioning. 16 comments across HN and Reddit validated 6 content principles.</description>
+<pubDate>Sun, 06 Apr 2026 00:00:00 +0000</pubDate>
+<guid>https://taprun.dev/blog/comments-as-ab-tests.html</guid>
+</item>
+
+<item>
+<title>Programs Beat Prompts: Why AI Should Write Code, Not Run It</title>
+<link>https://taprun.dev/blog/programs-beat-prompts.html</link>
+<description>AI browser agents burn tokens every run. The better model: AI writes a deterministic program once, then it runs forever at zero cost.</description>
+<pubDate>Sun, 06 Apr 2026 00:00:00 +0000</pubDate>
+<guid>https://taprun.dev/blog/programs-beat-prompts.html</guid>
+</item>
+
+<item>
+<title>Your AI Browser Agent Costs $3,600/month. Here's How to Make It $0.</title>
+<link>https://taprun.dev/blog/ai-browser-agent-costs-3600.html</link>
+<description>Browser-use users burn tokens on every run. The compiler model: AI writes a program once, runs forever at zero cost.</description>
+<pubDate>Sat, 05 Apr 2026 00:00:00 +0000</pubDate>
+<guid>https://taprun.dev/blog/ai-browser-agent-costs-3600.html</guid>
+</item>
+
+<item>
+<title>Websites Change. Your Automation Shouldn't Stop.</title>
+<link>https://taprun.dev/blog/websites-change-automation-shouldnt-stop.html</link>
+<description>The self-healing loop: watch for data changes, detect breakage via health contracts, auto-heal with one AI call, continue at $0.</description>
+<pubDate>Fri, 04 Apr 2026 00:00:00 +0000</pubDate>
+<guid>https://taprun.dev/blog/websites-change-automation-shouldnt-stop.html</guid>
+</item>
+
+<item>
+<title>Your Automation Costs $1 Per Run. Mine Costs $0.</title>
+<link>https://taprun.dev/blog/automation-costs-one-dollar.html</link>
+<description>AI browser agents burn tokens every run. Deterministic programs run forever at zero cost. Here's the math.</description>
+<pubDate>Fri, 04 Apr 2026 00:00:00 +0000</pubDate>
+<guid>https://taprun.dev/blog/automation-costs-one-dollar.html</guid>
+</item>
+
+<item>
+<title>Your Scraper Is Broken Right Now. You Just Don't Know It Yet.</title>
+<link>https://taprun.dev/blog/your-scraper-is-broken.html</link>
+<description>Most scrapers fail silently — returning empty arrays for days before anyone notices. Health contracts + deterministic programs fix this.</description>
+<pubDate>Fri, 04 Apr 2026 00:00:00 +0000</pubDate>
+<guid>https://taprun.dev/blog/your-scraper-is-broken.html</guid>
+</item>
+
+</channel>
+</rss>
