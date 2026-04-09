@@ -11,7 +11,7 @@
 <p align="center">
   <a href="https://taprun.dev/"><b>Homepage</b></a> &nbsp;|&nbsp;
   <a href="https://taprun.dev/blog/"><b>Blog</b></a> &nbsp;|&nbsp;
-  <a href="https://github.com/LeonTing1010/tap-skills"><b>200+ Skills</b></a> &nbsp;|&nbsp;
+  <a href="https://github.com/LeonTing1010/tap-skills"><b>140+ Skills</b></a> &nbsp;|&nbsp;
   <a href="README.zh-CN.md"><b>中文</b></a>
 </p>
 
@@ -24,14 +24,14 @@
 
 ---
 
-**Tell AI what you want. Tap compiles it into a program. The program runs forever — no AI, no tokens, no surprises.**
+**Tell AI what you want. Tap compiles it into a deterministic program. The program runs forever — no AI, no tokens, no surprises.**
 
 ```
 First run:  AI inspects the website → compiles a .tap.js program  (one-time cost)
 Every run:  The program runs instantly, same result every time     ($0.00, forever)
 ```
 
-200+ websites already supported. One binary, zero dependencies.
+140+ skills across 68+ sites already supported. One binary, zero dependencies.
 
 ## Get Started
 
@@ -156,11 +156,11 @@ You → AI → Tap ──────┤─ Playwright  (headless, server, CI/CD
 2. **AI compiles** it into a `.tap.js` program — plain JavaScript, version-controlled
 3. **Tap runs** the program on any of three runtimes — forever, at $0
 
-Every successful compilation makes the next one faster. 200+ community skills mean your agent already knows 65+ websites.
+Every successful compilation makes the next one faster. 140+ community skills mean your agent already knows 68+ websites.
 
 ## Community Skills
 
-**[tap-skills](https://github.com/LeonTing1010/tap-skills)** — 200+ skills, open source.
+**[tap-skills](https://github.com/LeonTing1010/tap-skills)** — 140+ skills, open source.
 
 | Category | Examples |
 |----------|---------|
@@ -182,7 +182,7 @@ tap doctor    # Health check your taps
 |--|-----|-------------------|---------------------|
 | **AI cost per run** | $0 (compile once) | Tokens every run | Free |
 | **Accuracy** | Deterministic | Varies per run | Deterministic |
-| **Self-healing** | Yes (auto re-compile) | No | No |
+| **Self-healing** | Yes (doctor diagnostics + AI heal) | No | No |
 | **Detection risk** | Low (real browser) | High | High |
 | **Runtimes** | 3 (browser + headless + desktop) | 1 | 1 |
 | **Reusable** | .tap.js (shareable) | Ephemeral | Fragile scripts |
@@ -206,11 +206,11 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ## Roadmap
 
-- [x] 200+ community skills across 65+ sites
+- [x] 140+ community skills across 68+ sites
 - [x] 3 runtimes — Chrome, Playwright, macOS
 - [x] Unix pipes — `tap A | tap B`
 - [x] Watch mode — monitor changes over time
-- [x] Self-healing — auto re-compile broken taps
+- [x] Doctor — health check + diagnostics for broken taps
 - [x] One-command setup — `tap setup` configures all AI agents
 - [ ] Android runtime
 - [ ] iOS runtime
