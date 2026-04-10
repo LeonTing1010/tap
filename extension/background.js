@@ -297,22 +297,23 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
         // No tab exists yet — create one with the target URL (background, don't steal focus)
         const tab = await chrome.tabs.create({ url: params.url, active: false })
         tabId = tab.id
-        activeTabId = tab.id
       } else {
         const current = await chrome.tabs.get(tabId)
         if (current.url?.startsWith('chrome://') || current.url?.startsWith('data:')) {
           const tab = await chrome.tabs.create({ url: params.url, active: false })
           tabId = tab.id
-          activeTabId = tab.id
         } else {
           await chrome.tabs.update(tabId, { url: params.url })
-          activeTabId = tabId
         }
       }
-      await waitForTabLoad(activeTabId, params.url)
+      // Only update activeTabId for non-daemon callers (popup/content-script).
+      // Daemon sessions track their own tabId via bridge — touching the global
+      // activeTabId causes cross-session tab leakage when commands run concurrently.
+      if (!fromDaemon) activeTabId = tabId
+      await waitForTabLoad(tabId, params.url)
       // Return final URL (after redirects) — session URL tracking depends on this
-      const finalTab = await chrome.tabs.get(activeTabId)
-      return { frameId: 'main', tabId: activeTabId, url: finalTab.url || params.url }
+      const finalTab = await chrome.tabs.get(tabId)
+      return { frameId: 'main', tabId, url: finalTab.url || params.url }
     }
 
     case 'wait':
