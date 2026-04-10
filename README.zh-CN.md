@@ -58,7 +58,7 @@ curl -fsSL https://taprun.dev/install.sh | sh
 | Linux | [tap-linux-x64](https://github.com/LeonTing1010/tap/releases/latest) |
 | Windows | [tap-windows-x64.exe](https://github.com/LeonTing1010/tap/releases/latest) |
 
-### 2. 连接 AI Agent（免费）
+### 2. 连接 AI Agent
 
 适用于 Claude Code、Cursor、Windsurf 或任何 MCP 兼容的 Agent — 不需要浏览器扩展：
 

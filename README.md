@@ -58,7 +58,7 @@ curl -fsSL https://taprun.dev/install.sh | sh
 | Linux | [tap-linux-x64](https://github.com/LeonTing1010/tap/releases/latest) |
 | Windows | [tap-windows-x64.exe](https://github.com/LeonTing1010/tap/releases/latest) |
 
-### 2. Connect to Your AI Agent (Free)
+### 2. Connect to Your AI Agent
 
 Works with Claude Code, Cursor, Windsurf, or any MCP-compatible agent — no extension needed:
 
