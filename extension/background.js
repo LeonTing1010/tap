@@ -13,7 +13,10 @@ console.log('[tap] extension runtime ready')
 
 // --- State ---
 
-let activeTabId = null
+// --- Session Manager ---
+// Each MCP session owns a dedicated tab. Commands route via sessionId → tabId.
+const sessions = new Map()  // sessionId → { tabId, url, interceptActive, networkCapturing }
+
 const debuggerSessions = new Map()
 
 // Network capture state (per-tab)
@@ -48,13 +51,16 @@ const requestMeta = new Map()
 const interceptStates = new Map()
 
 chrome.tabs.onRemoved.addListener((tabId) => {
-  const session = debuggerSessions.get(tabId)
-  if (session?.detachTimer) clearTimeout(session.detachTimer)
+  const dbgSession = debuggerSessions.get(tabId)
+  if (dbgSession?.detachTimer) clearTimeout(dbgSession.detachTimer)
   debuggerSessions.delete(tabId)
   networkCaptures.delete(tabId)
   requestMeta.delete(tabId)
   interceptStates.delete(tabId)
-  if (tabId === activeTabId) activeTabId = null
+  // Clean up any session that owned this tab
+  for (const [sid, s] of sessions) {
+    if (s.tabId === tabId) { sessions.delete(sid); break }
+  }
 })
 
 // --- Debugger Helpers (only for core.pointer, core.keyboard, core.eval CSP fallback) ---
@@ -131,47 +137,6 @@ async function execFunc(tabId, func, ...args) {
   return result?.result
 }
 
-// --- Tab Resolution ---
-
-async function resolveTab(params, { allowUnscriptable = false, fromDaemon = false } = {}) {
-  const explicitTabId = params.tabId ? Number(params.tabId) : null
-  // Daemon commands: ONLY use explicit tabId — never fall back to activeTabId.
-  // This prevents cross-session tab leakage when multiple MCP sessions share the daemon.
-  // activeTabId is only for popup/content-script messages (single-user, no session).
-  let tabId = fromDaemon ? explicitTabId : (explicitTabId || activeTabId)
-
-  if (tabId) {
-    try {
-      const tab = await chrome.tabs.get(tabId)
-      // Skip chrome:// tabs — can't run scripts on them (unless caller handles it, e.g. nav)
-      if (!allowUnscriptable && (tab.url?.startsWith('chrome://') || tab.url?.startsWith('chrome-extension://'))) {
-        if (explicitTabId || fromDaemon) throw new Error(`Tab ${tabId} is not scriptable (${tab.url})`)
-        tabId = null
-      }
-    } catch (e) {
-      if (explicitTabId || fromDaemon) throw e
-      tabId = null
-    }
-  }
-
-  // Auto-discover: only for non-daemon callers (popup, content script)
-  // Daemon sessions return null — handleMethod decides if that's an error
-  // (nav and tab.new can work without a tab, other methods cannot)
-  if (!tabId) {
-    if (fromDaemon) return null
-    const tabs = await chrome.tabs.query({ currentWindow: true })
-    const httpTab = tabs.find(t => t.url?.startsWith('http'))
-    if (httpTab) {
-      tabId = httpTab.id
-    } else {
-      const tab = await chrome.tabs.create({ active: false })
-      tabId = tab.id
-    }
-    activeTabId = tabId
-  }
-  return tabId
-}
-
 // --- Message Handler ---
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
@@ -183,13 +148,19 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 })
 
 async function handleMethod(method, params = {}, senderTabId = null, { fromDaemon = false } = {}) {
-  // nav and tab.close don't need to script the tab — let chrome:// tabs through
-  const allowUnscriptable = method === 'nav' || method === 'tab.close'
-  let tabId = await resolveTab(params, { allowUnscriptable, fromDaemon })
+  let tabId = params.tabId ? Number(params.tabId) : null
 
-  // nav and tab.new can work without an existing tab — they create one
-  if (!tabId && method !== 'nav' && method !== 'tab.new' && method !== 'tab.list' && method !== 'capabilities') {
-    throw new Error('No active tab. Call nav first to open a page.')
+  // Non-daemon callers (popup/content-script): auto-discover tab if none specified
+  if (!tabId && !fromDaemon) {
+    const tabs = await chrome.tabs.query({ active: true, currentWindow: true })
+    tabId = tabs[0]?.id || null
+  }
+
+  // Methods that can work without a tab
+  const noTabNeeded = ['nav', 'tab.new', 'tab.list', 'tab.close', 'capabilities', 'reload',
+                       'session.create', 'session.destroy', 'session.info']
+  if (!tabId && !noTabNeeded.includes(method)) {
+    throw new Error('No active tab. Call nav first or use session.create.')
   }
 
   switch (method) {
@@ -293,8 +264,8 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
     }
 
     case 'nav': {
+      const origTabId = tabId
       if (!tabId) {
-        // No tab exists yet — create one with the target URL (background, don't steal focus)
         const tab = await chrome.tabs.create({ url: params.url, active: false })
         tabId = tab.id
       } else {
@@ -306,13 +277,16 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
           await chrome.tabs.update(tabId, { url: params.url })
         }
       }
-      // Only update activeTabId for non-daemon callers (popup/content-script).
-      // Daemon sessions track their own tabId via bridge — touching the global
-      // activeTabId causes cross-session tab leakage when commands run concurrently.
-      if (!fromDaemon) activeTabId = tabId
       await waitForTabLoad(tabId, params.url)
-      // Return final URL (after redirects) — session URL tracking depends on this
       const finalTab = await chrome.tabs.get(tabId)
+      // Update session: URL always, tabId if replaced
+      for (const [, s] of sessions) {
+        if (s.tabId === origTabId || s.tabId === tabId) {
+          s.url = finalTab.url || params.url
+          s.tabId = tabId  // update if tab was replaced
+          break
+        }
+      }
       return { frameId: 'main', tabId, url: finalTab.url || params.url }
     }
 
@@ -352,7 +326,8 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
           'upload', 'dialog', 'extract',
           'tab.new', 'tab.list', 'tab.close',
           'inspect.page', 'inspect.networkStart', 'inspect.networkDump', 'inspect.networkStop',
-          'intercept.on', 'intercept.off'
+          'intercept.on', 'intercept.off',
+          'session.create', 'session.destroy', 'session.info'
         ]
       }
 
@@ -654,6 +629,10 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       // Clear detach timer — keep debugger alive for capture
       const session = debuggerSessions.get(tabId)
       if (session?.detachTimer) { clearTimeout(session.detachTimer); session.detachTimer = null }
+      // Track in session
+      for (const [, s] of sessions) {
+        if (s.tabId === tabId) { s.networkCapturing = true; break }
+      }
       return {}
     }
 
@@ -684,6 +663,10 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       requestMeta.delete(tabId)
       try { await chrome.debugger.sendCommand({ tabId }, 'Network.disable') } catch {}
       scheduleDetach(tabId)
+      // Track in session
+      for (const [, s] of sessions) {
+        if (s.tabId === tabId) { s.networkCapturing = false; break }
+      }
       return {}
     }
 
@@ -705,6 +688,10 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       await chrome.debugger.sendCommand({ tabId }, 'Fetch.enable', { patterns })
       const session2 = debuggerSessions.get(tabId)
       if (session2?.detachTimer) { clearTimeout(session2.detachTimer); session2.detachTimer = null }
+      // Track intercept state in session
+      for (const [, s] of sessions) {
+        if (s.tabId === tabId) { s.interceptActive = true; break }
+      }
       return {}
     }
 
@@ -716,6 +703,10 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       try { await chrome.debugger.sendCommand({ tabId }, 'Fetch.disable') } catch {}
       interceptStates.delete(tabId)
       scheduleDetach(tabId)
+      // Track intercept state in session
+      for (const [, s] of sessions) {
+        if (s.tabId === tabId) { s.interceptActive = false; break }
+      }
       return {}
     }
 
@@ -735,7 +726,6 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
     case 'tab.new': {
       const url = params.url || undefined
       const tab = await chrome.tabs.create(url ? { url, active: false } : { active: false })
-      activeTabId = tab.id
       return { tabId: tab.id, url: tab.url || '' }
     }
 
@@ -748,6 +738,38 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       const closeId = params.tabId || tabId
       if (closeId) await chrome.tabs.remove(closeId).catch(() => {})
       return {}
+    }
+
+    // ========== SESSION MANAGEMENT ==========
+
+    case 'session.create': {
+      const sessionId = crypto.randomUUID().slice(0, 8)
+      const tab = await chrome.tabs.create({ active: false })
+      sessions.set(sessionId, { tabId: tab.id, url: '', interceptActive: false, networkCapturing: false })
+      return { sessionId, tabId: tab.id }
+    }
+
+    case 'session.destroy': {
+      const sid = params.sessionId
+      const sess = sessions.get(sid)
+      if (!sess) return { closed: false }
+      // Ordered cleanup: intercept.off → networkStop → tab.close
+      if (sess.interceptActive) {
+        try { await handleMethod('intercept.off', { tabId: sess.tabId }, null, { fromDaemon: true }) } catch {}
+      }
+      if (sess.networkCapturing) {
+        try { await handleMethod('inspect.networkStop', { tabId: sess.tabId }, null, { fromDaemon: true }) } catch {}
+      }
+      await chrome.tabs.remove(sess.tabId).catch(() => {})
+      sessions.delete(sid)
+      return { closed: true }
+    }
+
+    case 'session.info': {
+      const sid = params.sessionId
+      const sess = sessions.get(sid)
+      if (!sess) return { error: 'session not found' }
+      return { sessionId: sid, ...sess }
     }
 
     default:
@@ -970,7 +992,7 @@ chrome.alarms.onAlarm.addListener(() => {
 })
 
 // Handle a command from daemon and send result back — runs concurrently with poll loop.
-// fromDaemon=true: commands ONLY use explicit tabId, never activeTabId fallback.
+// fromDaemon=true: commands use explicit tabId (or sessionId→tabId), no auto-discover.
 // This prevents cross-session tab leakage when multiple MCP sessions share the daemon.
 async function handleAndReport(id, method, params) {
   let response
@@ -1033,10 +1055,14 @@ async function pollLoop() {
       // If we await handleMethod here, there's no active fetch during
       // command execution, and Chrome kills the service worker.
       for (const cmd of commands) {
-        const { id, method: rawMethod, params, tabId: msgTabId } = cmd
+        const { id, method: rawMethod, params, sessionId } = cmd
         const method = rawMethod?.replace?.('tap.', '') || rawMethod
         const resolvedParams = { ...(params || {}) }
-        if (msgTabId && !resolvedParams.tabId) resolvedParams.tabId = msgTabId
+        // Resolve sessionId to tabId
+        if (sessionId && sessions.has(sessionId)) {
+          resolvedParams.tabId = sessions.get(sessionId).tabId
+          resolvedParams._sessionId = sessionId  // pass through for session commands
+        }
 
         // Fire-and-forget: handle + report result asynchronously
         handleAndReport(id, method, resolvedParams)
