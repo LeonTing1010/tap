@@ -1861,7 +1861,7 @@ h2 .hl {
       <div class="hero-content">
         <div class="hero-badge">
           <span class="hero-badge-dot"></span>
-          v0.10 just shipped &nbsp;·&nbsp; 140+ skills, 0 setup
+          v0.11 just shipped &nbsp;·&nbsp; 140+ skills, 0 setup
         </div>
         <h1>You're paying $2 every time<br>your agent touches a website.<br><span class="hl">You should pay that once.</span></h1>
         <p class="hero-sub">Browser-Use and Stagehand call the LLM on every step. Tap lets AI analyze a site once, compile a program, and run it forever &mdash; zero AI tokens at runtime.</p>
@@ -2190,8 +2190,8 @@ h2 .hl {
   <div class="container">
     <div class="install-header">
       <div class="section-tag reveal">Get Started</div>
-      <h2 class="reveal">Forge your first tap in <span class="hl">5 minutes</span></h2>
-      <p class="section-desc reveal">One command to install, one extension to load, one line to add to your MCP config. Your AI agent does the rest.</p>
+      <h2 class="reveal">Run your first tap in <span class="hl">2 minutes</span></h2>
+      <p class="section-desc reveal">One command to install, one line to add to your MCP config. No browser extension needed &mdash; works immediately.</p>
     </div>
 
     <div class="install-steps">
@@ -2207,17 +2207,17 @@ h2 .hl {
       <div class="install-step reveal">
         <div class="install-step-num">2</div>
         <div>
-          <h4>Load Extension &amp; Skills</h4>
-          <p>Download <a href="https://github.com/LeonTing1010/tap/releases/latest">tap-extension.zip</a> from Releases, unzip, load unpacked in Chrome. Then install community skills.</p>
-          <div class="code-block"><span class="prompt">$ </span><span class="cmd">tap update</span></div>
+          <h4>Connect Your AI Agent <span style="font-family:var(--font-mono);font-size:11px;color:var(--green);font-weight:600;margin-left:6px;">Free</span></h4>
+          <p>Add to your MCP config (Claude Code, Cursor, Windsurf, Codex, any MCP host). 140+ skills, free &mdash; no extension, no setup, works immediately.</p>
+          <div class="code-block"><span class="hl-dim">{</span> <span class="cmd">"mcpServers"</span><span class="hl-dim">:</span> <span class="hl-dim">{</span> <span class="cmd">"tap"</span><span class="hl-dim">:</span> <span class="hl-dim">{</span> <span class="cmd">"command"</span><span class="hl-dim">:</span> <span style="color:var(--gold)">"tap"</span><span class="hl-dim">,</span> <span class="cmd">"args"</span><span class="hl-dim">:</span> <span class="hl-dim">[</span><span style="color:var(--gold)">"mcp"</span><span class="hl-dim">]</span> <span class="hl-dim">} } }</span></div>
         </div>
       </div>
       <div class="install-step reveal">
         <div class="install-step-num">3</div>
         <div>
-          <h4>Connect Your AI Agent <span style="font-family:var(--font-mono);font-size:11px;color:var(--gold);font-weight:600;margin-left:6px;">Hacker+</span></h4>
-          <p>Add to your MCP config (Claude Code, Cursor, Windsurf, Codex, any MCP host) and start tapping. MCP integration requires the <a href="#pricing" style="color:var(--indigo-bright);text-decoration:underline;">Hacker tier</a> ($9/mo). Free users get the full CLI &mdash; 140+ skills, <code>tap forge &lt;url&gt;</code> Tier 0 compiler, <code>tap doctor --auto</code> diagnostics, <code>tap watch</code>.</p>
-          <div class="code-block"><span class="hl-dim">{</span> <span class="cmd">"mcpServers"</span><span class="hl-dim">:</span> <span class="hl-dim">{</span> <span class="cmd">"tap"</span><span class="hl-dim">:</span> <span class="hl-dim">{</span> <span class="cmd">"command"</span><span class="hl-dim">:</span> <span style="color:var(--gold)">"tap"</span><span class="hl-dim">,</span> <span class="cmd">"args"</span><span class="hl-dim">:</span> <span class="hl-dim">[</span><span style="color:var(--gold)">"mcp"</span><span class="hl-dim">]</span> <span class="hl-dim">} } }</span></div>
+          <h4>Need login-required sites? <span style="font-family:var(--font-mono);font-size:11px;color:var(--gold);font-weight:600;margin-left:6px;">Optional</span></h4>
+          <p>Most taps work without login. For sites that need your session (Xiaohongshu, Zhihu, etc.), add the <a href="https://github.com/LeonTing1010/tap/releases/latest">Chrome Extension</a> for safe, undetectable automation in your real browser.</p>
+          <div class="code-block"><span class="prompt">$ </span><span class="cmd">tap update</span></div>
         </div>
       </div>
     </div>
@@ -2301,7 +2301,7 @@ h2 .hl {
     </div>
 
     <p class="pricing-proof reveal">
-      <code>tap-skills v0.10</code><span class="proof-sep">·</span>deterministic execution<span class="proof-sep">·</span><code>$0</code>/run
+      <code>tap v0.11</code><span class="proof-sep">·</span>deterministic execution<span class="proof-sep">·</span><code>$0</code>/run
     </p>
   </div>
 </section>
