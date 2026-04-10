@@ -41,9 +41,9 @@
   "codeRepository": "https://github.com/LeonTing1010/tap",
   "keywords": ["AI agents", "MCP", "tap protocol", "forge", "deterministic automation", "Chrome extension", "Playwright", "sandbox", "self-healing", "doctor", "fingerprint", "Tier 0 compiler"],
   "offers": [
-    {"@type": "Offer", "price": "0", "priceCurrency": "USD", "description": "Free — unlimited runs, 140+ skills, Tier 0 forge (no AI for sites with API/JSON-LD/RSS), doctor with diagnostics, watch"},
-    {"@type": "Offer", "price": "9", "priceCurrency": "USD", "description": "Hacker — Tap inside any MCP host (Claude Code, Cursor, Windsurf, Codex). Full forge pipeline through your AI agent."},
-    {"@type": "Offer", "price": "29", "priceCurrency": "USD", "description": "Pro — Tap on a server you own. Cron-driven Playwright daemon (headless, no Chrome window), MCP HTTP mode for multi-client, Slack/webhook routing. 100% local-first, no Tap-hosted AI proxy."}
+    {"@type": "Offer", "price": "0", "priceCurrency": "USD", "description": "Free — 300+ skills in any MCP agent, Tier 0 forge, doctor, watch. 3-day trial on paid features."},
+    {"@type": "Offer", "price": "9", "priceCurrency": "USD", "description": "Hacker — AI creates taps for you. Full forge pipeline in Claude Code, Cursor, any MCP host. BYOK."},
+    {"@type": "Offer", "price": "29", "priceCurrency": "USD", "description": "Pro — Taps run themselves. Auto-repair, auto-refresh, scheduled runs, team server. 100% local-first."}
   ]
 }
 </script>
@@ -2229,8 +2229,8 @@ h2 .hl {
   <div class="container">
     <div class="pricing-header">
       <div class="section-tag reveal">Pricing</div>
-      <h2 class="reveal">From terminal to <span class="hl">your own server.</span></h2>
-      <p class="section-desc reveal">Free in your terminal. $9 inside your AI agent. $29 on a server you own &mdash; not ours. Each rung shifts where Tap runs, never where your data goes.</p>
+      <h2 class="reveal">You run it. AI creates it. <span class="hl">Taps run themselves.</span></h2>
+      <p class="section-desc reveal">Free in your AI agent. $9 when you want AI to create taps for you. $29 when you want taps to fix themselves. 3-day free trial on every feature &mdash; no credit card.</p>
     </div>
 
     <div class="pricing-grid reveal">
@@ -2243,17 +2243,15 @@ h2 .hl {
         </div>
         <div class="price-amount"><span class="currency">$</span>0</div>
         <div class="price-label">You run it.</div>
-        <p class="price-poem">The terminal on your laptop. Type the command, Tap runs the tap. Forever.</p>
+        <p class="price-poem">300+ taps, free inside Claude Code, Cursor, or your terminal. Install, run, done.</p>
         <div class="price-divider"></div>
         <ul class="price-features">
-          <li><span class="bullet">+</span> <strong>140+ community skills</strong>, instant install</li>
-          <li><span class="bullet">+</span> <code>tap forge &lt;url&gt;</code> &mdash; <strong>Tier 0 compiler</strong>: any site with an API, JSON-LD, or RSS compiles to a tap with <em>zero AI</em></li>
-          <li><span class="bullet">+</span> <code>tap forge "..."</code> &mdash; AI agent loop, BYOK: Claude, GPT, DeepSeek, or <strong>local Ollama / LM Studio</strong> for fully offline forge</li>
-          <li><span class="bullet">+</span> <code>tap doctor --auto</code> &mdash; diagnostics + fingerprint diff + git history for any broken tap</li>
-          <li><span class="bullet">+</span> <code>tap watch</code> &mdash; deterministic diff loop, pipe to anywhere</li>
-          <li><span class="bullet">+</span> <code>tap value</code> &mdash; savings dashboard, see what Tap saves you vs paid alternatives</li>
-          <li><span class="bullet">+</span> Chrome extension <em>and</em> Playwright runtimes</li>
-          <li><span class="bullet bullet--minus">&minus;</span> Terminal only &mdash; no MCP, no agent integration</li>
+          <li><span class="bullet">+</span> <strong>300+ community skills</strong> in any MCP agent (Claude Code, Cursor, Windsurf)</li>
+          <li><span class="bullet">+</span> <code>tap forge &lt;url&gt;</code> &mdash; create taps from terminal (Tier 0: zero AI for API/JSON-LD/RSS sites)</li>
+          <li><span class="bullet">+</span> <code>tap doctor</code> &mdash; health checks + fingerprint diff + diagnostics</li>
+          <li><span class="bullet">+</span> <code>tap watch</code> &mdash; monitor changes, pipe to anywhere</li>
+          <li><span class="bullet">+</span> BYOK forge (Claude, GPT, DeepSeek, Ollama) &mdash; your key, your model</li>
+          <li><span class="bullet">+</span> 3-day free trial on any paid feature &mdash; no credit card</li>
         </ul>
         <a href="#install" class="price-btn price-btn--outline">Install Free</a>
       </div>
@@ -2266,16 +2264,15 @@ h2 .hl {
           <span class="rung-label">Hacker</span>
         </div>
         <div class="price-amount"><span class="currency">$</span>9<span class="period">/mo</span></div>
-        <div class="price-label">Your AI runs it.</div>
-        <p class="price-poem">Plug Tap into Claude Code, Cursor, or Windsurf. Your agent inspects, forges, and verifies end-to-end &mdash; in the same chat.</p>
+        <div class="price-label">AI creates for you.</div>
+        <p class="price-poem">"Make me a tap for Hacker News." Your agent inspects the page, writes the code, verifies it works &mdash; all in one chat.</p>
         <div class="price-divider"></div>
         <ul class="price-features">
           <li><span class="bullet">+</span> Everything in Free</li>
-          <li><span class="bullet">+</span> <strong>40+ MCP tools</strong> &mdash; Claude Code, Cursor, Windsurf, Codex, any MCP host</li>
-          <li><span class="bullet">+</span> <strong>Full forge through the agent:</strong> <code>forge.inspect → verify → save</code> in one conversation, no terminal switching</li>
-          <li><span class="bullet">+</span> Heal-from-diagnostics: when a tap fails, your AI reads <code>doctor --auto</code> output (current code, fingerprint diff, git history, live page) and patches the tap in place</li>
-          <li><span class="bullet">+</span> <code>intent:&nbsp;write</code> safety &mdash; doctor never clicks publish by accident</li>
-          <li><span class="bullet">+</span> BYOK &mdash; Claude, GPT, DeepSeek, anything OpenAI-compatible</li>
+          <li><span class="bullet">+</span> <strong>AI forge in your agent:</strong> <code>inspect → draft → verify → save</code> in one conversation</li>
+          <li><span class="bullet">+</span> Your agent reads the page, picks the best strategy, and writes a tap that runs forever at $0</li>
+          <li><span class="bullet">+</span> When a tap breaks, your agent reads diagnostics and patches it in place</li>
+          <li><span class="bullet">+</span> Works in Claude Code, Cursor, Windsurf, Codex &mdash; any MCP host</li>
         </ul>
         <a href="https://api.taprun.dev/checkout?plan=hacker" class="price-btn price-btn--gold">Start Hacking</a>
       </div>
@@ -2287,15 +2284,16 @@ h2 .hl {
           <span class="rung-label">Pro</span>
         </div>
         <div class="price-amount"><span class="currency">$</span>29<span class="period">/mo</span></div>
-        <div class="price-label">Tap on a server you own.</div>
-        <p class="price-poem">Run Tap unattended on a VPS, NAS, Mac mini, or CI runner. No Chrome window, no babysitting &mdash; <strong>and no Tap-hosted servers in the loop</strong>.</p>
+        <div class="price-label">Taps run themselves.</div>
+        <p class="price-poem">Your taps break? They fix themselves overnight. Sites change? Baselines auto-update. You sleep, Tap works &mdash; <strong>on your machine, not ours</strong>.</p>
         <div class="price-divider"></div>
         <ul class="price-features">
           <li><span class="bullet">+</span> Everything in Hacker</li>
-          <li><span class="bullet">+</span> <code>tap schedule</code> &mdash; cron-driven Playwright daemon, fully headless, no Chrome window required</li>
-          <li><span class="bullet">+</span> <strong>MCP over HTTP</strong> &mdash; multiple local clients (Claude Desktop + Cursor + n8n) on one Tap daemon, binds <code>127.0.0.1</code> by default</li>
-          <li><span class="bullet">+</span> <strong>Slack + webhook routing</strong> on doctor failures and successful heals</li>
-          <li><span class="bullet">+</span> <strong>100% local-first</strong> &mdash; Tap never executes code from our servers in your browser. <a href="https://github.com/LeonTing1010/tap/blob/main/SECURITY.md" style="color:var(--indigo-bright);text-decoration:underline;">read our security policy</a></li>
+          <li><span class="bullet">+</span> <strong>Self-maintaining taps</strong> &mdash; auto-repair when broken, auto-refresh when stale, 24/7 on your schedule</li>
+          <li><span class="bullet">+</span> <code>tap schedule</code> &mdash; cron-driven headless runs on your VPS, NAS, Mac mini, or CI runner</li>
+          <li><span class="bullet">+</span> <strong>Team server</strong> &mdash; multiple AI agents (Claude Code + Cursor + n8n) share one Tap daemon</li>
+          <li><span class="bullet">+</span> Slack + webhook alerts on failures and heals</li>
+          <li><span class="bullet">+</span> <strong>100% local-first</strong> &mdash; runs on your machine, never ours. <a href="https://github.com/LeonTing1010/tap/blob/main/SECURITY.md" style="color:var(--indigo-bright);text-decoration:underline;">security policy</a></li>
         </ul>
         <a href="https://api.taprun.dev/checkout?plan=pro" class="price-btn price-btn--outline">Get Pro &rarr;</a>
       </div>
@@ -2323,7 +2321,7 @@ h2 .hl {
       </details>
       <details class="faq-item reveal">
         <summary>What happens when a website changes?</summary>
-        <div class="faq-answer"><code>tap doctor --auto</code> detects breakage via health contracts and packages everything an AI needs to fix it: the current tap source, fingerprint diff (which selectors disappeared, which API schemas shifted), the last 3 commits to the tap, and a fresh page inspection. <strong>Free</strong> users hand that bundle to their AI (Claude Code, Cursor, or <code>tap forge</code> BYOK). <strong>Pro</strong> users put it on cron and their AI (BYOK) patches and ships the fix overnight, with Slack alerts on success.</div>
+        <div class="faq-answer"><code>tap doctor</code> detects breakage via health contracts and shows you exactly what changed (fingerprint diff: which selectors disappeared, which API schemas shifted). <strong>Free</strong> users can re-forge the tap or hand the diagnostics to their AI. <strong>Hacker</strong> users let their AI agent fix it in chat. <strong>Pro</strong> users don't even notice &mdash; taps auto-repair overnight and Slack pings when it's done.</div>
       </details>
       <details class="faq-item reveal">
         <summary>Can I use my own AI key?</summary>
