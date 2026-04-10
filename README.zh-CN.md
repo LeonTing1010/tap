@@ -58,15 +58,9 @@ curl -fsSL https://taprun.dev/install.sh | sh
 | Linux | [tap-linux-x64](https://github.com/LeonTing1010/tap/releases/latest) |
 | Windows | [tap-windows-x64.exe](https://github.com/LeonTing1010/tap/releases/latest) |
 
-### 2. 加载 Chrome 扩展
+### 2. 连接 AI Agent（免费）
 
-从 [Releases](https://github.com/LeonTing1010/tap/releases/latest) 下载 `tap-extension.zip`，解压后：
-
-打开 `chrome://extensions/` → 开启开发者模式 → 加载已解压的扩展程序 → 选择解压后的目录
-
-### 3. 连接 AI Agent
-
-适用于 Claude Code、Cursor、Windsurf 或任何 MCP 兼容的 Agent：
+适用于 Claude Code、Cursor、Windsurf 或任何 MCP 兼容的 Agent — 不需要浏览器扩展：
 
 ```json
 { "mcpServers": { "tap": { "command": "tap", "args": ["mcp"] } } }
@@ -77,6 +71,13 @@ curl -fsSL https://taprun.dev/install.sh | sh
 ```bash
 tap setup
 ```
+
+### 可选：Chrome 扩展（需要登录的站点）
+
+大部分 tap 不需要登录即可运行。如需访问小红书、知乎等需要登录的站点，安装 Chrome 扩展：
+
+从 [Releases](https://github.com/LeonTing1010/tap/releases/latest) 下载 `tap-extension.zip`，解压后：
+`chrome://extensions/` → 开启开发者模式 → 加载已解压的扩展程序
 
 ### 4. 开始使用
 

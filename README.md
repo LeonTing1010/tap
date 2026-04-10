@@ -58,15 +58,9 @@ curl -fsSL https://taprun.dev/install.sh | sh
 | Linux | [tap-linux-x64](https://github.com/LeonTing1010/tap/releases/latest) |
 | Windows | [tap-windows-x64.exe](https://github.com/LeonTing1010/tap/releases/latest) |
 
-### 2. Load Chrome Extension
+### 2. Connect to Your AI Agent (Free)
 
-Download `tap-extension.zip` from [Releases](https://github.com/LeonTing1010/tap/releases/latest), unzip, then:
-
-`chrome://extensions/` → Developer mode → Load unpacked → select the folder
-
-### 3. Connect to Your AI Agent
-
-Works with Claude Code, Cursor, Windsurf, or any MCP-compatible agent:
+Works with Claude Code, Cursor, Windsurf, or any MCP-compatible agent — no extension needed:
 
 ```json
 { "mcpServers": { "tap": { "command": "tap", "args": ["mcp"] } } }
@@ -78,7 +72,7 @@ Or auto-configure all installed agents:
 tap setup
 ```
 
-### 4. Go
+### 3. Go
 
 ```bash
 tap github trending              # GitHub trending repos
@@ -96,6 +90,13 @@ Agent: Here are today's top repos — React compiler hit 734 stars...
 You:   Forge a tap for Douban top 250 movies
 Agent: Done. Run `tap douban top250` anytime — $0 per run.
 ```
+
+### Optional: Chrome Extension (for login-required sites)
+
+Most taps work without login. For sites that need your session (Xiaohongshu, Zhihu, etc.), add the Chrome Extension:
+
+Download `tap-extension.zip` from [Releases](https://github.com/LeonTing1010/tap/releases/latest), unzip, then:
+`chrome://extensions/` → Developer mode → Load unpacked → select the folder
 
 ## What Can You Do?
 
