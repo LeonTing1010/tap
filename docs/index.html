@@ -1839,6 +1839,7 @@ h2 .hl {
       <span class="nav-brand-text">tap</span>
     </a>
     <ul class="nav-links" role="list">
+      <li><a href="#composition">Compose</a></li>
       <li><a href="#pricing">Pricing</a></li>
       <li><a href="https://taprun.dev/blog/" rel="noopener">Blog</a></li>
       <li><a href="https://github.com/LeonTing1010/tap" target="_blank" rel="noopener noreferrer">GitHub</a></li>
@@ -2007,6 +2008,83 @@ h2 .hl {
         </div>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- ===== Composition (added 2026-04-11) ===== -->
+<!-- Three-layer narrative for the composition era:
+     1. tap.pipe DSL — the declarative surface tap authors write
+     2. @taprun/executor — the embeddable engine products import
+     3. RDK showcase — the real economic result (294x speedup, $135/mo saved)
+     This section reuses protocol-layer styles; no new CSS required. -->
+<section class="protocol" id="composition">
+  <div class="container">
+    <div class="protocol-header">
+      <div class="section-tag reveal">Composition &mdash; new April 2026</div>
+      <h2 class="reveal">Chain any tap into any other tap. <span class="hl">Forever, for free.</span></h2>
+      <p class="section-desc reveal">Single taps compose into whole workflows. Reddit Demand Kit saw a <strong>294&times; speedup</strong> and zero LLM cost per invocation when they compiled their <code>market_scan</code> prompt into a pipe.</p>
+    </div>
+
+    <div class="protocol-layers">
+      <div class="protocol-layer layer-scripts reveal">
+        <div class="protocol-layer-head">
+          <h3>1. Declare &mdash; <code>tap.pipe({ steps, return })</code></h3>
+          <span class="protocol-layer-count">JavaScript, not YAML</span>
+        </div>
+        <div class="primitives">
+          <span class="prim">steps DAG</span>
+          <span class="prim">$ref binding</span>
+          <span class="prim">auto-parallel</span>
+          <span class="prim">run cache</span>
+          <span class="prim">cycle detection</span>
+          <span class="prim">schema contracts</span>
+        </div>
+      </div>
+
+      <div class="protocol-arrow">&darr;</div>
+
+      <div class="protocol-layer layer-builtin reveal">
+        <div class="protocol-layer-head">
+          <h3>2. Embed &mdash; <code>jsr:@taprun/executor</code></h3>
+          <span class="protocol-layer-count">65 KB &middot; zero deps &middot; MIT</span>
+        </div>
+        <div class="primitives">
+          <span class="prim">Deno + Node</span>
+          <span class="prim">in-process runPipe</span>
+          <span class="prim">no subprocess fork</span>
+          <span class="prim">serverless-friendly</span>
+          <span class="prim">live on JSR</span>
+        </div>
+      </div>
+
+      <div class="protocol-arrow">&darr;</div>
+
+      <div class="protocol-layer layer-runtime reveal">
+        <div class="protocol-layer-head">
+          <h3>3. Result &mdash; 26,000 LLM tokens &rarr; 0 tokens per run</h3>
+          <span class="protocol-layer-count">measured on a real product</span>
+        </div>
+        <div class="primitives">
+          <span class="prim">$0.15/call &rarr; $0</span>
+          <span class="prim">break-even &lt; 1 call</span>
+          <span class="prim">$135/mo saved</span>
+          <span class="prim">0.8 ms in-process</span>
+          <span class="prim">233 ms subprocess</span>
+          <span class="prim">294&times; speedup</span>
+        </div>
+      </div>
+    </div>
+
+    <p class="section-desc reveal" style="text-align:center;margin-top:32px;max-width:720px;margin-left:auto;margin-right:auto;">
+      Read the full story:
+      <a href="blog/composable-taps-are-just-javascript.html" style="color:var(--indigo-bright);text-decoration:underline;">why JS not YAML</a>
+      &middot;
+      <a href="blog/rdk-compiled-pipes-from-llm-prompts.html" style="color:var(--indigo-bright);text-decoration:underline;">RDK case study</a>
+      &middot;
+      <a href="blog/taprun-executor-0-8-ms-library.html" style="color:var(--indigo-bright);text-decoration:underline;">engine extraction</a>
+      &middot;
+      <a href="https://jsr.io/@taprun/executor" style="color:var(--indigo-bright);text-decoration:underline;">@taprun/executor on JSR</a>
+    </p>
   </div>
 </section>
 
