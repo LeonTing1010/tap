@@ -142,8 +142,9 @@ export async function validateRequires(
   return missing;
 }
 
-/** Parse a $ref string into { source, path }. Returns null if not a ref. */
-function parseRef(s: string): { source: string; path: string[] } | null {
+/** Parse a $ref string into { source, path }. Returns null if not a ref.
+ *  @internal — shared with explain.ts. Not a public API, no stability guarantee. */
+export function parseRef(s: string): { source: string; path: string[] } | null {
   if (typeof s !== "string" || !s.startsWith("$")) return null;
   // $foo     → source=foo, path=[]
   // $foo.bar → source=foo, path=[bar]
@@ -153,8 +154,9 @@ function parseRef(s: string): { source: string; path: string[] } | null {
   return { source: parts[0], path: parts.slice(1) };
 }
 
-/** Walk a value and collect every $ref string, with its source id. */
-function collectRefs(value: unknown, out: Set<string>): void {
+/** Walk a value and collect every $ref string, with its source id.
+ *  @internal — shared with explain.ts. Not a public API, no stability guarantee. */
+export function collectRefs(value: unknown, out: Set<string>): void {
   if (typeof value === "string") {
     const ref = parseRef(value);
     if (ref && ref.source !== "args") out.add(ref.source);
@@ -171,8 +173,9 @@ function collectRefs(value: unknown, out: Set<string>): void {
   }
 }
 
-/** Recursively resolve $refs in an arg structure against a context. */
-function resolveRefs(
+/** Recursively resolve $refs in an arg structure against a context.
+ *  @internal — shared with explain.ts. Not a public API. */
+export function resolveRefs(
   value: unknown,
   context: { args: Record<string, unknown>; steps: Record<string, unknown> },
 ): unknown {

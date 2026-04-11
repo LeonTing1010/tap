@@ -60,6 +60,17 @@ export type {
   TapRun,
 } from "./src/pipe.ts";
 
+// Explain — the static dual of runPipe. Given a Pipe, returns an
+// ExecutionPlan describing rounds, edges, capabilities, and arg-contract
+// warnings without executing any sub-tap. Safe to call anywhere.
+export { explain } from "./src/explain.ts";
+export type {
+  ExecutionPlan,
+  ExplainOptions,
+  PlanEdge,
+  PlanNode,
+} from "./src/explain.ts";
+
 // Tap execution — load and run .tap.js files from disk.
 export {
   appendLog,
