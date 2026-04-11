@@ -1,0 +1,11 @@
+{
+  "name": "@taprun/executor",
+  "version": "0.1.0",
+  "exports": {
+    ".": "./mod.ts",
+    "./sandbox": "./src/sandbox.ts"
+  },
+  "tasks": {
+    "test": "deno test --no-check --allow-all test/"
+  }
+}

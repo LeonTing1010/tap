@@ -1,0 +1,631 @@
+/**
+ * Tap executor — dynamic loading + execution of .tap.js files.
+ *
+ * Tap executor — dynamic loading + execution. Taps are loaded via dynamic
+ * import() from disk, executed with a tap handle, results normalized.
+ */
+
+import { createTapHandle, type RpcSend } from "./page.ts";
+import { type Pipe, runPipe } from "./pipe.ts";
+import { runInSandbox } from "./sandbox.ts";
+
+export interface TapArgSpec {
+  type: string;
+  default?: unknown;
+  required?: boolean;
+  maxLength?: number;
+  description?: string;
+}
+
+export interface TapHealthContract {
+  min_rows?: number;
+  non_empty?: string[];
+  contains?: Record<string, string>;
+  unique?: string[];
+  max_ms?: number;
+  url?: string;
+  title?: string;
+  visible?: string[];
+  hidden?: string[];
+  requires_auth?: boolean;
+  /** Declarative property assertions — runtime validation of row data semantics.
+   *  Each entry is a JS expression evaluated against each row. Examples:
+   *    - "price >= 0" — numeric constraint
+   *    - "url.startsWith('http')" — format check
+   *    - "title.length > 0 && title.length <= 200" — length range
+   *    - "status === 'active' || status === 'pending'" — enum constraint
+   *  Returns { ok, issues } where issues describe which rows failed.
+   */
+  properties?: string[];
+}
+
+/** Structure fingerprint — captured at forge time, compared by doctor. */
+export interface TapFingerprint {
+  captured: string;    // ISO timestamp
+  strategy: "dom" | "api" | "ssr" | "unknown";
+  root_hash?: string;  // Merkle root — O(1) "did anything change?" check
+  selectors?: Record<string, { count: number; sample_tag?: string; semantic_hash?: string }>;
+  endpoints?: Array<{ url: string; status: number; shape_hash: string }>;
+  globals?: Array<{ name: string; keys: string[] }>;
+  json_ld_types?: string[];  // Schema.org @type values — SEO-driven, extremely stable
+  page?: { title_pattern: string; element_count_range: [number, number] };
+  /**
+   * Write actions discovered via forge.probe_actions (Phase B/C).
+   * Populated only for write-intent taps that have been probed at least once.
+   * Each entry is a (trigger, endpoint, body shape) tuple — drift in any of
+   * these means the page's write surface changed and the tap may need re-forging.
+   * Optional + additive: existing fingerprints without this field still validate.
+   */
+  write_actions?: Array<{
+    trigger_text: string;        // Visible text or aria-label of the triggering element
+    method: string;              // POST | PUT | PATCH | DELETE
+    url_pattern: string;         // Endpoint URL with /\d+/ → /:id normalization
+    body_keys: string[];         // Sorted top-level keys of the request body
+    body_shape_hash: string;     // FNV-1a hash of the body's deep shape (stable across values)
+  }>;
+}
+
+/**
+ * Column schema for tap outputs. Used to declare the shape of result rows
+ * so pipeline consumers can validate their input contract without running
+ * the upstream tap first.
+ *
+ * Backwards compatible with the legacy `columns: string[]` form — a plain
+ * string is treated as `{ name }` with no type info.
+ */
+export interface ColumnSchema {
+  name: string;
+  type?: "string" | "number" | "boolean" | "object" | "array";
+  required?: boolean;
+  description?: string;
+}
+
+/** Either legacy name-only or full schema. Mixed arrays are allowed. */
+export type ColumnDecl = string | ColumnSchema;
+
+/** Normalize a TapModule.columns value into an array of ColumnSchema objects. */
+export function normalizeColumns(cols: ColumnDecl[] | undefined): ColumnSchema[] {
+  if (!cols) return [];
+  return cols.map(c => typeof c === "string" ? { name: c } : c);
+}
+
+/** Extract just the column names from either legacy or schema form. */
+export function columnNames(cols: ColumnDecl[] | undefined): string[] {
+  if (!cols) return [];
+  return cols.map(c => typeof c === "string" ? c : c.name);
+}
+
+export interface TapModule {
+  site: string;
+  name: string;
+  description: string;
+  runtime?: "extension" | "playwright" | "macos";
+  app?: string;
+  columns?: ColumnDecl[];
+  /**
+   * Sub-tap dependencies declared as "site/name" strings.
+   * Validated at forge.save time — missing sub-taps reject the save so
+   * broken composite taps never reach production.
+   */
+  requires?: string[];
+  args?: Record<string, TapArgSpec>;
+  examples?: Record<string, unknown>[];
+  health?: TapHealthContract;
+  fingerprint?: TapFingerprint;
+  /**
+   * Intent declaration — separates execution location from side-effect intent.
+   *   "read"  (default) — no side effects, doctor runs automatically
+   *   "write" — has side effects (post/delete/upload), doctor skips without --all
+   */
+  intent?: "read" | "write";
+  /**
+   * Unified tap entry point. Receives the tap handle (full tap.* API) and resolved args.
+   * Single execution function — replaces the historical {extract, transform, run} split.
+   */
+  tap?: (handle: unknown, args: Record<string, unknown>) => Promise<unknown[]> | unknown[];
+  cleanup?: (tap: unknown) => Promise<void>;
+  url?: string | ((args: Record<string, unknown>) => string);
+  waitFor?: string;
+  timeout?: number;
+  reuseTab?: boolean;
+}
+
+/**
+ * Resolve effective intent for a tap module.
+ * Default is read (safe-by-default for new tap shape).
+ */
+export function resolveIntent(mod: TapModule): "read" | "write" {
+  return mod.intent ?? "read";
+}
+
+export interface TraceStep {
+  method: string;
+  params_summary: string;
+  result_summary?: string;
+  duration_ms: number;
+  error?: string;
+}
+
+export interface TapResult {
+  columns: string[];
+  rows: Record<string, string>[];
+  rawRows: Record<string, unknown>[];
+  count: number;
+  timing: {
+    run_ms?: number;
+    total_ms: number;
+  };
+  trace?: TraceStep[];
+}
+
+function summarize(s: string, max: number): string {
+  if (!s || s.length <= max) return s || "";
+  return s.slice(0, max) + "...";
+}
+
+/** Parse a string literal ('...' or "...") and return its contents, or null. */
+function parseStringLiteral(s: string): string | null {
+  const m = s.match(/^["'](.*)["']$/);
+  return m ? m[1] : null;
+}
+
+/** Simple expression interpreter for health.properties — no eval/Function, zero injection risk.
+ *  Supports: "field > 0", "field.length > 0", "field !== ''",
+ *            "field.startsWith('x')", "field.includes('x')", "field.endsWith('x')" */
+function safeEvalExpr(expr: string, row: Record<string, unknown>): boolean | null {
+  const e = expr.trim();
+
+  // Pattern 1: field.method('arg') — returns boolean directly
+  const methodMatch = e.match(/^(\w+)\.(startsWith|endsWith|includes)\((.+)\)$/);
+  if (methodMatch) {
+    const [, field, method, argRaw] = methodMatch;
+    if (!(field in row) || typeof row[field] !== "string") return null;
+    const arg = parseStringLiteral(argRaw.trim());
+    if (arg === null) return null;
+    const val = row[field] as string;
+    if (method === "startsWith") return val.startsWith(arg);
+    if (method === "endsWith") return val.endsWith(arg);
+    if (method === "includes") return val.includes(arg);
+  }
+
+  // Pattern 2: field(.prop)? op value — comparison
+  const cmpMatch = e.match(/^(\w+)(?:\.(\w+))?\s*(>=|<=|===|!==|>|<)\s*(.+)$/);
+  if (!cmpMatch) return null;
+  const [, field, prop, op, rhsRaw] = cmpMatch;
+  if (!(field in row)) return null;
+  let lhs: unknown = row[field];
+  if (prop) {
+    if (prop === "length" && (typeof lhs === "string" || Array.isArray(lhs))) lhs = lhs.length;
+    else return null;
+  }
+  const rhs = rhsRaw.trim();
+  let right: unknown;
+  if (rhs === "''" || rhs === '""') right = "";
+  else if (rhs === "null") right = null;
+  else if (rhs === "true") right = true;
+  else if (rhs === "false") right = false;
+  else if (/^-?\d+(\.\d+)?$/.test(rhs)) right = Number(rhs);
+  else { const s = parseStringLiteral(rhs); if (s !== null) right = s; else return null; }
+  switch (op) {
+    case ">": return (lhs as number) > (right as number);
+    case ">=": return (lhs as number) >= (right as number);
+    case "<": return (lhs as number) < (right as number);
+    case "<=": return (lhs as number) <= (right as number);
+    case "===": return lhs === right;
+    case "!==": return lhs !== right;
+  }
+  return null;
+}
+
+/** Check a tap result against its health contract. Always returns a Promise. */
+export async function checkHealth(
+  tap: TapModule,
+  result: TapResult,
+  send?: RpcSend,
+): Promise<{ ok: boolean; issues: string[] }> {
+  const issues: string[] = [];
+  if (!tap.health) return { ok: true, issues };
+  if (tap.health.min_rows && result.count < tap.health.min_rows) {
+    issues.push(`min_rows: expected ${tap.health.min_rows}, got ${result.count}`);
+  }
+  if (tap.health.non_empty && result.rows.length > 0) {
+    for (const col of tap.health.non_empty) {
+      const empty = result.rows.filter(r => !r[col] || r[col] === "");
+      if (empty.length > 0) {
+        issues.push(`non_empty: ${empty.length}/${result.rows.length} rows have empty "${col}"`);
+      }
+    }
+  }
+  if (tap.health.contains) {
+    for (const [col, value] of Object.entries(tap.health.contains)) {
+      const found = result.rows.some(r => r[col] === value);
+      if (!found) {
+        issues.push(`contains: no row has "${col}" matching "${value}"`);
+      }
+    }
+  }
+  if (tap.health.unique) {
+    for (const col of tap.health.unique) {
+      const values = result.rows.map(r => r[col]);
+      const uniqueValues = new Set(values);
+      if (uniqueValues.size < values.length) {
+        issues.push(`unique: column "${col}" has duplicate values`);
+      }
+    }
+  }
+  if (tap.health.max_ms !== undefined && result.timing.total_ms > tap.health.max_ms) {
+    issues.push(`max_ms: expected <= ${tap.health.max_ms}ms, got ${result.timing.total_ms}ms`);
+  }
+  // Property assertions — each expression evaluated safely against each row
+  if (tap.health.properties && result.rows.length > 0) {
+    for (const expr of tap.health.properties) {
+      const failures: number[] = [];
+      for (let i = 0; i < result.rows.length; i++) {
+        const row = result.rows[i];
+        const result_val = safeEvalExpr(expr, row);
+        if (result_val === null) {
+          issues.push(`properties: expression "${expr}" is not allowed or failed to evaluate`);
+          break;
+        }
+        if (!result_val) failures.push(i);
+      }
+      if (failures.length > 0) {
+        const sample = failures.slice(0, 3).map(i => {
+          const r = result.rows[i];
+          return JSON.stringify(r).slice(0, 50);
+        });
+        issues.push(`properties: "${expr}" failed on ${failures.length}/${result.rows.length} rows (sample: ${sample.join(", ")})`);
+      }
+    }
+  }
+  // Async checks
+  if (send && tap.health.url) {
+    const href = await send("tool", "tap.eval", { expression: "location.href" }) as string;
+    if (!href || !href.includes(tap.health.url)) {
+      issues.push(`url: expected URL to include "${tap.health.url}", got "${href}"`);
+    }
+  }
+  if (send && tap.health.visible) {
+    for (const selector of tap.health.visible) {
+      const vis = await send("tool", "tap.eval", { expression: `!!document.querySelector('${selector}')` });
+      if (!vis) {
+        issues.push(`visible: selector "${selector}" is not visible`);
+      }
+    }
+  }
+  return { ok: issues.length === 0, issues };
+}
+
+/** Cache for loaded tap modules — evicts oldest entries when capacity is reached.
+ *  Prevents unbounded module registry growth from repeated dynamic import() calls. */
+const tapCache = new Map<string, { mod: TapModule; mtime: number }>();
+const TAP_CACHE_MAX_SIZE = 100;
+
+/** Load a single .tap.js from disk via dynamic import. */
+export async function loadTap(path: string): Promise<TapModule> {
+  // Cache-bust with mtime so tap edits are picked up without daemon restart
+  const stat = await Deno.stat(path).catch(() => null);
+  const mtime = stat?.mtime?.getTime() ?? Date.now();
+
+  // Check cache — return cached module if file hasn't changed
+  const cached = tapCache.get(path);
+  if (cached && cached.mtime === mtime) return cached.mod;
+
+  // Evict oldest entries if cache is full
+  if (tapCache.size >= TAP_CACHE_MAX_SIZE) {
+    const firstKey = tapCache.keys().next().value;
+    if (firstKey !== undefined) tapCache.delete(firstKey);
+  }
+
+  // Convert to file:// URL for Deno import
+  const base = path.startsWith("file://") ? path : `file://${path}`;
+  const url = `${base}?t=${mtime}`;
+  const mod = await import(url);
+  const tap = mod.default;
+  if (!tap || !tap.site || !tap.name) {
+    throw new Error(`Invalid tap at ${path}: missing site or name`);
+  }
+  // Read the unified per-tap manifest (.jsonld) for the fingerprint. The manifest
+  // also carries Schema.org public surface (provider, action, item list) for external
+  // consumers, but doctor's runtime contract is tap.health — manifest schema fields
+  // are documentation for outside tools, not an internal validation source.
+  if (!tap.fingerprint) {
+    const manifestPath = path.replace(/\.tap\.js$/, ".jsonld");
+    try {
+      const manifest = JSON.parse(await Deno.readTextFile(manifestPath)) as Record<string, unknown>;
+      const fp = manifest["tap:fingerprint"] as Record<string, unknown> | undefined;
+      if (fp) {
+        tap.fingerprint = parseTapFingerprintFromJsonLd(fp);
+      }
+    } catch { /* no manifest — pre-migration tap, runs without enriched metadata */ }
+  }
+
+  // Cache the loaded module
+  tapCache.set(path, { mod: tap as TapModule, mtime });
+
+  return tap as TapModule;
+}
+
+/** Parse a JSON-LD `tap:fingerprint` blob back into the internal TapFingerprint shape. */
+function parseTapFingerprintFromJsonLd(fp: Record<string, unknown>): TapFingerprint {
+  const out: TapFingerprint = {
+    captured: (fp["tap:capturedAt"] as string) || new Date().toISOString(),
+    strategy: ((fp["tap:strategy"] as string) || "tap:unknown").replace(/^tap:/, "") as TapFingerprint["strategy"],
+    root_hash: fp["tap:rootHash"] as string | undefined,
+  };
+  const sels = fp["tap:selectors"] as Array<Record<string, unknown>> | undefined;
+  if (sels && sels.length > 0) {
+    out.selectors = {};
+    for (const s of sels) {
+      const css = s["tap:css"] as string;
+      if (!css) continue;
+      out.selectors[css] = {
+        count: (s["tap:count"] as number) ?? 0,
+        ...(s["tap:semanticHash"] ? { semantic_hash: s["tap:semanticHash"] as string } : {}),
+      };
+    }
+  }
+  const eps = fp["tap:endpoints"] as Array<Record<string, unknown>> | undefined;
+  if (eps && eps.length > 0) {
+    out.endpoints = eps.map(e => ({
+      url: e["tap:url"] as string,
+      status: (e["tap:status"] as number) ?? 0,
+      shape_hash: (e["tap:shapeHash"] as string) ?? "",
+    }));
+  }
+  const globs = fp["tap:globals"] as Array<Record<string, unknown>> | undefined;
+  if (globs && globs.length > 0) {
+    out.globals = globs.map(g => ({
+      name: g["tap:name"] as string,
+      keys: (g["tap:keys"] as string[]) ?? [],
+    }));
+  }
+  return out;
+}
+
+/** Discover all .tap.js files in directories.
+ *  Dirs are searched in order — first match wins (user taps override skills). */
+export async function listTaps(dirs: string[]): Promise<TapModule[]> {
+  const seen = new Set<string>();
+  const taps: TapModule[] = [];
+  for (const dir of dirs) {
+    try {
+      for await (const siteEntry of Deno.readDir(dir)) {
+        if (!siteEntry.isDirectory) continue;
+        const sitePath = `${dir}/${siteEntry.name}`;
+        for await (const fileEntry of Deno.readDir(sitePath)) {
+          if (!fileEntry.name.endsWith(".tap.js")) continue;
+          try {
+            const tap = await loadTap(`${sitePath}/${fileEntry.name}`);
+            const key = `${tap.site}/${tap.name}`;
+            if (seen.has(key)) continue; // user tap already registered
+            seen.add(key);
+            taps.push(tap);
+          } catch {
+            // Skip invalid taps
+          }
+        }
+      }
+    } catch {
+      // Skip missing directories
+    }
+  }
+  return taps.sort((a, b) =>
+    `${a.site}/${a.name}`.localeCompare(`${b.site}/${b.name}`)
+  );
+}
+
+/** Append a log entry to ~/.tap/logs/tap.jsonl. Auto-rotates: keeps last 30 days. */
+let _lastRotation = 0;
+const ROTATION_INTERVAL_MS = 24 * 60 * 60 * 1000; // check once per day
+const MAX_LOG_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+
+export async function appendLog(entry: Record<string, unknown>): Promise<void> {
+  try {
+    const home = Deno.env.get("TAP_HOME") || `${Deno.env.get("HOME")}/.tap`;
+    const dir = `${home}/logs`;
+    await Deno.mkdir(dir, { recursive: true }).catch(() => {});
+    const logPath = `${dir}/tap.jsonl`;
+    const now = Date.now();
+    const line = JSON.stringify({ ...entry, ts: now }) + "\n";
+    await Deno.writeTextFile(logPath, line, { append: true });
+    // Rotate: prune old entries once per day
+    if (now - _lastRotation > ROTATION_INTERVAL_MS) {
+      _lastRotation = now;
+      try {
+        const content = await Deno.readTextFile(logPath);
+        const cutoff = now - MAX_LOG_AGE_MS;
+        const kept = content.split("\n").filter(l => {
+          if (!l) return false;
+          try { return (JSON.parse(l).ts || 0) > cutoff; } catch { return false; }
+        });
+        await Deno.writeTextFile(logPath, kept.join("\n") + "\n");
+      } catch { /* rotation is best-effort */ }
+    }
+  } catch { /* logging must never break execution */ }
+}
+
+/** Run a tap with a tap handle, normalize results. */
+export async function runTap(
+  mod: TapModule,
+  args: Record<string, unknown>,
+  send: RpcSend,
+  tapDirs?: string[],
+  opts?: { sessionId?: string; tapPath?: string; sandbox?: boolean },
+): Promise<TapResult> {
+  // Tab identity is managed by SessionManager in the extension.
+  // Executor does not track tabId — session routing is handled by createSessionSend.
+
+  // Trace collection: record every RPC call for Meta-Forge history
+  const traceSteps: TraceStep[] = [];
+  const tracingSend: RpcSend = async (type: string, method: string, params: Record<string, unknown>) => {
+    const t0 = performance.now();
+    try {
+      const result = await send(type, method, params);
+      traceSteps.push({
+        method,
+        params_summary: summarize(JSON.stringify(params), 200),
+        result_summary: summarize(JSON.stringify(result), 500),
+        duration_ms: Math.round(performance.now() - t0),
+      });
+      return result;
+    } catch (e) {
+      traceSteps.push({
+        method,
+        params_summary: summarize(JSON.stringify(params), 200),
+        duration_ms: Math.round(performance.now() - t0),
+        error: String(e).slice(0, 200),
+      });
+      throw e;
+    }
+  };
+
+  const tap = createTapHandle(tracingSend);
+  const start = performance.now();
+
+  // Wire tap.run() for composition — load sub-taps from disk, run locally.
+  // Public tap.run returns .rows (array) to match the legacy contract every
+  // existing composite tap relies on. tap.pipe (below) uses a separate
+  // internal call to get the full result so step outputs include meta.
+  if (tapDirs) {
+    tap.run = async (site: string, name: string, subArgs: Record<string, unknown> = {}) => {
+      let tapPath = "";
+      for (const dir of tapDirs) {
+        const p = `${dir}/${site}/${name}.tap.js`;
+        try { await Deno.stat(p); tapPath = p; break; } catch { /* next */ }
+      }
+      if (!tapPath) throw new Error(`tap not found: ${site}/${name}`);
+      const subMod = await loadTap(tapPath);
+      const result = await runTap(subMod, subArgs, send, tapDirs);
+      return result.rows;
+    };
+  }
+
+  // Resolve args with defaults + validate constraints
+  const resolvedArgs: Record<string, unknown> = { ...args };
+  if (mod.args) {
+    for (const [key, spec] of Object.entries(mod.args)) {
+      if (resolvedArgs[key] === undefined && spec.default !== undefined) {
+        resolvedArgs[key] = spec.default;
+      }
+      // Validate required
+      if (spec.required && (resolvedArgs[key] === undefined || resolvedArgs[key] === '')) {
+        throw new Error(`${mod.site}/${mod.name}: required arg "${key}" is missing`);
+      }
+      // Validate maxLength
+      if (spec.maxLength && typeof resolvedArgs[key] === 'string') {
+        const val = resolvedArgs[key] as string;
+        if (val.length > spec.maxLength) {
+          throw new Error(
+            `${mod.site}/${mod.name}: arg "${key}" is ${val.length} chars, max ${spec.maxLength}`
+          );
+        }
+      }
+    }
+  }
+
+  // Wire tap.pipe() — declarative composition DSL. Uses the parent tap's
+  // resolvedArgs as the $args.* binding context. Needs tapDirs to resolve
+  // sub-tap paths; throws a clear error otherwise.
+  if (tapDirs) {
+    tap.pipe = async (pipe: unknown) => {
+      const pipeRun = async (site: string, name: string, subArgs: Record<string, unknown>) => {
+        let tapPath = "";
+        for (const dir of tapDirs) {
+          const p = `${dir}/${site}/${name}.tap.js`;
+          try { await Deno.stat(p); tapPath = p; break; } catch { /* next */ }
+        }
+        if (!tapPath) throw new Error(`tap not found: ${site}/${name}`);
+        const subMod = await loadTap(tapPath);
+        // Return the FULL TapResult so $step.rows, $step.columns, $step.count
+        // all work from the pipe's reference binding layer.
+        return await runTap(subMod, subArgs, send, tapDirs);
+      };
+      return await runPipe(pipe as Pipe, resolvedArgs, pipeRun);
+    };
+  } else {
+    tap.pipe = () => {
+      throw new Error("tap.pipe requires tapDirs to be configured for sub-tap loading");
+    };
+  }
+
+  let rawRows: unknown[];
+  try {
+    if (!mod.tap) {
+      throw new Error(`Tap ${mod.site}/${mod.name} must define a tap(handle, args) function`);
+    }
+    // Sandbox: run in isolated Deno Worker with zero permissions.
+    // Tap code can only call tap.* via message passing — no filesystem, no network.
+    if (opts?.sandbox !== false && opts?.tapPath) {
+      rawRows = (await runInSandbox(opts.tapPath, resolvedArgs, tracingSend)) as unknown[];
+    } else {
+      rawRows = (await mod.tap(tap, resolvedArgs)) as unknown[];
+    }
+    // Apply limit if specified (formerly extract-format-only)
+    if (Array.isArray(rawRows) && resolvedArgs.limit) {
+      rawRows = rawRows.slice(0, resolvedArgs.limit as number);
+    }
+  } catch (e) {
+    // Run cleanup even on error — guaranteed lifecycle
+    if (mod.cleanup) {
+      try { await mod.cleanup(tap); } catch { /* cleanup must not break execution */ }
+    }
+    const totalMs = Math.round(performance.now() - start);
+    await appendLog({
+      event: "run", site: mod.site, name: mod.name,
+      ms: totalMs, rows: 0, error: String(e),
+      ...(opts?.sessionId && { sid: opts.sessionId }),
+    });
+    throw e;
+  }
+
+  // Run cleanup on success — guaranteed lifecycle
+  if (mod.cleanup) {
+    try { await mod.cleanup(tap); } catch { /* cleanup must not break execution */ }
+  }
+
+  const totalMs = Math.round(performance.now() - start);
+
+  // Ensure array
+  if (!Array.isArray(rawRows)) {
+    rawRows = rawRows ? [rawRows] : [];
+  }
+
+  // Preserve raw rows (original types) for pipeline composition
+  const typedRows = rawRows.map((row) => {
+    if (row && typeof row === "object") return { ...row as Record<string, unknown> };
+    return {};
+  });
+
+  // Normalize rows: all values to strings (for display / LLM consumption)
+  const rows = rawRows.map((row) => {
+    const normalized: Record<string, string> = {};
+    if (row && typeof row === "object") {
+      for (const [k, v] of Object.entries(row as Record<string, unknown>)) {
+        normalized[k] = v == null ? "" : String(v);
+      }
+    }
+    return normalized;
+  });
+
+  // Infer columns from first row if not declared. Declared columns may be
+  // the new ColumnSchema form — flatten to names for the result shape.
+  const columns = mod.columns
+    ? columnNames(mod.columns)
+    : (rows.length > 0 ? Object.keys(rows[0]) : []);
+
+  await appendLog({
+    event: "run", site: mod.site, name: mod.name,
+    ms: totalMs, rows: rows.length,
+    ...(opts?.sessionId && { sid: opts.sessionId }),
+  });
+
+  return {
+    columns,
+    rows,
+    rawRows: typedRows,
+    count: rows.length,
+    timing: { run_ms: totalMs, total_ms: totalMs },
+    trace: traceSteps,
+  };
+}
