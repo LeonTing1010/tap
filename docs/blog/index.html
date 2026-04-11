@@ -45,6 +45,12 @@ a:hover { text-decoration: underline; }
 <h1>Blog</h1>
 
 <div class="post">
+<h2><a href="taprun-executor-0-8-ms-library.html">How We Turned Tap's Engine Into a 0.8 ms Library (and Measured a 294× Speedup)</a></h2>
+<p>Tap spent three months as a compiled binary that every embedding product had to shell out to. We extracted the composition engine into <code>@taprun/executor</code> — a Deno-first, zero-dep, 65 KB package that runs pipes in-process. Measured on a pure-transform pipeline: 0.8 ms in-process vs 233.7 ms subprocess. 294× faster, zero semantic change, full backwards compatibility. Includes the re-export shim trick for zero-import-churn extractions and the boundary test that guarantees the package stays self-contained.</p>
+<div class="meta">April 11, 2026 &middot; 9 min read</div>
+</div>
+
+<div class="post">
 <h2><a href="rdk-compiled-pipes-from-llm-prompts.html">How Reddit Demand Kit Turned a $0.15 LLM Call Into a $0 Compiled Pipe</a></h2>
 <p>RDK's <code>market_scan</code> burns ~26,000 LLM tokens every time a user runs it — $0.15 per call, $135/month for a heavy user. We compiled the prompt into a deterministic JavaScript pipeline using Tap's new composition DSL. Break-even: 0.46 of a single invocation. 217× cheaper after 100 runs. Real before/after code, the 3 bugs we hit during the refactor, and why every LLM-wrapping product should steal this pattern.</p>
 <div class="meta">April 11, 2026 &middot; 13 min read</div>

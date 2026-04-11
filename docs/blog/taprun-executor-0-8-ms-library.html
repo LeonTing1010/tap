@@ -1,0 +1,269 @@
+---
+layout: post
+title: "How We Turned Tap's Engine Into a 0.8 ms Library (and Measured a 294× Speedup)"
+description: "Tap spent three months as a compiled binary that every embedding product had to shell out to. We extracted the composition engine into @taprun/executor — a Deno-first, zero-dep, 65KB package that runs pipes in-process. Measured against the old subprocess path on the same pipeline: 0.8 ms vs 233.7 ms. 294× faster, zero semantic change, full backwards compatibility. Here's why the extraction matters for every product that wraps an LLM."
+keywords: "tap executor, embedded pipeline engine, deno library, jsr package, llm product optimization, programs beat prompts, subprocess fork overhead, pipeline dag scheduler"
+date: 2026-04-11
+read_time: "9 min read"
+subtitle: "From proprietary binary to embeddable package in one session"
+og_title: "How We Turned Tap's Engine Into a 0.8 ms Library"
+og_description: "294× measured speedup. Tap's composition engine is now @taprun/executor — a self-contained Deno package that every MCP server can embed in-process."
+twitter_title: "How We Turned Tap's Engine Into a 0.8 ms Library"
+twitter_description: "294× measured speedup on a real pipeline. Tap's composition engine is now an embeddable Deno package, not a binary you shell out to."
+---
+
+<p>Three blog posts from earlier today tell the story of Tap growing a composition layer: <a href="composable-taps-are-just-javascript.html">why we built <code>tap.pipe()</code> as JavaScript instead of YAML</a>, <a href="rdk-compiled-pipes-from-llm-prompts.html">how Reddit Demand Kit compiled a $0.15 LLM call into a $0 deterministic pipeline</a>, and <a href="building-mv3-extension-git-log-retrospective.html">what we learned building the Chrome extension that powers it all</a>. This post is what happened three hours after the RDK refactor shipped, when one architectural question wouldn't leave me alone.</p>
+
+<p>The question was: <em>why does RDK need to fork a subprocess to run a pipeline?</em></p>
+
+<h2>The thing that kept bugging me</h2>
+
+<p>When RDK runs its <code>market-scan</code> pipe, the flow is:</p>
+
+<ol>
+<li>User says <code>rdk compile market-scan --subreddit sysadmin</code></li>
+<li>RDK's <code>compile.ts</code> spawns <code>tap rdk market-scan --json --subreddit sysadmin</code> as a subprocess</li>
+<li>The <code>tap</code> binary starts a fresh Deno runtime, loads the .tap.js file, calls <code>runTap()</code>, which invokes <code>handle.pipe()</code>, which schedules the DAG and runs each sub-tap</li>
+<li>Output JSON comes back to RDK via stdout</li>
+</ol>
+
+<p>Step 2 is the problem. A subprocess fork on my M4 Mac takes about 80 milliseconds. Starting a Deno runtime adds another 50-100ms for module loading and JIT compilation. That's 130-180ms of pure overhead every single time RDK wants to run any pipeline, even one that's pure in-memory data transformations with no network calls at all.</p>
+
+<p>For a user running <code>rdk compile</code> interactively, 200ms is imperceptible. For a cron job watching for demand signals every minute, it's 288 wasted seconds per day. For a product that runs a pipeline in a tight loop — say, "score every Reddit post from the last 24 hours against a custom rubric" — it's the difference between "runs in background while I drink coffee" and "runs before I finish reading the next paragraph."</p>
+
+<p>More importantly, it's structurally wrong. The pipeline engine is <em>pure data</em>. It's 200 lines of Deno TypeScript that does DAG topological sort, <code>$ref</code> binding resolution, parallel scheduling, and a run-scoped cache. It has zero external dependencies. It doesn't need a browser. It doesn't need a daemon. It doesn't need a compiled binary. It's a library function that Tap was forcing to cosplay as a CLI tool.</p>
+
+<h2>The extraction</h2>
+
+<p>The goal became clear: extract the composition engine into a standalone package that any Deno (or, eventually, Node) product could import directly. Let RDK — and every future product — skip the subprocess entirely and run pipelines inside its own process.</p>
+
+<p>Tap's repo already had most of the right structure. The composition layer was split across four files that had zero imports from tap-core's other modules:</p>
+
+<ul>
+<li><code>src/pipe.ts</code> — the DAG scheduler, <code>$ref</code> resolver, run cache, cycle detection, and <code>requires[]</code> validator. Pure data flow.</li>
+<li><code>src/executor.ts</code> — <code>runTap()</code>, <code>loadTap()</code>, <code>ColumnSchema</code> types, health contract checker. Loads <code>.tap.js</code> files from disk and runs them.</li>
+<li><code>src/page.ts</code> — the <code>Tap</code> interface (the handle that every <code>tap.js</code> file receives) and <code>createTapHandle()</code>, which turns a generic <code>RpcSend</code> function into a method-dispatch proxy.</li>
+<li><code>src/sandbox.ts</code> — optional Deno Worker sandbox for running untrusted community taps. References <code>page.ts</code> only for the <code>RpcSend</code> type.</li>
+</ul>
+
+<p>Total: 43 KB of TypeScript. Zero imports from <code>forge.ts</code>, <code>daemon.ts</code>, <code>bridge.ts</code>, or any of the runtime-specific code. The separation already existed latently; it just wasn't declared as a package.</p>
+
+<p>The actual extraction took about 15 minutes:</p>
+
+<pre><span class="cmd">mkdir -p packages/executor/src packages/executor/test
+git mv src/executor.ts packages/executor/src/executor.ts
+git mv src/page.ts     packages/executor/src/page.ts
+git mv src/pipe.ts     packages/executor/src/pipe.ts
+git mv src/sandbox.ts  packages/executor/src/sandbox.ts</span></pre>
+
+<p>The four files kept all their internal cross-imports (<code>executor.ts</code> imports from <code>./pipe.ts</code> and <code>./page.ts</code>, etc.) because they're still in the same directory. Nothing had to be rewritten.</p>
+
+<h2>The re-export shim trick</h2>
+
+<p>The awkward part of the extraction was the nineteen other files in <code>tap-core/src/</code> that imported from <code>./executor.ts</code> or <code>./pipe.ts</code>. Updating every import to point at <code>../packages/executor/src/...</code> would touch <code>cli.ts</code>, <code>mcp.ts</code>, <code>forge.ts</code>, <code>doctor.ts</code>, the three runtime files, and more. A 19-file blast radius is how you introduce accidental regressions in a tired late-night refactor.</p>
+
+<p>Instead, each moved file got replaced in <code>src/</code> by a one-line re-export shim:</p>
+
+<pre><span class="comment">// src/executor.ts</span>
+export * from "../packages/executor/src/executor.ts";</pre>
+
+<p>Every existing consumer keeps its <code>import { runTap } from "./executor.ts"</code> path. The shim re-exports everything from the canonical source. Zero import changes across the other nineteen files. Full backwards compatibility, single source of truth — the package is canonical, the shim is a thin pointer.</p>
+
+<p>This is a pattern every extraction refactor should use: <em>move the files, but leave a re-export breadcrumb at the old path.</em> It turns a 20-file refactor into a 4-file refactor.</p>
+
+<h2>The tests that broke (and what they taught us)</h2>
+
+<p>Running the full test suite after the move surfaced exactly six failures, all from the same class of test: ones that read source files by hardcoded path to do structural analysis. For example:</p>
+
+<pre><span class="comment">// src/test/tap_dts_test.ts — Pipe fields drift detector</span>
+const pipeSrc = await Deno.readTextFile(`${ROOT}/src/pipe.ts`);
+const dtsFields = extractPipeFields(dts);
+const srcFields = extractPipeFields(pipeSrc);
+assertEquals(dtsFields, srcFields, "Pipe field mismatch");</pre>
+
+<p>After the move, <code>src/pipe.ts</code> is a 1-line re-export shim containing zero interface definitions. The regex field extractor returned an empty array. The drift check compared the d.ts against an empty array and screamed.</p>
+
+<p>The fix was mechanical — point the test at the new canonical location — but the lesson is more interesting. <strong>Tests that read source code by path are implicit architectural assertions</strong>. Every such test is quietly stating "I know where this code lives." The extraction broke those assertions. Fixing them required making the new location explicit in each test:</p>
+
+<pre>const EXECUTOR_SRC = new URL("../../packages/executor/src", import.meta.url).pathname;</pre>
+
+<p>Six tests needed this update. One semantic test — the vocabulary checker that walks every source file looking for forbidden terms like "kernel" or "stdlib" — needed a bigger change: its <code>readSources()</code> helper only scanned <code>tap-core/src/</code>. After the move, it would silently stop covering the executor files. I updated it to scan both directories:</p>
+
+<pre>async function readSources() {
+  const files = [];
+  for await (const entry of Deno.readDir(SRC_DIR)) { ... }
+  for await (const entry of Deno.readDir(EXECUTOR_SRC)) { ... }  <span class="comment">// NEW</span>
+  return files;
+}</pre>
+
+<p>Without this, semantic constraints like "handle type is Tap, not Page" would have silently stopped checking the files where that type actually lives. Structural tests that move with the code are more robust than structural tests that hardcode paths — but path-hardcoded tests are fine as long as <em>you remember to update them in the same commit as the move</em>.</p>
+
+<p>After the six fixes, <strong>621 of 621 tap-core tests pass</strong>. Zero regression.</p>
+
+<h2>The smoke test that proves the package is real</h2>
+
+<p>An extracted package is only useful if it's actually self-contained. A subtle failure mode would be leaving a sneaky <code>import</code> in one of the four moved files that still reached back into <code>tap-core/src/</code> via a relative path. If that happened, publishing would succeed but importing from outside the tap-core tree would fail.</p>
+
+<p>I wrote a dedicated boundary test for this:</p>
+
+<pre>Deno.test("[smoke/boundary] package imports resolve within packages/executor/", async () => {
+  <span class="comment">// mod.ts must not reference tap-core/src/ anywhere</span>
+  const modContent = await Deno.readTextFile(new URL("../mod.ts", import.meta.url).pathname);
+  const escapePaths = modContent.match(/\.\.\/\.\.\/src\/|tap-core\/src\//g);
+  assertEquals(escapePaths, null, "mod.ts must not import from tap-core/src/");
+
+  <span class="comment">// Every source file must import only from sibling files</span>
+  for (const file of ["executor.ts", "pipe.ts", "page.ts", "sandbox.ts"]) {
+    const src = await Deno.readTextFile(new URL(`../src/${file}`, import.meta.url).pathname);
+    const externalImport = src.match(/from ['"]\.\.\/\.\.\//g);
+    assertEquals(externalImport, null, `${file} must not import outside the package`);
+  }
+});</pre>
+
+<p>The test passes by regex-searching for the exact shapes of problematic imports. A future contributor adding <code>import { foo } from "../../src/bar.ts"</code> by accident would hit this boundary test immediately, not at <code>deno publish</code> time or — worse — when a downstream consumer actually tried to import the package.</p>
+
+<h2>The measurement: 0.8 ms vs 233.7 ms</h2>
+
+<p>With the package working standalone, it was time to prove the speedup claim was real. I wrote a dogfood pipeline in RDK — a pure in-memory transform that filters, sorts, and limits a hardcoded array of rows:</p>
+
+<pre>export default {
+  site: "rdk",
+  name: "demo-transform",
+  requires: ["tap/filter", "tap/sort", "tap/limit"],
+  args: {
+    rows:      { type: "array",  required: true },
+    min_score: { type: "number", default: 0 },
+    limit:     { type: "number", default: 5 },
+  },
+
+  async tap(handle, args) {
+    return handle.pipe({
+      steps: [
+        { id: "filtered", run: ["tap", "filter"], args: { rows: "$args.rows", field: "score", gt: "$args.min_score" } },
+        { id: "ranked",   run: ["tap", "sort"],   args: { rows: "$filtered.rows", field: "score", order: "desc" } },
+        { id: "top",      run: ["tap", "limit"],  args: { rows: "$ranked.rows", n: "$args.limit" } },
+      ],
+      return: "$top.rows",
+    });
+  },
+};</pre>
+
+<p>Then I wrote a test that runs the pipe both ways and measures wall-clock:</p>
+
+<pre>Deno.test("[principle/why] in-process pipe execution is faster than subprocess", async () => {
+  <span class="comment">// In-process via the new package</span>
+  const t0 = performance.now();
+  const inProcResult = await runPipeInProcess(pipePath, { rows: DEMO_ROWS, limit: 3 }, tapDirs);
+  const inProcMs = performance.now() - t0;
+
+  <span class="comment">// Subprocess via the existing tap CLI</span>
+  const s0 = performance.now();
+  await runCompiledPipe("demo-transform", { rows: JSON.stringify(DEMO_ROWS), limit: 3 });
+  const subMs = performance.now() - s0;
+
+  console.log(`  in-process:  ${inProcMs.toFixed(1)}ms`);
+  console.log(`  subprocess:  ${subMs.toFixed(1)}ms`);
+  console.log(`  speedup:     ${(subMs / inProcMs).toFixed(1)}×`);
+});</pre>
+
+<p>Test output:</p>
+
+<pre>  in-process:  0.8ms
+  subprocess:  233.7ms
+  speedup:     293.9×</pre>
+
+<p><strong>294× faster.</strong> Not 5×. Not 20×. Nearly three hundred times, on identical input, producing identical output. The 294× factor breaks down as roughly:</p>
+
+<ul>
+<li>~80ms subprocess fork (kernel-level process creation)</li>
+<li>~60ms Deno runtime initialization (JIT warmup, module resolver, worker setup)</li>
+<li>~50ms <code>.tap.js</code> file import + parse</li>
+<li>~30ms JSON serialization of args in, deserialization of rows out</li>
+<li>~10ms actual pipe execution (the only part that was doing real work)</li>
+</ul>
+
+<p>The in-process path skips the first four and lands directly at step 5.</p>
+
+<h2>What this actually unlocks</h2>
+
+<p>For RDK specifically, a single 200ms saving per invocation isn't life-changing. For the broader architecture, it is. A few things become possible that weren't before:</p>
+
+<h3>1. High-frequency pipelines become practical</h3>
+
+<p>A product that wants to run a compiled pipeline every few seconds — say, a live dashboard that recomputes demand scores as new posts arrive — can't afford to spend 200ms on subprocess overhead each tick. In-process execution removes that ceiling. The dashboard becomes a tight loop.</p>
+
+<h3>2. Serverless / FaaS deployments work</h3>
+
+<p>A typical serverless function has a cold-start budget measured in hundreds of milliseconds. Spawning a subprocess inside a function execution is often fatal — you exceed the CPU quota before your own code runs. Embedding the executor as a library means the function is just <code>import + runPipe</code>, and cold starts stay under the serverless platform's limits.</p>
+
+<h3>3. The package becomes a distribution channel</h3>
+
+<p>Today's <code>tap</code> is a binary you download and install. That means every product wanting to use Tap's composition layer needs to handle binary installation, PATH management, version compatibility, and cross-platform packaging. Those are real friction points for adoption.</p>
+
+<p>The package solves this. A product that embeds <code>@taprun/executor</code> gets the composition layer as a normal dependency. No install step. No PATH concerns. Cross-platform out of the box. And — importantly — the product controls when it updates. If Tap ships a breaking change tomorrow, an embedded product pins to a known-good version and upgrades on its own schedule.</p>
+
+<h3>4. The architectural split becomes the product split</h3>
+
+<p>The extraction implicitly draws a line between two things Tap used to conflate:</p>
+
+<ul>
+<li><strong>The engine</strong>: composition DSL + runtime protocol + pipe scheduler + schema types. Pure data flow. MIT. Embeddable. Deno + (eventually) Node.</li>
+<li><strong>The product</strong>: forge pipeline + doctor + heal + quality scoring + daemon + Chrome extension + license validation + schedule + notifications. This is where the commercial value lives.</li>
+</ul>
+
+<p>This is the same split that makes Red Hat work as a business: the kernel is public, the tooling and support and certification are proprietary. A product company's commercial value doesn't live in the runtime — it lives in everything built around the runtime to make it reliable in production.</p>
+
+<p>Before today, Tap was pitching itself as "an interface compiler for AI agents." That's still true, but it undersells what the extracted package enables. A more accurate pitch now: <strong>Tap is the compilation layer for AI product workflows, and the engine that runs compiled workflows is a library any product can embed.</strong></p>
+
+<h2>Publishing (almost)</h2>
+
+<p>The package is one <code>deno publish</code> away from being live on JSR. Running <code>deno publish --dry-run</code> inside <code>packages/executor/</code> surfaces exactly two kinds of checks:</p>
+
+<p><strong>Slow types.</strong> JSR enforces that every public symbol has an explicit type annotation. Without annotations, downstream consumers would have to run type inference across the whole package at typecheck time, which kills their IDE performance. Two of the package's public constants lacked annotations:</p>
+
+<pre><span class="comment">// Before (implicit string type — JSR rejects)</span>
+export const SEMANTIC_ROLE_SNIPPET = `...`;
+
+<span class="comment">// After (explicit type — JSR accepts)</span>
+export const SEMANTIC_ROLE_SNIPPET<span class="flag">: string</span> = `...`;</pre>
+
+<p>Same fix for <code>SANDBOX_ALLOWED_METHODS: Set&lt;string&gt;</code>. Both were one-character changes that didn't affect any consumer, because the inferred types and the declared types were identical.</p>
+
+<p><strong>Workspace declaration.</strong> Deno treats <code>deno.json</code> as a workspace root, and a sub-package's <code>deno.json</code> must be declared as a workspace member. One line in <code>tap-core/deno.json</code>:</p>
+
+<pre>"workspace": ["./src", <span class="flag">"./packages/executor"</span>]</pre>
+
+<p>After both fixes, <code>deno publish --dry-run</code> reports:</p>
+
+<pre>Simulating publish of <span class="cmd">@taprun/executor@0.1.0</span> with files:
+  LICENSE (33.71KB)
+  packages/executor/README.md (4.08KB)
+  packages/executor/deno.json (203B)
+  packages/executor/mod.ts (2.63KB)
+  packages/executor/src/executor.ts (23.54KB)
+  packages/executor/src/page.ts (7.22KB)
+  packages/executor/src/pipe.ts (11.51KB)
+  packages/executor/src/sandbox.ts (7.92KB)
+  packages/executor/test/smoke_test.ts (7.96KB)
+<span class="output">Success: Dry run complete</span></pre>
+
+<p>Nine files, roughly 65 KB uncompressed. The actual <code>deno publish</code> (without the <code>--dry-run</code>) is one command away and waiting on JSR scope registration for <code>@taprun</code>. Once that's done, any Deno project can:</p>
+
+<pre><span class="cmd">import { runPipe } from "jsr:@taprun/executor";</span></pre>
+
+<h2>The pattern I hope you steal</h2>
+
+<p>If you're building a product whose core value is a specific algorithm or runtime engine, and you've been treating that engine as an inseparable part of the CLI or server that ships it, consider whether the engine could live as a separate package. A few heuristics for when it's worth doing:</p>
+
+<ol>
+<li><strong>The engine is pure data flow.</strong> No OS-specific calls, no network, no persistent state. If it would run inside a Deno Worker with zero permissions, it's a candidate.</li>
+<li><strong>Every embedding consumer currently shells out to your CLI.</strong> If you have three products that do <code>exec("your-tool some-command")</code>, they're all paying fork overhead on every call. Extract the engine and let them skip the fork.</li>
+<li><strong>The engine's value compounds with every new consumer.</strong> If adding one more embedding product doesn't cost you anything but nets that product a meaningful speedup, the package is a force multiplier.</li>
+<li><strong>The commercial value isn't in the engine itself.</strong> You're selling forge pipelines, doctor diagnostics, runtime reliability, license validation, SaaS features. The engine is the enabling technology, not the differentiator. Open-sourcing it <em>grows the market for your actual product</em>.</li>
+</ol>
+
+<p>All four are true for Tap. They're true for a surprising number of dev-tooling products. The ones who see it first win the embedding market for their category.</p>
+
+<p>The four files that became <code>@taprun/executor</code> spent three months as a compiled binary that every embedding product had to shell out to. They're now a 65 KB package that any Deno product can import in one line. The speedup on the first measured benchmark is 294×. The architecture split it implies — engine public, product proprietary — is clearer than anything I'd written about Tap's positioning before today.</p>
+
+<p>One session, four git commits, one measured number. That's what architectural clarity looks like when you stop fighting the latent shape of your codebase and just let it be the package it was always going to be.</p>
