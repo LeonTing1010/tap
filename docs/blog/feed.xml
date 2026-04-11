@@ -9,6 +9,14 @@
 <lastBuildDate>Sat, 11 Apr 2026 00:00:00 +0000</lastBuildDate>
 
 <item>
+<title>40 Commits to Ship a Chrome MV3 Extension: A Git Log Retrospective</title>
+<link>https://taprun.dev/blog/building-mv3-extension-git-log-retrospective.html</link>
+<description>Building Tap's Chrome extension took three months and forty-ish commits fighting Chrome MV3. A category-by-category tour: service worker termination, chrome.alarms' silent 1-minute floor, the 25-second timeout cap, chrome.storage.session as the only durable state, the CDP debugger-attached tax, the unsafe-eval ban, and tab stealing across concurrent sessions.</description>
+<pubDate>Sat, 11 Apr 2026 00:00:00 +0000</pubDate>
+<guid>https://taprun.dev/blog/building-mv3-extension-git-log-retrospective.html</guid>
+</item>
+
+<item>
 <title>The Free SEO Stack for a New Dev Tool Site: GSC + Bing WMT + Ahrefs Webmaster Tools</title>
 <link>https://taprun.dev/blog/free-seo-stack-gsc-bing-ahrefs.html</link>
 <description>Ahrefs and SEMrush cost $99+/month, but a 10-day-old site won't meaningfully benefit from them for 3-6 months. Here's the free stack that covers the same data you actually need at this stage: Google Search Console, Bing Webmaster Tools, Ahrefs Webmaster Tools (Free), and IndexNow — plus the Cloudflare cache gotcha and how to fix it.</description>

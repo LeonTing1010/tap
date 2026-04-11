@@ -1,0 +1,160 @@
+---
+layout: post
+title: "40 Commits to Ship a Chrome MV3 Extension: A Git Log Retrospective"
+description: "Building Tap's Chrome extension meant fighting Chrome MV3 for three months — service worker termination, chrome.alarms' silent 1-minute floor, the 25-second timeout cap, chrome.storage.session as the only durable state, the CDP debugger-attached bar, the unsafe-eval ban, and tab stealing across sessions. A category-by-category tour of forty-ish real commits that got Tap to ship."
+keywords: "chrome mv3 extension, manifest v3 service worker, chrome.alarms minimum period, chrome.storage.session, mv3 csp unsafe-eval, chrome.debugger lifecycle, mv3 long-poll, tab stealing prevention, mv3 extension architecture, chrome extension git log"
+date: 2026-04-11
+read_time: "10 min read"
+subtitle: "Five categories of MV3 pain, with commit links"
+og_title: "40 Commits to Ship a Chrome MV3 Extension"
+og_description: "Building Tap's Chrome extension took 40+ commits fighting MV3. A categorized retrospective of the service worker termination race, the 25-second cap, chrome.storage.session, the CDP tax, the unsafe-eval ban, and tab stealing."
+twitter_title: "40 Commits to Ship a Chrome MV3 Extension"
+twitter_description: "Five categories of MV3 pain, with commit links. The service worker termination race alone took a dozen commits to get right."
+---
+
+<p><a href="https://taprun.dev/">Tap</a> is a browser automation tool that turns interface operations into deterministic programs. The Chrome extension is one of its three runtimes — alongside Playwright and macOS — and it's the one most people actually use, because it runs in the user's real logged-in Chrome instead of a sandboxed headless browser.</p>
+
+<p>When I started building the extension, I assumed Manifest V3 would be a minor adjustment from V2. Drop <code>background.html</code> for <code>background.js</code>, swap <code>chrome.extension</code> for <code>chrome.runtime</code>, done. I had shipped MV2 extensions before. How different could it be?</p>
+
+<p>Three months and roughly forty commits later, the answer is: <em>fundamentally different</em>. This is a category-by-category tour of what actually broke, drawn from <code>git log</code> on Tap's extension repo, so that the next person building an MV3 extension doesn't have to rediscover each of these the hard way.</p>
+
+<h2>Category 1: the service worker dies every 30 seconds</h2>
+
+<p>The single biggest architectural difference between MV2 and MV3 is that MV3 service workers are not long-lived background pages. They're event handlers. Chrome terminates them after roughly thirty seconds of idle, and any in-flight computation, module-level state, timer, or open connection dies with them. This one fact drove at least a dozen of my commits.</p>
+
+<h3>setInterval no longer works</h3>
+
+<p>The first version of Tap's extension used <code>setInterval</code> to poll the local daemon for commands. It worked on my machine for about five seconds at a time, then silently stopped. The reason was obvious once I thought about it: when the service worker dies, the timer dies with it, and nothing wakes the SW back up on a timer alone.</p>
+
+<pre>commit <span class="cmd">061dce6</span>
+perf: switch from setInterval polling to long-poll loop
+
+Removes adaptive setInterval (50ms/500ms) in favor of a single
+persistent long-poll connection to the daemon. Browser makes 0
+requests at idle instead of 2/sec, and commands dispatch with
+near-zero latency.</pre>
+
+<p>The replacement was a long-poll: the extension opens one HTTP request to the daemon, the daemon holds it open until a command arrives, then responds. The loop re-issues immediately. At idle, browser traffic is zero. When a command arrives, dispatch latency is sub-millisecond. And crucially, an outstanding fetch <em>does</em> keep the service worker alive — while it's awaiting a response, Chrome doesn't kill it.</p>
+
+<h3>chrome.alarms has a silent 1-minute floor</h3>
+
+<p>Long-polling alone wasn't enough. What if the fetch disconnects (daemon restart, network flake, timeout), the SW goes idle waiting to reconnect, and Chrome kills it? The standard MV3 keepalive pattern is <code>chrome.alarms</code>: schedule an alarm to fire every N minutes, and Chrome wakes the SW to handle it. I wrote:</p>
+
+<pre><span class="cmd">chrome.alarms.create('keepalive', { periodInMinutes: 25 / 60 })</span>  <span class="comment">// fire every 25 seconds</span></pre>
+
+<p>This does not work. It compiles. It runs. It never fires. I wasted an hour before reading the docs more carefully:</p>
+
+<blockquote>
+<p>"The minimum period is 1 minute. If you specify a value less than 1 minute, Chrome will silently ignore it and use 1 minute instead."</p>
+</blockquote>
+
+<pre>commit <span class="cmd">528e894</span>
+fix: pollLoop never exits — retry on all errors, prevent silent death
+
+- Fix chrome.alarms minimum: 1 min (Chrome silently ignores &lt;1)
+- Poll fetch failure: badge !, 3s backoff, continue loop (never exit)
+- Result post failure: silently ignored (daemon may restart)</pre>
+
+<p>If you want a sub-minute keepalive in MV3, you need to get creative — an outstanding fetch that returns a dummy packet every 20 seconds, for example. But for Tap's purposes, 1 minute was fine. The real fix was in the same commit: make the poll loop unkillable. Any fetch error (daemon down, 502, abort, timeout) triggers a 3-second backoff and continues. The loop exits only when the service worker itself is terminated — and then <code>chrome.alarms</code> wakes it back up one minute later.</p>
+
+<h3>Every wait must be capped below the 30-second kill threshold</h3>
+
+<p>The next subtle bug: Tap's CDP <code>Runtime.evaluate</code> had a 30-second default timeout. A user ran a script that hung waiting for a selector. The timeout fired at exactly 30 seconds — which is exactly when Chrome also killed the service worker for being idle-plus-a-bit. The fetch never resolved, the poll loop died, and the extension looked frozen.</p>
+
+<pre>commit <span class="cmd">8bb6d7d</span>
+fix: MV3 service worker safety — session ID + 25s caps on all waits
+
+- Poll sends sessionId; daemon evicts ghost waiters from old sessions
+- CDP eval timeout: 30s → 25s (below Chrome SW kill threshold)
+- wait/waitFor/waitForNetwork: capped at 25s max
+- poll fetch: explicit 25s AbortSignal timeout</pre>
+
+<p>Every internal deadline got shaved to 25 seconds — a safety margin of five seconds below the SW kill threshold. The commit also introduced session IDs: each time the extension wakes up, it generates a new session ID and sends it with every poll. The daemon uses this to evict any ghost waiters still referencing the old session, so a reanimated extension doesn't receive replies meant for a dead one.</p>
+
+<h3>In-memory state does not persist across SW restarts</h3>
+
+<p>This one I only hit last week, three months into the project. I had a <code>Map</code> at module scope that tracked all Chrome tabs Tap had opened. Every thirty seconds the service worker died and the <code>Map</code> re-initialized empty. The Chrome tabs, however, lived in the browser process — they persisted. So over a single afternoon a user accumulated nine orphan tabs that Tap had forgotten about and could no longer clean up.</p>
+
+<pre>commit <span class="cmd">7092f8e</span>
+fix: persist session map to storage.session, stop nav leaking chrome://newtab/</pre>
+
+<p>The fix, which I wrote about in detail in <a href="mv3-orphan-tabs-fix.html">a previous post</a>, is to persist the map to <code>chrome.storage.session</code> — Chrome's built-in per-browser-session in-memory KV store that is specifically designed to survive service worker restarts. Every mutation to the map writes through to storage. Every command handler that reads from the map waits for a rehydration promise before its first lookup. It's fifty lines of boilerplate that I should have written on day one.</p>
+
+<h2>Category 2: WebSockets and persistent connections die too</h2>
+
+<p>My first draft of the daemon-to-extension bridge was a WebSocket. Obvious choice — bidirectional, low-latency, idiomatic. It worked beautifully until the service worker went idle, at which point the WebSocket closed and the reconnect logic on the SW side couldn't execute because the SW was dead.</p>
+
+<pre>commit <span class="cmd">24d68eb</span>
+feat: HTTP polling replaces WebSocket connection to daemon</pre>
+
+<p>HTTP long-polling doesn't care about persistent sockets. Each request is a discrete event that wakes the SW if it's asleep. Worse latency on the first request after idle, but it's measured in milliseconds and it works.</p>
+
+<p>The rule in MV3 is: <strong>if your architecture needs a connection that outlives a single event handler, redesign your architecture</strong>. Chrome is not going to make exceptions for you.</p>
+
+<h2>Category 3: tab stealing across concurrent sessions</h2>
+
+<p>Tap supports multiple concurrent automation sessions. Each session owns one or more Chrome tabs. In the early extension, a subtle bug would occasionally cause session A's <code>tap.click</code> to execute in session B's tab — wrong tab, wrong page, data corruption.</p>
+
+<p>The root cause was a helper called <code>resolveTab(tabId)</code> that, if given a falsy <code>tabId</code>, would fall back to Chrome's <em>currently active tab</em> — whatever the user happened to be looking at. Under concurrency, this meant commands issued just after a context switch would land in whichever tab was foregrounded at that millisecond, not the tab their session owned.</p>
+
+<pre>commit <span class="cmd">f2e7ba1</span>
+fix: prevent tab stealing — explicit tabId never falls back to active tab
+
+commit <span class="cmd">1455f06</span>
+fix: nav uses local tabId, not global activeTabId for daemon commands
+
+commit <span class="cmd">fc414d4</span>
+fix: daemon session isolation — daemon commands never use activeTabId</pre>
+
+<p>The fix is a design rule: <em>every command must carry an explicit <code>tabId</code>, and any fallback to "the active tab" is a bug</em>. The SessionManager refactor (commit <code>8c32d78</code>) formalized this by making each session's tabId a mandatory parameter on every internal call, so a missing value is a type error rather than a runtime fallback.</p>
+
+<h3>Creating tabs without stealing focus</h3>
+
+<p>A related issue: when Tap opens a new tab for a session, Chrome by default foregrounds it, which is annoying if the user is typing in a different window.</p>
+
+<pre>commit <span class="cmd">88b6c30</span>
+fix: tabs created by tap never steal focus — active: false everywhere</pre>
+
+<p>One line: <code>chrome.tabs.create({ url, active: false })</code>. But this created its own subtle issue — several Tap APIs need the tab to be the "active" tab to work (<code>chrome.scripting.executeScript</code> works on any tab, but some older code paths didn't). Those all had to be updated to address tabs by explicit ID, never by "whatever is active."</p>
+
+<h2>Category 4: the CDP debugger-attached tax</h2>
+
+<p>Tap uses the Chrome DevTools Protocol for operations that require native input events — mouse clicks with real hardware cursor, keyboard events that fire exactly the DOM listeners a human would trigger. CDP is attached via <code>chrome.debugger.attach</code>. The tax you pay for this: Chrome shows a yellow bar at the top of every debugged tab that says <em>"WebTap started debugging this browser."</em> Users hate it. They file bugs about it. Some users even think the extension is malicious.</p>
+
+<pre>commit <span class="cmd">20597c3</span>
+feat: click JS-first + dialog JS override — minimize CDP usage</pre>
+
+<p>The mitigation is to only attach CDP when strictly necessary. For <code>tap.click</code>, the first attempt is a native JavaScript <code>element.click()</code> synthesized from a real <code>MouseEvent</code>. If the target handler requires a genuine user gesture (OAuth popup, file input, etc.), that fails silently and Tap falls back to CDP. For most clicks on most pages, CDP is never touched, and no debugger bar appears.</p>
+
+<pre>commit <span class="cmd">aa6269c</span>
+fix: remove chrome.debugger.sendCommand from protocol.js — use injected cdp/cdpNav</pre>
+
+<p>The follow-up tightened the abstraction so that the built-in operation layer (<code>tap.click</code>, <code>tap.type</code>, <code>tap.fetch</code>) never touches <code>chrome.debugger</code> directly. Only the lowest layer of core operations can attach CDP, and it only does so when the JS path has been exhausted. This means roughly 80% of Tap operations never trigger the debugger bar.</p>
+
+<h2>Category 5: the unsafe-eval ban</h2>
+
+<p>MV2 let you opt into <code>'unsafe-eval'</code> in the extension CSP. MV3 rejects the manifest at load time if you try. This sounds like a small thing, but it breaks any extension that dynamically loads code — in particular, browser automation tools that need to run user-provided scripts inside the page.</p>
+
+<pre>commit <span class="cmd">c29131c</span>
+fix: eval CSP fallback — use CDP Runtime.evaluate when eval blocked
+
+commit <span class="cmd">a8b9417</span>
+fix: CDP eval returns correct values via indirect eval in async IIFE</pre>
+
+<p>The workaround is to route all dynamic code execution through <code>chrome.debugger</code>'s <code>Runtime.evaluate</code> command. CDP is not subject to extension CSP, because it's running at the browser process level, not inside the extension page context. The downside is the tax from Category 4 — every dynamic evaluation pops the debugger bar. Combined with the JS-first mitigation above, this is fine for occasional evals, but it means extensions built around heavy dynamic code execution pay a UX cost on every call.</p>
+
+<h2>The meta-lesson: MV3 is hostile to code, not to extensions</h2>
+
+<p>After three months and forty-ish commits of fighting this, the pattern finally clicked. Every single category above has the same root cause: <strong>MV3 is aggressively hostile to arbitrary code execution, and aggressively opinionated about how state should be persisted</strong>. The rules Chrome is enforcing, collectively, are:</p>
+
+<ol>
+<li>Your extension must ship its code as static files in the package. You cannot download, generate, or evaluate code at runtime. (<code>unsafe-eval</code> ban.)</li>
+<li>Your extension code executes only in response to events. There is no long-running process. (Service worker termination.)</li>
+<li>Your state must be persisted to <code>chrome.storage</code>, not held in JS variables. (<code>storage.session</code> for ephemeral, <code>storage.local</code> for durable.)</li>
+<li>Your extension must not take actions that a reasonable user would not expect. (CDP debugger bar as transparency mechanism.)</li>
+<li>Your extension must be isolated from other code running in the same browser. (No global state, no tab stealing, explicit references everywhere.)</li>
+</ol>
+
+<p>Tap's original design broke all five of these rules in various ways. Every commit in the forty-something I cited above is a concession to one of them — usually discovered the hard way, in production, after a user complained.</p>
+
+<p>If you're about to start building an MV3 extension, read those five rules first. Design your architecture around them, not in spite of them. Your future self will thank you. Mine did not get the warning.</p>
