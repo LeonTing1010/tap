@@ -17,6 +17,52 @@ console.log('[tap] extension runtime ready')
 // Each MCP session owns a dedicated tab. Commands route via sessionId → tabId.
 const sessions = new Map()  // sessionId → { tabId, url, interceptActive, networkCapturing }
 
+// --- Session persistence ---
+//
+// MV3 service workers get killed after ~30s idle, wiping in-memory state.
+// But Chrome tabs persist across SW restarts. Without persistence, a session
+// created before SW idle becomes an orphan: `sessions.get(sid)` returns
+// undefined on the next SW instance, session.destroy silently no-ops
+// (returns {closed:false}), and the tab leaks forever.
+//
+// chrome.storage.session is in-memory but survives SW restarts within the
+// same browser session — a perfect lifetime match for our session state.
+// Rehydrate on startup, write-through on every mutation.
+async function rehydrateSessions() {
+  try {
+    const stored = await chrome.storage.session.get('tap_sessions')
+    const map = stored?.tap_sessions
+    if (!map) return
+    for (const [sid, s] of Object.entries(map)) {
+      // Verify the tab still exists — user may have closed it manually while SW was down
+      try {
+        const tab = await chrome.tabs.get(s.tabId)
+        sessions.set(sid, { ...s, url: tab.url || s.url || '' })
+      } catch {
+        /* tab gone — drop the session; rewrite below prunes stale entries */
+      }
+    }
+    // Rewrite storage with the pruned set (drops any tab-gone sessions so
+    // the next rehydrate doesn't have to re-check them).
+    await chrome.storage.session.set({ tap_sessions: Object.fromEntries(sessions) })
+    if (sessions.size > 0) console.log(`[tap] rehydrated ${sessions.size} sessions from storage`)
+  } catch (e) {
+    console.warn('[tap] session rehydrate failed:', e?.message)
+  }
+}
+
+async function persistSessions() {
+  try {
+    await chrome.storage.session.set({ tap_sessions: Object.fromEntries(sessions) })
+  } catch (e) {
+    console.warn('[tap] session persist failed:', e?.message)
+  }
+}
+
+// Kick off rehydrate at SW startup. Everything that reads `sessions` for
+// command routing (pollLoop) must await this before doing any work.
+const rehydrateReady = rehydrateSessions()
+
 const debuggerSessions = new Map()
 
 // Network capture state (per-tab)
@@ -58,9 +104,11 @@ chrome.tabs.onRemoved.addListener((tabId) => {
   requestMeta.delete(tabId)
   interceptStates.delete(tabId)
   // Clean up any session that owned this tab
+  let sessionRemoved = false
   for (const [sid, s] of sessions) {
-    if (s.tabId === tabId) { sessions.delete(sid); break }
+    if (s.tabId === tabId) { sessions.delete(sid); sessionRemoved = true; break }
   }
+  if (sessionRemoved) void persistSessions()
 })
 
 // --- Debugger Helpers (only for core.pointer, core.keyboard, core.eval CSP fallback) ---
@@ -270,23 +318,35 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
         tabId = tab.id
       } else {
         const current = await chrome.tabs.get(tabId)
-        if (current.url?.startsWith('chrome://') || current.url?.startsWith('data:')) {
+        const isInternal = current.url?.startsWith('chrome://') || current.url?.startsWith('data:')
+        if (isInternal && !fromDaemon) {
+          // Popup/content-script path: the user is actively looking at a
+          // chrome:// or data: tab — don't clobber it, open the target in a
+          // new tab instead. This is UX-preserving replacement.
           const tab = await chrome.tabs.create({ url: params.url, active: false })
           tabId = tab.id
         } else {
+          // Daemon path (and regular-URL tabs): navigate in place via
+          // tabs.update. chrome://newtab/ is our own placeholder from
+          // session.create and can be navigated away from in place — the
+          // previous "create a replacement tab" branch leaked the original
+          // chrome://newtab/ on every session-based nav.
           await chrome.tabs.update(tabId, { url: params.url })
         }
       }
       await waitForTabLoad(tabId, params.url)
       const finalTab = await chrome.tabs.get(tabId)
       // Update session: URL always, tabId if replaced
+      let sessionUpdated = false
       for (const [, s] of sessions) {
         if (s.tabId === origTabId || s.tabId === tabId) {
           s.url = finalTab.url || params.url
           s.tabId = tabId  // update if tab was replaced
+          sessionUpdated = true
           break
         }
       }
+      if (sessionUpdated) void persistSessions()
       return { frameId: 'main', tabId, url: finalTab.url || params.url }
     }
 
@@ -631,7 +691,7 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       if (session?.detachTimer) { clearTimeout(session.detachTimer); session.detachTimer = null }
       // Track in session
       for (const [, s] of sessions) {
-        if (s.tabId === tabId) { s.networkCapturing = true; break }
+        if (s.tabId === tabId) { s.networkCapturing = true; void persistSessions(); break }
       }
       return {}
     }
@@ -665,7 +725,7 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       scheduleDetach(tabId)
       // Track in session
       for (const [, s] of sessions) {
-        if (s.tabId === tabId) { s.networkCapturing = false; break }
+        if (s.tabId === tabId) { s.networkCapturing = false; void persistSessions(); break }
       }
       return {}
     }
@@ -690,7 +750,7 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       if (session2?.detachTimer) { clearTimeout(session2.detachTimer); session2.detachTimer = null }
       // Track intercept state in session
       for (const [, s] of sessions) {
-        if (s.tabId === tabId) { s.interceptActive = true; break }
+        if (s.tabId === tabId) { s.interceptActive = true; void persistSessions(); break }
       }
       return {}
     }
@@ -705,7 +765,7 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       scheduleDetach(tabId)
       // Track intercept state in session
       for (const [, s] of sessions) {
-        if (s.tabId === tabId) { s.interceptActive = false; break }
+        if (s.tabId === tabId) { s.interceptActive = false; void persistSessions(); break }
       }
       return {}
     }
@@ -746,13 +806,24 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       const sessionId = crypto.randomUUID().slice(0, 8)
       const tab = await chrome.tabs.create({ active: false })
       sessions.set(sessionId, { tabId: tab.id, url: '', interceptActive: false, networkCapturing: false })
+      // Await persist: if the SW gets killed between here and the client's
+      // next command, storage MUST already contain this session or the tab
+      // becomes an orphan on the next SW instance.
+      await persistSessions()
       return { sessionId, tabId: tab.id }
     }
 
     case 'session.destroy': {
       const sid = params.sessionId
       const sess = sessions.get(sid)
-      if (!sess) return { closed: false }
+      if (!sess) {
+        // Session unknown. Expected causes: (1) rare — session created by a
+        // previous SW instance that never persisted to storage, (2) benign
+        // double-destroy from the client, (3) wrong sid. Return structured
+        // reason so the client can log potential orphan tabs instead of
+        // silently treating it as success.
+        return { closed: false, reason: 'session_not_found' }
+      }
       // Ordered cleanup: intercept.off → networkStop → tab.close
       if (sess.interceptActive) {
         try { await handleMethod('intercept.off', { tabId: sess.tabId }, null, { fromDaemon: true }) } catch {}
@@ -762,6 +833,7 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       }
       await chrome.tabs.remove(sess.tabId).catch(() => {})
       sessions.delete(sid)
+      await persistSessions()
       return { closed: true }
     }
 
@@ -977,7 +1049,8 @@ chrome.action.onClicked.addListener(async () => {
   if (connected) return
   // Disconnected — open install guide so user knows what to do
   chrome.tabs.create({ url: 'https://taprun.dev/install' })
-  if (!polling) pollLoop()
+  // Use startPoll (not pollLoop directly) so rehydrate always runs first.
+  startPoll()
 })
 
 // Keep-alive: MV3 kills service workers after ~30s idle.
@@ -1015,7 +1088,10 @@ async function handleAndReport(id, method, params) {
 function startPoll() {
   if (polling) return
   polling = true
-  pollLoop()
+  // Wait for rehydrate before accepting commands — otherwise the poll loop
+  // would resolve sessionId→tabId against an empty Map right after SW wake,
+  // routing commands to nothing and throwing "No active tab".
+  rehydrateReady.finally(() => pollLoop())
 }
 
 async function pollLoop() {
