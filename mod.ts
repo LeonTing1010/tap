@@ -51,14 +51,28 @@
 export {
   createRunCache,
   runPipe,
+  runPipeWithTrace,
   validateRequires,
 } from "./src/pipe.ts";
 export type {
   Pipe,
   PipeStep,
+  PipeTrace,
+  PipeTraceNode,
   RunCache,
   TapRun,
 } from "./src/pipe.ts";
+
+// Trace persistence — the post-run dual of explain.
+// See docs/composition-retrospective.md Tier 2-B (T_trace).
+export {
+  listTapTraces,
+  makeRunId,
+  pruneTapTraces,
+  readTapTrace,
+  writeTapTrace,
+} from "./src/trace.ts";
+export type { TapTrace } from "./src/trace.ts";
 
 // Explain — the static dual of runPipe. Given a Pipe, returns an
 // ExecutionPlan describing rounds, edges, capabilities, and arg-contract

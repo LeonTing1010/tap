@@ -6,8 +6,9 @@
  */
 
 import { createTapHandle, type RpcSend } from "./page.ts";
-import { type Pipe, runPipe } from "./pipe.ts";
+import { type Pipe, type PipeTrace, runPipeWithTrace } from "./pipe.ts";
 import { runInSandbox } from "./sandbox.ts";
+import { makeRunId, type TapTrace, writeTapTrace } from "./trace.ts";
 
 export interface TapArgSpec {
   type: string;
@@ -214,6 +215,14 @@ export interface TapResult {
     total_ms: number;
   };
   trace?: TraceStep[];
+  /**
+   * Unique identifier for this run, emitted since 2026-04-11 with T_trace.
+   * Present on every runTap invocation; `tap.trace(run_id)` looks up the
+   * persisted TapTrace with the same id for post-mortem inspection.
+   * Optional in the type only for backwards compat with pre-T_trace
+   * consumers that literal-matched the result shape.
+   */
+  run_id?: string;
 }
 
 function summarize(s: string, max: number): string {
@@ -541,6 +550,13 @@ export async function runTap(
   const tap = createTapHandle(tracingSend);
   const start = performance.now();
 
+  // T_trace: assign a unique run_id for this invocation so callers can
+  // later look up the persisted TapTrace via tap.trace(run_id). Generated
+  // unconditionally because it's free; persistence is best-effort and
+  // silently no-ops if the filesystem isn't writable.
+  const runId = makeRunId();
+  const runStartedAt = new Date().toISOString();
+
   // Sub-tap resolution helper shared by tap.run and tap.invoke. Walks the
   // configured tapDirs in order, returns the first matching path, throws if
   // no candidate exists. Extracted so run/invoke stay trivial wrappers.
@@ -603,6 +619,14 @@ export async function runTap(
   // Wire tap.pipe() — declarative composition DSL. Uses the parent tap's
   // resolvedArgs as the $args.* binding context. Needs tapDirs to resolve
   // sub-tap paths; throws a clear error otherwise.
+  //
+  // T_trace: capture the PipeTrace from runPipeWithTrace into a closure
+  // variable so the enclosing runTap call can persist it alongside the
+  // top-level TapTrace metadata. If a tap calls handle.pipe() multiple
+  // times (unusual but legal), only the LAST call's trace survives —
+  // v0.1 accepts this rather than threading a list. Most pipe-only
+  // taps call pipe() exactly once at the top level anyway.
+  let capturedPipeTrace: PipeTrace | null = null;
   if (tapDirs) {
     tap.pipe = async (pipe: unknown) => {
       const pipeRun = async (site: string, name: string, subArgs: Record<string, unknown>) => {
@@ -617,7 +641,13 @@ export async function runTap(
         // all work from the pipe's reference binding layer.
         return await runTap(subMod, subArgs, send, tapDirs);
       };
-      return await runPipe(pipe as Pipe, resolvedArgs, pipeRun);
+      const { result, trace: pipeTrace } = await runPipeWithTrace(
+        pipe as Pipe,
+        resolvedArgs,
+        pipeRun,
+      );
+      capturedPipeTrace = pipeTrace;
+      return result;
     };
   } else {
     tap.pipe = () => {
@@ -679,9 +709,26 @@ export async function runTap(
     const totalMs = Math.round(performance.now() - start);
     await appendLog({
       event: "run", site: mod.site, name: mod.name,
+      run_id: runId,
       ms: totalMs, rows: 0, error: String(e),
       ...(opts?.sessionId && { sid: opts.sessionId }),
     });
+    // T_trace: persist the trace on error so post-mortem tooling sees
+    // the failure. If the pipe crashed mid-run, capturedPipeTrace has
+    // whatever rounds completed before the throw — crucial debugging data.
+    const errorTrace: TapTrace = {
+      run_id: runId,
+      site: mod.site,
+      name: mod.name,
+      started_at: runStartedAt,
+      finished_at: new Date().toISOString(),
+      total_ms: totalMs,
+      status: "error",
+      error: e instanceof Error ? e.message : String(e),
+      args: resolvedArgs,
+      ...(capturedPipeTrace ? { pipe: capturedPipeTrace } : {}),
+    };
+    await writeTapTrace(errorTrace);
     throw e;
   }
 
@@ -722,9 +769,29 @@ export async function runTap(
 
   await appendLog({
     event: "run", site: mod.site, name: mod.name,
+    run_id: runId,
     ms: totalMs, rows: rows.length,
     ...(opts?.sessionId && { sid: opts.sessionId }),
   });
+
+  // T_trace: persist the successful run's trace. For pipe-only taps,
+  // capturedPipeTrace has per-step detail. For leaf taps, there's no
+  // pipe trace — just the top-level metadata + row count. The RPC-level
+  // trace (traceSteps, from tracingSend above) stays attached to the
+  // returned TapResult, since that's what existing consumers expect.
+  const successTrace: TapTrace = {
+    run_id: runId,
+    site: mod.site,
+    name: mod.name,
+    started_at: runStartedAt,
+    finished_at: new Date().toISOString(),
+    total_ms: totalMs,
+    status: "ok",
+    rows_out: rows.length,
+    args: resolvedArgs,
+    ...(capturedPipeTrace ? { pipe: capturedPipeTrace } : {}),
+  };
+  await writeTapTrace(successTrace);
 
   return {
     columns,
@@ -733,5 +800,6 @@ export async function runTap(
     count: rows.length,
     timing: { run_ms: totalMs, total_ms: totalMs },
     trace: traceSteps,
+    run_id: runId,
   };
 }
