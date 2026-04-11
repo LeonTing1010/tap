@@ -9,6 +9,14 @@
 <lastBuildDate>Sat, 11 Apr 2026 00:00:00 +0000</lastBuildDate>
 
 <item>
+<title>The Free SEO Stack for a New Dev Tool Site: GSC + Bing WMT + Ahrefs Webmaster Tools</title>
+<link>https://taprun.dev/blog/free-seo-stack-gsc-bing-ahrefs.html</link>
+<description>Ahrefs and SEMrush cost $99+/month, but a 10-day-old site won't meaningfully benefit from them for 3-6 months. Here's the free stack that covers the same data you actually need at this stage: Google Search Console, Bing Webmaster Tools, Ahrefs Webmaster Tools (Free), and IndexNow — plus the Cloudflare cache gotcha and how to fix it.</description>
+<pubDate>Sat, 11 Apr 2026 00:00:00 +0000</pubDate>
+<guid>https://taprun.dev/blog/free-seo-stack-gsc-bing-ahrefs.html</guid>
+</item>
+
+<item>
 <title>Debugging Chrome MV3's "Many Empty Tabs" Bug: A chrome.storage.session Post-Mortem</title>
 <link>https://taprun.dev/blog/mv3-orphan-tabs-fix.html</link>
 <description>A user reported 9 empty chrome://newtab/ tabs accumulating overnight from Tap's extension. Three wrong fixes later (about:blank, self-scripting own extension pages, unsafe-eval offscreen eval), I finally read the Chromium docs properly. MV3 has four hard rules that none of my first three attempts respected.</description>
