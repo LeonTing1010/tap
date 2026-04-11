@@ -94,6 +94,12 @@ export interface Tap {
   // scheduling, $ref binding, run-scoped cache, and clear step-id errors.
   // Assigned at runtime by executor.ts when tapDirs is available.
   pipe?(pipe: unknown): Promise<unknown>;
+  // invoke — like run, but returns the full TapResult (rows + columns +
+  // count + rawRows + timing) instead of just rows. Preferred by
+  // compositional code that needs access to meta fields. run() returns
+  // .rows for backwards compat with legacy imperative callers.
+  // Assigned at runtime by executor.ts when tapDirs is available.
+  invoke?(site: string, name: string, args?: Record<string, unknown>): Promise<unknown>;
 }
 
 export function createTapHandle(send: RpcSend): Tap {

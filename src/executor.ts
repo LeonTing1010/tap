@@ -95,6 +95,42 @@ export function columnNames(cols: ColumnDecl[] | undefined): string[] {
   return cols.map(c => typeof c === "string" ? c : c.name);
 }
 
+/**
+ * Auto-detect which Tap handle methods a tap body calls, by regex-scanning
+ * the source for `handle.X(` or `tap.X(` patterns.
+ *
+ * Populates TapModule.capabilities at forge.save time. Embedding products
+ * (like RDK's runPipeInProcess) read this to statically decide whether
+ * the current runtime can execute the tap — a capabilities: ["fetch"]
+ * tap runs anywhere, capabilities: ["nav", "eval"] needs a browser-backed
+ * RpcSend.
+ *
+ * Imperfect: won't catch destructured `const { nav } = handle; nav()` or
+ * dynamic dispatch. Good enough for ~95% of hand-written tap code. For
+ * the edge cases, authors can explicitly set the `capabilities` field.
+ */
+export function detectCapabilities(code: string): string[] {
+  const METHODS = [
+    // Core (8)
+    "eval", "pointer", "keyboard", "nav", "wait", "screenshot", "run", "capabilities",
+    // Built-in (20)
+    "click", "type", "fill", "hover", "scroll", "pressKey", "select", "upload",
+    "dialog", "fetch", "find", "cookies", "download", "waitFor", "waitForNetwork",
+    "ssrState", "storage", "copyAll", "parseXML", "extract",
+    // Composition
+    "pipe", "invoke",
+  ];
+  const found = new Set<string>();
+  for (const method of METHODS) {
+    // Match `handle.method(` or `tap.method(`. Catches common variable
+    // names, ignores method names buried inside longer identifiers like
+    // `myhandle.navigate(` or `taps.click`.
+    const pattern = new RegExp(`\\b(handle|tap)\\s*\\.\\s*${method}\\s*\\(`);
+    if (pattern.test(code)) found.add(method);
+  }
+  return [...found].sort();
+}
+
 export interface TapModule {
   site: string;
   name: string;
@@ -123,6 +159,28 @@ export interface TapModule {
    * Single execution function — replaces the historical {extract, transform, run} split.
    */
   tap?: (handle: unknown, args: Record<string, unknown>) => Promise<unknown[]> | unknown[];
+  /**
+   * Static pipe declaration. When set, the tap IS the pipe — no tap() function
+   * body, no arbitrary code, pure data flow. runTap auto-wraps this into a
+   * tap() equivalent of `(h, _a) => h.pipe(mod.pipe)`.
+   *
+   * Benefits over inlining `handle.pipe({...})` inside a tap() function:
+   *  - Sandbox can be skipped (no arbitrary code to isolate)
+   *  - forge.save can statically validate every step's args against the
+   *    declared schema of the sub-tap it calls
+   *  - The pipe is introspectable without running (e.g. by `tap explain`)
+   *  - AI generation writes less boilerplate — just the data structure
+   */
+  pipe?: Pipe;
+  /**
+   * Set of tap handle methods the tap body calls, auto-detected at
+   * forge.save time via source scan. Consumed by embedding products
+   * (like RDK's runPipeInProcess) to decide whether the current runtime
+   * can actually execute this tap — a tap with capabilities: ["fetch"]
+   * runs anywhere, one with capabilities: ["nav", "eval"] needs a
+   * browser-backed RpcSend.
+   */
+  capabilities?: string[];
   cleanup?: (tap: unknown) => Promise<void>;
   url?: string | ((args: Record<string, unknown>) => string);
   waitFor?: string;
@@ -483,21 +541,39 @@ export async function runTap(
   const tap = createTapHandle(tracingSend);
   const start = performance.now();
 
-  // Wire tap.run() for composition — load sub-taps from disk, run locally.
-  // Public tap.run returns .rows (array) to match the legacy contract every
-  // existing composite tap relies on. tap.pipe (below) uses a separate
-  // internal call to get the full result so step outputs include meta.
+  // Sub-tap resolution helper shared by tap.run and tap.invoke. Walks the
+  // configured tapDirs in order, returns the first matching path, throws if
+  // no candidate exists. Extracted so run/invoke stay trivial wrappers.
+  const resolveSubTap = async (site: string, name: string): Promise<string> => {
+    if (!tapDirs) throw new Error(`tap not found: ${site}/${name} (no tapDirs configured)`);
+    for (const dir of tapDirs) {
+      const p = `${dir}/${site}/${name}.tap.js`;
+      try { await Deno.stat(p); return p; } catch { /* next dir */ }
+    }
+    throw new Error(`tap not found: ${site}/${name}`);
+  };
+
+  // Wire tap.run() for composition — legacy API returning just .rows, kept
+  // so every existing composite tap (many taps written before 2026-04-11)
+  // keeps working unchanged. New compositional code should prefer
+  // tap.invoke(), which returns the full TapResult.
   if (tapDirs) {
     tap.run = async (site: string, name: string, subArgs: Record<string, unknown> = {}) => {
-      let tapPath = "";
-      for (const dir of tapDirs) {
-        const p = `${dir}/${site}/${name}.tap.js`;
-        try { await Deno.stat(p); tapPath = p; break; } catch { /* next */ }
-      }
-      if (!tapPath) throw new Error(`tap not found: ${site}/${name}`);
+      const tapPath = await resolveSubTap(site, name);
       const subMod = await loadTap(tapPath);
       const result = await runTap(subMod, subArgs, send, tapDirs);
       return result.rows;
+    };
+
+    // Wire tap.invoke() — the compositional alternative. Returns the full
+    // TapResult so callers can access .rows, .columns, .count, .rawRows,
+    // and .timing without a second query. This is what tap.pipe uses
+    // internally; exposing it to tap authors lets them write imperative
+    // compositions that still get the full result shape.
+    tap.invoke = async (site: string, name: string, subArgs: Record<string, unknown> = {}) => {
+      const tapPath = await resolveSubTap(site, name);
+      const subMod = await loadTap(tapPath);
+      return await runTap(subMod, subArgs, send, tapDirs);
     };
   }
 
@@ -549,17 +625,47 @@ export async function runTap(
     };
   }
 
+  // Resolve the tap function. Three cases in order of priority:
+  //   1. Explicit mod.tap — user-authored function body (imperative taps)
+  //   2. Static mod.pipe — synthesize a tap function that forwards to
+  //      handle.pipe. Pipe-only taps don't need arbitrary code; the DSL
+  //      is declarative data, which is why sandbox (below) can be skipped
+  //      for this case.
+  //   3. Neither set — invalid, throw.
+  //
+  // `isPipeOnly` is used below to decide whether the sandbox Worker runs
+  // (Tension 3: pipe-only taps are pure data flow, sandboxing them adds
+  // overhead for zero isolation benefit — sub-taps called by the pipe
+  // executor still get their own sandbox decisions based on their own
+  // module shape).
+  const isPipeOnly = !mod.tap && !!mod.pipe;
+  const tapFn: TapModule["tap"] = mod.tap
+    ? mod.tap
+    : mod.pipe
+      ? (handle, _args) => {
+          const h = handle as { pipe?: (p: unknown) => Promise<unknown> };
+          if (!h.pipe) {
+            throw new Error(`pipe-only tap ${mod.site}/${mod.name} needs a tap handle with .pipe() method (configure tapDirs)`);
+          }
+          return h.pipe(mod.pipe!) as Promise<unknown[]>;
+        }
+      : undefined;
+
   let rawRows: unknown[];
   try {
-    if (!mod.tap) {
-      throw new Error(`Tap ${mod.site}/${mod.name} must define a tap(handle, args) function`);
+    if (!tapFn) {
+      throw new Error(`Tap ${mod.site}/${mod.name} must define a tap(handle, args) function OR a pipe: {...} declaration`);
     }
     // Sandbox: run in isolated Deno Worker with zero permissions.
     // Tap code can only call tap.* via message passing — no filesystem, no network.
-    if (opts?.sandbox !== false && opts?.tapPath) {
+    //
+    // EXCEPTION: pipe-only taps skip the sandbox. The tap body has no
+    // arbitrary code — it's just `handle.pipe(mod.pipe)`. The real
+    // isolation happens per sub-tap inside the pipe executor, not here.
+    if (opts?.sandbox !== false && opts?.tapPath && !isPipeOnly) {
       rawRows = (await runInSandbox(opts.tapPath, resolvedArgs, tracingSend)) as unknown[];
     } else {
-      rawRows = (await mod.tap(tap, resolvedArgs)) as unknown[];
+      rawRows = (await tapFn(tap, resolvedArgs)) as unknown[];
     }
     // Apply limit if specified (formerly extract-format-only)
     if (Array.isArray(rawRows) && resolvedArgs.limit) {

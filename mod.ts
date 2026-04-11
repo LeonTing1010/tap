@@ -65,6 +65,7 @@ export {
   appendLog,
   checkHealth,
   columnNames,
+  detectCapabilities,
   listTaps,
   loadTap,
   normalizeColumns,
