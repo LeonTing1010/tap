@@ -692,8 +692,27 @@ export async function runTap(
     // EXCEPTION: pipe-only taps skip the sandbox. The tap body has no
     // arbitrary code — it's just `handle.pipe(mod.pipe)`. The real
     // isolation happens per sub-tap inside the pipe executor, not here.
+    //
+    // For imperative-with-pipe taps (mod.tap() that internally calls
+    // handle.pipe({...})), we route handle.pipe through a localPipe
+    // handler so the sandbox worker can compose sub-taps via the real
+    // executor closure. Without this, handle.pipe would be forwarded as
+    // an RPC call to the daemon, which has no handler for it — that was
+    // the "operation 'pipe' is restricted" wall that blocked every
+    // imperative-with-pipe tap running through the CLI subprocess path.
     if (opts?.sandbox !== false && opts?.tapPath && !isPipeOnly) {
-      rawRows = (await runInSandbox(opts.tapPath, resolvedArgs, tracingSend)) as unknown[];
+      // Only expose local pipe composition when tapDirs is configured.
+      // Without tapDirs, tap.pipe throws a clear error anyway, so the
+      // sandbox's default rejection message is more informative.
+      const localPipe = tapDirs
+        ? (pipe: unknown) => (tap.pipe as (p: unknown) => Promise<unknown>)(pipe)
+        : undefined;
+      rawRows = (await runInSandbox(
+        opts.tapPath,
+        resolvedArgs,
+        tracingSend,
+        localPipe,
+      )) as unknown[];
     } else {
       rawRows = (await tapFn(tap, resolvedArgs)) as unknown[];
     }

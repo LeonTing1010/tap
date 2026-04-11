@@ -34,18 +34,37 @@ export const SANDBOX_ALLOWED_METHODS: Set<string> = new Set([
   "screenshot", "cookies", "ssrState", "storage", "capabilities",
   "fetch", "dialog", "download", "upload", "copyAll",
   "parseXML",
+  // "pipe" is a composition operator, NOT an RPC call — it takes a pipe
+  // DSL object and runs sub-taps against the local executor. The Worker
+  // whitelist must allow it so imperative-with-pipe taps compile, but the
+  // main-thread handler routes pipe() to a local closure instead of
+  // forwarding via `send`. See runInSandbox's localPipe parameter.
+  "pipe",
 ]);
+
+/** Local pipe handler — receives the pipe DSL object and executes it against
+ *  the real executor closure (which has access to tapDirs / loadTap / runTap).
+ *  The sandbox only whitelists `pipe` when this handler is provided. */
+export type LocalPipeHandler = (pipe: unknown) => Promise<unknown>;
 
 /**
  * Run a tap's run() function in a sandboxed Worker.
  * The tap can only call tap.* methods via message passing.
  * Method calls are restricted to a whitelist — dangerous operations like
  * eval, nav, run, download, upload, pointer, keyboard are blocked.
+ *
+ * `localPipe` is an optional handler for `handle.pipe(...)` calls. When
+ * provided, `pipe` is routed to this closure (which holds a reference to
+ * the executor's real `tap.pipe` with access to tapDirs, loadTap, runTap).
+ * When undefined, `pipe` calls are rejected with the same restricted-
+ * operation error as any other unknown method — an embedder that doesn't
+ * want pipe composition inside imperative taps simply omits this arg.
  */
 export async function runInSandbox(
   tapPath: string,
   args: Record<string, unknown>,
   send: RpcSend,
+  localPipe?: LocalPipeHandler,
 ): Promise<unknown[]> {
   // Worker code: import tap, create proxy handle, call run()
   const workerCode = `
@@ -144,6 +163,38 @@ export async function runInSandbox(
             return;
           }
           const params = Array.isArray(msg.params) ? msg.params : [];
+
+          // `pipe` is a composition operator, not an RPC call. When the
+          // embedder wires up `localPipe`, route it there — it holds a
+          // reference to the real executor closure with tapDirs/loadTap
+          // in scope. When not wired, treat it like any other blocked op:
+          // the whitelist lets `pipe` through so the worker-side check
+          // doesn't throw prematurely, but the actual rejection happens
+          // here at the boundary where we know whether it's supported.
+          if (methodName === "pipe") {
+            if (!localPipe) {
+              worker.postMessage({
+                id: msg.id,
+                type: "error",
+                error:
+                  "handle.pipe() is not available in this sandbox — the executor did not wire a local pipe handler. " +
+                  "Author this tap as pipe-only (set `pipe: {...}` on the module) or run with sandbox:false.",
+              });
+              return;
+            }
+            try {
+              // The Worker-side Proxy passes positional args as `params`.
+              // handle.pipe takes a single pipe-DSL argument, so params[0]
+              // is the pipe object. Everything in it is plain data
+              // (strings/numbers/arrays/objects) — structured-clone safe.
+              const result = await localPipe(params[0]);
+              worker.postMessage({ id: msg.id, type: "result", value: result });
+            } catch (err) {
+              worker.postMessage({ id: msg.id, type: "error", error: String(err) });
+            }
+            return;
+          }
+
           try {
             // Proxy tap.* call to actual runtime
             const method = `tap.${methodName}`;

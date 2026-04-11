@@ -239,3 +239,124 @@ Deno.test("[smoke/boundary] package imports resolve within packages/executor/", 
     );
   }
 });
+
+// ============================================================================
+// Regression: imperative-with-pipe taps run through the sandbox
+// ============================================================================
+
+Deno.test("[regression] imperative tap that calls handle.pipe() inside works under sandbox", async () => {
+  // Why: before 2026-04-11, tap files with shape
+  //
+  //   export default {
+  //     async tap(handle, args) {
+  //       return handle.pipe({ steps: [...], return: "$x.rows" });
+  //     }
+  //   }
+  //
+  // compiled into the sandbox Worker as a Proxy where `handle.pipe` sent
+  // "pipe" via postMessage like any other tap.* RPC. The main-thread
+  // handler forwarded it to `send("tool", "tap.pipe", ...)` which had no
+  // daemon handler, so it bubbled back as
+  //
+  //   operation 'pipe' is restricted in this context
+  //
+  // blocking every imperative-with-pipe tap on the CLI subprocess path —
+  // including rdk/market-scan, rdk/demo-transform, bounty/match. The fix
+  // is the localPipe parameter on runInSandbox: handle.pipe() is still
+  // whitelisted in the Worker, but on the main thread it's intercepted
+  // and routed to the real tap.pipe closure instead of being forwarded
+  // as RPC. This test exercises the full path.
+  const tmp = await Deno.makeTempDir();
+  try {
+    // A sub-tap that just returns literal rows — no network, no sandbox
+    // escape hatches. The pipe DSL will fan this out and reassemble.
+    await Deno.mkdir(`${tmp}/t`, { recursive: true });
+    await Deno.writeTextFile(
+      `${tmp}/t/src.tap.js`,
+      `export default {
+         site: "t", name: "src",
+         async tap(_handle, _args) {
+           return [{ n: 1 }, { n: 2 }, { n: 3 }];
+         }
+       }`,
+    );
+    // An imperative parent that composes src via handle.pipe(). This is
+    // the exact pattern rdk/market-scan uses. Under the old code, this
+    // tap would be sandboxed (sandbox: true default), hit the worker's
+    // "pipe" Proxy, and error out. Under the fix, localPipe routes it
+    // to the real executor closure.
+    await Deno.writeTextFile(
+      `${tmp}/t/parent.tap.js`,
+      `export default {
+         site: "t", name: "parent",
+         async tap(handle, _args) {
+           return handle.pipe({
+             steps: [{ id: "x", run: ["t", "src"], args: {} }],
+             return: "$x.rows",
+           });
+         }
+       }`,
+    );
+
+    const mod = await loadTap(`${tmp}/t/parent.tap.js`);
+    const result = await runTap(
+      mod,
+      {},
+      () => Promise.resolve({}),
+      [tmp], // tapDirs — needed for tap.pipe to resolve sub-taps
+      { tapPath: `${tmp}/t/parent.tap.js`, sandbox: true }, // SANDBOX ON
+    );
+
+    // The load-bearing claim is "pipe composition actually executed
+    // and produced the right number of rows with the right data" — not
+    // what their storage type is. Pipe DSL $x.rows is the column-
+    // normalized view, which stringifies numeric columns; the pipe then
+    // returns that view into rawRows. Compare stringified values.
+    assertEquals(result.rawRows.length, 3);
+    const rawRows = result.rawRows as Array<Record<string, unknown>>;
+    assertEquals(String(rawRows[0].n), "1");
+    assertEquals(String(rawRows[1].n), "2");
+    assertEquals(String(rawRows[2].n), "3");
+  } finally {
+    await Deno.remove(tmp, { recursive: true });
+  }
+});
+
+Deno.test("[regression] imperative handle.pipe() without tapDirs still gives a clear error under sandbox", async () => {
+  // Why: when an embedder enables the sandbox but doesn't provide tapDirs,
+  // tap.pipe has nothing to resolve against. The executor passes
+  // localPipe:undefined in that case, so the sandbox's main-thread
+  // handler rejects pipe() with a helpful message pointing at the fix
+  // ("author as pipe-only OR run with sandbox:false"). This prevents
+  // a silent runtime crash deep inside runPipeWithTrace.
+  const tmp = await Deno.makeTempDir();
+  try {
+    await Deno.mkdir(`${tmp}/t`, { recursive: true });
+    await Deno.writeTextFile(
+      `${tmp}/t/lonely.tap.js`,
+      `export default {
+         site: "t", name: "lonely",
+         async tap(handle, _args) {
+           return handle.pipe({ steps: [], return: "$nothing" });
+         }
+       }`,
+    );
+
+    const mod = await loadTap(`${tmp}/t/lonely.tap.js`);
+    // Intentionally pass NO tapDirs and NO explicit sandbox:false.
+    await assertRejects(
+      () =>
+        runTap(
+          mod,
+          {},
+          () => Promise.resolve({}),
+          undefined, // no tapDirs → localPipe will be undefined
+          { tapPath: `${tmp}/t/lonely.tap.js`, sandbox: true },
+        ),
+      Error,
+      "pipe",
+    );
+  } finally {
+    await Deno.remove(tmp, { recursive: true });
+  }
+});
