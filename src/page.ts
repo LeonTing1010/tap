@@ -21,7 +21,7 @@ export type RpcSend = (
  * Lives in page.ts because all consumers already import from here.
  * Must be self-contained JavaScript (no closures, no imports).
  */
-export const SEMANTIC_ROLE_SNIPPET = `
+export const SEMANTIC_ROLE_SNIPPET: string = `
 const ROLE={nav:'navigation',main:'main',aside:'complementary',article:'article',
   button:'button',textarea:'textbox',ul:'list',ol:'list',li:'listitem',table:'table',
   tr:'row',td:'cell',th:'columnheader',h1:'heading',h2:'heading',h3:'heading',

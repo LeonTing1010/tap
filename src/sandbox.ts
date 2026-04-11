@@ -24,7 +24,7 @@ interface SandboxMessage {
   error?: string;
 }
 
-export const SANDBOX_ALLOWED_METHODS = new Set([
+export const SANDBOX_ALLOWED_METHODS: Set<string> = new Set([
   // All tap.* RPC methods are allowed — they're messages to the runtime,
   // not local permissions. The sandbox isolates Deno APIs (file, network,
   // env), not browser operations. The runtime handles its own security.
