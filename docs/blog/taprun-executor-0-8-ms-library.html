@@ -215,9 +215,9 @@ assertEquals(dtsFields, srcFields, "Pipe field mismatch");</pre>
 
 <p>Before today, Tap was pitching itself as "an interface compiler for AI agents." That's still true, but it undersells what the extracted package enables. A more accurate pitch now: <strong>Tap is the compilation layer for AI product workflows, and the engine that runs compiled workflows is a library any product can embed.</strong></p>
 
-<h2>Publishing (almost)</h2>
+<h2>Publishing</h2>
 
-<p>The package is one <code>deno publish</code> away from being live on JSR. Running <code>deno publish --dry-run</code> inside <code>packages/executor/</code> surfaces exactly two kinds of checks:</p>
+<p>The package is <a href="https://jsr.io/@taprun/executor">live on JSR as <code>@taprun/executor@0.1.0</code></a> (published 2026-04-11). Before it shipped, <code>deno publish --dry-run</code> inside <code>packages/executor/</code> surfaced exactly two kinds of checks that had to be fixed:</p>
 
 <p><strong>Slow types.</strong> JSR enforces that every public symbol has an explicit type annotation. Without annotations, downstream consumers would have to run type inference across the whole package at typecheck time, which kills their IDE performance. Two of the package's public constants lacked annotations:</p>
 
@@ -247,9 +247,17 @@ export const SEMANTIC_ROLE_SNIPPET<span class="flag">: string</span> = `...`;</p
   packages/executor/test/smoke_test.ts (7.96KB)
 <span class="output">Success: Dry run complete</span></pre>
 
-<p>Nine files, roughly 65 KB uncompressed. The actual <code>deno publish</code> (without the <code>--dry-run</code>) is one command away and waiting on JSR scope registration for <code>@taprun</code>. Once that's done, any Deno project can:</p>
+<p>Nine files, roughly 65 KB uncompressed. After creating the <code>@taprun</code> scope at jsr.io/new and running the real <code>deno publish</code>, the package went live in under a minute. Any Deno project can now:</p>
 
 <pre><span class="cmd">import { runPipe } from "jsr:@taprun/executor";</span></pre>
+
+<p>From Node/npm, thanks to JSR's npm compat shim:</p>
+
+<pre><span class="cmd">npx jsr add @taprun/executor</span>
+<span class="comment">// Then:</span>
+<span class="cmd">import { runPipe } from "@taprun/executor";</span></pre>
+
+<p>RDK's <code>src/compile.ts</code> — the in-process dogfood from earlier in this post — swapped its ugly local file-URL import (<code>new URL("../../tap-core/packages/executor/mod.ts", import.meta.url).href</code>) for a clean <code>"jsr:@taprun/executor@^0.1.0"</code> string the moment the package went live. The JSR fetch added ~3 seconds of first-run cold-start time (downloading five module files into Deno's cache); every subsequent run was cache-warm and cost zero network.</p>
 
 <h2>The pattern I hope you steal</h2>
 
