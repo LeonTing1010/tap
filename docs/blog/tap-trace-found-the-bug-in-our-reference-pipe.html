@@ -1,0 +1,287 @@
+---
+layout: post
+title: "Four Rounds, Two Trace-Driven Fixes, One Working Pipe"
+description: "We shipped tap.explain, forge.pipe, and tap.trace in one session. The first real demo composed a pipe in Claude Code, saved it, ran it against live Reddit, failed, and iterated through four rounds to a working version — every fix driven by a specific piece of trace data, every round still zero external AI cost. Along the way we found the same silent bug sitting in our hand-written reference pipe."
+keywords: "tap trace, tap explain, forge pipe, mcp debugging, pipe composition, observability, claude code mcp, programs beat prompts, deterministic automation, reddit pain points, iteration loop"
+date: 2026-04-11
+read_time: "13 min read"
+subtitle: "Composing and debugging an RDK pipe through MCP, zero API calls, four iterations, one working result"
+og_title: "Four Rounds, Two Trace-Driven Fixes, One Working Pipe"
+og_description: "Live session: draft a pipe in Claude Code, watch tap.explain pass it, watch tap.run fail, watch tap.trace explain why, iterate. Four rounds, one working pipe, zero external AI cost."
+twitter_title: "Four rounds, two trace-driven fixes, one working pipe"
+twitter_description: "A live MCP session composing and debugging an RDK pipe. Trace is the debugging primitive that makes iteration tractable. Also: the hand-written reference pipe has the same bug."
+canonical_url: "https://taprun.dev/blog/tap-trace-found-the-bug-in-our-reference-pipe.html"
+---
+
+<p>Earlier today we shipped three new MCP tools in one session: <code>tap.explain</code> (static analysis of a pipe before running it), <code>forge.pipe</code> (compose a pipe from a natural-language goal), and <code>tap.trace</code> (post-mortem inspection of a previous <code>tap.run</code>). The architecture argument was that they form an observability sandwich around <code>tap.run</code>: <code>tap.explain</code> says what will happen, <code>tap.run</code> does it, <code>tap.trace</code> says what did happen.</p>
+
+<p>An architecture argument is worth approximately nothing until you use the tools on a real case. This post is what happened when I tried to compose an RDK market-scan-style pipe in Claude Code, ran it against r/sysadmin, and watched the tool chain walk me through four iterations to a working version. Every round produced a new class of failure. Every failure was diagnosable in one <code>tap.trace</code> call. Every fix came from a specific field in the previous round's trace, not from guessing. The final pipe returned five rows that are genuinely relevant to the user's goal. And along the way the demo found a silent bug in our own hand-written reference pipe that nobody had noticed because the bug is invisible unless you pick a subreddit whose headline style defeats a 19-keyword classifier.</p>
+
+<h2>The setup, and why <code>forge.pipe</code> turned out to be the wrong tool</h2>
+
+<p>The goal was the sort of thing any RDK user would actually say: <em>scan r/sysadmin for the top pain-point discussion threads, rank them by community engagement, and return the top five</em>. The hand-written reference for this is <code>rdk/market-scan</code>, a six-step pipe that composes <code>reddit/sub-intel</code>, <code>reddit/pain-points</code>, <code>reddit/hot</code>, <code>tap/filter</code>, <code>tap/sort</code>, and <code>tap/limit</code> into a structured report. I wanted to see if the new tools could produce something similar starting from the English goal alone.</p>
+
+<p>I reached for <code>mcp__tap__forge_pipe</code> and hit a practical snag: my AI config pointed at Ollama with a model that wasn't installed. The tool would have errored on the HTTP call to the AI endpoint. I had three apparent options — pull a local model, hand over a cloud API key, or skip <code>forge.pipe</code> entirely and use the underlying primitives directly.</p>
+
+<p>The third option is the one that matters, and it's why I'm writing this post instead of a forge.pipe tutorial. <strong>Claude Code is already an AI agent.</strong> It's the MCP host. It has full access to <code>tap.list</code>, <code>tap.explain</code>, and <code>forge.save</code>. The <code>forge.pipe</code> tool exists to package the draft → explain → iterate loop for clients that don't have built-in AI. When the client <em>is</em> an AI, the loop lives inside the client and the tool call becomes unnecessary. The primitives are the interface; <code>forge.pipe</code> is a convenience wrapper for thin clients.</p>
+
+<p>For the rest of this post, when I write "I drafted a pipe" or "I noticed X in the trace," that's Claude Code drafting the pipe and noticing things as part of this very conversation, using the same MCP server a Tap user would have. Zero external AI API calls. Zero per-round cost. The work Claude does as the host is work the user is already paying for just by typing into the chat.</p>
+
+<h2>Round 1: the minimal draft that passes static analysis</h2>
+
+<p>Step one was reading the catalog. <code>mcp__tap__tap_list({site: "reddit"})</code> returned 23 reddit taps, including <code>reddit/pain-points</code>, whose description reads "Extract pain points and complaints from a subreddit — validate product ideas." Its columns include <code>title</code>, <code>score</code>, <code>comments</code>, <code>url</code>, <code>excerpt</code>, and a <code>type</code> column that appeared to classify rows into pain-point and discussion categories. A second call to <code>tap.list({site: "tap"})</code> turned up the transform building blocks: <code>filter</code>, <code>sort</code>, <code>limit</code>, <code>dedupe</code>, <code>pick</code>, <code>table</code>.</p>
+
+<p>That's enough to draft. The obvious minimal pipe chains three steps — fetch pain points, sort by score, take top N:</p>
+
+<pre><code>{
+  "steps": [
+    { "id": "pain",   "run": ["reddit", "pain-points"],
+      "args": { "subreddit": "$args.subreddit", "sort": "hot", "limit": 25 } },
+    { "id": "ranked", "run": ["tap", "sort"],
+      "args": { "rows": "$pain.rows", "field": "score", "order": "desc" } },
+    { "id": "top",    "run": ["tap", "limit"],
+      "args": { "rows": "$ranked.rows", "n": 5 } }
+  ],
+  "return": "$top.rows"
+}</code></pre>
+
+<p>I passed this as raw JSON to <code>mcp__tap__tap_explain</code> with <code>args: {subreddit: "sysadmin"}</code>. The response came back in under twenty milliseconds: <code>{ok: true, blocking: false, warnings: false}</code>, three nodes, three sequential rounds, all sub-taps resolved to on-disk paths, no cycles, no unresolved refs, no schema warnings. By the structural contract, the pipe was runnable.</p>
+
+<p>By the semantic contract it had a problem I could see as soon as I re-read <code>reddit/pain-points</code>'s columns. The <code>type</code> field returns either <code>pain_point</code> or <code>discussion</code>, depending on some internal classifier. The user asked for top <em>pain points</em>. My pipe was going to include every row — including discussions — and return the top five by score, which is subtly not what was asked for. This is the sort of thing <code>tap.explain</code> can't catch, because it's a domain concern, not a structural one. It's why iterative drafting with a review pass matters even when the static check passes.</p>
+
+<h2>Round 2: insert the filter, pass explain again, run it, get zero rows</h2>
+
+<p>Round 2 adds a <code>tap/filter</code> step between the reddit fetch and the sort, filtering by <code>field: "type", eq: "pain_point"</code>. Four steps, four sequential rounds of scheduling:</p>
+
+<pre><code>{
+  "steps": [
+    { "id": "pain",      "run": ["reddit", "pain-points"],
+      "args": { "subreddit": "$args.subreddit", "sort": "hot", "limit": 25 } },
+    { "id": "pain_only", "run": ["tap", "filter"],
+      "args": { "rows": "$pain.rows", "field": "type", "eq": "pain_point" } },
+    { "id": "ranked",    "run": ["tap", "sort"],
+      "args": { "rows": "$pain_only.rows", "field": "score", "order": "desc" } },
+    { "id": "top",       "run": ["tap", "limit"],
+      "args": { "rows": "$ranked.rows", "n": "$args.limit" } }
+  ],
+  "return": "$top.rows"
+}</code></pre>
+
+<p><code>tap.explain</code> came back <code>ok: true</code> again. I wrote the full .tap.js with metadata (site, name, columns, health, args, examples, the pipe) and called <code>mcp__tap__forge_save({site: "rdk", name: "pain-scan", code: "..."})</code>. Saved to <code>~/.tap/taps/rdk/pain-scan.tap.js</code>, auto-committed as git <code>c6f9a89</code>. The only surprise in the save response was a false-positive lint warning — <code>checkTapQuality</code> doesn't yet know about static <code>pipe: {}</code> taps and emitted "Missing tap()" even though the executor synthesizes a forwarder for that form. Noted on the follow-up list, but the save itself was real.</p>
+
+<p>Then I ran it against live Reddit:</p>
+
+<pre><code>mcp__tap__tap_run({
+  site: "rdk",
+  name: "pain-scan",
+  args: { subreddit: "sysadmin", limit: 5 }
+})</code></pre>
+
+<p>The response came back 5458 milliseconds later:</p>
+
+<pre><code>{
+  "columns": ["title", "score", "comments", "url", "excerpt", "type"],
+  "rows": [],
+  "count": 0,
+  "timing": { "run_ms": 5458, "total_ms": 5458 },
+  "run_id": "mnubwmsj-534ecc"
+}</code></pre>
+
+<p>Zero rows. No error. Five and a half seconds spent on something. The pipe I had just validated with <code>tap.explain</code>, saved to disk, and run through the executor returned an empty array. This is the canonical "why is my pipe broken" moment. The old <code>tap.jsonl</code> log line for this would say exactly <code>{event: "run", ms: 5458, rows: 0}</code> — true but not useful. Before T_trace, the post-mortem would involve adding <code>console.log</code> statements to the executor and re-running, which is both slower and pointless.</p>
+
+<h2>The first trace: filter ate every row because every row was <code>type: "discussion"</code></h2>
+
+<p>I called <code>mcp__tap__tap_trace({run_id: "mnubwmsj-534ecc"})</code>. The response was a structured execution record with per-step nodes. Edited for length:</p>
+
+<pre><code>{
+  "run_id": "mnubwmsj-534ecc",
+  "total_ms": 5458,
+  "status": "ok",
+  "rows_out": 0,
+  "pipe": {
+    "nodes": [
+      { "id": "pain",      "rows_out": 23, "duration_ms": 5454,
+        "args_resolved": { "subreddit": "sysadmin", "sort": "hot", "limit": 25 } },
+      { "id": "pain_only", "rows_out":  0, "duration_ms":    1,
+        "args_resolved": { "rows": [ /* 23 objects, ALL with type: "discussion" */ ],
+                           "field": "type", "eq": "pain_point" } },
+      { "id": "ranked",    "rows_out":  0, "duration_ms":    0 },
+      { "id": "top",       "rows_out":  0, "duration_ms":    1 }
+    ],
+    "rounds_actual": [["pain"], ["pain_only"], ["ranked"], ["top"]],
+    "run_cache_misses": 4,
+    "run_cache_hits": 0
+  }
+}</code></pre>
+
+<p>The answer is in the first two <code>rows_out</code> values. The <code>pain</code> step fetched <strong>23 rows</strong>. The <code>pain_only</code> filter step returned <strong>0 rows</strong>. The filter ate everything. The subsequent sort and limit propagated the empty array. Total time was dominated by the Reddit fetch; the downstream transform pipeline ran in 2ms combined.</p>
+
+<p>Crucially, the trace captures each step's full <code>args_resolved</code>, not just the arg names. That means I could see all 23 rows the filter was looking at, with their <code>type</code> values, without another tool call. Every single one was <code>type: "discussion"</code>. Not one was <code>pain_point</code>. The filter was doing exactly what I asked it to do; I just asked the wrong thing given the data.</p>
+
+<p>From "zero rows after 5458ms, no idea why" to "filter ate everything because every row has <code>type: discussion</code>" was one MCP call. That's the value proposition <code>tap.trace</code> exists to make, delivered on the first real use.</p>
+
+<p>Knowing the filter ate the rows told me where to look next. I opened <code>~/.tap/taps/reddit/pain-points.tap.js</code> and found the classifier:</p>
+
+<pre><code>const painKeywords = [
+  "frustrat", "annoying", "broken", "hate", "terrible", "awful", "worst",
+  "problem", "issue", "bug", "fail", "can't", "unable", "struggle",
+  "difficult", "hard", "pain", "sucks", "disappointed"
+];
+const isPainPoint = painKeywords.some(k =&gt; titleLower.includes(k));</code></pre>
+
+<p><code>reddit/pain-points</code> classifies a post as <code>pain_point</code> if and only if its <em>title</em> contains one of 19 hardcoded English keywords. Today's top r/sysadmin hot posts don't hit any of them — "Bad IT decisions causing a corporate meltdown" contains "Bad" which isn't in the list (the list has "awful", "worst", "terrible", but not "bad"); "France Launches Government Linux Desktop Plan as Windows Exit Begins" has no pain keywords; "Patch Tuesday Megathread" has no pain keywords; "When do you NOT create a support ticket?" has no pain keywords. All 23 rows failed the classifier. The filter correctly kept zero of them. The pipe worked exactly as specified; the specification was based on a classifier whose precision on today's r/sysadmin was zero.</p>
+
+<h2>Round 3: pivot to <code>reddit/hot</code>, pass explain, return 5 rows, still broken</h2>
+
+<p>The trace pointed at the filter as the failure surface, so the next iteration had to either drop the filter or replace the upstream tap with one whose data has better engagement signals. I went with the second option. <code>reddit/hot</code> returns recent popular posts and doesn't do any classification, which seemed like the cleaner primitive. I drafted a three-step pipe: <code>reddit/hot</code> with a larger limit, sort by comment count (higher comment count means higher community engagement, which was the user's explicit ranking criterion), take top five.</p>
+
+<pre><code>{
+  "steps": [
+    { "id": "hot",    "run": ["reddit", "hot"],
+      "args": { "subreddit": "$args.subreddit", "limit": 50 } },
+    { "id": "ranked", "run": ["tap", "sort"],
+      "args": { "rows": "$hot.rows", "field": "comments", "order": "desc" } },
+    { "id": "top",    "run": ["tap", "limit"],
+      "args": { "rows": "$ranked.rows", "n": "$args.limit" } }
+  ],
+  "return": "$top.rows"
+}</code></pre>
+
+<p><code>tap.explain</code> returned <code>ok: true</code>. Three steps, three sequential rounds, no warnings. I saved this as the new version of <code>rdk/pain-scan</code> (git <code>ade9b9f</code>), ran it, and got five rows back in 3652ms. This is what they looked like:</p>
+
+<pre><code>[
+  { rank: "1", title: "Weekly 'I made a useful thing' Thread - April 10, 2026", score: "3",   ... },
+  { rank: "2", title: "Patch Tuesday Megathread - March 10, 2026",              score: "122", ... },
+  { rank: "3", title: "Vendors that skip the discovery call ...",               score: "82",  ... },
+  { rank: "4", title: "France Launches Government Linux Desktop Plan ...",      score: "681", ... },
+  { rank: "5", title: "Are we understaffed?",                                   score: "143", ... }
+]</code></pre>
+
+<p>Something about this is off. If the pipe is supposedly sorting by <em>comment count</em> descending, why are the top two rows "Weekly 'I made a useful thing' Thread" and "Patch Tuesday Megathread"? Those don't look like the most-discussed threads in r/sysadmin today. In fact, "Weekly 'I made a useful thing'" has a score of 3 — essentially nothing. Also, the returned <code>columns</code> list is <code>["rank", "title", "subreddit", "score", "url"]</code>. <strong>There's no <code>comments</code> column.</strong></p>
+
+<p><code>tap.trace</code> on this run confirmed the suspicion in one field:</p>
+
+<pre><code>{
+  "pipe": {
+    "nodes": [
+      { "id": "hot",    "rows_out": 50,
+        "columns_out": ["rank", "title", "subreddit", "score", "url"] },
+      { "id": "ranked", "rows_out": 50,
+        "args_resolved": { "rows": [ /* 50 rows in ORIGINAL rank order */ ],
+                           "field": "comments", "order": "desc" },
+        "columns_out": ["rank", "title", "subreddit", "score", "url"] },
+      { "id": "top",    "rows_out": 5 }
+    ]
+  }
+}</code></pre>
+
+<p>The <code>hot</code> step returned 50 rows with <code>columns_out</code> that does not contain <code>comments</code>. The <code>ranked</code> step's output rows are in the same order as its input rows. <strong>Sorting by a field that doesn't exist silently no-ops</strong> — <code>tap/sort</code> compares undefined against undefined, concludes they're equal, and leaves the array unchanged. The <code>top</code> step then takes the first five rows of the original rank ordering.</p>
+
+<p>So round 3 is a subtler failure than round 2. Round 2 returned zero rows — loudly wrong. Round 3 returned five rows in a stable, runnable response — quietly wrong. Without the trace, a user seeing those five rows would assume the pipe was working and ship it. The bug would live in production forever because every invocation would look successful.</p>
+
+<p>This is another class of failure <code>tap.explain</code> can't catch in its current implementation. It doesn't check whether a sort field exists in the upstream tap's column schema. That's a real limitation and one of the follow-up items I'm taking away from this demo. A plan could know this: the <code>reddit/hot</code> manifest in <code>tap.list</code> already declares its columns; explain could cross-reference <code>tap/sort</code>'s <code>field</code> argument against the upstream's schema and flag <code>field: "comments"</code> as a warning. Maybe a full week of follow-up work, but the manifest data is already there.</p>
+
+<h2>Round 4: the winning pipe, diagnosed from trace data</h2>
+
+<p>The trace from round 3 told me exactly what to fix. I needed a tap that actually returns a <code>comments</code> column. Looking at the catalog, <code>reddit/pain-points</code> has one — its columns are <code>["title", "score", "comments", "url", "excerpt", "type"]</code>. That's the tap from round 2, which I abandoned because its classifier ate all the rows. But I don't need to filter by <code>type</code>; I just need the <code>comments</code> column. Drop the filter, keep the upstream, sort by <code>comments</code>.</p>
+
+<pre><code>{
+  "steps": [
+    { "id": "pain",   "run": ["reddit", "pain-points"],
+      "args": { "subreddit": "$args.subreddit", "sort": "hot", "limit": 25 } },
+    { "id": "ranked", "run": ["tap", "sort"],
+      "args": { "rows": "$pain.rows", "field": "comments", "order": "desc" } },
+    { "id": "top",    "run": ["tap", "limit"],
+      "args": { "rows": "$ranked.rows", "n": "$args.limit" } }
+  ],
+  "return": "$top.rows"
+}</code></pre>
+
+<p><code>tap.explain</code> returned <code>ok: true</code>. I saved as git <code>145978f</code> and ran it. The response came back in 1837ms — noticeably faster than the earlier runs, probably because Reddit's CDN was cached. Five rows, sorted descending by comment count:</p>
+
+<table>
+<thead><tr><th>Rank</th><th>Comments</th><th>Title</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>259</td><td>France Launches Government Linux Desktop Plan as Windows Exit Begins</td></tr>
+<tr><td>2</td><td>231</td><td>When do you NOT create a support ticket?</td></tr>
+<tr><td>3</td><td>225</td><td>Bad IT decisions causing a corporate meltdown</td></tr>
+<tr><td>4</td><td>189</td><td>Patch Tuesday Megathread - March 10, 2026</td></tr>
+<tr><td>5</td><td>119</td><td>Can you tell me why I should move away from "golden master" imaging?</td></tr>
+</tbody>
+</table>
+
+<p>The trace confirms the sort actually sorted this time. Input rows had comments values like 225, 259, 61, 119, 231, 189 — random order. Output rows are strictly descending: 259, 231, 225, 189, 119. Good.</p>
+
+<p>And look at the content. Row 2 is a classic sysadmin argument about ticket granularity where everyone disagrees (231 comments, which is how you know it's controversial). Row 3 is literally a thread titled "Bad IT decisions causing a corporate meltdown." Row 4 is the Patch Tuesday Megathread, which is the monthly community dumping ground for whatever broke this round. Row 5 is someone asking for permission to stop doing something they're not sure about. These are <strong>actually pain-point-flavored discussions</strong>, which is what the user goal asked for — even though every single one was classified as <code>type: "discussion"</code> by the internal keyword matcher. Comment count turns out to be a substantially better pain-point proxy than the 19-keyword classifier, at least on this subreddit.</p>
+
+<p>Four rounds. Two trace-driven fixes. One working pipe. Zero external AI calls. The whole loop, start to finish, ran in about ninety seconds of wall-clock time through MCP tool calls from Claude Code. The saved pipe lives at <code>~/.tap/taps/rdk/pain-scan.tap.js</code>, is git-committed, and will run forever at zero AI cost per invocation.</p>
+
+<h2>The reference pipe has the same silent bug</h2>
+
+<p>Here's the finding I didn't expect when I started this session. I ran the original hand-written <code>rdk/market-scan</code> on the same subreddit to see if it avoided the problem. The first attempt crashed with <code>Error: operation 'pipe' is restricted in this context</code>. That's the static-pipe sandbox constraint — <code>rdk/market-scan</code> still uses the old inline <code>handle.pipe({...})</code> form inside <code>async tap()</code>, which runs in the sandboxed Worker and can't forward pipe calls to the executor. This is a pending migration that earlier work today explicitly called out. It just hadn't come up as a blocker until now. Second commit for the follow-up list.</p>
+
+<p>I re-ran with <code>noSandbox: true</code>. The pipe produced output, and the output contained what the hand-written code promised: a community section populated from <code>reddit/sub-intel</code>, a trending section populated with ten <code>reddit/hot</code> posts — and a pain_points section that was <strong>empty</strong>.</p>
+
+<pre><code>{
+  "community":  [ { "subreddit": "sysadmin", /* ... */ } ],
+  "pain_points": [],
+  "trending":    [ /* 10 hot posts */ ],
+  "pain_count":  0
+}</code></pre>
+
+<p>The hand-written reference pipe has the same silent failure my forged round-2 pipe had, for the exact same reason. It uses <code>tap/filter{field: "type", eq: "pain_point"}</code> on <code>reddit/pain-points</code>'s output. On any subreddit whose hot threads don't happen to contain pain keywords in their titles, the filter eats every row, <code>pain_points</code> comes back empty, and the other two sections (community, trending) hide the bug by still populating. Anybody reading the output at a glance might even think everything worked.</p>
+
+<p>This is what production silent bugs look like. Nobody wrote a test that specifically checked for non-empty pain_points on r/sysadmin, because the people who wrote the pipe were testing on r/SaaS or r/indiehackers, where the subreddit vernacular uses words like "broken" and "frustrat" regularly enough that the classifier trips. The failure mode only exists in places where the subreddit's phrasing is different. Running my own demo against r/sysadmin was the first time the bug had been exercised, at least as far as I know.</p>
+
+<p>I pulled the market-scan trace too. The round structure was more interesting than pain-scan's, because market-scan fetches three reddit taps in parallel in round 0:</p>
+
+<pre><code>"rounds_actual": [
+  ["intel", "pain", "hot"],  // 3-way parallel, total 3970ms
+  ["pain_only"],             //  1ms (the silent eat)
+  ["ranked"],                //  0ms (no rows to sort)
+  ["top"]                    //  1ms (no rows to limit)
+]</code></pre>
+
+<p>Individual durations for round 0 were 3349ms (pain), 3356ms (hot), and 3970ms (intel). The round total was 3970ms, because <code>reddit/sub-intel</code> is the critical path and the other two fetches are shorter. That's a useful optimization target for some future post: if latency mattered, the first place to look would be <code>reddit/sub-intel</code>, because speeding up the other two can never make the whole round faster than intel's 3.97 seconds. None of that would be easy to see without trace; the <code>tap.run</code> response would just tell you "the pipe took ~4 seconds" and hide which step dominated.</p>
+
+<p>Third commit for the follow-up list: <code>reddit/pain-points</code> needs a better classifier. Options include expanding the keyword list, adding body-text matching, or switching to something learned. The right move probably depends on measuring how often this bug bites in practice across different subreddits, which is itself a great trace-driven study.</p>
+
+<h2>What the sandwich actually caught, and what it couldn't</h2>
+
+<p>Four rounds of a real workflow is enough evidence to break down what each tool did and what each tool missed:</p>
+
+<p><strong><code>tap.explain</code> caught zero bugs in this session, because it only looks at shapes.</strong> Round 1: pass. Round 2: pass. Round 3: pass. Round 4: pass. All four rounds were structurally valid. The bugs were in the data (round 2), in the schema cross-reference (round 3), and in neither (round 4). Explain did its job — verify that each step's args satisfy the sub-tap's required args, that every <code>$ref</code> points to a real step, that there are no cycles. That's all explain promises and all it delivers. The demo showed that this is necessary but never sufficient, and that the cases where explain is sufficient are the boring cases.</p>
+
+<p><strong><code>tap.run</code> gave me a <code>run_id</code> for every invocation and otherwise told me almost nothing.</strong> It knows it succeeded (no thrown exception), it knows the row count, it knows the total time. That's it. Without the <code>run_id</code>, correlating a broken run with a later diagnostic would require re-running, which often isn't deterministic and sometimes is destructive. The <code>run_id</code> is the handle that makes post-mortems tractable. Nothing else about <code>tap.run</code>'s response tells you whether the result was what you wanted — that's not its job.</p>
+
+<p><strong><code>tap.trace</code> was the only tool that diagnosed anything.</strong> Round 2's diagnosis took one call and one field (<code>pain_only.rows_out: 0</code> with <code>pain.rows_out: 23</code>). Round 3's diagnosis took one call and two fields (<code>ranked.columns_out</code> missing <code>comments</code>, combined with the input rows being in original rank order in <code>args_resolved</code>). In both cases the trace contained the smoking gun in an easily-findable location and the fix was targeted, not speculative. Neither diagnosis involved re-running the pipe, adding log statements, or reading sub-tap source code (though I did read pain-points's source in round 2 to understand the classifier's implementation, which is a layer deeper than the trace needs to surface).</p>
+
+<p><strong>The plan and the trace aligned on the boring parts and diverged on exactly the interesting part.</strong> The <code>rounds</code> field in explain's output matched <code>rounds_actual</code> in trace for every round. The <code>requires</code> list matched the <code>run</code> tuples. The <code>argsResolved</code> in explain was a subset of <code>args_resolved</code> in trace (explain shows symbolic refs for <code>$step.field</code>, trace shows the resolved values). What differed was <code>rows_out</code>, which explain can't predict — and rows_out divergences are exactly where the bugs are. A tool that diffed explain's plan against trace's actual results and highlighted the first step with an unexpected <code>rows_out: 0</code> or unexpected <code>columns_out</code> would have flagged every round 2 and round 3 failure in zero additional steps. That's maybe two hundred lines of TypeScript and a weekend. Writing it is on the follow-up list too.</p>
+
+<h2>What this proved about <code>forge.pipe</code> versus the primitives it wraps</h2>
+
+<p>Every round of this demo ran through <code>tap.list</code>, <code>tap.explain</code>, <code>forge.save</code>, <code>tap.run</code>, and <code>tap.trace</code>. I never once called <code>forge.pipe</code>. The agent loop — draft, validate, save, run, diagnose, iterate — ran inside Claude Code as the MCP host, using the primitives directly. Fourteen MCP tool calls across four rounds, zero LLM tokens inside the Tap process, one working pipe at the end.</p>
+
+<p><code>forge.pipe</code> is genuinely useful for a different audience. It packages the same loop for MCP hosts that don't have built-in AI: a CLI user who wants to type <code>tap forge-pipe "goal"</code> and get a result, a scheduler that calls Tap from a cron job, a product embedding Tap inside something that isn't itself a conversational agent. For those cases, <code>forge.pipe</code> bundles the AI transport (Claude / OpenAI / local Ollama), the prompt template, the parse loop, the explain check, and the round bookkeeping into one tool call. That's a real convenience and it's why the tool exists.</p>
+
+<p>But for an AI host calling Tap over MCP — which is every use through Claude Code, Cursor, CraftAgents, or any MCP-connected agent — the primitives are the interface. <code>forge.pipe</code> becomes unnecessary in that context. What matters is that <code>tap.list</code>, <code>tap.explain</code>, and <code>forge.save</code> are MCP-visible, structured, and cheap to call. What matters even more is that <code>tap.trace</code> closes the iteration loop: every failed run becomes actionable data, not a dead end.</p>
+
+<p>This is the concrete meaning of "Tap is the tool layer, not the AI layer." Every AI host gets better the moment its tools give it structured, queryable, reversible primitives. The wrapper tools exist for clients that need them. The base tools are the actual product.</p>
+
+<h2>Follow-up commits this demo put on the list</h2>
+
+<ol>
+<li><code>checkTapQuality</code> needs to learn about static pipes. It currently emits a false-positive "Missing tap()" warning on any pipe tap without an <code>async tap()</code> function. The fix is a one-line check for <code>mod.pipe</code>.</li>
+<li><code>rdk/market-scan</code> needs to migrate from inline <code>handle.pipe({...})</code> to static <code>pipe: {}</code>. The retrospective called this out as a known pending migration; this demo turned it into a blocker, because under the sandbox the pipe crashes instead of producing wrong output. That's arguably the safer failure mode but not the one users expect.</li>
+<li><code>reddit/pain-points</code> needs a better classifier. A 19-keyword title-only scan is too narrow and doesn't handle paraphrase or subreddit drift. Expand the keyword list for a short-term fix, add body-text matching for a medium-term fix, or switch to a learned classifier for a long-term fix — the right choice depends on seeing how often the current classifier misses across real subreddits, which is itself a good trace-driven study.</li>
+<li><code>tap.explain</code> should cross-reference <code>tap/sort</code> / <code>tap/filter</code> field arguments against upstream taps' declared column schemas. Round 3's silent no-op would become a <code>warnings: true</code> pre-run. All the data is already in <code>tap.list</code>.</li>
+<li>Write an <code>explain</code>-vs-<code>trace</code> diff tool. Both sides already share field names for nodes, rounds, and args. A diff that highlights first-divergence rows (primarily unexpected <code>rows_out: 0</code> or <code>columns_out</code> schema mismatches) would catch the class of bug this post is about automatically.</li>
+</ol>
+
+<h2>The meta-point</h2>
+
+<p>I shipped three new MCP tools earlier today. I used them on a real case in Claude Code. The demo ran through four rounds of draft, save, run, and trace. Three of the four rounds produced subtly broken pipes. All three bugs were caught by <code>tap.trace</code> on the first diagnostic call after each failed run. The fix for each round came from a specific field in the previous round's trace, not from guessing. The fourth round produced a working pipe that is now on disk, git-committed, and will run forever at zero AI cost. Along the way the demo surfaced an undetected production bug in the hand-written reference pipe. All of this happened through MCP tool calls from Claude Code, with zero external AI API calls and zero per-round cost.</p>
+
+<p>The lesson isn't that <code>forge.pipe</code> is a failed tool. It's the opposite: <code>forge.pipe</code> is useful for the cases where it's needed, and most of its value is in the primitives it wraps. For any MCP host that's already an AI, the primitives are the product. Read the catalog. Draft a pipe. Call <code>tap.explain</code>. Save it. Run it. Call <code>tap.trace</code> when something surprises you. Iterate until convergence. That's the whole workflow, and it's the whole product.</p>
+
+<p>If you're running Tap through Claude Code, Cursor, or any other MCP-connected agent, you already have everything you need to do what I did in this post. No extra subscription, no API key, no cost per composition. The tools are already on your tool list. The question is whether you use them.</p>
