@@ -45,6 +45,12 @@ a:hover { text-decoration: underline; }
 <h1>Blog</h1>
 
 <div class="post">
+<h2><a href="composable-taps-are-just-javascript.html">Composable Taps Are Just JavaScript: Why Tap's Pipeline DSL Doesn't Need YAML</a></h2>
+<p>GitHub Actions, Kubernetes, CircleCI, Airflow, n8n — every pipeline system in 2026 is YAML. When we designed Tap's composition DSL, the industry convention was obvious. We picked JavaScript instead, and it's strictly better: diff-friendly, AI-generatable, type-checked, debuggable. A full breakdown with real before/after code from migrating <code>bounty/match</code> to the new <code>tap.pipe()</code> executor.</p>
+<div class="meta">April 11, 2026 &middot; 11 min read</div>
+</div>
+
+<div class="post">
 <h2><a href="building-mv3-extension-git-log-retrospective.html">40 Commits to Ship a Chrome MV3 Extension: A Git Log Retrospective</a></h2>
 <p>Building Tap's Chrome extension took three months and forty-ish commits fighting Chrome MV3. A category-by-category tour of the real commits: service worker termination, <code>chrome.alarms</code>' silent 1-minute floor, the 25-second timeout cap, <code>chrome.storage.session</code> as the only durable state, the CDP debugger-attached tax, the <code>unsafe-eval</code> ban, and tab stealing across concurrent sessions.</p>
 <div class="meta">April 11, 2026 &middot; 10 min read</div>

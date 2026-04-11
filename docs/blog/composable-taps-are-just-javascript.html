@@ -1,0 +1,251 @@
+---
+layout: post
+title: "Composable Taps Are Just JavaScript: Why Tap's Pipeline DSL Doesn't Need YAML"
+description: "GitHub Actions pipelines are YAML. Kubernetes is YAML. CircleCI, Airflow, n8n — all YAML. When we designed Tap's composition DSL, the convention was obvious. We picked JavaScript instead, and it's strictly better for every argument YAML is usually chosen for: diff-friendly, AI-generatable, type-checked, debuggable. Here's the full breakdown with real before/after code from migrating Tap's bounty/match composite tap."
+keywords: "tap pipeline dsl, javascript vs yaml pipelines, workflow as code, declarative composition, tap.pipe, browser automation composition, ai agent workflow, tap.js composite taps, jsdoc type imports"
+date: 2026-04-11
+read_time: "11 min read"
+subtitle: "Why we chose JS object literals over a new YAML format"
+og_title: "Composable Taps Are Just JavaScript"
+og_description: "GitHub Actions, K8s, Airflow — all YAML. When we designed Tap's pipeline DSL, the convention was obvious. We picked JavaScript instead, and it's strictly better. Here's why, with real migration code."
+twitter_title: "Composable Taps Are Just JavaScript"
+twitter_description: "Why Tap's pipeline DSL is JS objects, not YAML. Every argument for YAML in pipelines is actually an argument against it once you write one."
+---
+
+<p>Every pipeline-as-code system in modern DevOps is YAML. GitHub Actions, CircleCI, GitLab CI, Kubernetes, Helm, Argo, Airflow (optionally), Tekton, Jenkins (declarative), Azure Pipelines, n8n workflows — the list has no exceptions. When we sat down to design <a href="https://taprun.dev/">Tap</a>'s composition layer — how one tap calls another tap and chains the results together — the industry answer was obvious. A new format, call it <code>.pipe.yaml</code>, with <code>steps:</code> and <code>run:</code> and <code>args:</code> keys.</p>
+
+<p>I spent a day writing up that proposal. And then a user asked me the question I should have asked myself first: <em>why not just use JavaScript?</em></p>
+
+<p>This is the post I should have written before proposing YAML. It's the case against a YAML pipeline DSL for Tap, the case for JavaScript object literals, and the migration of a real Tap composite (<code>bounty/match</code>) that proves the approach works in production.</p>
+
+<h2>Every argument for YAML is actually an argument against it</h2>
+
+<p>YAML advocates cite five benefits. Each one turns out to be false — or worse, achievable via a strictly better route — once you look at it.</p>
+
+<h3>1. YAML "limits blast radius" by not being Turing-complete</h3>
+
+<p>The strongest argument for YAML is that it's not a programming language. A YAML file can't do arbitrary computation, so it can't contain bugs beyond the structural ones the schema validator catches. This is genuinely valuable when your pipeline is authored by marketers and PMs who don't code, like in Zapier or Make.</p>
+
+<p>But look at what every mature YAML pipeline system has actually done over time:</p>
+
+<pre>v1  simple steps with names and run commands
+v2  add `if:` conditionals
+v3  add `${{ }}` expression interpolation
+v4  add `matrix:` for fan-out
+v5  add `parallel:` + `needs:` for DAG scheduling
+v6  add built-in functions like `fromJson()`, `contains()`, `hashFiles()`
+v7  add `continue-on-error:`, `retry:`, `timeout-minutes:`
+v8  add `outputs:` for cross-job value passing
+v9  add reusable workflows + composite actions + anchors</pre>
+
+<p>Congratulations, you invented JavaScript — with worse syntax, no debugger, no type checker, and no LSP. GitHub Actions' current expression language has this in its docs as real syntax:</p>
+
+<pre>if: ${{ fromJSON(needs.setup.outputs.matrix).include[0].name == 'foo' &amp;&amp;
+       !contains(fromJSON(needs.build.outputs.tags), 'skip-deploy') }}</pre>
+
+<p>This is a programming language. A bad one. The YAML escape hatch doesn't limit blast radius — it just forces every new feature to be expressed in a worse notation.</p>
+
+<h3>2. YAML is "diff-friendly"</h3>
+
+<p>This one's just false. A JavaScript object literal diffs exactly as well as YAML:</p>
+
+<pre>-  { id: "filter", run: ["tap", "filter"], args: { rows: "$hot.rows", gt: 10 } },
++  { id: "filter", run: ["tap", "filter"], args: { rows: "$hot.rows", gt: 50 } },</pre>
+
+<p>This is a perfectly readable, reviewable git diff. The YAML equivalent is one line of <code>value: 10 → value: 50</code>. Neither is meaningfully better than the other. And when the refactor is bigger — renaming a field across six steps, moving a step from position 2 to position 5, reorganizing the DAG — the YAML diff gets <em>worse</em> because whitespace-significant indentation doubles the noise.</p>
+
+<h3>3. YAML is "easier to generate with AI"</h3>
+
+<p>This one is the most backwards. Training data:</p>
+
+<ul>
+<li><strong>JavaScript / TypeScript:</strong> trillions of tokens, decades of open source code, every major LLM sees it as a first-class language.</li>
+<li><strong>GitHub Actions YAML:</strong> maybe tens of billions of tokens.</li>
+<li><strong>Tap's bespoke <code>.pipe.yaml</code> DSL, which doesn't exist yet:</strong> zero tokens.</li>
+</ul>
+
+<p>Claude and GPT-5 generate JavaScript object literals with the same fluency they generate English. They generate custom YAML DSLs by cargo-culting the closest thing they've seen, which is usually wrong. If your goal is AI-authored pipelines, the format to pick is the one the LLM already knows in its bones — which for code is always going to be JavaScript.</p>
+
+<h3>4. YAML gives you "free schema validation"</h3>
+
+<p>JSON Schema can validate YAML at parse time, catching typos in field names and type mismatches before the pipeline runs. This is real — but TypeScript does strictly more.</p>
+
+<p>A TypeScript interface catches the same typos, produces better error messages (with source location, type hover, and autocomplete), gets refactored across the codebase for free, and lets you compose types in ways JSON Schema can't (generics, unions, mapped types, conditional types). The tradeoff isn't "validation vs. no validation" — it's "schema validation vs. a much stronger type system that also validates."</p>
+
+<h3>5. YAML is "not code, so it's declarative"</h3>
+
+<p>A JavaScript object literal is also declarative. Watch:</p>
+
+<pre>const pipeline = {
+  steps: [
+    { id: "hot",  run: ["reddit", "search"], args: { subreddit: "webscraping", sort: "hot" } },
+    { id: "top",  run: ["tap", "filter"],    args: { rows: "$hot.rows", field: "score", op: "gt", value: 100 } },
+    { id: "sum",  run: ["reddit", "insights"], args: { posts: "$top.rows" } },
+  ],
+  return: "$sum.rows",
+};</pre>
+
+<p>This is data, not code. It has no control flow. It has no side effects. It can be <code>JSON.stringify</code>d, diffed, versioned, persisted, analyzed, and re-loaded. You can write a visualizer that renders it as a DAG without running it. An AI agent can generate, mutate, and heal it the same way it would a YAML file.</p>
+
+<p>"Declarative" is a property of <em>how you use the format</em>, not of the format itself. JavaScript used as a DSL is declarative. YAML used as a programming language (see argument 1) is not. The format is the wrong axis to judge on.</p>
+
+<h2>The Tap migration: bounty/match before and after</h2>
+
+<p>Here's a real composite tap from Tap's skill library, before and after the refactor. This is <code>bounty/match</code> — a pipeline that fetches bounties from Algora, IssueHunt, and HackerOne, scores them by opportunity quality (competition, freshness, maintainer activity), and returns the top-N.</p>
+
+<h3>Before: imperative with indirect args</h3>
+
+<pre>export default {
+  site: "bounty",
+  name: "match",
+  intent: "read",
+  description: "Composable bounty pipeline",
+  args: {
+    min:          { type: "number", default: 100 },
+    platform:     { type: "string", default: "" },
+    max_comments: { type: "number", default: 15 },
+    max_days:     { type: "number", default: 60 },
+    limit:        { type: "number", default: 10 },
+  },
+
+  async tap(tap, args) {
+    return await tap.run("bounty", "score", {
+      source_site: "bounty",
+      source_name: "all",
+      source_args: JSON.stringify({
+        min: args.min,
+        platform: args.platform,
+      }),
+      max_comments: args.max_comments,
+      max_days:     args.max_days,
+      limit:        args.limit,
+    });
+  },
+};</pre>
+
+<p>This works, but notice what it's doing. <code>bounty/match</code> is passing <em>the name of another tap</em> (<code>source_site: "bounty"</code>, <code>source_name: "all"</code>) as a string argument to <code>bounty/score</code>, along with <em>JSON-serialized inner args</em> (<code>source_args: JSON.stringify({...})</code>). <code>bounty/score</code> then receives these strings, parses them, and calls <code>tap.run(source_site, source_name, parsed_args)</code> internally.</p>
+
+<p>This is composition by convention — the entire pipeline DAG is hidden inside a JSON-string parameter. You cannot see from the file which sub-taps actually run. You cannot statically check that <code>source_site: "bounty"</code> and <code>source_name: "all"</code> correspond to an existing sub-tap. You cannot introspect or visualize the flow. If <code>bounty/all</code> gets renamed or removed, this breaks at runtime with a "tap not found" error that looks unrelated to <code>bounty/match</code>.</p>
+
+<h3>After: tap.pipe() with explicit DAG</h3>
+
+<pre>/// &lt;reference path="../../../Documents/tap-core/types.d.ts" /&gt;
+
+/** @type {import('../../../Documents/tap-core/types.d.ts').TapModule} */
+export default {
+  site: "bounty",
+  name: "match",
+  intent: "read",
+  description: "Pipeline: bounty/all → bounty/score → top-N by opportunity score",
+  requires: ["bounty/all", "bounty/score"],
+  columns: [
+    { name: "amount",   type: "string", required: true },
+    { name: "title",    type: "string", required: true },
+    { name: "platform", type: "string" },
+    { name: "link",     type: "string", required: true },
+    { name: "score",    type: "string", required: true },
+    { name: "days_old", type: "string" },
+    { name: "comments", type: "string" },
+  ],
+  health: { min_rows: 1, non_empty: ["amount", "title", "link", "score"] },
+  args: {
+    min:          { type: "number", default: 100 },
+    platform:     { type: "string", default: ""  },
+    max_comments: { type: "number", default: 15  },
+    max_days:     { type: "number", default: 60  },
+    limit:        { type: "number", default: 10  },
+  },
+
+  async tap(handle, args) {
+    return handle.pipe({
+      steps: [
+        {
+          id: "all",
+          run: ["bounty", "all"],
+          args: { min: "$args.min", platform: "$args.platform" },
+        },
+        {
+          id: "scored",
+          run: ["bounty", "score"],
+          args: {
+            rows: "$all.rows",
+            max_comments: "$args.max_comments",
+            max_days:     "$args.max_days",
+            limit:        "$args.limit",
+          },
+        },
+      ],
+      return: "$scored.rows",
+    });
+  },
+};</pre>
+
+<p>Eleven lines became forty (if you count the structured column metadata and the JSDoc reference path). The file got bigger, not smaller. And yet every structural property improved:</p>
+
+<ul>
+<li><strong>The DAG is visible.</strong> <code>bounty/all</code> runs first, then <code>bounty/score</code> receives its rows. That's in the file, readable top-to-bottom, no reverse engineering needed.</li>
+<li><strong><code>requires[]</code> is now declared.</strong> When someone runs <code>forge.save</code> on a future version of this tap, Tap will verify that <code>bounty/all</code> and <code>bounty/score</code> both exist before writing the file. A typo would fail save, not silently pass until runtime.</li>
+<li><strong>Columns have types.</strong> The old form had <code>columns: ["amount", "title", ...]</code> — a bare string array with no type info. The new form declares each column as <code>{ name, type, required }</code>, so downstream pipes can validate their input contract at load time.</li>
+<li><strong>JSDoc types flow in.</strong> Any editor that understands <code>@type {import(...)}</code> — VS Code, Cursor, WebStorm, neovim with LSP — gets autocomplete on <code>handle.pipe(...)</code>, on every field of the pipe object, on every sub-tap argument. Zero configuration, works out of the box.</li>
+<li><strong>Arguments forward via <code>$args</code>.</strong> The pipe doesn't need a closure over the outer <code>args</code> variable. References like <code>$args.min</code> get resolved by the executor at step launch time, which means the whole pipe is a plain data structure that survives <code>JSON.stringify</code> and can be analyzed without executing anything.</li>
+<li><strong>Fan-out is automatic.</strong> If you add a third step that also depends on <code>$all.rows</code>, the executor sees that both step 2 and step 3 have no dependency on each other and runs them in parallel. You don't have to think about it.</li>
+<li><strong>Sub-tap calls are deduped.</strong> If two different steps both call <code>github/trending</code> with the same args, the run-scoped cache returns the same result to both, hitting GitHub exactly once.</li>
+</ul>
+
+<h2>The refactor that made it possible</h2>
+
+<p>One thing the refactor required was updating <code>bounty/score</code> to accept its input as a direct <code>rows[]</code> array, instead of the old indirect <code>source_site</code> / <code>source_name</code> / <code>source_args</code> pattern. The new version accepts both, with <code>rows</code> preferred and the legacy path kept alive for backwards compatibility:</p>
+
+<pre>async tap(tap, args) {
+  let bounties;
+  if (Array.isArray(args.rows)) {
+    <span class="comment">// New path: pre-fetched rows from tap.pipe composition</span>
+    bounties = args.rows;
+  } else if (args.source_site &amp;&amp; args.source_name) {
+    <span class="comment">// Legacy path: fetch from an indirect source tap</span>
+    const sourceArgs = JSON.parse(args.source_args || "{}");
+    bounties = await tap.run(args.source_site, args.source_name, sourceArgs);
+  } else {
+    throw new Error("bounty/score: pass rows[] or source_site + source_name");
+  }
+  <span class="comment">// ... scoring logic unchanged ...</span>
+}</pre>
+
+<p>This is the right pattern for any composite-style sub-tap: accept <code>rows[]</code> as the preferred input path, keep the old indirect path working so existing callers don't break, and migrate callers one at a time. After every caller has moved, the legacy path can be removed in a future major version.</p>
+
+<h2>The six-step implementation</h2>
+
+<p>Everything above landed in a six-step implementation cycle that I'd recommend for anyone building their own composition layer:</p>
+
+<ol>
+<li><strong>Column schema types</strong> (1 day). Replace bare <code>columns: string[]</code> with <code>columns: ColumnSchema[]</code>. Backwards compatible. This is the type foundation every subsequent step builds on.</li>
+<li><strong><code>tap.pipe()</code> executor</strong> (2 days). DAG analysis, topological sort, parallel scheduling, <code>$ref</code> resolution, clear error messages with step IDs. 180 lines of Deno TypeScript.</li>
+<li><strong>Run cache + requires validation</strong> (half day). Promise-sharing cache so identical sub-tap calls across different steps dedupe. <code>requires: string[]</code> on the tap module plus <code>forge.save</code>-time validation that every listed sub-tap exists.</li>
+<li><strong>Shipped <code>types.d.ts</code></strong> (half day). A single declaration file covering <code>Pipe</code>, <code>PipeStep</code>, <code>TapHandle</code>, <code>TapModule</code>, <code>ColumnSchema</code>, and the rest of the DSL surface. Drift-detected against <code>src/</code> by a test that compares field names via regex extraction.</li>
+<li><strong>Migrate one real composite</strong> (half day). <code>bounty/match</code> as proof-of-concept. Test with mocked <code>bounty/all</code> and <code>bounty/score</code> to verify the pipeline runs end-to-end without hitting live APIs.</li>
+<li><strong>Write the blog post</strong> (this one). Tells the story, locks in the design decisions.</li>
+</ol>
+
+<p>Total: about five days of focused implementation, plus the test suite grew from 580 passing tests to 621 — 41 new tests across 5 new test files, all red-green-refactored. Zero regression. Every existing composite tap continues to work without modification.</p>
+
+<h2>What we didn't build (and why)</h2>
+
+<p>I want to mention the things that are on <em>most</em> pipeline systems' feature lists but that I deliberately didn't build:</p>
+
+<ul>
+<li><strong>No <code>tap.parallel([...])</code> helper.</strong> <code>tap.pipe</code> already auto-parallelizes independent steps. A one-off parallel helper is a <code>Promise.all</code> one-liner any JavaScript author already knows how to write. Adding it as a named helper would just be API noise.</li>
+<li><strong>No retry / timeout / circuit-breaker primitives in the pipe spec.</strong> These belong at the <em>step</em> level (the sub-tap's own logic), not the pipeline level. Wrapping <code>tap.pipe</code> in a retry loop is three lines of JavaScript and keeps the pipeline DSL minimal.</li>
+<li><strong>No conditionals inside steps.</strong> Conditional sub-step execution is a slippery slope — once <code>if:</code> exists, you need <code>switch:</code>, then <code>while:</code>, then expressions. JavaScript already has all of these. If you need conditional composition, write a JavaScript function that returns different pipe shapes based on its input.</li>
+<li><strong>No cross-pipeline value passing.</strong> A pipe returns one value. If you need a second pipeline to consume it, call them in sequence from a regular tap function. There's no need to invent <code>outputs:</code> or <code>needs:</code> syntax.</li>
+<li><strong>No pipeline-level visualizer.</strong> Can be added later as a pure-JSON consumer of the <code>Pipe</code> structure — doesn't need any special support from the executor.</li>
+</ul>
+
+<p>The guiding principle: <em>redefine before extending</em>. Tap's core has stayed at ~5,500 lines by asking "what should this thing <em>be</em>?" before adding features. The pipeline DSL grew by about 300 lines of executor plus a types file. Every feature I left out would have been a concession to YAML-pipeline muscle memory, not a real need.</p>
+
+<h2>JavaScript was the right default all along</h2>
+
+<p>The reason every pipeline system in 2026 is YAML isn't that YAML is the correct choice for pipelines. It's that when your target user is a non-developer — a sysadmin in 2006, a marketer in 2016 — YAML is the <em>only</em> format that maintains plausible deniability that the user "isn't coding." Once you accept that your target user is actually a developer running Claude Code or Cursor, the optimization flips. JavaScript isn't just <em>acceptable</em> — it's strictly better, because every affordance YAML advertises is something JavaScript already does better with ten more years of tooling.</p>
+
+<p>If you're designing a composition layer for a developer-focused tool in 2026, default to JavaScript (or TypeScript). Default to plain object literals, no runtime builder pattern, no class hierarchy. Declare types via a single <code>.d.ts</code> file that ships with the tool so JSDoc <code>@type</code> imports light up every editor. Validate invariants with a type system that already exists. When a user asks why you didn't pick YAML, show them what they'd be giving up.</p>
+
+<p>And if you already wrote a YAML pipeline DSL — consider whether the right move is to freeze it in maintenance mode and ship a JavaScript escape hatch that your power users can graduate to. That's the path where the feature pressure comes off the YAML layer and the genuinely complex workflows live in the one format that can handle them.</p>
