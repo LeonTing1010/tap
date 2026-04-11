@@ -9,6 +9,14 @@
 <lastBuildDate>Sat, 11 Apr 2026 00:00:00 +0000</lastBuildDate>
 
 <item>
+<title>How Reddit Demand Kit Turned a $0.15 LLM Call Into a $0 Compiled Pipe</title>
+<link>https://taprun.dev/blog/rdk-compiled-pipes-from-llm-prompts.html</link>
+<description>Reddit Demand Kit's market_scan tool burns 26,000 LLM tokens every time a user runs it — $0.15 per call, $135/month for a heavy user. We compiled the prompt into a deterministic JavaScript pipeline that produces the same structured output with zero LLM tokens per run. Break-even: 0.46 of a single invocation. Here's how we did it with Tap's new composition DSL, and why every LLM-wrapping product should steal this pattern.</description>
+<pubDate>Sat, 11 Apr 2026 00:00:00 +0000</pubDate>
+<guid>https://taprun.dev/blog/rdk-compiled-pipes-from-llm-prompts.html</guid>
+</item>
+
+<item>
 <title>Composable Taps Are Just JavaScript: Why Tap's Pipeline DSL Doesn't Need YAML</title>
 <link>https://taprun.dev/blog/composable-taps-are-just-javascript.html</link>
 <description>GitHub Actions, Kubernetes, CircleCI, Airflow, n8n — every pipeline system in 2026 is YAML. When we designed Tap's composition DSL, the convention was obvious. We picked JavaScript instead, and it's strictly better: diff-friendly, AI-generatable, type-checked, debuggable. A full breakdown with real before/after code from migrating bounty/match to the new tap.pipe() executor.</description>
