@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Changelog — Tap</title>
+<meta name="description" content="Tap release notes. Every version bumps, fixes, and new features. v0.11.3 shipped Chrome MV3 service worker persistence, lazy MCP main session, and four related fixes for orphan tab leaks.">
+<meta name="keywords" content="tap changelog, tap release notes, tap version history, tap v0.11.3, chrome extension tap updates, tap MCP fixes">
+<link rel="canonical" href="https://taprun.dev/changelog.html">
+<meta property="og:title" content="Changelog — Tap">
+<meta property="og:description" content="Release notes for every Tap version. The story of every fix, written in one sentence each.">
+<meta property="og:url" content="https://taprun.dev/changelog.html">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://taprun.dev/social-preview.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Changelog — Tap">
+<meta name="twitter:description" content="Release notes for every Tap version.">
+<meta name="twitter:image" content="https://taprun.dev/social-preview.png">
+<meta name="robots" content="index, follow">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='105' cy='115' r='55' fill='%23FFFFFF'/%3E%3Ccircle cx='85' cy='70' r='45' fill='%23FFFFFF'/%3E%3Cellipse cx='75' cy='32' rx='15' ry='22' fill='%23EF4444'/%3E%3Cellipse cx='90' cy='30' rx='12' ry='20' fill='%23DC2626'/%3E%3Cellipse cx='103' cy='35' rx='10' ry='16' fill='%23B91C1C'/%3E%3Cpath d='M 55 68 L 8 75 L 55 85 Z' fill='%23FBBF24'/%3E%3Cpath d='M 55 85 L 8 75 L 12 82 Z' fill='%23D97706'/%3E%3Ccircle cx='70' cy='65' r='14' fill='%231F2937'/%3E%3Ccircle cx='66' cy='61' r='5' fill='%23FFFFFF'/%3E%3Ccircle cx='74' cy='68' r='2.5' fill='%23FFFFFF'/%3E%3Cellipse cx='50' cy='78' rx='8' ry='5' fill='%23FECACA' opacity='0.8'/%3E%3Cellipse cx='125' cy='115' rx='35' ry='30' fill='%23818CF8'/%3E%3Cellipse cx='125' cy='115' rx='25' ry='20' fill='%236366F1'/%3E%3Ccircle cx='95' cy='130' r='25' fill='%23F9FAFB'/%3E%3Cpath d='M 145 140 L 175 185 L 155 180 L 140 145 Z' fill='%23818CF8'/%3E%3Cpath d='M 150 145 L 180 190 L 162 185 L 148 150 Z' fill='%236366F1'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": "Tap Changelog",
+  "description": "Release notes for every Tap version.",
+  "url": "https://taprun.dev/changelog.html",
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "Tap",
+    "url": "https://taprun.dev/"
+  },
+  "about": {
+    "@type": "SoftwareApplication",
+    "name": "Tap",
+    "url": "https://taprun.dev/",
+    "softwareVersion": "0.11.3",
+    "applicationCategory": "DeveloperApplication",
+    "operatingSystem": "macOS, Linux, Windows"
+  }
+}
+</script>
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0a0918; color: #e0e0e0; line-height: 1.8; }
+.container { max-width: 760px; margin: 0 auto; padding: 60px 24px; }
+h1 { font-size: 2.2rem; font-weight: 700; color: #fff; margin-bottom: 8px; line-height: 1.2; font-family: 'Bricolage Grotesque', sans-serif; }
+h2 { font-size: 1.5rem; font-weight: 600; color: #fff; margin-top: 56px; margin-bottom: 4px; display: flex; align-items: baseline; gap: 16px; font-family: 'Bricolage Grotesque', sans-serif; }
+h2 .date { font-size: 0.85rem; font-weight: 400; color: #666; font-family: 'Plus Jakarta Sans', sans-serif; }
+h2 a { color: #fff; }
+h2 a:hover { color: #818cf8; text-decoration: none; }
+h3 { font-size: 0.95rem; font-weight: 600; color: #a0a0b0; margin-top: 20px; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+p, li { font-size: 0.95rem; color: #b0b0b0; margin-bottom: 10px; }
+ul { padding-left: 24px; list-style: none; }
+ul li { position: relative; padding-left: 4px; }
+ul li::before { content: "→"; position: absolute; left: -20px; color: #6366F1; }
+ul li strong { color: #d0d0d8; font-weight: 500; }
+a { color: #818cf8; text-decoration: none; }
+a:hover { text-decoration: underline; }
+.meta-intro { font-size: 0.9rem; color: #888; margin-bottom: 40px; padding-bottom: 24px; border-bottom: 1px solid #222; }
+.back { display: inline-block; margin-bottom: 24px; font-size: 0.9rem; }
+code { background: #1a1a2e; padding: 2px 6px; border-radius: 4px; font-size: 0.88em; font-family: 'JetBrains Mono', monospace; color: #c8c8d0; }
+.version-block { margin-top: 32px; padding-top: 4px; }
+.version-highlight { padding: 14px 18px; background: rgba(129,140,248,0.06); border: 1px solid rgba(129,140,248,0.2); border-radius: 8px; margin: 16px 0 20px; font-size: 0.9rem; color: #c0c0c8; }
+.version-highlight strong { color: #818cf8; }
+hr { border: none; border-top: 1px solid #222; margin: 56px 0 40px; }
+.older { font-size: 0.9rem; color: #888; padding: 16px; background: rgba(255,255,255,0.02); border-radius: 8px; }
+</style>
+</head>
+<body>
+<div class="container">
+<a href="./" class="back">&larr; Tap</a>
+
+<h1>Changelog</h1>
+<p class="meta-intro">Every Tap release, one sentence per fix. For full technical notes on each version, see the <a href="https://github.com/LeonTing1010/tap/releases">GitHub releases page</a>.</p>
+
+<div class="version-block">
+<h2><a href="https://github.com/LeonTing1010/tap/releases/tag/v0.11.3">v0.11.3</a> <span class="date">April 11, 2026</span></h2>
+<div class="version-highlight">
+<strong>Chrome MV3 "many empty tabs" root fix.</strong> Four related bugs, one root cause: MV3 service workers wipe in-memory state every ~30s of idle, but Chrome tabs persist. The sessions Map in the extension was losing track of its own tabs across SW restarts, and every follow-on symptom traced back to that one mismatch. Full post-mortem: <a href="blog/mv3-orphan-tabs-fix.html">Debugging Chrome MV3's "Many Empty Tabs" Bug</a>.
+</div>
+<h3>Fixes</h3>
+<ul>
+<li><strong>Session persistence across service-worker restarts.</strong> Extension's sessions Map is now written through to <code>chrome.storage.session</code> and rehydrated on SW wake. Previously, any session created before an SW idle became an orphan: <code>session.destroy</code> silently no-op'd on lookup miss, and the tab leaked forever.</li>
+<li><strong>nav no longer leaks <code>chrome://newtab/</code> placeholder tabs.</strong> The daemon-path nav handler used to create a replacement tab whenever the current URL was <code>chrome://</code>, updating session.tabId but never closing the original. Now uses <code>chrome.tabs.update</code> in place.</li>
+<li><strong>MCP main session is lazy.</strong> <code>mcp-stdio.ts</code> / <code>mcp-http.ts</code> used to eagerly <code>sessionCreate</code> on the first non-local tool call, wasting a browser tab for pure <code>tap.run</code> workflows (which create their own temp session). Main session now materializes only on first use of the interactive API.</li>
+<li><strong>Compiled-binary detection uses <code>Deno.execPath()</code>.</strong> The prior <code>Deno.mainModule.startsWith("file://")</code> check silently regressed in recent Deno — both source and compiled contexts now return <code>file://</code>-prefixed main modules, so the Playwright→extension fallback never fired and every compiled binary errored with "Playwright is not available" on the first MCP call.</li>
+</ul>
+</div>
+
+<div class="version-block">
+<h2><a href="https://github.com/LeonTing1010/tap/releases/tag/v0.11.2">v0.11.2</a> <span class="date">April 11, 2026</span></h2>
+<h3>Fixes</h3>
+<ul>
+<li><strong><code>npm-publish --sync-only</code> runs sync step only</strong> instead of triggering the full build+publish pipeline. Used by <code>release.sh</code> step 1 to keep npm package.json versions aligned with <code>src/cli.ts</code> VERSION without rebuilding dist/.</li>
+</ul>
+</div>
+
+<div class="version-block">
+<h2><a href="https://github.com/LeonTing1010/tap/releases/tag/v0.11.1">v0.11.1</a> <span class="date">April 10, 2026</span></h2>
+<h3>Fixes</h3>
+<ul>
+<li><strong>Daemon pollWaiters drops dead waiters on timeout.</strong> Stale waiters accumulated on every client timeout and caused subsequent <code>notifyPoll</code> calls to shift resolved no-ops instead of the live extension waiter — every client command was paying the full poll timeout (~20s) before dispatch. Unblocked typical RPC latency back to single-digit milliseconds.</li>
+</ul>
+</div>
+
+<div class="version-block">
+<h2><a href="https://github.com/LeonTing1010/tap/releases/tag/v0.11.0">v0.11.0</a> <span class="date">April 10, 2026</span></h2>
+<div class="version-highlight">
+<strong>MCP goes Playwright-first.</strong> Zero-friction onboarding: <code>tap mcp</code> now defaults to Playwright runtime (no extension, no daemon needed). Users can switch to Chrome mid-session via the new <code>tap.connect(runtime:'chrome')</code> tool when they hit an auth wall.
+</div>
+<h3>Features</h3>
+<ul>
+<li><strong><code>tap.connect</code> — switch runtime mid-session in MCP.</strong> Hit a login wall on a headless run? Call <code>tap.connect(runtime:'chrome')</code> and the next tool call operates on your real Chrome browser with login cookies. No server restart.</li>
+<li><strong><code>tap doctor --env</code> — environment health check.</strong> One command surfaces daemon status, extension connectivity, Playwright availability, Chrome profile state, and MCP auth — the first place to look when something misbehaves.</li>
+<li><strong>SessionManager refactor — extension owns all tab lifecycle.</strong> Sessions are created, routed, and destroyed inside the extension process; Deno side just holds sessionIds. Cleaner boundary, fewer cross-process races.</li>
+</ul>
+<h3>Fixes</h3>
+<ul>
+<li><strong>MCP detects Playwright availability at startup</strong> and falls back to extension runtime if the npm package isn't loadable. Hint messages guide users to either install Playwright or call <code>tap.connect(runtime:'chrome')</code>.</li>
+<li><strong><code>tap.run</code> reuses caller's runtime context.</strong> Previously, a tap run from a Playwright MCP session would spawn a fresh extension runtime, losing cookies/session. Now <code>tap.run</code> honors the caller's runtime when they match.</li>
+<li><strong>Stable daemon token + forge captures page-load API traffic.</strong> Daemon restarts no longer invalidate MCP auth; forge.inspect now captures network requests that happen during the initial page load (previously missed the first batch).</li>
+<li><strong>Sandbox allows all <code>tap.*</code> RPC methods, blocks Deno APIs.</strong> Clarified the sandbox's threat model: it isolates untrusted tap code from the host's filesystem/network/env, not from the browser runtime (which has its own security layer).</li>
+<li><strong><code>codesign --deep</code> for macOS binaries.</strong> Nested frameworks in the compiled binary were not being signed, causing Gatekeeper to kill the process on launch.</li>
+</ul>
+</div>
+
+<hr>
+
+<p class="older">For releases older than v0.11.0, see the <a href="https://github.com/LeonTing1010/tap/releases">full GitHub releases archive</a>.</p>
+
+<p style="margin-top: 40px; padding-top: 24px; border-top: 1px solid #222; font-size: 0.85rem; color: #666;"><a href="./">&larr; Back to Tap</a> &middot; <a href="blog/">Blog</a> &middot; <a href="https://github.com/LeonTing1010/tap">GitHub</a></p>
+
+</div>
+</body>
+</html>

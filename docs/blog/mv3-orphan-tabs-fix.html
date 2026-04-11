@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Debugging Chrome MV3's "Many Empty Tabs" Bug: A chrome.storage.session Post-Mortem — Tap Blog</title>
+<meta name="description" content="A Chrome MV3 service worker idles every 30 seconds and loses all in-memory state. If your extension tracks tabs in a Map, session.destroy silently leaks them. Here's how we found it in Tap, three wrong fixes later.">
+<meta name="keywords" content="chrome MV3 service worker orphan tabs, chrome.storage.session persistence, MV3 tabs Map wiped, chrome.scripting.executeScript chrome-extension, MV3 unsafe-eval content security policy, Deno.mainModule compiled binary, chrome extension debugging, manifest v3 gotchas">
+<link rel="canonical" href="https://taprun.dev/blog/mv3-orphan-tabs-fix.html">
+<meta property="og:title" content="Debugging Chrome MV3's 'Many Empty Tabs' Bug">
+<meta property="og:description" content="An MV3 service worker idles every 30 seconds and loses all in-memory state. If your extension tracks tabs in a JS Map, session.destroy silently leaks them forever. Here's how we found it, three wrong fixes later.">
+<meta property="og:url" content="https://taprun.dev/blog/mv3-orphan-tabs-fix.html">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://taprun.dev/social-preview.png">
+<meta property="article:published_time" content="2026-04-11">
+<meta property="article:author" content="Leon Ting">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Debugging Chrome MV3's 'Many Empty Tabs' Bug">
+<meta name="twitter:description" content="Three wrong fixes later: the real rule is that MV3 service workers lose all state on idle, and chrome.storage.session is the sanctioned fix.">
+<meta name="twitter:image" content="https://taprun.dev/social-preview.png">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='105' cy='115' r='55' fill='%23FFFFFF'/%3E%3Ccircle cx='85' cy='70' r='45' fill='%23FFFFFF'/%3E%3Cellipse cx='75' cy='32' rx='15' ry='22' fill='%23EF4444'/%3E%3Cellipse cx='90' cy='30' rx='12' ry='20' fill='%23DC2626'/%3E%3Cellipse cx='103' cy='35' rx='10' ry='16' fill='%23B91C1C'/%3E%3Cpath d='M 55 68 L 8 75 L 55 85 Z' fill='%23FBBF24'/%3E%3Cpath d='M 55 85 L 8 75 L 12 82 Z' fill='%23D97706'/%3E%3Ccircle cx='70' cy='65' r='14' fill='%231F2937'/%3E%3Ccircle cx='66' cy='61' r='5' fill='%23FFFFFF'/%3E%3Ccircle cx='74' cy='68' r='2.5' fill='%23FFFFFF'/%3E%3Cellipse cx='50' cy='78' rx='8' ry='5' fill='%23FECACA' opacity='0.8'/%3E%3Cellipse cx='125' cy='115' rx='35' ry='30' fill='%23818CF8'/%3E%3Cellipse cx='125' cy='115' rx='25' ry='20' fill='%236366F1'/%3E%3Ccircle cx='95' cy='130' r='25' fill='%23F9FAFB'/%3E%3Cpath d='M 145 140 L 175 185 L 155 180 L 140 145 Z' fill='%23818CF8'/%3E%3Cpath d='M 150 145 L 180 190 L 162 185 L 148 150 Z' fill='%236366F1'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Debugging Chrome MV3's 'Many Empty Tabs' Bug: A chrome.storage.session Post-Mortem",
+  "description": "An MV3 service worker idles every 30 seconds and loses all in-memory state. If your extension tracks tabs in a JS Map, session.destroy silently leaks them forever. Here's how we found it in Tap, three wrong fixes later.",
+  "datePublished": "2026-04-11",
+  "author": { "@type": "Person", "name": "Leon Ting", "url": "https://github.com/LeonTing1010" },
+  "publisher": { "@type": "Organization", "name": "Tap", "url": "https://taprun.dev" },
+  "url": "https://taprun.dev/blog/mv3-orphan-tabs-fix.html",
+  "mainEntityOfPage": "https://taprun.dev/blog/mv3-orphan-tabs-fix.html",
+  "keywords": "chrome MV3, service worker, orphan tabs, chrome.storage.session, chrome.scripting, unsafe-eval, manifest v3"
+}
+</script>
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0a0918; color: #e0e0e0; line-height: 1.8; }
+.container { max-width: 760px; margin: 0 auto; padding: 60px 24px; }
+h1 { font-size: 2rem; font-weight: 600; color: #fff; margin-bottom: 8px; line-height: 1.3; }
+h2 { font-size: 1.35rem; font-weight: 500; color: #fff; margin-top: 48px; margin-bottom: 16px; }
+h3 { font-size: 1.1rem; font-weight: 500; color: #fff; margin-top: 32px; margin-bottom: 12px; }
+p, li { font-size: 0.95rem; color: #b0b0b0; margin-bottom: 16px; }
+ul, ol { padding-left: 24px; }
+a { color: #818cf8; text-decoration: none; }
+a:hover { text-decoration: underline; }
+.meta { font-size: 0.85rem; color: #666; margin-bottom: 40px; }
+.back { display: inline-block; margin-bottom: 24px; font-size: 0.9rem; }
+code { background: #1a1a2e; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; font-family: 'JetBrains Mono', monospace; }
+pre { background: #111118; border: 1px solid #222; border-radius: 8px; padding: 16px 20px; overflow-x: auto; margin: 20px 0; font-family: 'JetBrains Mono', monospace; font-size: 0.88rem; line-height: 1.6; color: #c8c8d0; }
+pre .comment { color: #555; }
+pre .cmd { color: #818cf8; }
+pre .output { color: #6ee7b7; }
+pre .flag { color: #fbbf24; }
+pre .err { color: #f87171; }
+blockquote { border-left: 3px solid #6366F1; padding: 12px 16px; margin: 20px 0; background: rgba(99,102,241,0.06); border-radius: 0 8px 8px 0; }
+blockquote p { color: #a0a0b0; margin-bottom: 0; font-style: italic; }
+blockquote cite { display: block; margin-top: 8px; font-size: 0.85rem; color: #666; font-style: normal; }
+.cta { margin-top: 48px; padding: 24px; background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.2); border-radius: 12px; }
+.cta h3 { color: #fff; font-size: 1.1rem; margin-bottom: 12px; margin-top: 0; }
+.cta pre { margin-bottom: 0; }
+hr { border: none; border-top: 1px solid #222; margin: 48px 0; }
+.rule-box { background: rgba(239,68,68,0.06); border: 1px solid rgba(239,68,68,0.2); border-radius: 8px; padding: 16px 20px; margin: 24px 0; }
+.rule-box strong { color: #fca5a5; }
+</style>
+</head>
+<body>
+<div class="container">
+<a href="../" class="back">&larr; Tap</a> &middot; <a href="./" class="back">Blog</a>
+<h1>Debugging Chrome MV3's "Many Empty Tabs" Bug</h1>
+<p class="meta">April 11, 2026 &middot; Leon Ting &middot; 9 min read &middot; A chrome.storage.session post-mortem</p>
+
+<p>Three weeks after shipping <a href="https://taprun.dev/">Tap</a>'s Chrome Extension runtime, a user filed a simple question: "why does each tap run open so many empty tabs?"</p>
+
+<p>They had nine <code>chrome://newtab/</code> tabs sitting in their browser, all titled "New Tab", all from our extension. None of them should have existed — every session Tap opens gets explicitly destroyed at the end.</p>
+
+<p>I spent an afternoon tracking this down and fixing it three different wrong ways before finally reading the Chromium extension docs properly. This post is the story of what I found, because every mistake I made is a Chrome MV3 rule that isn't obvious until you've hit it.</p>
+
+<h2>The symptom</h2>
+
+<p>Tap's extension manages one Chrome tab per logical session — <code>session.create</code> opens a tab, the tap operates on it, <code>session.destroy</code> closes it. The sessions Map lives in the service worker:</p>
+
+<pre><span class="comment">// extension/background.js</span>
+const sessions = new Map()  <span class="comment">// sessionId → { tabId, url, ... }</span>
+
+chrome.runtime.onMessage.addListener(async (msg) =&gt; {
+  if (msg.type === 'session.create') {
+    const tab = await chrome.tabs.create({ active: false })
+    const sessionId = crypto.randomUUID().slice(0, 8)
+    sessions.set(sessionId, { tabId: tab.id })
+    return { sessionId }
+  }
+  if (msg.type === 'session.destroy') {
+    const sess = sessions.get(msg.sessionId)
+    if (!sess) return { closed: false }  <span class="err">// ← the bug</span>
+    await chrome.tabs.remove(sess.tabId)
+    sessions.delete(msg.sessionId)
+    return { closed: true }
+  }
+})</pre>
+
+<p>Every session created by the extension should get destroyed. But the user saw orphan tabs accumulating overnight. So something was leaking.</p>
+
+<h2>Why the leak happens (and why MV3 developers keep hitting it)</h2>
+
+<p>The sessions Map is a JavaScript object at module scope. Every extension developer writes code like this. It works fine — until you learn that MV3 service workers <em>get terminated every ~30 seconds of idle time</em>.</p>
+
+<p>From the Chromium extension team's guidance:</p>
+
+<blockquote>
+<p>"Extension service workers are short-lived. The runtime terminates them when they're not actively processing events, typically after 30 seconds of idle. On next activity, a fresh instance loads the background script from the top."</p>
+<cite>— Chromium Extensions documentation</cite>
+</blockquote>
+
+<p>"Fresh instance loads from the top" is the load-bearing phrase. It means <code>const sessions = new Map()</code> runs again, and the Map is empty. Every session created by a previous SW instance becomes invisible to the new one.</p>
+
+<p>But Chrome tabs don't live in the service worker. They live in the browser process. They persist.</p>
+
+<p>So the state diverges: <strong>the Map thinks there are zero sessions, the browser has seven orphan tabs from sessions the previous SW instance knew about.</strong> When the client eventually calls <code>session.destroy</code> for any of those sessionIds, the handler runs its <code>if (!sess) return { closed: false }</code> branch and <em>silently</em> does nothing. The tab leaks forever.</p>
+
+<p>This is the class of MV3 bug that's invisible until you accumulate enough of them to notice. Our user had nine orphans because they'd been running the extension for a few days.</p>
+
+<h2>Wrong turn #1: <code>about:blank</code> isn't accessible</h2>
+
+<p>My first diagnostic idea was to intercept the leak earlier. If <code>session.create</code> creates a tab on <code>chrome://newtab/</code> (the default for <code>chrome.tabs.create({ active: false })</code> with no URL), maybe switching to <code>about:blank</code> would let me attach a debug hook to the tab from the service worker.</p>
+
+<pre><span class="comment">// Attempted fix: open on about:blank instead</span>
+const tab = await chrome.tabs.create({ url: 'about:blank', active: false })</pre>
+
+<p>Result:</p>
+
+<pre><span class="err">Error: Cannot access contents of url "about:blank".
+Extension manifest must request permission to access this host.</span></pre>
+
+<p>Wait — <code>host_permissions: ["&lt;all_urls&gt;"]</code> is in the manifest. Why is <code>about:blank</code> rejected?</p>
+
+<p>Turns out <code>&lt;all_urls&gt;</code> does not match <code>about:blank</code> unless the frame was opened from a parent whose URL matches. Top-level <code>about:blank</code> tabs with no opener have <em>no matchable origin</em>. The only way to grant access is via <code>match_about_blank: true</code> in a content_scripts manifest entry — which is for sub-frames, not standalone tabs.</p>
+
+<div class="rule-box">
+<strong>MV3 rule #1:</strong> <code>&lt;all_urls&gt;</code> host permission does not grant access to top-level <code>about:blank</code> tabs. Standalone <code>about:blank</code> is not scriptable from a service worker via <code>chrome.scripting.executeScript</code>.
+</div>
+
+<h2>Wrong turn #2: <code>chrome-extension://</code> isn't self-scriptable either</h2>
+
+<p>OK, if <code>about:blank</code> doesn't work, what about a page from our own extension? Extensions can always access their own origin, right?</p>
+
+<p>I shipped a minimal <code>blank.html</code> in the extension bundle and pointed session.create at it:</p>
+
+<pre><span class="cmd">const blankUrl = chrome.runtime.getURL('blank.html')
+const tab = await chrome.tabs.create({ url: blankUrl, active: false })</span></pre>
+
+<p>Result:</p>
+
+<pre><span class="err">Error: Cannot access contents of url
+"chrome-extension://nmhmmpljcccdgbagjeemobmfhpoddaba/blank.html".
+Extension manifest must request permission to access this host.</span></pre>
+
+<p>This surprised me. Adding the blank.html to <code>web_accessible_resources</code> didn't help either. Digging into Chromium's extension mailing list turned up the actual rule:</p>
+
+<blockquote>
+<p>"Extensions cannot run content scripts in extension pages. This is a fundamental restriction in MV3. <code>executeScript</code> is only for web pages, just like <code>content_scripts</code>, but when you open an extension page — it has a <code>chrome-extension://</code> URL. To run code in your own extension pages, include a <code>&lt;script&gt;</code> tag directly in the HTML."</p>
+<cite>— chromium-extensions@chromium.org</cite>
+</blockquote>
+
+<div class="rule-box">
+<strong>MV3 rule #2:</strong> <code>chrome.scripting.executeScript</code> cannot inject into <code>chrome-extension://*</code> URLs, even for your own extension's pages, regardless of <code>web_accessible_resources</code>. The sanctioned way to run code in your own extension pages is to ship the code as a bundled script tag in the HTML file.
+</div>
+
+<h2>Wrong turn #3: <code>unsafe-eval</code> is banned at the manifest layer</h2>
+
+<p>Next idea: use an <a href="https://developer.chrome.com/docs/extensions/reference/api/offscreen">offscreen document</a>. Offscreen documents are the MV3-sanctioned way to use DOM APIs from a service worker context. I wanted to run arbitrary tap expressions that use <code>DOMParser</code>, so I set up an offscreen.html with a message handler:</p>
+
+<pre>chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) =&gt; {
+  if (msg.target !== 'offscreen') return
+  if (msg.type === 'eval') {
+    try {
+      <span class="comment">// Run the expression in the offscreen document's context,
+      // which has DOMParser and other DOM APIs available.</span>
+      const result = <span class="err">(0, eval)</span>(msg.data.expression)
+      sendResponse({ ok: true, result })
+    } catch (e) {
+      sendResponse({ ok: false, error: e.message })
+    }
+  }
+  return true
+})</pre>
+
+<p>The default MV3 CSP blocks <code>eval()</code>, so I added the usual override to the manifest:</p>
+
+<pre>{
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' <span class="flag">'unsafe-eval'</span>; object-src 'self'"
+  }
+}</pre>
+
+<p>Chrome's response:</p>
+
+<pre><span class="err">Failed to load extension.
+'content_security_policy.extension_pages': Insecure CSP value "'unsafe-eval'"
+in directive 'script-src'. Could not load manifest.</span></pre>
+
+<p>This one I definitely did not know. In MV2, you could opt into <code>'unsafe-eval'</code> in the extension CSP if you really wanted to. In MV3, you cannot — the manifest validator rejects it at load time. There is no flag, no override, no compatibility mode.</p>
+
+<div class="rule-box">
+<strong>MV3 rule #3:</strong> <code>'unsafe-eval'</code> is forbidden in <code>content_security_policy.extension_pages</code>. The manifest fails to load. You cannot run <code>eval()</code> or <code>new Function()</code> in any part of an MV3 extension — service workers, offscreen documents, or options pages.
+</div>
+
+<h2>Stop. Read the rules.</h2>
+
+<p>At this point my user interrupted me with the right question: <em>"shouldn't you learn the rules before coding?"</em></p>
+
+<p>They were right. I'd been trial-and-erroring a permission system that has been publicly documented for years. One afternoon of reading the Chromium extension docs, the MV3 migration guide, and the chromium-extensions mailing list turned up the complete picture:</p>
+
+<ol>
+<li><strong>Service workers terminate on ~30s idle</strong> and reload from the top. All module-level JS state is lost.</li>
+<li><strong><code>chrome.scripting.executeScript</code> cannot target</strong> <code>chrome://</code>, <code>chrome-extension://</code>, or standalone <code>about:blank</code> URLs.</li>
+<li><strong><code>'unsafe-eval'</code> is forbidden</strong> in any extension page CSP, including offscreen documents.</li>
+<li><strong>Service workers have no DOM APIs.</strong> No <code>DOMParser</code>, no <code>document</code>, no <code>window</code>. Offscreen documents are the workaround, but they inherit the extension CSP (see rule 3), so they still can't <code>eval()</code>.</li>
+</ol>
+
+<p>Rules 1-4 are mutually reinforcing. MV3 is not hostile to extensions; it's very hostile to <em>arbitrary code execution</em> in extensions. Every rule is a piece of the same principle: extensions must ship their code as static files, and service workers should be short-lived event handlers with persistent data in <code>chrome.storage</code>.</p>
+
+<p>Which meant our sessions Map was architecturally wrong from the start.</p>
+
+<h2>The real fix: persist the Map</h2>
+
+<p><code>chrome.storage.session</code> is a per-browser-session in-memory KV store that survives service worker restarts. It's the MV3-sanctioned place for state that should outlive the SW but not the browser session. A perfect match for our sessions Map.</p>
+
+<p>The fix is 40 lines of boilerplate:</p>
+
+<pre><span class="comment">// extension/background.js</span>
+
+const sessions = new Map()
+
+async function rehydrateSessions() {
+  const stored = await chrome.storage.session.get('tap_sessions')
+  const map = stored?.tap_sessions
+  if (!map) return
+  for (const [sid, s] of Object.entries(map)) {
+    <span class="comment">// Verify the tab still exists — the user may have closed it
+    // manually while the SW was down.</span>
+    try {
+      await chrome.tabs.get(s.tabId)
+      sessions.set(sid, s)
+    } catch { <span class="comment">/* tab gone — drop the session */</span> }
+  }
+}
+
+async function persistSessions() {
+  await chrome.storage.session.set({
+    tap_sessions: Object.fromEntries(sessions),
+  })
+}
+
+<span class="comment">// Kick off rehydrate at SW startup. pollLoop / command handlers
+// must wait for this promise before doing any sessionId → tabId lookup.</span>
+const rehydrateReady = rehydrateSessions()</pre>
+
+<p>Every mutation to <code>sessions</code> now writes through to <code>chrome.storage.session</code>. Every command handler that reads from <code>sessions</code> waits for <code>rehydrateReady</code> before the first lookup. <code>session.destroy</code> on a previously-orphaned session now finds the session in the rehydrated Map and closes the tab correctly.</p>
+
+<p>The fix was in the wrong place all along. I'd been looking for a way to make script injection work on a placeholder tab. The actual bug was that <em>the Map was never the source of truth</em>.</p>
+
+<h2>The four bugs that were actually one bug</h2>
+
+<p>Once the persistence fix landed, three sibling issues fell out of the same root cause:</p>
+
+<p><strong>Nav-case orphan leak.</strong> The extension's nav handler had a branch that, if the current tab was on <code>chrome://newtab/</code>, would create a <em>new</em> tab at the target URL and update the session to point at it — but it never closed the original placeholder tab. Every <code>tap.run</code> against an http destination was leaking the initial placeholder. With persistence, this was trivial to fix: call <code>chrome.tabs.update(tabId, { url })</code> on the original tab in place. <code>chrome://newtab/</code> is perfectly navigable via <code>tabs.update</code>; the old "create a replacement" branch was unnecessary and leaky.</p>
+
+<p><strong>Wasted main session per MCP workflow.</strong> Tap's MCP server was eagerly calling <code>sessionCreate</code> on the first non-local tool call, opening a browser tab that was immediately unused by <code>tap.run</code> (which creates its own dedicated session). Pure <code>tap.run</code> workflows — the dominant Claude Code usage pattern — were paying one wasted placeholder tab per MCP session, and that tab was the longest-lived resource most exposed to SW-restart orphan leaks. Making the main session lazy (materialized only on first use of the interactive API) eliminated the waste and removed the biggest single source of leaked tabs.</p>
+
+<p><strong>Deno.mainModule regression.</strong> While verifying the fix, the compiled <code>tap</code> binary errored with "Playwright is not available in this binary" on the first MCP call. Chasing it, I found that Tap's runtime-detection code used <code>!Deno.mainModule.startsWith("file://")</code> to distinguish compiled binaries from source, and at some point in the last few Deno releases that check stopped working — both source and compiled now return <code>file://</code>-prefixed main modules. Switching to <code>Deno.execPath()</code> fixed it. This one's completely unrelated to Chrome MV3, but it was blocking verification, so it shipped as part of the same release.</p>
+
+<p>All four — the persistence bug, the nav leak, the main-session waste, and the Deno detection regression — went out in <a href="https://github.com/LeonTing1010/tap/releases/tag/v0.11.3">Tap v0.11.3</a>. The root was "extensions make assumptions about state that MV3 doesn't honor", and everything downstream of that was just different ways of tripping over the same wire.</p>
+
+<h2>What this means for browser automation tools</h2>
+
+<p>If you're building an MV3 Chrome extension that runs long-lived operations — automation, scraping, multi-step workflows — read this as a checklist before you write your first <code>chrome.tabs.create</code>:</p>
+
+<ul>
+<li><strong>Never put tab state in module-level JS.</strong> Service workers terminate every 30 seconds. Use <code>chrome.storage.session</code> for anything that outlives a single event handler.</li>
+<li><strong>Rehydrate before accepting commands.</strong> If you have a long-poll loop, make the first iteration wait for a rehydration promise. Otherwise commands arriving right after SW wake-up will resolve lookups against an empty Map.</li>
+<li><strong>session.destroy must not silently no-op.</strong> Return a structured "session not found" result instead of <code>{ closed: false }</code>, so the client can distinguish real orphans from benign double-destroys.</li>
+<li><strong>Don't create placeholder tabs you don't immediately use.</strong> Every tab is exposure surface for SW-restart leaks. Create tabs lazily on first use, not eagerly on session creation.</li>
+<li><strong>Assume <code>chrome.scripting.executeScript</code> cannot target non-http URLs</strong>, including your own extension pages and <code>about:blank</code>. If you need to run code without a real webpage, use offscreen documents with static handlers (not <code>eval</code>).</li>
+</ul>
+
+<p>The fundamental tension MV3 is trying to resolve is: "extensions should not execute arbitrary code, and their state should be recoverable from disk". Tools like Tap — which, by design, run lots of browser automation on behalf of AI agents — need to live within both constraints. Everything we shipped in v0.11.3 was us learning to do that properly.</p>
+
+<hr>
+
+<div class="cta">
+<h3>Tap: deterministic browser automation for AI agents</h3>
+<p>Tap compiles AI understanding of a website into a deterministic program that runs forever at $0 per execution — no LLM call per step, no surprise tab leaks, self-healing when sites change. The Chrome Extension runtime is MIT-licensed and open source. The bug this post is about is fixed in v0.11.3.</p>
+<pre><span class="cmd">curl -fsSL https://taprun.dev/install.sh | sh</span></pre>
+<p style="margin-top: 16px; margin-bottom: 0;"><a href="https://taprun.dev/">taprun.dev</a> &middot; <a href="https://github.com/LeonTing1010/tap">GitHub</a> &middot; <a href="https://github.com/LeonTing1010/tap/releases/tag/v0.11.3">v0.11.3 release notes</a></p>
+</div>
+
+</div>
+</body>
+</html>

@@ -44,6 +44,12 @@ a:hover { text-decoration: underline; }
 <h1>Blog</h1>
 
 <div class="post">
+<h2><a href="mv3-orphan-tabs-fix.html">Debugging Chrome MV3's "Many Empty Tabs" Bug: A chrome.storage.session Post-Mortem</a></h2>
+<p>A user reported 9 empty <code>chrome://newtab/</code> tabs accumulating overnight from Tap's extension. Three wrong fixes later (<code>about:blank</code>, self-scripting own extension pages, <code>unsafe-eval</code> offscreen eval), I finally read the Chromium docs properly. MV3 has four hard rules that none of my first three attempts respected.</p>
+<div class="meta">April 11, 2026 &middot; 9 min read</div>
+</div>
+
+<div class="post">
 <h2><a href="stagehand-vs-tap.html">Stagehand vs Tap: AI Browser Automation Compared</a></h2>
 <p>Stagehand calls the LLM on every step — same cost per run, same reliability floor as Browser Use. Tap compiles AI understanding into deterministic programs that run forever at $0.</p>
 <div class="meta">April 9, 2026 &middot; 5 min read</div>
