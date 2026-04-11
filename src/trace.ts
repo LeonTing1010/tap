@@ -110,12 +110,18 @@ export async function writeTapTrace(trace: TapTrace): Promise<void> {
     await Deno.writeTextFile(path, JSON.stringify(trace, null, 2));
 
     // Best-effort prune. If the last prune was >24h ago, scan the dir
-    // and delete anything older than 30 days. Async but not awaited —
-    // caller shouldn't wait for housekeeping.
+    // and delete anything older than 30 days. Awaited because a fire-and-
+    // forget call leaks a live Deno.readDir iterator past the end of
+    // runTap — Deno's test leak sanitizer flags it. The prune runs at
+    // most once per day per process and touches one directory, so the
+    // latency cost is negligible compared to the hot path (~50ms scan
+    // on a well-pruned dir).
     const now = Date.now();
     if (now - _lastPrune > PRUNE_INTERVAL_MS) {
       _lastPrune = now;
-      pruneTapTraces(MAX_TRACE_AGE_MS).catch(() => {});
+      try {
+        await pruneTapTraces(MAX_TRACE_AGE_MS);
+      } catch { /* housekeeping is never load-bearing */ }
     }
   } catch {
     // Silent failure — trace persistence is observational, never load-bearing
