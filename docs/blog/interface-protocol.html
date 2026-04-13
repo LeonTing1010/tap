@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Interface Protocol: 8 Operations That Replace Every Browser Automation SDK — Tap Blog</title>
+<meta name="description" content="Every browser automation tool invents its own API. Tap defines 8 irreducible operations — eval, pointer, keyboard, nav, wait, screenshot, run, capabilities — that any runtime implements. Write a program once, run it on Chrome, Playwright, macOS, or anything.">
+<link rel="canonical" href="https://taprun.dev/blog/interface-protocol.html">
+<meta property="og:title" content="The Interface Protocol: 8 Operations That Replace Every Browser Automation SDK">
+<meta property="og:description" content="8 irreducible operations. Any runtime implements them. Your automation runs everywhere.">
+<meta property="og:url" content="https://taprun.dev/blog/interface-protocol.html">
+<meta property="og:type" content="article">
+<meta property="article:published_time" content="2026-04-13">
+<meta property="article:author" content="Leon Ting">
+<meta property="og:image" content="https://taprun.dev/social-preview.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="The Interface Protocol: 8 Operations That Replace Every Browser Automation SDK">
+<meta name="twitter:description" content="8 irreducible operations. Any runtime implements them. Your automation runs everywhere.">
+<meta name="twitter:image" content="https://taprun.dev/social-preview.png">
+<meta name="keywords" content="interface protocol, browser automation protocol, deterministic automation, tap core operations, runtime-agnostic automation, write once run anywhere, browser automation abstraction">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "The Interface Protocol: 8 Operations That Replace Every Browser Automation SDK",
+  "description": "Every browser automation tool invents its own API. Tap defines 8 irreducible operations that any runtime implements. Write a program once, run it on Chrome, Playwright, macOS, or anything.",
+  "datePublished": "2026-04-13",
+  "author": { "@type": "Person", "name": "Leon Ting", "url": "https://github.com/LeonTing1010" },
+  "publisher": { "@type": "Organization", "name": "Tap", "url": "https://taprun.dev" },
+  "url": "https://taprun.dev/blog/interface-protocol.html",
+  "mainEntityOfPage": "https://taprun.dev/blog/interface-protocol.html"
+}
+</script>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='105' cy='115' r='55' fill='%23FFFFFF'/%3E%3Ccircle cx='85' cy='70' r='45' fill='%23FFFFFF'/%3E%3Cellipse cx='75' cy='32' rx='15' ry='22' fill='%23EF4444'/%3E%3Cellipse cx='90' cy='30' rx='12' ry='20' fill='%23DC2626'/%3E%3Cellipse cx='103' cy='35' rx='10' ry='16' fill='%23B91C1C'/%3E%3Cpath d='M 55 68 L 8 75 L 55 85 Z' fill='%23FBBF24'/%3E%3Cpath d='M 55 85 L 8 75 L 12 82 Z' fill='%23D97706'/%3E%3Ccircle cx='70' cy='65' r='14' fill='%231F2937'/%3E%3Ccircle cx='66' cy='61' r='5' fill='%23FFFFFF'/%3E%3Ccircle cx='74' cy='68' r='2.5' fill='%23FFFFFF'/%3E%3Cellipse cx='50' cy='78' rx='8' ry='5' fill='%23FECACA' opacity='0.8'/%3E%3Cellipse cx='125' cy='115' rx='35' ry='30' fill='%23818CF8'/%3E%3Cellipse cx='125' cy='115' rx='25' ry='20' fill='%236366F1'/%3E%3Ccircle cx='95' cy='130' r='25' fill='%23F9FAFB'/%3E%3Cpath d='M 145 140 L 175 185 L 155 180 L 140 145 Z' fill='%23818CF8'/%3E%3Cpath d='M 150 145 L 180 190 L 162 185 L 148 150 Z' fill='%236366F1'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0a0918; color: #e0e0e0; line-height: 1.8; }
+.container { max-width: 720px; margin: 0 auto; padding: 60px 24px; }
+h1 { font-size: 2rem; font-weight: 600; color: #fff; margin-bottom: 8px; line-height: 1.3; }
+h2 { font-size: 1.35rem; font-weight: 500; color: #fff; margin-top: 48px; margin-bottom: 16px; }
+h3 { font-size: 1.1rem; font-weight: 500; color: #fff; margin-top: 32px; margin-bottom: 12px; }
+p, li { font-size: 0.95rem; color: #b0b0b0; margin-bottom: 16px; }
+ul, ol { padding-left: 24px; }
+a { color: #818cf8; text-decoration: none; }
+a:hover { text-decoration: underline; }
+.meta { font-size: 0.85rem; color: #666; margin-bottom: 40px; }
+.back { display: inline-block; margin-bottom: 24px; font-size: 0.9rem; }
+code { background: #1a1a2e; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; font-family: 'JetBrains Mono', monospace; }
+pre { background: #111118; border: 1px solid #222; border-radius: 8px; padding: 16px 20px; overflow-x: auto; margin: 20px 0; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; line-height: 1.6; color: #c8c8d0; }
+pre .comment { color: #555; }
+pre .cmd { color: #818cf8; }
+pre .output { color: #6ee7b7; }
+pre .flag { color: #fbbf24; }
+pre .err { color: #f87171; }
+pre .key { color: #818cf8; }
+pre .val { color: #6ee7b7; }
+blockquote { border-left: 3px solid #6366F1; padding: 12px 16px; margin: 20px 0; background: rgba(99,102,241,0.06); border-radius: 0 8px 8px 0; }
+blockquote p { color: #a0a0b0; margin-bottom: 0; font-style: italic; }
+blockquote cite { display: block; margin-top: 8px; font-size: 0.85rem; color: #666; font-style: normal; }
+table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid #222; font-size: 0.9rem; }
+th { color: #fff; font-weight: 500; }
+td { color: #b0b0b0; }
+.cta { margin-top: 48px; padding: 24px; background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.2); border-radius: 12px; }
+.cta h3 { color: #fff; font-size: 1.1rem; margin-bottom: 12px; margin-top: 0; }
+.cta pre { margin-bottom: 0; }
+hr { border: none; border-top: 1px solid #222; margin: 48px 0; }
+</style>
+<script src="https://analytics.ahrefs.com/analytics.js" data-key="G1wKuningnrw+t5LQJ+MPw" async></script>
+</head>
+<body>
+<div class="container">
+<a href="../" class="back">&larr; Tap</a> &middot; <a href="./" class="back">Blog</a>
+<h1>The Interface Protocol: 8 Operations That Replace Every Browser Automation SDK</h1>
+<p class="meta">April 13, 2026 &middot; Leon Ting &middot; 7 min read</p>
+
+<p>Playwright has 400+ API methods. Puppeteer has 300+. Selenium has its own taxonomy of <code>WebDriver</code>, <code>WebElement</code>, <code>Actions</code>, <code>Options</code>. Every browser automation framework invents its own surface area, and every program written against one framework is locked to that framework forever.</p>
+
+<p>Tap takes a different approach. <strong>8 core operations.</strong> That's the entire interface between a tap program and any runtime. A Chrome extension implements them. A Playwright runtime implements them. A macOS desktop runtime implements them. The programs don't know or care which one is running underneath.</p>
+
+<h2>The Problem: SDK Lock-in</h2>
+
+<p>Write a Playwright script today. Tomorrow you need it to run inside a Chrome extension (because the site needs real login cookies). Rewrite. Next month you need to automate a native macOS app. Rewrite again.</p>
+
+<p>Each framework carries implicit assumptions:</p>
+
+<ul>
+<li><strong>Playwright</strong> assumes a browser it launched and controls via CDP.</li>
+<li><strong>Puppeteer</strong> assumes a Chromium process it owns.</li>
+<li><strong>Selenium</strong> assumes a WebDriver binary running somewhere.</li>
+<li><strong>AppleScript</strong> assumes macOS with accessibility permissions.</li>
+</ul>
+
+<p>Your automation logic &mdash; "click this button, read that table, type into that field" &mdash; is identical across all of them. The code is completely different. The abstraction layer is missing.</p>
+
+<h2>8 Core Operations</h2>
+
+<p>Every interface interaction &mdash; browser, desktop, mobile &mdash; reduces to eight irreducible operations:</p>
+
+<pre><span class="key">eval</span>        <span class="comment">Execute code in the target context, return result</span>
+<span class="key">pointer</span>     <span class="comment">Move / click / drag at coordinates</span>
+<span class="key">keyboard</span>    <span class="comment">Type text or press key combinations</span>
+<span class="key">nav</span>         <span class="comment">Navigate to a URL</span>
+<span class="key">wait</span>        <span class="comment">Wait for a condition (time, selector, network idle)</span>
+<span class="key">screenshot</span>  <span class="comment">Capture the current visual state</span>
+<span class="key">run</span>         <span class="comment">Execute another tap program</span>
+<span class="key">capabilities</span> <span class="comment">Report what this runtime supports</span></pre>
+
+<p>That's it. Not 400 methods. Not a class hierarchy. Eight functions that every runtime implements, and every tap program calls.</p>
+
+<p>The insight is <em>irreducibility</em>. We didn't start with "what features should we support?" and enumerate. We started with "what is the minimum set of operations from which every other operation can be composed?" and reduced.</p>
+
+<h2>17 Built-in Operations, Composed from 8</h2>
+
+<p>If 8 operations are all you have, how do you click a button by its text? How do you fill a form? How do you upload a file?</p>
+
+<p>You compose:</p>
+
+<pre><span class="comment">// click("Submit") is not a core operation.
+// It's composed from two core operations:</span>
+
+<span class="key">click</span>(target) =
+  <span class="val">eval</span>(find target &rarr; get coordinates)
+  + <span class="val">pointer</span>(x, y, 'click')
+
+<span class="comment">// type("hello") into a field:</span>
+
+<span class="key">fill</span>(selector, value) =
+  <span class="val">eval</span>(find element &rarr; focus it)
+  + <span class="val">keyboard</span>(value)
+
+<span class="comment">// upload a file:</span>
+
+<span class="key">upload</span>(selector, path) =
+  <span class="val">eval</span>(find file input)
+  + runtime-specific file injection</pre>
+
+<p>Tap ships 17 built-in operations composed from core: <code>click</code>, <code>type</code>, <code>fill</code>, <code>hover</code>, <code>scroll</code>, <code>pressKey</code>, <code>select</code>, <code>upload</code>, <code>dialog</code>, <code>fetch</code>, <code>find</code>, <code>cookies</code>, <code>download</code>, <code>waitFor</code>, <code>waitForNetwork</code>, <code>ssrState</code>, <code>storage</code>. Every one of them works on every runtime because every one of them is built from the same 8 primitives.</p>
+
+<p>A runtime can <em>override</em> a built-in for performance &mdash; Chrome's extension runtime uses CDP for file uploads because it's faster than the composed path &mdash; but it doesn't have to. The default composition works everywhere.</p>
+
+<h2>What This Means for Programs</h2>
+
+<p>A <code>.tap.js</code> program calls built-in operations. It never calls Playwright methods, Chrome APIs, or AppleScript commands. This makes every tap program runtime-agnostic by construction:</p>
+
+<pre><span class="comment">// This tap works on Chrome, Playwright, and macOS
+// without a single line changed</span>
+
+export default {
+  site: "github",
+  name: "trending",
+
+  async tap(handle) {
+    await handle.nav("https://github.com/trending");
+    const repos = await handle.eval(() =&gt; {
+      return [...document.querySelectorAll("article.Box-row")]
+        .map(el =&gt; ({
+          name: el.querySelector("h2 a")?.textContent?.trim(),
+          stars: el.querySelector("span.d-inline-block")?.textContent?.trim(),
+        }));
+    });
+    return { rows: repos };
+  }
+}</pre>
+
+<p>Switch runtimes with a flag:</p>
+
+<pre><span class="cmd">$</span> tap github trending                        <span class="comment"># Chrome extension (default)</span>
+<span class="cmd">$</span> tap github trending <span class="flag">--runtime playwright</span>   <span class="comment"># Headless, CI-friendly</span>
+<span class="cmd">$</span> tap github trending <span class="flag">--runtime chrome</span>       <span class="comment"># User's real browser, logged in</span></pre>
+
+<p>Same program. Same output. Different runtime underneath. The program doesn't know and doesn't need to know.</p>
+
+<h2>Why Not Just Use Playwright Everywhere?</h2>
+
+<p>Playwright is excellent. It's the best browser automation library ever built. But it's a <em>library</em>, not a <em>protocol</em>. The difference matters:</p>
+
+<table>
+<tr><th></th><th>Library (Playwright)</th><th>Protocol (Tap)</th></tr>
+<tr><td>Browser you control</td><td>Yes</td><td>Yes</td></tr>
+<tr><td>User's real browser (cookies, sessions)</td><td>No</td><td>Yes (Chrome runtime)</td></tr>
+<tr><td>Native desktop apps</td><td>No</td><td>Yes (macOS runtime)</td></tr>
+<tr><td>Mobile apps (future)</td><td>No</td><td>Yes (protocol is extensible)</td></tr>
+<tr><td>CI / headless</td><td>Yes</td><td>Yes (Playwright runtime)</td></tr>
+<tr><td>Program portability</td><td>Locked to Playwright</td><td>Any runtime</td></tr>
+</table>
+
+<p>A protocol abstracts the runtime. A library <em>is</em> the runtime. When you write against a library, you get that library's capabilities and constraints. When you write against a protocol, you get every present and future runtime that implements it.</p>
+
+<h2>The TCP/IP Analogy</h2>
+
+<p>Before TCP/IP, every network vendor had its own protocol. IBM had SNA. DEC had DECnet. Novell had IPX/SPX. Applications written for one couldn't talk to another. TCP/IP defined a minimal, composable interface &mdash; and within a decade, every other protocol was either dead or tunneled over TCP/IP.</p>
+
+<p>Browser automation in 2026 is pre-TCP/IP networking. Every vendor has its own interface. Programs are locked to vendors. The abstraction layer that should exist &mdash; a minimal protocol for interface operations &mdash; doesn't.</p>
+
+<p>Tap's 8 core operations are that layer. Not because 8 is a magic number, but because 8 is what you get when you <em>reduce</em> instead of <em>enumerate</em>. You don't need 400 methods. You need the minimum set from which 400 methods can be composed.</p>
+
+<h2>How a New Runtime Gets Added</h2>
+
+<p>Implementing a Tap runtime is implementing 8 functions:</p>
+
+<pre><span class="comment">// A runtime is this interface. Nothing more.</span>
+
+interface TapRuntime {
+  <span class="key">eval</span>(code: string): Promise&lt;any&gt;
+  <span class="key">pointer</span>(x: number, y: number, action: string): Promise&lt;void&gt;
+  <span class="key">keyboard</span>(text: string, opts?: KeyOpts): Promise&lt;void&gt;
+  <span class="key">nav</span>(url: string): Promise&lt;void&gt;
+  <span class="key">wait</span>(condition: WaitCondition): Promise&lt;void&gt;
+  <span class="key">screenshot</span>(opts?: ScreenshotOpts): Promise&lt;Buffer&gt;
+  <span class="key">run</span>(site: string, name: string, args?: object): Promise&lt;Result&gt;
+  <span class="key">capabilities</span>(): Promise&lt;Capabilities&gt;
+}</pre>
+
+<p>Implement these 8 methods and you get all 17 built-in operations for free. <code>click</code>, <code>fill</code>, <code>upload</code>, <code>scroll</code> &mdash; they all compose from your 8 implementations without any additional code.</p>
+
+<p>Tap's Chrome extension runtime is ~600 lines. The Playwright runtime is ~400 lines. The macOS runtime (JXA + CGEvent + Accessibility API) is ~500 lines. That's how small a runtime is when the protocol is right.</p>
+
+<h2>Capability Negotiation</h2>
+
+<p>Not every runtime supports everything. The macOS runtime can't do <code>cookies</code> (there's no browser). A headless Playwright runtime can't access a user's logged-in session. A mobile runtime might not support <code>keyboard</code> the same way.</p>
+
+<p>This is what <code>capabilities()</code> is for:</p>
+
+<pre><span class="comment">// Chrome extension runtime</span>
+capabilities() {
+  return {
+    <span class="key">eval</span>: <span class="val">true</span>,
+    <span class="key">pointer</span>: <span class="val">true</span>,
+    <span class="key">keyboard</span>: <span class="val">true</span>,
+    <span class="key">cookies</span>: <span class="val">true</span>,       <span class="comment">// can read/write browser cookies</span>
+    <span class="key">upload</span>: <span class="val">true</span>,        <span class="comment">// CDP file injection</span>
+    <span class="key">sessions</span>: <span class="val">true</span>,      <span class="comment">// user's real login sessions</span>
+  }
+}
+
+<span class="comment">// Playwright runtime</span>
+capabilities() {
+  return {
+    <span class="key">eval</span>: <span class="val">true</span>,
+    <span class="key">pointer</span>: <span class="val">true</span>,
+    <span class="key">keyboard</span>: <span class="val">true</span>,
+    <span class="key">cookies</span>: <span class="val">true</span>,
+    <span class="key">upload</span>: <span class="val">true</span>,
+    <span class="key">sessions</span>: <span class="val">false</span>,     <span class="comment">// no user sessions, fresh context</span>
+    <span class="key">headless</span>: <span class="val">true</span>,      <span class="comment">// can run without display</span>
+  }
+}</pre>
+
+<p>A tap can declare <code>requires: ["sessions"]</code> and Tap will route it to a runtime that has sessions. A CI pipeline can request <code>--runtime playwright</code> knowing it supports headless. The protocol handles the negotiation; the program stays clean.</p>
+
+<h2>Protocol vs. Implementation</h2>
+
+<p>The deepest design principle behind the interface protocol: <strong>the tap API is the protocol, not the implementation.</strong></p>
+
+<p>The Chrome extension is not Tap. Playwright is not Tap. The macOS runtime is not Tap. They are <em>implementations</em> of the protocol. The protocol is the 8 operations, the 17 built-in compositions, and the capability negotiation contract.</p>
+
+<p>This distinction is why Tap programs survive runtime changes. When Chrome ships a breaking API change, the Chrome runtime updates &mdash; zero tap programs change. When a new platform appears (Android, iOS, Electron), a new runtime implements 8 methods &mdash; and every existing tap program runs on it immediately.</p>
+
+<p>This is what "programs beat prompts" looks like at the architecture level. The program is written against a protocol, not a vendor. The protocol is minimal enough to implement anywhere. The implementation is swappable. The program is permanent.</p>
+
+<hr>
+
+<h2>Related</h2>
+<ul>
+<li><a href="programs-beat-prompts.html">Programs Beat Prompts</a> &mdash; why AI should write code, not run it</li>
+<li><a href="composable-taps-are-just-javascript.html">Composable Taps Are Just JavaScript</a> &mdash; why the pipeline DSL is JS, not YAML</li>
+<li><a href="deterministic-vs-ai-browser-automation.html">Deterministic vs AI Browser Automation</a> &mdash; compiler model vs interpreter model</li>
+</ul>
+
+<div class="cta">
+<h3>Try it now</h3>
+<pre><span class="comment"># Install</span>
+<span class="cmd">curl</span> -fsSL https://taprun.dev/install.sh | sh
+
+<span class="comment"># Same tap, different runtimes</span>
+<span class="cmd">tap</span> github trending                         <span class="comment"># Chrome</span>
+<span class="cmd">tap</span> github trending <span class="flag">--runtime playwright</span>    <span class="comment"># Headless</span></pre>
+<p style="margin-top: 16px; margin-bottom: 0;"><a href="https://taprun.dev/">Home</a> &middot; <a href="https://github.com/LeonTing1010/tap">GitHub</a></p>
+</div>
+
+</div>
+<script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "91c486def20e49999fa55db9040ec94d"}'></script>
+</body>
+</html>

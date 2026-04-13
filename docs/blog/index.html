@@ -45,6 +45,12 @@ a:hover { text-decoration: underline; }
 <h1>Blog</h1>
 
 <div class="post">
+<h2><a href="interface-protocol.html">The Interface Protocol: 8 Operations That Replace Every Browser Automation SDK</a></h2>
+<p>Playwright has 400+ methods. Puppeteer has 300+. Every framework invents its own API, and every program is locked to one vendor. Tap defines 8 irreducible operations &mdash; eval, pointer, keyboard, nav, wait, screenshot, run, capabilities &mdash; that any runtime implements. Write a <code>.tap.js</code> once, run it on Chrome, Playwright, macOS, or anything that implements the protocol.</p>
+<div class="meta">April 13, 2026 &middot; 7 min read</div>
+</div>
+
+<div class="post">
 <h2><a href="taprun-executor-0-8-ms-library.html">How We Turned Tap's Engine Into a 0.8 ms Library (and Measured a 294× Speedup)</a></h2>
 <p>Tap spent three months as a compiled binary that every embedding product had to shell out to. We extracted the composition engine into <code>@taprun/executor</code> — a Deno-first, zero-dep, 65 KB package that runs pipes in-process. Measured on a pure-transform pipeline: 0.8 ms in-process vs 233.7 ms subprocess. 294× faster, zero semantic change, full backwards compatibility. Includes the re-export shim trick for zero-import-churn extractions and the boundary test that guarantees the package stays self-contained.</p>
 <div class="meta">April 11, 2026 &middot; 9 min read</div>
