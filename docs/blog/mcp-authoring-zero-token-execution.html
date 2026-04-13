@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MCP Is the Authoring Layer. Execution Should Cost Zero Tokens. — Tap Blog</title>
+<meta name="description" content="MCP costs 37% more tokens than CLI. The community is right — but the answer isn't 'MCP is dead.' It's using MCP for discovery and CLI for execution. Tap already does this.">
+<link rel="canonical" href="https://taprun.dev/blog/mcp-authoring-zero-token-execution.html">
+<meta property="og:title" content="MCP Is the Authoring Layer. Execution Should Cost Zero Tokens.">
+<meta property="og:description" content="MCP overhead is real. The fix isn't dropping MCP — it's separating authoring (MCP) from execution (zero tokens).">
+<meta property="og:url" content="https://taprun.dev/blog/mcp-authoring-zero-token-execution.html">
+<meta property="og:type" content="article">
+<meta property="article:published_time" content="2026-04-13">
+<meta property="article:author" content="Leon Ting">
+<meta property="og:image" content="https://taprun.dev/social-preview.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="MCP Is the Authoring Layer. Execution Should Cost Zero Tokens.">
+<meta name="twitter:description" content="MCP overhead is real. The fix isn't dropping MCP — it's separating authoring from execution.">
+<meta name="twitter:image" content="https://taprun.dev/social-preview.png">
+<meta name="keywords" content="MCP token cost, MCP overhead, CLI vs MCP, browser automation tokens, MCP authoring layer, zero token execution, tap run">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "MCP Is the Authoring Layer. Execution Should Cost Zero Tokens.",
+  "description": "MCP costs 37% more tokens than CLI. The community is right — but the answer isn't 'MCP is dead.' It's using MCP for discovery and CLI for execution.",
+  "datePublished": "2026-04-13",
+  "author": { "@type": "Person", "name": "Leon Ting", "url": "https://github.com/LeonTing1010" },
+  "publisher": { "@type": "Organization", "name": "Tap", "url": "https://taprun.dev" },
+  "url": "https://taprun.dev/blog/mcp-authoring-zero-token-execution.html",
+  "mainEntityOfPage": "https://taprun.dev/blog/mcp-authoring-zero-token-execution.html"
+}
+</script>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='105' cy='115' r='55' fill='%23FFFFFF'/%3E%3Ccircle cx='85' cy='70' r='45' fill='%23FFFFFF'/%3E%3Cellipse cx='75' cy='32' rx='15' ry='22' fill='%23EF4444'/%3E%3Cellipse cx='90' cy='30' rx='12' ry='20' fill='%23DC2626'/%3E%3Cellipse cx='103' cy='35' rx='10' ry='16' fill='%23B91C1C'/%3E%3Cpath d='M 55 68 L 8 75 L 55 85 Z' fill='%23FBBF24'/%3E%3Cpath d='M 55 85 L 8 75 L 12 82 Z' fill='%23D97706'/%3E%3Ccircle cx='70' cy='65' r='14' fill='%231F2937'/%3E%3Ccircle cx='66' cy='61' r='5' fill='%23FFFFFF'/%3E%3Ccircle cx='74' cy='68' r='2.5' fill='%23FFFFFF'/%3E%3Cellipse cx='50' cy='78' rx='8' ry='5' fill='%23FECACA' opacity='0.8'/%3E%3Cellipse cx='125' cy='115' rx='35' ry='30' fill='%23818CF8'/%3E%3Cellipse cx='125' cy='115' rx='25' ry='20' fill='%236366F1'/%3E%3Ccircle cx='95' cy='130' r='25' fill='%23F9FAFB'/%3E%3Cpath d='M 145 140 L 175 185 L 155 180 L 140 145 Z' fill='%23818CF8'/%3E%3Cpath d='M 150 145 L 180 190 L 162 185 L 148 150 Z' fill='%236366F1'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0a0918; color: #e0e0e0; line-height: 1.8; }
+.container { max-width: 720px; margin: 0 auto; padding: 60px 24px; }
+h1 { font-size: 2rem; font-weight: 600; color: #fff; margin-bottom: 8px; line-height: 1.3; }
+h2 { font-size: 1.35rem; font-weight: 500; color: #fff; margin-top: 48px; margin-bottom: 16px; }
+p, li { font-size: 0.95rem; color: #b0b0b0; margin-bottom: 16px; }
+ul, ol { padding-left: 24px; }
+a { color: #818cf8; text-decoration: none; }
+a:hover { text-decoration: underline; }
+.meta { font-size: 0.85rem; color: #666; margin-bottom: 40px; }
+.back { display: inline-block; margin-bottom: 24px; font-size: 0.9rem; }
+code { background: #1a1a2e; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; font-family: 'JetBrains Mono', monospace; }
+pre { background: #111118; border: 1px solid #222; border-radius: 8px; padding: 16px 20px; overflow-x: auto; margin: 20px 0; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; line-height: 1.6; color: #c8c8d0; }
+pre .comment { color: #555; }
+pre .cmd { color: #818cf8; }
+pre .output { color: #6ee7b7; }
+pre .flag { color: #fbbf24; }
+pre .err { color: #f87171; }
+blockquote { border-left: 3px solid #6366F1; padding: 12px 16px; margin: 20px 0; background: rgba(99,102,241,0.06); border-radius: 0 8px 8px 0; }
+blockquote p { color: #a0a0b0; margin-bottom: 0; font-style: italic; }
+blockquote cite { display: block; margin-top: 8px; font-size: 0.85rem; color: #666; font-style: normal; }
+table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid #222; font-size: 0.9rem; }
+th { color: #fff; font-weight: 500; }
+td { color: #b0b0b0; }
+.cta { margin-top: 48px; padding: 24px; background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.2); border-radius: 12px; }
+.cta h3 { color: #fff; font-size: 1.1rem; margin-bottom: 12px; margin-top: 0; }
+.cta pre { margin-bottom: 0; }
+hr { border: none; border-top: 1px solid #222; margin: 48px 0; }
+</style>
+<script src="https://analytics.ahrefs.com/analytics.js" data-key="G1wKuningnrw+t5LQJ+MPw" async></script>
+</head>
+<body>
+<div class="container">
+<a href="../" class="back">&larr; Tap</a> &middot; <a href="./" class="back">Blog</a>
+<h1>MCP Is the Authoring Layer. Execution Should Cost Zero Tokens.</h1>
+<p class="meta">April 13, 2026 &middot; Leon Ting &middot; 6 min read</p>
+
+<p>Two posts on Reddit this month independently measured MCP's token overhead. Both reached the same number: <strong>30&ndash;40% more tokens than the CLI equivalent.</strong></p>
+
+<blockquote>
+<p>"I added Notion, Sentry and Shortcut MCPs and was surprised to see every session starting off with 40% of the context used."</p>
+<cite>&mdash; NoSlicedMushrooms (28 upvotes), r/ClaudeAI</cite>
+</blockquote>
+
+<blockquote>
+<p>"A batch job with 4 MCP servers blew through our token budget in 2 hours. The schema injection on every turn is the killer."</p>
+<cite>&mdash; tom_mathews, r/ClaudeAI</cite>
+</blockquote>
+
+<p>The "MCP is dead, just use CLI" take followed immediately. But three independent users &mdash; in three different threads, on three different subreddits &mdash; arrived at the same conclusion: <strong>the problem isn't MCP. It's using MCP for the wrong job.</strong></p>
+
+<blockquote>
+<p>"MCP for the main orchestrator, CLI for sub-agents. Both hit the same backend."</p>
+<cite>&mdash; raphasouthall, r/mcp (48 upvotes)</cite>
+</blockquote>
+
+<blockquote>
+<p>"MCP makes sense for discovery, not for known workflows."</p>
+<cite>&mdash; tom_mathews, r/ClaudeAI</cite>
+</blockquote>
+
+<blockquote>
+<p>"Development Tool versus Production Tool. MCP the shit you serve to clients and CLI while building."</p>
+<cite>&mdash; mat8675, r/ClaudeAI</cite>
+</blockquote>
+
+<p>They're all describing the same architecture. And it's the architecture Tap has used from day one.</p>
+
+<h2>The Two-Layer Model</h2>
+
+<pre><span class="comment">Layer 1: MCP (Authoring)</span>
+<span class="flag">forge.inspect</span>    <span class="comment">→ AI analyzes the site</span>
+<span class="flag">forge.verify</span>     <span class="comment">→ AI tests the program</span>
+<span class="flag">forge.save</span>       <span class="comment">→ program saved to disk</span>
+<span class="comment">
+AI participates. Tokens consumed. One-time cost.
+
+─────────────────────────────────────────────</span>
+
+<span class="comment">Layer 2: CLI (Execution)</span>
+<span class="cmd">tap.run</span>          <span class="comment">→ program executes</span>
+<span class="comment">
+Zero AI. Zero tokens. Deterministic. Forever.</span></pre>
+
+<p>MCP is the authoring layer. It's where AI discovers what the site looks like, what API endpoints are available, which selectors match the data, and how to structure the extraction. This is a one-time process &mdash; forge &mdash; that produces a <code>.tap.js</code> file.</p>
+
+<p>After that, <code>tap.run</code> executes the program directly. No MCP. No schema injection. No token overhead. The program is JavaScript. It runs in less than a second.</p>
+
+<h2>The Numbers</h2>
+
+<p>raphasouthall measured MCP overhead precisely for a 21-tool server:</p>
+
+<table>
+<tr><th></th><th>MCP</th><th>CLI / tap.run</th></tr>
+<tr><td>Upfront cost</td><td>~1,300 tokens (schema injection)</td><td>0</td></tr>
+<tr><td>Per-call cost</td><td>~800 tokens</td><td>~750 tokens</td></tr>
+<tr><td>After 10 calls</td><td>~880 tokens/call (amortized)</td><td>750 tokens/call</td></tr>
+</table>
+
+<p>For a single forge session (one-time), ~1,300 tokens of overhead is nothing. For 1,000 daily executions? It's the difference between $0 and $135/month.</p>
+
+<p>Tap's architecture makes this explicit: <strong>pay the MCP overhead once during forge, then run at zero overhead forever.</strong></p>
+
+<h2>How Tap's 40 MCP Tools Don't Blow Up Your Context</h2>
+
+<p>The obvious concern: Tap ships 40 MCP tools. With 21 tools costing ~1,300 tokens of schema, 40 tools should cost ~2,500+. That's over 1% of a 200k context window before you even ask a question.</p>
+
+<p>Tap uses <strong>deferred tool loading</strong>. Only 12 core tools load at session start (~600 tokens). The other 28 &mdash; forge, doctor, fix, trace, watch, explain &mdash; load on demand, only when the agent actually needs them.</p>
+
+<pre><span class="comment"># What loads at session start (Tier 1 — always available)</span>
+<span class="output">tap.list</span>   <span class="output">tap.run</span>    <span class="output">tap.doctor</span>   <span class="output">tap.nav</span>
+<span class="output">tap.click</span>  <span class="output">tap.type</span>   <span class="output">tap.eval</span>     <span class="output">tap.find</span>
+<span class="output">tap.screenshot</span>  <span class="output">tap.runtime</span>  <span class="output">tap.pressKey</span>  <span class="output">tap.upload</span>
+
+<span class="comment"># What loads on demand (Tier 2 — disclosed via hints)</span>
+<span class="flag">tap.fix</span>    <span class="flag">tap.explain</span>   <span class="flag">tap.trace</span>    <span class="flag">tap.watch</span>
+<span class="flag">tap.refresh</span>   <span class="flag">tap.cookies</span>   <span class="flag">tap.wait</span>   <span class="flag">...</span>
+
+<span class="comment"># Forge tools — only load during forge sessions</span>
+<span class="flag">forge.inspect</span>   <span class="flag">forge.draft</span>   <span class="flag">forge.verify</span>   <span class="flag">forge.save</span></pre>
+
+<p>This is the same pattern the community arrived at independently:</p>
+
+<blockquote>
+<p>"Splitting tools into a tiny default set and a second on-demand pack, because dumping every possible tool into session start was where the waste really showed up."</p>
+<cite>&mdash; Organic-Bid-8298, r/mcp</cite>
+</blockquote>
+
+<h2>Why Not Just Use CLI for Everything?</h2>
+
+<p>Because authoring <em>requires</em> tool discovery. When AI is figuring out how to scrape a site it's never seen before, it needs typed parameters, rich descriptions, and structured responses. That's what MCP does well.</p>
+
+<blockquote>
+<p>"The one thing MCP does well is when it's tightly integrated (like Claude Code's built-in tools) &mdash; that feels natural because they control both sides."</p>
+<cite>&mdash; SmartYogurtcloset715 (8 upvotes), r/ClaudeAI</cite>
+</blockquote>
+
+<p>Tap controls both sides. The MCP server and the CLI are the same binary. The MCP tools call the same functions the CLI calls. The difference is <em>when</em> each is used:</p>
+
+<ul>
+<li><strong>Forge</strong> (one-time): MCP tools, because AI needs to discover and iterate</li>
+<li><strong>Run</strong> (every time): CLI, because the program already exists</li>
+<li><strong>Doctor</strong> (periodic): either &mdash; MCP for interactive diagnosis, CLI for scheduled health checks</li>
+</ul>
+
+<h2>The Implication for Browser Automation</h2>
+
+<p>Most browser MCP tools are execution-layer tools. They run in the browser on every call. That's where the token cost comes from &mdash; not just schema overhead, but the entire page state (accessibility tree, screenshot bytes, console output) flowing into the context window on every interaction.</p>
+
+<blockquote>
+<p>"Every <code>browser_navigate</code> + <code>browser_snapshot</code> call costs ~1,500 tokens in JSON schema framing &mdash; even though the actual useful output is just a few lines of text."</p>
+<cite>&mdash; BagNervous, r/ClaudeAI (Browser CLI author)</cite>
+</blockquote>
+
+<p>Tap's browser tools exist in MCP for authoring only. During forge, AI uses <code>tap.nav</code>, <code>tap.eval</code>, <code>tap.screenshot</code> to understand the page. After forge produces a <code>.tap.js</code>, execution calls the browser directly &mdash; no MCP framing, no token overhead, no context window pollution.</p>
+
+<p><strong>The 1,500-token-per-call problem doesn't exist for tap.run. It's not an MCP call. It's a function call.</strong></p>
+
+<hr>
+
+<h2>Related</h2>
+<ul>
+<li><a href="health-contracts-catch-silent-failures.html">Health Contracts Catch What Pydantic Can't</a> &mdash; semantic validation for scraper output</li>
+<li><a href="programs-beat-prompts.html">Programs Beat Prompts</a> &mdash; why AI should write code, not run it</li>
+<li><a href="interface-protocol.html">The Interface Protocol</a> &mdash; 8 operations that replace every browser automation SDK</li>
+</ul>
+
+<div class="cta">
+<h3>Try it</h3>
+<pre><span class="cmd">curl</span> -fsSL https://taprun.dev/install.sh | sh
+
+<span class="comment"># MCP for authoring — one time</span>
+<span class="cmd">tap</span> forge <span class="flag">https://news.ycombinator.com</span>
+
+<span class="comment"># CLI for execution — zero tokens, forever</span>
+<span class="cmd">tap</span> hackernews hot</pre>
+</div>
+
+</div>
+<script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "91c486def20e49999fa55db9040ec94d"}'></script>
+</body>
+</html>

@@ -1929,11 +1929,11 @@ h2 .hl {
             <span class="terminal-dot" style="background:#EF4444"></span>
             <span class="terminal-dot" style="background:#FBBF24"></span>
             <span class="terminal-dot" style="background:#22C55E"></span>
-            <span class="terminal-title">tap value</span>
+            <span class="terminal-title">tap doctor</span>
           </div>
           <div class="terminal-body" id="terminal-output"></div>
         </div>
-        <p class="hero-terminal-caption">↑ <code>tap value</code> &mdash; your savings dashboard, free for everyone. Run it on day 30.</p>
+        <p class="hero-terminal-caption">↑ <code>tap doctor</code> &mdash; catches silent failures before your data goes stale. Free for everyone.</p>
       </div>
     </div>
   </div>
@@ -2560,36 +2560,31 @@ if (navToggle && navLinks) {
 
 // ===== Terminal animation (scroll-triggered, one-time, char-by-char for commands) =====
 //
-// Hero demo: `tap value` — the compound-savings dashboard. Shows new visitors
-// what an active Tap user sees on day 30 (47 taps, 1,847 runs/month, ~$1,500
-// saved vs paid alternatives). The math reconciles exactly with the same 4
-// baselines that src/value.ts uses in the real CLI: at 1,847 runs/month the
-// avg of (Browser Use $0.50, Stagehand $1.20, Apify $0.30, manual $1.25)
-// works out to ~$1,500. Internally consistent — not made up.
+// Hero demo: `tap doctor` — the health check dashboard. Shows new visitors
+// what an active Tap user sees when running doctor on their fleet: healthy
+// taps pass, broken taps get caught with precise diagnostics (fingerprint
+// diff, health contract violations with range/pattern). This is Tap's #1
+// differentiator: silent failure detection that no other tool provides.
 (function() {
   // type: 'type' = char-by-char typing, 'print' = instant line appear
   var lines = [
-    { type: 'type',  text: '$ tap value', delay: 0, speed: 50 },
+    { type: 'type',  text: '$ tap doctor', delay: 0, speed: 50 },
     { type: 'print', html: '&nbsp;', delay: 700 },
-    { type: 'print', html: '  <span class="cmd">Your Tap fleet</span>            <span class="muted">last 30 days</span>', delay: 800 },
+    { type: 'print', html: '  <span class="cmd">Health check</span>              <span class="muted">47 taps in fleet</span>', delay: 800 },
     { type: 'print', html: '&nbsp;', delay: 900 },
-    { type: 'print', html: '  <span class="muted">Taps in fleet</span>                  <span class="cmd">47</span>', delay: 1000 },
-    { type: 'print', html: '  <span class="muted">Runs (30 days)</span>              <span class="cmd">1,847</span>', delay: 1100 },
-    { type: 'print', html: '  <span class="muted">Doctor catches</span>                  <span class="cmd">5</span>    <span class="muted">silent failures</span>', delay: 1200 },
-    { type: 'print', html: '  <span class="muted">Hours saved</span>                  <span class="cmd">~46h</span>', delay: 1300 },
-    { type: 'print', html: '&nbsp;', delay: 1450 },
-    { type: 'print', html: '  <span class="table-border">\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500</span>', delay: 1500 },
-    { type: 'print', html: '&nbsp;', delay: 1600 },
-    { type: 'print', html: '  <span class="muted">What you would have paid elsewhere</span>', delay: 1700 },
-    { type: 'print', html: '&nbsp;', delay: 1800 },
-    { type: 'print', html: '  Browser Use   <span class="muted">@ $0.50/run</span>     <span class="cmd">$923</span>', delay: 1900 },
-    { type: 'print', html: '  Stagehand     <span class="muted">@ $1.20/run</span>   <span class="cmd">$2,216</span>', delay: 2000 },
-    { type: 'print', html: '  Apify Actors  <span class="muted">@ $0.30/run</span>     <span class="cmd">$554</span>', delay: 2100 },
-    { type: 'print', html: '  Hand-running  <span class="muted">@ $1.25/run</span>   <span class="cmd">$2,309</span>', delay: 2200 },
-    { type: 'print', html: '                              <span class="table-border">\u2500\u2500\u2500\u2500\u2500\u2500\u2500</span>', delay: 2300 },
-    { type: 'print', html: '                        <span class="muted">avg \u2248 </span><span class="cost">$1,500</span>', delay: 2400 },
+    { type: 'print', html: '  <span style="color:#6ee7b7">\u2713</span> github/trending      <span class="muted">25 rows</span>   <span style="color:#6ee7b7">ok</span>     <span class="muted">890ms</span>', delay: 1000 },
+    { type: 'print', html: '  <span style="color:#6ee7b7">\u2713</span> hackernews/hot       <span class="muted">30 rows</span>   <span style="color:#6ee7b7">ok</span>     <span class="muted">420ms</span>', delay: 1200 },
+    { type: 'print', html: '  <span style="color:#6ee7b7">\u2713</span> reddit/search        <span class="muted">25 rows</span>   <span style="color:#6ee7b7">ok</span>     <span class="muted">1.2s</span>', delay: 1400 },
+    { type: 'print', html: '  <span style="color:#f87171">\u2717</span> ecommerce/products   <span class="muted"> 0 rows</span>   <span style="color:#f87171">FAIL</span>   <span class="muted">2.1s</span>', delay: 1600 },
+    { type: 'print', html: '    <span style="color:#f87171">range:</span> <span class="muted">"price" value 0.99 outside [1, 50000] in 3 rows</span>', delay: 1900 },
+    { type: 'print', html: '    <span style="color:#fbbf24">\u26A0</span> <span class="muted">fingerprint: semantic_hash changed on .product-card</span>', delay: 2100 },
+    { type: 'print', html: '  <span style="color:#6ee7b7">\u2713</span> arxiv/search         <span class="muted">15 rows</span>   <span style="color:#6ee7b7">ok</span>     <span class="muted">1.8s</span>', delay: 2300 },
+    { type: 'print', html: '  <span class="muted">... 42 more passed</span>', delay: 2500 },
     { type: 'print', html: '&nbsp;', delay: 2700 },
-    { type: 'print', html: '  <span class="cmd">Net saved this month</span>       <span class="cost">$1,500+</span>', delay: 2900 }
+    { type: 'print', html: '  <span class="table-border">\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500</span>', delay: 2800 },
+    { type: 'print', html: '  <span style="color:#6ee7b7">46 ok</span>  <span style="color:#f87171">1 fail</span>  <span class="muted">0 error</span>                   <span class="muted">12.4s</span>', delay: 3000 },
+    { type: 'print', html: '&nbsp;', delay: 3200 },
+    { type: 'print', html: '  <span class="muted">Run</span> <span class="cmd">tap fix ecommerce/products</span> <span class="muted">to collect diagnostics</span>', delay: 3400 }
   ];
 
   var terminalEl = document.getElementById('terminal-output');

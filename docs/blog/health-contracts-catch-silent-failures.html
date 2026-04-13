@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Health Contracts Catch What Pydantic Can't: Silent Scraper Failures — Tap Blog</title>
+<meta name="description" content="A Reddit user asked the same question 6 times: what catches valid-typed data from the wrong element? Nobody had an answer. Health contracts with range, pattern, and drift detection do.">
+<link rel="canonical" href="https://taprun.dev/blog/health-contracts-catch-silent-failures.html">
+<meta property="og:title" content="Health Contracts Catch What Pydantic Can't: Silent Scraper Failures">
+<meta property="og:description" content="Type validation passes. Row count is fine. But the price came from the ad block, not the product. Health contracts catch this.">
+<meta property="og:url" content="https://taprun.dev/blog/health-contracts-catch-silent-failures.html">
+<meta property="og:type" content="article">
+<meta property="article:published_time" content="2026-04-13">
+<meta property="article:author" content="Leon Ting">
+<meta property="og:image" content="https://taprun.dev/social-preview.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Health Contracts Catch What Pydantic Can't: Silent Scraper Failures">
+<meta name="twitter:description" content="Type validation passes. Row count is fine. But the price came from the wrong element. Health contracts catch this.">
+<meta name="twitter:image" content="https://taprun.dev/social-preview.png">
+<meta name="keywords" content="scraper monitoring, silent failure detection, health contracts, web scraping reliability, data validation, fingerprint diff, scraper broken">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Health Contracts Catch What Pydantic Can't: Silent Scraper Failures",
+  "description": "A Reddit user asked the same question 6 times: what catches valid-typed data from the wrong element? Nobody had an answer. Health contracts with range, pattern, and drift detection do.",
+  "datePublished": "2026-04-13",
+  "author": { "@type": "Person", "name": "Leon Ting", "url": "https://github.com/LeonTing1010" },
+  "publisher": { "@type": "Organization", "name": "Tap", "url": "https://taprun.dev" },
+  "url": "https://taprun.dev/blog/health-contracts-catch-silent-failures.html",
+  "mainEntityOfPage": "https://taprun.dev/blog/health-contracts-catch-silent-failures.html"
+}
+</script>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='105' cy='115' r='55' fill='%23FFFFFF'/%3E%3Ccircle cx='85' cy='70' r='45' fill='%23FFFFFF'/%3E%3Cellipse cx='75' cy='32' rx='15' ry='22' fill='%23EF4444'/%3E%3Cellipse cx='90' cy='30' rx='12' ry='20' fill='%23DC2626'/%3E%3Cellipse cx='103' cy='35' rx='10' ry='16' fill='%23B91C1C'/%3E%3Cpath d='M 55 68 L 8 75 L 55 85 Z' fill='%23FBBF24'/%3E%3Cpath d='M 55 85 L 8 75 L 12 82 Z' fill='%23D97706'/%3E%3Ccircle cx='70' cy='65' r='14' fill='%231F2937'/%3E%3Ccircle cx='66' cy='61' r='5' fill='%23FFFFFF'/%3E%3Ccircle cx='74' cy='68' r='2.5' fill='%23FFFFFF'/%3E%3Cellipse cx='50' cy='78' rx='8' ry='5' fill='%23FECACA' opacity='0.8'/%3E%3Cellipse cx='125' cy='115' rx='35' ry='30' fill='%23818CF8'/%3E%3Cellipse cx='125' cy='115' rx='25' ry='20' fill='%236366F1'/%3E%3Ccircle cx='95' cy='130' r='25' fill='%23F9FAFB'/%3E%3Cpath d='M 145 140 L 175 185 L 155 180 L 140 145 Z' fill='%23818CF8'/%3E%3Cpath d='M 150 145 L 180 190 L 162 185 L 148 150 Z' fill='%236366F1'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0a0918; color: #e0e0e0; line-height: 1.8; }
+.container { max-width: 720px; margin: 0 auto; padding: 60px 24px; }
+h1 { font-size: 2rem; font-weight: 600; color: #fff; margin-bottom: 8px; line-height: 1.3; }
+h2 { font-size: 1.35rem; font-weight: 500; color: #fff; margin-top: 48px; margin-bottom: 16px; }
+h3 { font-size: 1.1rem; font-weight: 500; color: #fff; margin-top: 32px; margin-bottom: 12px; }
+p, li { font-size: 0.95rem; color: #b0b0b0; margin-bottom: 16px; }
+ul, ol { padding-left: 24px; }
+a { color: #818cf8; text-decoration: none; }
+a:hover { text-decoration: underline; }
+.meta { font-size: 0.85rem; color: #666; margin-bottom: 40px; }
+.back { display: inline-block; margin-bottom: 24px; font-size: 0.9rem; }
+code { background: #1a1a2e; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; font-family: 'JetBrains Mono', monospace; }
+pre { background: #111118; border: 1px solid #222; border-radius: 8px; padding: 16px 20px; overflow-x: auto; margin: 20px 0; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; line-height: 1.6; color: #c8c8d0; }
+pre .comment { color: #555; }
+pre .cmd { color: #818cf8; }
+pre .output { color: #6ee7b7; }
+pre .flag { color: #fbbf24; }
+pre .err { color: #f87171; }
+blockquote { border-left: 3px solid #6366F1; padding: 12px 16px; margin: 20px 0; background: rgba(99,102,241,0.06); border-radius: 0 8px 8px 0; }
+blockquote p { color: #a0a0b0; margin-bottom: 0; font-style: italic; }
+blockquote cite { display: block; margin-top: 8px; font-size: 0.85rem; color: #666; font-style: normal; }
+table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid #222; font-size: 0.9rem; }
+th { color: #fff; font-weight: 500; }
+td { color: #b0b0b0; }
+.cta { margin-top: 48px; padding: 24px; background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.2); border-radius: 12px; }
+.cta h3 { color: #fff; font-size: 1.1rem; margin-bottom: 12px; margin-top: 0; }
+.cta pre { margin-bottom: 0; }
+hr { border: none; border-top: 1px solid #222; margin: 48px 0; }
+</style>
+<script src="https://analytics.ahrefs.com/analytics.js" data-key="G1wKuningnrw+t5LQJ+MPw" async></script>
+</head>
+<body>
+<div class="container">
+<a href="../" class="back">&larr; Tap</a> &middot; <a href="./" class="back">Blog</a>
+<h1>Health Contracts Catch What Pydantic Can't</h1>
+<p class="meta">April 13, 2026 &middot; Leon Ting &middot; 8 min read</p>
+
+<p>A user on r/webscraping runs 30 scrapers. His biggest problem isn't that they crash. It's that <strong>they silently return wrong data</strong>.</p>
+
+<blockquote>
+<p>"I run around 30 scrapers and the thing that annoys me most is when they don't crash but just silently return bad data because a selector changed or something on the site moved around. Sometimes I don't notice for days."</p>
+<cite>&mdash; pavlito88, r/webscraping (23 upvotes, 41 comments)</cite>
+</blockquote>
+
+<p>He asked the same follow-up question <strong>six times</strong> in that thread. Each time, someone suggested a monitoring approach. Each time, he found the gap:</p>
+
+<blockquote>
+<p>"What about when the structure is fine but the selector shifted &mdash; you're still getting a string for price, but it's now pulling the wrong price from the page?"</p>
+</blockquote>
+
+<p>Nobody had a complete answer. Prometheus doesn't help. Pydantic doesn't help. OTel doesn't help. They all validate <em>shape</em>. None of them validate <em>semantics</em> &mdash; is this the right price, from the right element, on the right page?</p>
+
+<h2>The Gap in Every Monitoring Stack</h2>
+
+<p>Here's what everyone told him to do, and where each approach breaks down:</p>
+
+<table>
+<tr><th>Approach</th><th>What it catches</th><th>What it misses</th></tr>
+<tr><td>Row count threshold</td><td>Scraper returned 0 rows</td><td>Scraper returned 100 rows from wrong section</td></tr>
+<tr><td>Type checking (pydantic)</td><td>Price is not a string</td><td>Price is a valid number &mdash; from the ad block</td></tr>
+<tr><td>Non-empty checks</td><td>Field is missing</td><td>Field is present but semantically wrong</td></tr>
+<tr><td>Prometheus + Grafana</td><td>Scraper process crashed</td><td>Scraper ran fine, data is garbage</td></tr>
+<tr><td>OpenTelemetry</td><td>Infrastructure health</td><td>"For data, you have to write the contract" &mdash; armanfixing</td></tr>
+</table>
+
+<p>The last one is the most revealing. Even the OTel advocate admitted: <strong>data correctness requires a contract</strong>. But who writes the contract? And what does it look like?</p>
+
+<h2>Health Contracts: The Missing Layer</h2>
+
+<p>A health contract is a declarative spec that lives inside the program itself. Not in a separate monitoring system. Not in a dashboard. <em>In the code.</em></p>
+
+<pre><span class="comment">// A .tap.js program with a health contract</span>
+export default {
+  site: "ecommerce",
+  name: "products",
+
+  health: {
+    <span class="comment">// Layer 1: Shape validation (what everyone already does)</span>
+    min_rows: 10,
+    non_empty: ["title", "price", "url"],
+    unique: ["url"],
+
+    <span class="comment">// Layer 2: Semantic validation (what nobody does)</span>
+    range: {
+      price: { min: 1, max: 50000 },     <span class="comment">// catches ad prices ($0.01) and glitches ($999999)</span>
+      rating: { min: 0, max: 5 }          <span class="comment">// catches wrong-column data</span>
+    },
+    pattern: {
+      url: "^https://store\\.example\\.com/products/",  <span class="comment">// catches URLs from related-items section</span>
+      sku: "^[A-Z]{2}-\\d{6}$"                          <span class="comment">// catches garbled SKUs</span>
+    },
+    drift: {
+      price: 50                           <span class="comment">// alert if median price shifts &gt;50% between runs</span>
+    }
+  },
+
+  async tap(handle) {
+    <span class="comment">// ... extraction logic ...</span>
+  }
+}</pre>
+
+<p>Three layers of validation, each catching failures the previous one can't:</p>
+
+<h3>1. <code>range</code> &mdash; numeric bounds per column</h3>
+
+<p>The site redesigns. Your <code>.price</code> selector now matches a promotional badge showing "$0.99 shipping" instead of the product price. The value is a valid number. It's non-empty. Row count is fine. Pydantic passes.</p>
+
+<p>But <code>range: { price: { min: 1, max: 50000 } }</code> catches it instantly: <strong>value 0.99 outside [1, 50000] in 3/25 rows.</strong></p>
+
+<h3>2. <code>pattern</code> &mdash; regex per column</h3>
+
+<p>The site adds a "Related Products" section below the main listing. Your selector now grabs URLs from both sections. The URLs are valid strings. They're non-empty. But half of them point to a different product category.</p>
+
+<p><code>pattern: { url: "^https://store\\.example\\.com/products/" }</code> catches it: <strong>failed regex in 12/25 rows.</strong> The related-products URLs don't match the expected path prefix.</p>
+
+<h3>3. <code>drift</code> &mdash; cross-run distribution shift</h3>
+
+<p>This is the hardest scenario to catch. The site doesn't break. The selectors don't move. But the site starts showing a different <em>sort order</em> &mdash; putting sponsored products first. Your top-10 results shift from $50&ndash;$200 products to $5&ndash;$15 sponsored items.</p>
+
+<p>Every row passes every validation. Shape is fine. Types are fine. Even ranges are fine (the values are within bounds). But the <em>distribution</em> has shifted dramatically.</p>
+
+<p><code>drift: { price: 50 }</code> compares the median price against the previous run. If it shifts more than 50%, you get an alert. Not because any individual value is wrong &mdash; but because the <em>population</em> has changed.</p>
+
+<h2>What <code>tap doctor</code> Does With This</h2>
+
+<pre><span class="cmd">$</span> tap doctor ecommerce products
+<span class="err">&#10008; ecommerce/products  FAIL  score: 0.72</span>
+  <span class="err">range: "price" value 0.99 outside [1, 50000] in 3/25 rows</span>
+  <span class="flag">&#9888; fingerprint: semantic_hash changed on .product-card</span>
+  <span class="output">&#10003; non_empty: all fields present</span>
+  <span class="output">&#10003; min_rows: 25 &ge; 10</span>
+  <span class="output">&#10003; pattern: all URLs match</span></pre>
+
+<p>Two signals converge: the health contract caught the bad values, and the fingerprint diff detected the structural change that caused them. Together, they tell you exactly what happened and where to look.</p>
+
+<p>Compare this to the current state of the art:</p>
+
+<blockquote>
+<p>"I just do manual spot checks which obviously doesn't scale."</p>
+<cite>&mdash; pavlito88</cite>
+</blockquote>
+
+<blockquote>
+<p>"It is a manual process to recreate selectors each time we see a major redesign."</p>
+<cite>&mdash; No-Appointment9068 (36 upvotes), r/webscraping</cite>
+</blockquote>
+
+<blockquote>
+<p>"They have developers (like me) working 24/7 to keep them running."</p>
+<cite>&mdash; army_of_wan (10 upvotes), r/webscraping</cite>
+</blockquote>
+
+<h2>Why This Has to Be in the Program, Not in the Dashboard</h2>
+
+<p>Every monitoring approach suggested in that thread is <em>external</em> to the scraper: Prometheus, Grafana, Dagster, n8n, Slack alerts. They monitor the <em>infrastructure</em>. They can tell you the process died or the request timed out.</p>
+
+<p>But data correctness is a <em>domain</em> problem, not an infrastructure problem. A price of $0.99 is a perfectly healthy HTTP response. The server returned 200. The JSON parsed. The field exists. Infrastructure monitoring has nothing to report.</p>
+
+<p>The contract has to live where the domain knowledge lives &mdash; in the extraction code itself. That's why it's a field on the module, not a separate config file:</p>
+
+<pre><span class="comment">// The person who writes the extractor knows:
+// - prices should be $1-$50,000
+// - URLs should match /products/
+// - SKUs follow a specific format
+// Nobody else knows this.</span>
+
+health: {
+  range: { price: { min: 1, max: 50000 } },
+  pattern: { url: "^https://store\\.example\\.com/products/" },
+}</pre>
+
+<p>When the site changes and the contract fails, <code>tap doctor</code> packages the diagnostics: the contract violation, the fingerprint diff showing what changed on the page, the current code, and the last 3 git commits. You (or your AI agent) read the diagnostics and decide how to fix it.</p>
+
+<p>No retry loops. No black-box "intelligence." A contract that either passes or doesn't, with a precise explanation of why.</p>
+
+<hr>
+
+<h2>Related</h2>
+<ul>
+<li><a href="your-scraper-is-broken.html">Your Scraper Is Broken Right Now</a> &mdash; the silent failure problem and why it matters</li>
+<li><a href="interface-protocol.html">The Interface Protocol</a> &mdash; 8 operations that replace every browser automation SDK</li>
+<li><a href="programs-beat-prompts.html">Programs Beat Prompts</a> &mdash; why AI should write code, not run it</li>
+</ul>
+
+<div class="cta">
+<h3>Try it</h3>
+<pre><span class="cmd">curl</span> -fsSL https://taprun.dev/install.sh | sh
+
+<span class="comment"># Check your taps right now</span>
+<span class="cmd">tap</span> doctor
+
+<span class="comment"># See which ones are silently broken</span>
+<span class="cmd">tap</span> doctor <span class="flag">--format json</span> | jq '.results[] | select(.status == "fail")'</pre>
+</div>
+
+</div>
+<script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "91c486def20e49999fa55db9040ec94d"}'></script>
+</body>
+</html>
