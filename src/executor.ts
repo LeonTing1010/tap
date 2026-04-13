@@ -38,6 +38,32 @@ export interface TapHealthContract {
    *  Returns { ok, issues } where issues describe which rows failed.
    */
   properties?: string[];
+  /** Per-column numeric range constraints.
+   *  Each key is a column name, value specifies min/max bounds (both optional).
+   *  Example: { price: { min: 1, max: 50000 }, score: { min: 0, max: 100 } }
+   */
+  range?: Record<string, { min?: number; max?: number }>;
+  /** Per-column regex pattern constraints.
+   *  Each key is a column name, value is a regex string tested against every row.
+   *  Example: { url: "^https://", date: "^\\d{4}-\\d{2}-\\d{2}$" }
+   */
+  pattern?: Record<string, string>;
+  /** Cross-run value distribution drift detection.
+   *  Each key is a column name, value is the max allowed % change in median vs baseline.
+   *  Checked by doctor (requires cross-run history), not by checkHealth at runtime.
+   *  Example: { price: 50 } — alert if median price changes >50% between runs.
+   */
+  drift?: Record<string, number>;
+  /**
+   * Cross-validate DOM-extracted values against the page's own JSON-LD structured data.
+   * Each key is a column name from the tap's output, value is a JSON-LD path:
+   *   "jsonld:Product.name"           — match against @type=Product, field name
+   *   "jsonld:Product.offers.price"   — nested path
+   *   "jsonld:Product.offers.availability" — e.g. "https://schema.org/InStock"
+   * Checked by doctor (requires browser to read current JSON-LD from page).
+   * Catches the hardest failure: valid-typed data from the wrong page element.
+   */
+  cross_validate?: Record<string, string>;
 }
 
 /** Structure fingerprint — captured at forge time, compared by doctor. */
@@ -45,10 +71,18 @@ export interface TapFingerprint {
   captured: string;    // ISO timestamp
   strategy: "dom" | "api" | "ssr" | "unknown";
   root_hash?: string;  // Merkle root — O(1) "did anything change?" check
-  selectors?: Record<string, { count: number; sample_tag?: string; semantic_hash?: string }>;
+  selectors?: Record<string, { count: number; sample_tag?: string; semantic_hash?: string; context_hash?: string }>;
   endpoints?: Array<{ url: string; status: number; shape_hash: string }>;
   globals?: Array<{ name: string; keys: string[] }>;
   json_ld_types?: string[];  // Schema.org @type values — SEO-driven, extremely stable
+  /**
+   * Full JSON-LD entity values — captured at forge time for cross-validation.
+   * Keyed by "@type.field.path" (e.g. "Product.name", "Product.offers.price").
+   * Sites maintain JSON-LD for Google rich snippets — changing it hurts SEO.
+   * Doctor compares DOM-extracted values against these declared values.
+   * All scalar values stored as strings; nested objects flattened with dot notation.
+   */
+  json_ld_values?: Record<string, string | null>;
   page?: { title_pattern: string; element_count_range: [number, number] };
   /**
    * Write actions discovered via forge.probe_actions (Phase B/C).
@@ -345,6 +379,43 @@ export async function checkHealth(
       }
     }
   }
+  // Range constraints — per-column numeric bounds
+  if (tap.health.range && result.rows.length > 0) {
+    for (const [col, bounds] of Object.entries(tap.health.range)) {
+      let outOfRange = 0;
+      for (const row of result.rows) {
+        if (row[col] == null) continue;  // skip null/undefined — missing data, not out-of-range
+        const val = Number(row[col]);
+        if (Number.isNaN(val)) continue;  // skip non-numeric (e.g. "N/A")
+        if (bounds.min !== undefined && val < bounds.min) outOfRange++;
+        else if (bounds.max !== undefined && val > bounds.max) outOfRange++;
+      }
+      if (outOfRange > 0) {
+        const label = `[${bounds.min ?? "-∞"}, ${bounds.max ?? "∞"}]`;
+        issues.push(`range: "${col}" value outside ${label} in ${outOfRange}/${result.rows.length} rows`);
+      }
+    }
+  }
+  // Pattern constraints — per-column regex validation
+  if (tap.health.pattern && result.rows.length > 0) {
+    for (const [col, regexStr] of Object.entries(tap.health.pattern)) {
+      try {
+        const re = new RegExp(regexStr);
+        let failures = 0;
+        for (const row of result.rows) {
+          const val = row[col];
+          if (val === undefined || val === null) { failures++; continue; }
+          if (!re.test(String(val))) failures++;
+        }
+        if (failures > 0) {
+          issues.push(`pattern: "${col}" failed regex /${regexStr}/ in ${failures}/${result.rows.length} rows`);
+        }
+      } catch {
+        issues.push(`pattern: "${col}" has invalid regex "${regexStr}"`);
+      }
+    }
+  }
+  // drift checked by doctor, not here — requires cross-run history
   // Async checks
   if (send && tap.health.url) {
     const href = await send("tool", "tap.eval", { expression: "location.href" }) as string;
@@ -359,6 +430,42 @@ export async function checkHealth(
         issues.push(`visible: selector "${selector}" is not visible`);
       }
     }
+  }
+  // Cross-validate: compare DOM-extracted values against page's JSON-LD declarations
+  // Catches "valid type, wrong source" — the hardest silent failure mode.
+  if (send && tap.health.cross_validate && result.rows.length > 0) {
+    try {
+      const ldValues = await send("tool", "tap.eval", { expression: `(() => {
+        const vals = {}
+        function flatten(obj, prefix) {
+          if (obj == null) return
+          if (typeof obj !== 'object') { vals[prefix] = String(obj); return }
+          if (Array.isArray(obj)) { if (obj.length <= 10) obj.forEach((v, i) => flatten(v, prefix + '.' + i)); return }
+          for (const [k, v] of Object.entries(obj)) {
+            if (k === '@context' || k === '@type') continue
+            flatten(v, prefix + '.' + k)
+          }
+        }
+        document.querySelectorAll('script[type="application/ld+json"]').forEach(s => {
+          try { const d = JSON.parse(s.textContent); const es = d['@graph'] || [d]; es.forEach(e => { const t = e['@type']; if (t && t !== 'BreadcrumbList') flatten(e, String(t)) }) } catch {}
+        })
+        return vals
+      })()` }) as Record<string, string> | null;
+      if (ldValues && Object.keys(ldValues).length > 0) {
+        for (const [col, ldPath] of Object.entries(tap.health.cross_validate)) {
+          // Parse "jsonld:Product.name" → "Product.name"
+          const path = ldPath.startsWith("jsonld:") ? ldPath.slice(7) : ldPath;
+          const declaredValue = ldValues[path];
+          if (declaredValue === undefined) continue; // JSON-LD doesn't have this field — skip
+          // Check first row's value against JSON-LD declared value
+          const domValue = String(result.rows[0][col] ?? "").trim();
+          const ldTrimmed = declaredValue.trim();
+          if (domValue && ldTrimmed && !domValue.includes(ldTrimmed) && !ldTrimmed.includes(domValue)) {
+            issues.push(`cross_validate: "${col}" value "${domValue}" does not match ${ldPath} "${ldTrimmed}"`);
+          }
+        }
+      }
+    } catch { /* best-effort — page may not have JSON-LD */ }
   }
   return { ok: issues.length === 0, issues };
 }
@@ -596,7 +703,10 @@ export async function runTap(
   // Resolve args with defaults + validate constraints
   const resolvedArgs: Record<string, unknown> = { ...args };
   if (mod.args) {
-    for (const [key, spec] of Object.entries(mod.args)) {
+    const argEntries: [string, Record<string, unknown>][] = Array.isArray(mod.args)
+      ? mod.args.map((spec: Record<string, unknown>) => [spec.name as string, spec])
+      : Object.entries(mod.args) as unknown as [string, Record<string, unknown>][];
+    for (const [key, spec] of argEntries) {
       if (resolvedArgs[key] === undefined && spec.default !== undefined) {
         resolvedArgs[key] = spec.default;
       }
@@ -607,7 +717,7 @@ export async function runTap(
       // Validate maxLength
       if (spec.maxLength && typeof resolvedArgs[key] === 'string') {
         const val = resolvedArgs[key] as string;
-        if (val.length > spec.maxLength) {
+        if (val.length > (spec.maxLength as number)) {
           throw new Error(
             `${mod.site}/${mod.name}: arg "${key}" is ${val.length} chars, max ${spec.maxLength}`
           );
