@@ -5,7 +5,7 @@
 <h1 align="center">Tap</h1>
 
 <h4 align="center">
-  Automate any website. AI compiles it. Runs forever at $0.
+  Your scraper is broken right now. You just don't know it yet.
 </h4>
 
 <p align="center">
@@ -24,14 +24,16 @@
 
 ---
 
-**Tell AI what you want. Tap compiles it into a deterministic program. The program runs forever — no AI, no tokens, no surprises.**
+**Tap compiles AI understanding into deterministic programs. Then monitors them.** Health contracts catch silent failures. Fingerprint diffs tell you exactly what changed. `tap doctor` detects breakage before your data goes stale — not three days later.
 
 ```
-First run:  AI inspects the website → compiles a .tap.js program  (one-time cost)
-Every run:  The program runs instantly, same result every time     ($0.00, forever)
+Forge:    AI inspects the site → compiles a .tap.js program       (one-time cost)
+Run:      The program executes instantly, same result every time   ($0, zero AI)
+Monitor:  tap doctor checks health contracts + fingerprint diffs  (catches breakage)
+Heal:     AI reads diagnostics and patches the program            (only when needed)
 ```
 
-140+ skills across 68+ sites already supported. One binary, zero dependencies.
+**MCP is the authoring layer. `tap.run` is the execution layer.** AI participates during forge (one-time). Execution is pure code — zero tokens, deterministic output. 140+ skills across 68+ sites. One binary, zero dependencies.
 
 ## Get Started
 
@@ -131,7 +133,7 @@ tap github trending | tap filter --field stars --gt 500 | tap table
 
 ```bash
 tap forge "get Hacker News top stories"           # BYOK Claude / GPT
-tap forge https://news.ycombinator.com            # Tier 0 compiler — no AI needed
+tap forge https://news.ycombinator.com            # API detected — compiled without AI
 ```
 
 Bring your own model — works with Claude, OpenAI, DeepSeek, or any
@@ -172,9 +174,9 @@ Every successful compilation makes the next one faster. 140+ community skills me
 | **Monitor** | Price tracking, stock data, competitor analysis |
 
 ```bash
+tap doctor    # Health check — catches silent failures before your data goes stale
 tap update    # Install / update all skills
 tap list      # See everything available
-tap doctor    # Health check your taps
 ```
 
 ## How Tap Compares
@@ -183,11 +185,12 @@ tap doctor    # Health check your taps
 |--|-----|-------------------|---------------------|
 | **AI cost per run** | $0 (compile once) | Tokens every run | Free |
 | **Accuracy** | Deterministic | Varies per run | Deterministic |
-| **Self-healing** | Yes (doctor diagnostics + AI heal) | No | No |
-| **Detection risk** | Low (real browser) | High | High |
-| **Runtimes** | 3 (browser + headless + desktop) | 1 | 1 |
-| **Reusable** | .tap.js (shareable) | Ephemeral | Fragile scripts |
-| **MCP native** | Yes | No | No |
+| **Silent failure detection** | Health contracts + fingerprint diff | None | None |
+| **Breakage diagnostics** | `tap doctor` — exact diff of what changed | None | Manual spot checks |
+| **Detection risk** | Low (real browser sessions) | High | High |
+| **Runtimes** | 3 (Chrome + Playwright + macOS) | 1 | 1 |
+| **Code inspectable** | .tap.js — git diff, debug, version | Black box / ephemeral | Fragile scripts |
+| **MCP native** | Yes (authoring layer only — execution is zero tokens) | No | No |
 
 ## Security
 
@@ -211,7 +214,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 - [x] 3 runtimes — Chrome, Playwright, macOS
 - [x] Unix pipes — `tap A | tap B`
 - [x] Watch mode — monitor changes over time
-- [x] Doctor — health check + diagnostics for broken taps
+- [x] Doctor — health contracts, fingerprint diffs, automatic diagnostics for broken taps
 - [x] One-command setup — `tap setup` configures all AI agents
 - [ ] Android runtime
 - [ ] iOS runtime

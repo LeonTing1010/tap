@@ -5,7 +5,7 @@
 <h1 align="center">Tap</h1>
 
 <h4 align="center">
-  自动化任何网站。AI 编译，永久运行，$0。
+  你的爬虫现在就是坏的。你只是还不知道。
 </h4>
 
 <p align="center">
@@ -24,14 +24,16 @@
 
 ---
 
-**告诉 AI 你想要什么。Tap 把它编译成确定性程序。程序永久运行 — 不需要 AI、不消耗 token、不会出意外。**
+**Tap 把 AI 对网站的理解编译成确定性程序，然后持续监控它。** 健康合约捕获静默故障，指纹对比精确定位变更。`tap doctor` 在数据变质前就发现问题 — 不是三天以后。
 
 ```
-第一次运行：AI 分析网站 → 编译成 .tap.js 程序  （一次性成本）
-之后每次：  程序即时运行，每次结果相同          ($0.00，永久)
+锻造：  AI 分析网站 → 编译成 .tap.js 程序          （一次性成本）
+执行：  程序即时运行，每次结果完全一致              ($0，零 AI）
+监控：  tap doctor 检查健康合约 + 指纹对比          （捕获故障）
+修复：  AI 读取诊断报告并修补程序                   （仅在需要时）
 ```
 
-140+ skills，覆盖 68+ 网站。一个二进制，零依赖。
+**MCP 是创作层，`tap.run` 是执行层。** AI 只在锻造时参与（一次性成本）。执行是纯代码 — 零 token，确定性输出。140+ skills，覆盖 68+ 网站。一个二进制，零依赖。
 
 ## 快速开始
 
@@ -131,7 +133,7 @@ tap github trending | tap filter --field stars --gt 500 | tap table
 
 ```bash
 tap forge "获取 Hacker News 热门文章"         # 自带 Claude / GPT key
-tap forge https://news.ycombinator.com        # Tier 0 编译器 — 无需 AI
+tap forge https://news.ycombinator.com        # 检测到 API — 无需 AI 直接编译
 ```
 
 自带模型 — 支持 Claude、OpenAI、DeepSeek，或任何 OpenAI 兼容端点，包括 **本地 Ollama / LM Studio**，实现完全离线锻造：
@@ -170,9 +172,9 @@ tap forge "抓取 arxiv 最新论文"                # 0 字节离开你的机�
 | **监控** | 价格追踪, 股票数据, 竞品分析 |
 
 ```bash
+tap doctor    # 健康检查 — 在数据变质前捕获静默故障
 tap update    # 安装 / 更新所有 skills
 tap list      # 查看所有可用 skills
-tap doctor    # 健康检查
 ```
 
 ## 对比
@@ -181,11 +183,12 @@ tap doctor    # 健康检查
 |--|-----|-----------------|----------|
 | **每次运行 AI 成本** | $0（编译一次） | 每次消耗 token | 免费 |
 | **准确性** | 确定性 | 每次不同 | 确定性 |
-| **自愈能力** | 有（doctor 诊断 + AI 修复） | 无 | 无 |
-| **检测风险** | 低（真实浏览器） | 高 | 高 |
-| **运行时** | 3（浏览器 + 无头 + 桌面） | 1 | 1 |
-| **可复用** | .tap.js（可分享） | 临时的 | 脆弱脚本 |
-| **MCP 原生** | 是 | 否 | 否 |
+| **静默故障检测** | 健康合约 + 指纹对比 | 无 | 无 |
+| **故障诊断** | `tap doctor` — 精确定位变更 | 无 | 手动排查 |
+| **检测风险** | 低（真实浏览器会话） | 高 | 高 |
+| **运行时** | 3（Chrome + Playwright + macOS） | 1 | 1 |
+| **代码可检查** | .tap.js — 可 git diff、调试、版本控制 | 黑盒 / 临时的 | 脆弱脚本 |
+| **MCP 原生** | 是（仅创作层 — 执行零 token） | 否 | 否 |
 
 ## 安全
 
@@ -209,7 +212,7 @@ tap doctor    # 健康检查
 - [x] 3 个运行时 — Chrome, Playwright, macOS
 - [x] Unix 管道 — `tap A | tap B`
 - [x] Watch 模式 — 监控变化
-- [x] Doctor — 健康检查 + 损坏 taps 诊断
+- [x] Doctor — 健康合约、指纹对比、损坏 taps 自动诊断
 - [x] 一键配置 — `tap setup` 配置所有 AI Agent
 - [ ] Android 运行时
 - [ ] iOS 运行时

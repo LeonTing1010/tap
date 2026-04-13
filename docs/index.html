@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tap — Your AI agent costs $2 per run. It should cost that once.</title>
-<meta name="description" content="Browser-Use and Stagehand call the LLM on every step. Tap lets AI analyze a site once, compile a program, then run it forever — zero AI tokens at runtime. Self-healing when sites change. 140+ ready-to-run skills.">
+<meta name="description" content="Your scraper is broken right now — you just don't know it. Tap compiles AI understanding into deterministic programs, then monitors them with health contracts and fingerprint diffs. When sites change, tap doctor catches it before your data goes stale. 140+ ready-to-run skills.">
 <meta property="og:title" content="Tap — Forge once. Run forever. $0 per execution.">
-<meta property="og:description" content="Stop paying $2 every time your AI agent touches a website. Tap compiles AI understanding into deterministic programs that run forever for free — and self-heal when sites change.">
+<meta property="og:description" content="Tap compiles AI understanding into deterministic programs that run forever for free. Health contracts and fingerprint diffs catch silent failures before your data goes stale.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://taprun.dev/">
 <meta property="og:image" content="https://taprun.dev/social-preview.svg">
@@ -14,9 +14,9 @@
 <meta property="og:image:height" content="640">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Tap — Forge once. Run forever. $0 per execution.">
-<meta name="twitter:description" content="Stop paying $2 every time your AI agent touches a website. Tap compiles AI understanding into deterministic programs that run forever for free — and self-heal when sites change.">
+<meta name="twitter:description" content="Tap compiles AI understanding into deterministic programs that run forever for free. Health contracts and fingerprint diffs catch silent failures before your data goes stale.">
 <meta name="twitter:image" content="https://taprun.dev/social-preview.svg">
-<meta name="keywords" content="AI coding agent protocol, MCP, model context protocol, Chrome extension, Playwright, tap protocol, forge, deterministic automation, sandbox, self-healing, macOS automation, doctor, fingerprint, website automation, AI agent, web scraping, browser automation, Tier 0 compiler, JSON-LD, RSS, OpenAPI">
+<meta name="keywords" content="AI coding agent protocol, MCP, model context protocol, Chrome extension, Playwright, tap protocol, forge, deterministic automation, sandbox, automatic diagnostics, macOS automation, doctor, fingerprint, website automation, AI agent, web scraping, browser automation, API auto-detection, JSON-LD, RSS, OpenAPI">
 <meta name="author" content="LeonTing1010">
 <meta name="robots" content="index, follow">
 <meta name="googlebot" content="index, follow">
@@ -27,7 +27,7 @@
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
   "name": "Tap",
-  "description": "Tap compiles AI understanding of websites into deterministic programs that run forever for $0 per execution. Self-healing via doctor + fingerprint when sites change. 140+ ready-to-run skills.",
+  "description": "Tap compiles AI understanding of websites into deterministic programs that run forever for $0 per execution. Doctor + fingerprint diffs catch silent failures. Health contracts verify data correctness. 140+ ready-to-run skills.",
   "url": "https://taprun.dev/",
   "downloadUrl": "https://github.com/LeonTing1010/tap/releases/latest",
   "softwareVersion": "0.11.3",
@@ -39,9 +39,9 @@
     "url": "https://github.com/LeonTing1010"
   },
   "codeRepository": "https://github.com/LeonTing1010/tap",
-  "keywords": ["AI agents", "MCP", "tap protocol", "forge", "deterministic automation", "Chrome extension", "Playwright", "sandbox", "self-healing", "doctor", "fingerprint", "Tier 0 compiler"],
+  "keywords": ["AI agents", "MCP", "tap protocol", "forge", "deterministic automation", "Chrome extension", "Playwright", "sandbox", "doctor", "fingerprint", "health contracts", "silent failure detection", "API auto-detection"],
   "offers": [
-    {"@type": "Offer", "price": "0", "priceCurrency": "USD", "description": "Free — 140+ skills in any MCP agent, Tier 0 forge, doctor, watch. 3-day trial on paid features."},
+    {"@type": "Offer", "price": "0", "priceCurrency": "USD", "description": "Free — 140+ skills in any MCP agent, API auto-detection forge, doctor, watch. 3-day trial on paid features."},
     {"@type": "Offer", "price": "9", "priceCurrency": "USD", "description": "Hacker — AI creates taps for you. Full forge pipeline in Claude Code, Cursor, any MCP host. BYOK."},
     {"@type": "Offer", "price": "29", "priceCurrency": "USD", "description": "Pro — Taps run themselves. Auto-repair, auto-refresh, scheduled runs, team server. 100% local-first."}
   ]
@@ -1866,8 +1866,8 @@ h2 .hl {
           v0.11.3 just shipped &nbsp;·&nbsp; 140+ skills, 0 setup
         </div>
         <h1>You're paying $2 every time<br>your agent touches a website.<br><span class="hl">You should pay that once.</span></h1>
-        <p class="hero-sub">Browser-Use and Stagehand call the LLM on every step. Tap lets AI analyze a site once, compile a program, and run it forever &mdash; zero AI tokens at runtime.</p>
-        <p class="hero-tagline"><strong>Stop renting automation.</strong> Start owning it &mdash; your .tap.js files live on your disk, run forever, no lock-in.</p>
+        <p class="hero-sub">AI browser agents burn tokens every run and break silently when sites change. Tap compiles AI understanding into a deterministic program once &mdash; then <code>tap doctor</code> monitors it with health contracts and fingerprint diffs so you know the moment something breaks, not three days later.</p>
+        <p class="hero-tagline"><strong>MCP is the authoring layer. <code>tap.run</code> is the execution layer.</strong> AI participates once. Execution is zero tokens, zero AI, deterministic.</p>
         <div class="hero-actions">
           <a href="#install" class="btn btn-primary">Start Free &mdash; $0/Run Forever</a>
           <a href="https://github.com/LeonTing1010/tap" class="btn btn-ghost">
@@ -2099,9 +2099,9 @@ h2 .hl {
 
     <div class="why-grid">
       <div class="why-card why-card--safe reveal">
-        <div class="why-card-tag">Self-healing</div>
-        <h3>Tap's doctor catches breakage within the hour.</h3>
-        <p>After every execution, <code>tap doctor</code> runs health contracts. Fingerprint diff (semantic, ARIA-based &mdash; survives CSS-in-JS rebuilds) tells you exactly what changed &mdash; not just "0 rows," but the precise selector that disappeared and the API schema that shifted. <code>--auto</code> packages everything an AI needs to fix it. Doctor detects the breakage, your AI reads the diagnostics and patches the tap.</p>
+        <div class="why-card-tag">Automatic diagnostics</div>
+        <h3>Doctor catches breakage before your data goes stale.</h3>
+        <p><code>tap doctor</code> runs health contracts after every execution. Fingerprint diff (semantic, ARIA-based &mdash; survives CSS-in-JS rebuilds) tells you exactly what changed &mdash; not just "0 rows," but the precise selector that disappeared and the API schema that shifted. <code>--auto</code> packages diagnostics: current code, git history, and a fresh page snapshot. You (or your AI agent) read the diff and decide how to fix it &mdash; no black-box retry loops.</p>
         <div class="code-block" style="margin-top:18px;">
           <span class="hl-dim">$ </span><span class="cmd">tap doctor --auto github trending</span><br>
           <span style="color:var(--red)">&#10007;</span> <span class="dim">selector</span> <code>h2.repo-name</code> <span class="dim">&mdash; gone since last run</span><br>
@@ -2326,7 +2326,7 @@ h2 .hl {
         <div class="price-divider"></div>
         <ul class="price-features">
           <li><span class="bullet">+</span> <strong>140+ community skills</strong> in any MCP agent (Claude Code, Cursor, Windsurf)</li>
-          <li><span class="bullet">+</span> <code>tap forge &lt;url&gt;</code> &mdash; create taps from terminal (Tier 0: zero AI for API/JSON-LD/RSS sites)</li>
+          <li><span class="bullet">+</span> <code>tap forge &lt;url&gt;</code> &mdash; create taps from terminal (sites with API/JSON-LD/RSS compile without AI)</li>
           <li><span class="bullet">+</span> <code>tap doctor</code> &mdash; health checks + fingerprint diff + diagnostics</li>
           <li><span class="bullet">+</span> <code>tap watch</code> &mdash; monitor changes, pipe to anywhere</li>
           <li><span class="bullet">+</span> BYOK forge (Claude, GPT, DeepSeek, Ollama) &mdash; your key, your model</li>
@@ -2457,7 +2457,7 @@ h2 .hl {
       <path d="M 150 145 L 180 190 L 162 185 L 148 150 Z" fill="#6366F1"/>
     </svg>
     <h2>Forge once. Run forever.<br><span class="hl">$0 per execution.</span></h2>
-    <p class="section-desc">140+ skills ready to run. Self-healing when websites change. Your programs, on your disk, forever.</p>
+    <p class="section-desc">140+ skills ready to run. <code>tap doctor</code> catches breakage before your data goes stale. Your programs, on your disk, forever.</p>
     <div class="hero-actions">
       <a href="#install" class="btn btn-primary">Start Free &mdash; $0/Run Forever</a>
       <a href="https://github.com/LeonTing1010/tap" class="btn btn-ghost">View on GitHub</a>

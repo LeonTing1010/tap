@@ -1,0 +1,30 @@
+# Tap — Browser Automation Runtime
+
+Tap compiles natural language instructions into deterministic JavaScript programs. The AI runs once to generate the program; after that it replays instantly at zero cost.
+
+## What You Can Do
+
+- **Extract data** from any website — scrape pages, pull structured content, monitor for changes.
+- **Automate workflows** — post to social media, fill forms, chain multi-step browser tasks like Unix pipes.
+- **Run anywhere** — as a Chrome extension (with your real login sessions), headless via Playwright, or on macOS desktop apps.
+- **Connect to AI agents** — MCP-native, works with Claude Code, Cursor, Windsurf, or any MCP-compatible tool.
+
+## Key Features
+
+- **Compile Once, Run Forever** — AI generates a .tap.js program once; replay is instant and free.
+- **140+ Pre-built Automations** — Community-contributed programs covering 68+ websites.
+- **3 Runtimes** — Chrome extension, Playwright (headless/server), macOS (desktop apps).
+- **Local-only** — Your data, sessions, and credentials never leave your machine.
+- **Automatic diagnostics** — `tap doctor` detects silent failures via health contracts and fingerprint diffs. AI reads diagnostics and patches programs when needed.
+
+## Getting Started
+
+```bash
+# Quick start
+npx -y @taprun/cli --version
+
+# Or install permanently (macOS/Linux)
+curl -fsSL https://taprun.dev/install.sh | sh
+```
+
+Install the Chrome Extension to automate sites that require login. Download from releases, unzip, then load unpacked in chrome://extensions/.
