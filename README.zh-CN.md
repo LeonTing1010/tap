@@ -20,6 +20,7 @@
   <a href="https://github.com/LeonTing1010/tap/releases/latest"><img src="https://img.shields.io/github/v/release/LeonTing1010/tap?style=flat-square" alt="Release"></a>
   <a href="https://github.com/LeonTing1010/tap/stargazers"><img src="https://img.shields.io/github/stars/LeonTing1010/tap?style=flat-square" alt="Stars"></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/LeonTing1010/tap?style=flat-square" alt="License"></a>
+  <a href="https://chromewebstore.google.com/detail/tap/llcidejeoobdegbkolbjhfoeckphldce"><img src="https://img.shields.io/chrome-web-store/v/llcidejeoobdegbkolbjhfoeckphldce?style=flat-square&label=Chrome%20Web%20Store" alt="Chrome Web Store"></a>
 </p>
 
 ---
@@ -76,10 +77,7 @@ tap setup
 
 ### 可选：Chrome 扩展（需要登录的站点）
 
-大部分 tap 不需要登录即可运行。如需访问小红书、知乎等需要登录的站点，安装 Chrome 扩展：
-
-从 [Releases](https://github.com/LeonTing1010/tap/releases/latest) 下载 `tap-extension.zip`，解压后：
-`chrome://extensions/` → 开启开发者模式 → 加载已解压的扩展程序
+大部分 tap 不需要登录即可运行。如需访问小红书、知乎等需要登录的站点，从 [Chrome Web Store](https://chromewebstore.google.com/detail/tap/llcidejeoobdegbkolbjhfoeckphldce) 安装扩展。
 
 ### 4. 开始使用
 

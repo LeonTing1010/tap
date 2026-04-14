@@ -27,4 +27,4 @@ npx -y @taprun/cli --version
 curl -fsSL https://taprun.dev/install.sh | sh
 ```
 
-Install the Chrome Extension to automate sites that require login. Download from releases, unzip, then load unpacked in chrome://extensions/.
+Install the Chrome Extension from the Chrome Web Store to automate sites that require login: https://chromewebstore.google.com/detail/tap/llcidejeoobdegbkolbjhfoeckphldce

@@ -20,6 +20,7 @@
   <a href="https://github.com/LeonTing1010/tap/releases/latest"><img src="https://img.shields.io/github/v/release/LeonTing1010/tap?style=flat-square" alt="Release"></a>
   <a href="https://github.com/LeonTing1010/tap/stargazers"><img src="https://img.shields.io/github/stars/LeonTing1010/tap?style=flat-square" alt="Stars"></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/LeonTing1010/tap?style=flat-square" alt="License"></a>
+  <a href="https://chromewebstore.google.com/detail/tap/llcidejeoobdegbkolbjhfoeckphldce"><img src="https://img.shields.io/chrome-web-store/v/llcidejeoobdegbkolbjhfoeckphldce?style=flat-square&label=Chrome%20Web%20Store" alt="Chrome Web Store"></a>
 </p>
 
 ---
@@ -95,10 +96,7 @@ Agent: Done. Run `tap douban top250` anytime — $0 per run.
 
 ### Optional: Chrome Extension (for login-required sites)
 
-Most taps work without login. For sites that need your session (Xiaohongshu, Zhihu, etc.), add the Chrome Extension:
-
-Download `tap-extension.zip` from [Releases](https://github.com/LeonTing1010/tap/releases/latest), unzip, then:
-`chrome://extensions/` → Developer mode → Load unpacked → select the folder
+Most taps work without login. For sites that need your session (Xiaohongshu, Zhihu, etc.), install the [Chrome Extension](https://chromewebstore.google.com/detail/tap/llcidejeoobdegbkolbjhfoeckphldce) from the Chrome Web Store.
 
 ## What Can You Do?
 
