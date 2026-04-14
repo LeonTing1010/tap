@@ -14,7 +14,7 @@
 
 **Description:** Fetches the top 30 stories from Hacker News using the official Algolia API. Returns structured data with rank, title, URL, score, author, and comment count.
 
-**Execution Layer:** Layer 1 -- `tap.fetch` (direct API call, zero browser overhead)
+**Selector Layer:** Layer 1 -- `tap.fetch` (direct API call, zero browser overhead)
 
 **Cost Comparison:**
 | Method | Cost per run |
@@ -35,7 +35,7 @@
 
 **Description:** Extracts trending repositories from GitHub's trending page. Uses DOM extraction since GitHub trending has no public API. Returns repo name, description, language, stars today, and total stars.
 
-**Execution Layer:** Layer 2 -- `extract` (DOM parsing via `tap.eval`)
+**Selector Layer:** Layer 2 -- `extract` (DOM parsing via `tap.eval`)
 
 **Cost Comparison:**
 | Method | Cost per run |
@@ -56,7 +56,7 @@
 
 **Description:** Fetches Weibo's real-time hot search rankings via the mobile API. Returns rank, keyword, hot value, and category tag for each trending topic.
 
-**Execution Layer:** Layer 1 -- `tap.fetch` (mobile API endpoint)
+**Selector Layer:** Layer 1 -- `tap.fetch` (mobile API endpoint)
 
 **Cost Comparison:**
 | Method | Cost per run |
@@ -77,7 +77,7 @@
 
 **Description:** Monitors any subreddit's new posts via Reddit's JSON API. Filters by keyword, returns title, author, score, comment count, and permalink. Perfect for trend watching.
 
-**Execution Layer:** Layer 1 -- `tap.fetch` (Reddit JSON API, append `.json` to any listing)
+**Selector Layer:** Layer 1 -- `tap.fetch` (Reddit JSON API, append `.json` to any listing)
 
 **Cost Comparison:**
 | Method | Cost per run |
@@ -98,7 +98,7 @@
 
 **Description:** Navigates to Xiaohongshu search, enters keywords, and extracts note cards from results. Handles the SPA with proper wait conditions. Returns title, author, likes, and cover image URL.
 
-**Execution Layer:** Layer 3 -- `nav` + `eval` (requires full browser interaction, no public API)
+**Selector Layer:** Layer 3 -- `nav` + `eval` (requires full browser interaction, no public API)
 
 **Cost Comparison:**
 | Method | Cost per run |
@@ -119,7 +119,7 @@
 
 **Description:** Fetches channel data via YouTube's innertube API. Returns video title, view count, publish date, duration, and thumbnail URL for the latest uploads. No API key required.
 
-**Execution Layer:** Layer 1 -- `tap.fetch` (innertube API endpoint)
+**Selector Layer:** Layer 1 -- `tap.fetch` (innertube API endpoint)
 
 **Cost Comparison:**
 | Method | Cost per run |
@@ -140,7 +140,7 @@
 
 **Description:** Fetches Baidu's real-time hot search rankings from the internal API. Returns rank, keyword, search volume, and trend tag (new/hot/rising).
 
-**Execution Layer:** Layer 1 -- `tap.fetch` (internal API)
+**Selector Layer:** Layer 1 -- `tap.fetch` (internal API)
 
 **Cost Comparison:**
 | Method | Cost per run |
@@ -161,7 +161,7 @@
 
 **Description:** Fetches the daily top products via Product Hunt's GraphQL API. Returns product name, tagline, vote count, maker info, and topics. Sorted by votes.
 
-**Execution Layer:** Layer 1 -- `tap.fetch` (GraphQL API)
+**Selector Layer:** Layer 1 -- `tap.fetch` (GraphQL API)
 
 **Cost Comparison:**
 | Method | Cost per run |
@@ -182,7 +182,7 @@
 
 **Description:** Fetches Bilibili's popular video rankings from the public API. Returns title, author (UP主), view count, danmaku count, and video duration. Covers the top 100 trending videos.
 
-**Execution Layer:** Layer 1 -- `tap.fetch` (Bilibili public API)
+**Selector Layer:** Layer 1 -- `tap.fetch` (Bilibili public API)
 
 **Cost Comparison:**
 | Method | Cost per run |
@@ -203,7 +203,7 @@
 
 **Description:** Navigates to LinkedIn job search, enters criteria, and extracts job listings. Handles pagination and dynamic loading. Returns job title, company, location, salary range (when available), and posting date.
 
-**Execution Layer:** Layer 3 -- `nav` + `eval` (requires authenticated browser session, no public API for full data)
+**Selector Layer:** Layer 3 -- `nav` + `eval` (requires authenticated browser session, no public API for full data)
 
 **Cost Comparison:**
 | Method | Cost per run |
@@ -214,15 +214,15 @@
 
 ---
 
-## Execution Layers Explained
+## Selector Layers Explained
 
-| Layer | Method | When to use | Example |
-|-------|--------|-------------|---------|
-| **Layer 1** | `tap.fetch` | Site has an API (public or discoverable) | Hacker News, Reddit, Bilibili |
-| **Layer 2** | `extract` (DOM) | Static/SSR pages with no API | GitHub Trending |
-| **Layer 3** | `nav` + `eval` | SPAs requiring full browser interaction | Xiaohongshu, LinkedIn |
+| Layer | W3C concept (selector type) | Tap method | When to use |
+|-------|-----------------------------|------------|-------------|
+| **Layer 1** | FragmentSelector (JSON-LD) + JsonPathSelector | `tap.fetch` | Site has explicit APIs (JSON-LD, OpenAPI, RSS) |
+| **Layer 2** | XPathSelector / CssSelector scoped to ARIA roles | `extract` (DOM) | Static/SSR pages with no API |
+| **Layer 3** | TextQuoteSelector + navigation | `nav` + `eval` | SPAs requiring browser interaction |
 
-**Layer 1 is always preferred.** `tap.fetch` is fastest, most reliable, and least likely to break. Tappy's forge pipeline automatically discovers APIs via network inspection before falling back to DOM extraction or browser automation.
+**Layer 1 is always preferred.** See https://www.w3.org/TR/annotation-model/ for the W3C definitions.
 
 ---
 

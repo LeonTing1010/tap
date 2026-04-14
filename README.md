@@ -25,12 +25,12 @@
 
 ---
 
-**Tap compiles AI understanding into deterministic programs. Then monitors them.** Health contracts catch silent failures. Fingerprint diffs tell you exactly what changed. `tap doctor` detects breakage before your data goes stale — not three days later.
+**Tap compiles AI understanding into deterministic programs. Then monitors them.** Health contracts catch silent failures. Structural state diffs tell you exactly what changed. `tap doctor` detects breakage before your data goes stale — not three days later.
 
 ```
 Forge:    AI inspects the site → compiles a .tap.js program       (one-time cost)
 Run:      The program executes instantly, same result every time   ($0, zero AI)
-Monitor:  tap doctor checks health contracts + fingerprint diffs  (catches breakage)
+Monitor:  tap doctor checks health contracts + structural state diffs  (catches breakage)
 Heal:     AI reads diagnostics and patches the program            (only when needed)
 ```
 
@@ -183,7 +183,7 @@ tap list      # See everything available
 |--|-----|-------------------|---------------------|
 | **AI cost per run** | $0 (compile once) | Tokens every run | Free |
 | **Accuracy** | Deterministic | Varies per run | Deterministic |
-| **Silent failure detection** | Health contracts + fingerprint diff | None | None |
+| **Silent failure detection** | Health contracts + structural state diff | None | None |
 | **Breakage diagnostics** | `tap doctor` — exact diff of what changed | None | Manual spot checks |
 | **Detection risk** | Low (real browser sessions) | High | High |
 | **Runtimes** | 3 (Chrome + Playwright + macOS) | 1 | 1 |
@@ -216,6 +216,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 - [x] One-command setup — `tap setup` configures all AI agents
 - [ ] Android runtime
 - [ ] iOS runtime
+- [ ] Concurrency control — deterministic coordination for M agents operating shared accounts in parallel
 
 ## License
 

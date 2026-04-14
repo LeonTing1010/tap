@@ -149,7 +149,7 @@ Start a discussion in [Issues](https://github.com/LeonTing1010/tap/issues) befor
 
 - One tap per PR (for new taps) — keeps review fast
 - Run all tests before submitting
-- Include the site URL and a brief description of your extraction strategy
+- Include the site URL and a brief description of your extraction selector
 - For write taps: describe what the tap does and any prerequisites
 
 ## License
