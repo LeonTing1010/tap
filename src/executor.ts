@@ -257,6 +257,72 @@ export interface TapResult {
    * consumers that literal-matched the result shape.
    */
   run_id?: string;
+  /**
+   * Phase 5 — W3C PROV lineage for the result.
+   *
+   * List of tap IRIs (format `tap:${site}/${name}`) in lineage order.
+   * - Ancestors first, current tap last. When A → B → C, C's result carries
+   *   `["tap:siteA/A", "tap:siteB/B", "tap:siteC/C"]`.
+   * - Produced for every `runTap` invocation. `handle.run`/`handle.invoke`
+   *   composition appends the sub-tap's chain. CLI stdin pipeline
+   *   (`tap A | tap B`) prepends the upstream envelope's chain.
+   * - Order-preserving dedupe — circular composition collapses to a single
+   *   entry per tap.
+   * - Optional in the type only so older consumers that literal-matched
+   *   the result shape keep compiling.
+   */
+  "prov:wasDerivedFrom"?: string[];
+  /** ISO 8601 UTC timestamp the result was produced. */
+  "prov:generatedAtTime"?: string;
+  /** Generator identifier: e.g. "tap-core/0.11.5". */
+  "prov:generator"?: string;
+}
+
+// ─── Provenance helpers (Phase 5) ───────────────────────────────────
+
+/**
+ * Canonical IRI for a tap — same shape as Phase 1 annotation `id`. Kept
+ * inside the executor package so it's usable without reaching across the
+ * package boundary; re-exported from src/shared.ts for callers outside.
+ */
+export function makeTapIri(site: string, name: string): string {
+  const s = site && site.length > 0 ? site : "_";
+  const n = name && name.length > 0 ? name : "_";
+  return `tap:${s}/${n}`;
+}
+
+/**
+ * Order-preserving dedupe merge. First occurrence of any IRI wins, so
+ * circular compositions (A → B → A) flatten to `[A, B]` instead of
+ * `[A, B, A]`. Either arg may be undefined; result is always an array.
+ */
+export function appendProvenance(
+  current: string[] | undefined,
+  ancestor: string[] | undefined,
+): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  const push = (iri: string) => {
+    if (typeof iri !== "string" || iri.length === 0) return;
+    if (seen.has(iri)) return;
+    seen.add(iri);
+    out.push(iri);
+  };
+  if (Array.isArray(current)) for (const iri of current) push(iri);
+  if (Array.isArray(ancestor)) for (const iri of ancestor) push(iri);
+  return out;
+}
+
+/**
+ * Phase 5 generator identifier. Reads TAP_VERSION env var at call time so
+ * the executor doesn't have to import cli.ts's VERSION constant (which
+ * would create a cycle). CLI / MCP set this once at startup.
+ */
+function tapProvGenerator(): string {
+  const v = (typeof Deno !== "undefined" && Deno.env?.get)
+    ? (Deno.env.get("TAP_VERSION") || "")
+    : "";
+  return v ? `tap-core/${v}` : "tap-core";
 }
 
 function summarize(s: string, max: number): string {
@@ -676,6 +742,21 @@ export async function runTap(
     throw new Error(`tap not found: ${site}/${name}`);
   };
 
+  // Phase 5 — accumulate prov:wasDerivedFrom from every sub-run the tap body
+  // performs via handle.run / handle.invoke. The current tap's own IRI is
+  // appended last (below, at result construction). Chain rule: ancestors
+  // first, most-recent derivation appended after them. Deduplicated in
+  // order so circular composition (A → B → A) collapses to [A, B].
+  //
+  // Initial seed: incoming args may carry a prov chain from an upstream
+  // source — e.g. the CLI Unix pipeline `tap A | tap B` reads A's envelope
+  // from stdin and threads its `prov:wasDerivedFrom` into B's args. Same
+  // shape, same semantics: ancestors come before the current tap's IRI.
+  const incomingProv = Array.isArray((args as Record<string, unknown>)["prov:wasDerivedFrom"])
+    ? (args as Record<string, unknown>)["prov:wasDerivedFrom"] as string[]
+    : undefined;
+  let subProvenance: string[] = incomingProv ? appendProvenance([], incomingProv) : [];
+
   // Wire tap.run() for composition — legacy API returning just .rows, kept
   // so every existing composite tap (many taps written before 2026-04-11)
   // keeps working unchanged. New compositional code should prefer
@@ -685,6 +766,11 @@ export async function runTap(
       const tapPath = await resolveSubTap(site, name);
       const subMod = await loadTap(tapPath);
       const result = await runTap(subMod, subArgs, send, tapDirs);
+      // Phase 5 — absorb the sub-run's full chain (ancestors + sub itself)
+      // into this tap's accumulator. Sub's chain already ends with its own
+      // IRI; appending works whether this tap has called run() 0, 1, or N
+      // times before.
+      subProvenance = appendProvenance(subProvenance, result["prov:wasDerivedFrom"]);
       return result.rows;
     };
 
@@ -696,7 +782,9 @@ export async function runTap(
     tap.invoke = async (site: string, name: string, subArgs: Record<string, unknown> = {}) => {
       const tapPath = await resolveSubTap(site, name);
       const subMod = await loadTap(tapPath);
-      return await runTap(subMod, subArgs, send, tapDirs);
+      const result = await runTap(subMod, subArgs, send, tapDirs);
+      subProvenance = appendProvenance(subProvenance, result["prov:wasDerivedFrom"]);
+      return result;
     };
   }
 
@@ -749,7 +837,10 @@ export async function runTap(
         const subMod = await loadTap(tapPath);
         // Return the FULL TapResult so $step.rows, $step.columns, $step.count
         // all work from the pipe's reference binding layer.
-        return await runTap(subMod, subArgs, send, tapDirs);
+        const r = await runTap(subMod, subArgs, send, tapDirs);
+        // Phase 5 — every pipe step is a sub-run for lineage purposes.
+        subProvenance = appendProvenance(subProvenance, r["prov:wasDerivedFrom"]);
+        return r;
       };
       const { result, trace: pipeTrace } = await runPipeWithTrace(
         pipe as Pipe,
@@ -922,6 +1013,14 @@ export async function runTap(
   };
   await writeTapTrace(successTrace);
 
+  // Phase 5 — compose the final prov chain. Current tap's IRI is appended
+  // last (most-recent-derivation-appended convention), after ancestors
+  // contributed by sub-runs, incoming args envelope, and pipe steps.
+  // Dedupe is order-preserving so circular composition produces a clean
+  // chain of distinct taps.
+  const selfIri = makeTapIri(mod.site, mod.name);
+  const provChain = appendProvenance(subProvenance, [selfIri]);
+
   return {
     columns,
     rows,
@@ -930,5 +1029,8 @@ export async function runTap(
     timing: { run_ms: totalMs, total_ms: totalMs },
     trace: traceSteps,
     run_id: runId,
+    "prov:wasDerivedFrom": provChain,
+    "prov:generatedAtTime": new Date().toISOString(),
+    "prov:generator": tapProvGenerator(),
   };
 }
