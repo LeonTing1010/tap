@@ -166,10 +166,38 @@ export function detectCapabilities(code: string): string[] {
   return [...found].sort();
 }
 
+/**
+ * Phase 1 — Web Annotation Migration. An authoring-time structural navigation
+ * decision, persisted as an optional `target` field on a .tap.js module.
+ *
+ * The shape intentionally mirrors W3C Web Annotation Data Model's SpecificResource
+ * so downstream phases can lift this into a full Annotation without reshuffling.
+ * Executor treats it as opaque pass-through data — zero behavior change when
+ * absent. See `shared.ts#resolveTarget` for normalization into the full
+ * Annotation envelope.
+ */
+export interface TapTarget {
+  /** The URL the selector chain resolves against. SHOULD be an absolute IRI. */
+  source?: string;
+  /** Ordered selector chain. First = outermost, may `refinedBy` inner. */
+  selector?: unknown;
+  /** Optional captured state (time / fingerprint) — populated by Phase 2. */
+  state?: unknown;
+  /** Open to tap-specific and prov:* extensions. */
+  [k: string]: unknown;
+}
+
 export interface TapModule {
   site: string;
   name: string;
   description: string;
+  /**
+   * Phase 1 — optional W3C Annotation target. When present, forge picked
+   * a specific structural source (API endpoint, JSON-LD, DOM node) to
+   * compile from, and that decision is now first-class persisted metadata.
+   * Legacy taps without this field run unchanged.
+   */
+  target?: TapTarget;
   runtime?: "extension" | "playwright" | "macos";
   app?: string;
   columns?: ColumnDecl[];
