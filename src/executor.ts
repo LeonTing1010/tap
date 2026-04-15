@@ -269,7 +269,7 @@ export interface TraceStep {
 
 export interface TapResult {
   columns: string[];
-  rows: Record<string, string>[];
+  rows: Record<string, unknown>[];
   rawRows: Record<string, unknown>[];
   count: number;
   timing: {
