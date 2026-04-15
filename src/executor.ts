@@ -703,7 +703,7 @@ export async function appendLog(entry: Record<string, unknown>): Promise<void> {
       try {
         const content = await Deno.readTextFile(logPath);
         const cutoff = now - MAX_LOG_AGE_MS;
-        const kept = content.split("\n").filter(l => {
+        const kept = content.split("\n").filter((l: string) => {
           if (!l) return false;
           try { return (JSON.parse(l).ts || 0) > cutoff; } catch { return false; }
         });
