@@ -179,10 +179,15 @@ export function detectCapabilities(code: string): string[] {
 export interface TapTarget {
   /** The URL the selector chain resolves against. SHOULD be an absolute IRI. */
   source?: string;
-  /** Ordered selector chain. First = outermost, may `refinedBy` inner. */
-  selector?: unknown;
+  /**
+   * Ordered selector chain (W3C Selectors and States §2).
+   * First = outermost, may contain `refinedBy` for inner selectors.
+   * Shape: { type: string|string[], value?: string, ... } | array thereof.
+   * Full type: see core/src/annotation.ts Selector union.
+   */
+  selector?: Record<string, unknown> | Array<Record<string, unknown>>;
   /** Optional captured state (time / fingerprint) — populated by Phase 2. */
-  state?: unknown;
+  state?: Record<string, unknown>;
   /** Open to tap-specific and prov:* extensions. */
   [k: string]: unknown;
 }
