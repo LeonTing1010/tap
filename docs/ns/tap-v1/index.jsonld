@@ -1,0 +1,195 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    {
+      "@version": 1.1,
+      "tap": "https://taprun.dev/ns/tap-v1#",
+      "oa": "http://www.w3.org/ns/oa#",
+      "owl": "http://www.w3.org/2002/07/owl#",
+      "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+      "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+      "xsd": "http://www.w3.org/2001/XMLSchema#",
+      "schema": "http://schema.org/",
+      "dcterms": "http://purl.org/dc/terms/",
+      "prov": "http://www.w3.org/ns/prov#"
+    }
+  ],
+
+  "@id": "https://taprun.dev/ns/tap-v1",
+  "@type": "owl:Ontology",
+  "dcterms:title": "Tap v1 Web Annotation Extension Vocabulary",
+  "dcterms:description": "Tap-namespaced extensions to the W3C Web Annotation Data Model. Defines JSONPath selectors (RFC 9535), semantic hash states, the `extracting` motivation, and the metadata fields that tap programs attach to Annotations. Published as the hard prerequisite for Phase 1 of the Tap Web Annotation migration; the Tap runtime parses `tap:*` fields by literal key and does not require a remote-context fetch, so this document exists primarily as a stable identifier and as documentation for external tooling.",
+  "dcterms:issued": "2026-04-15",
+  "dcterms:creator": {
+    "@type": "schema:Person",
+    "schema:name": "Leo",
+    "schema:url": "https://github.com/LeonTing1010"
+  },
+  "dcterms:license": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "dcterms:isVersionOf": "https://taprun.dev/ns/tap-v1",
+  "owl:versionInfo": "tap-v1",
+  "rdfs:seeAlso": [
+    "https://www.w3.org/TR/annotation-model/",
+    "https://www.w3.org/TR/annotation-vocab/",
+    "https://www.w3.org/TR/selectors-states/",
+    "https://www.rfc-editor.org/rfc/rfc9535",
+    "https://taprun.dev/"
+  ],
+
+  "@graph": [
+    {
+      "@id": "tap:JsonPathSelector",
+      "@type": "rdfs:Class",
+      "rdfs:subClassOf": { "@id": "oa:Selector" },
+      "rdfs:label": "JSONPath Selector",
+      "rdfs:comment": "Selects a JSON value using a JSONPath expression per RFC 9535. Used for Layer 1/2 JSON structural navigation — JSON-LD blocks, embedded state globals (e.g. __NEXT_DATA__), and structured API responses. Not part of W3C Selectors and States (2017) because JSONPath was not ratified until RFC 9535 in 2024; a proposal back to the W3C Web Annotation CG is tracked as future work.",
+      "dcterms:conformsTo": { "@id": "https://www.rfc-editor.org/rfc/rfc9535" },
+      "rdfs:isDefinedBy": { "@id": "https://taprun.dev/ns/tap-v1" }
+    },
+
+    {
+      "@id": "tap:SemanticHashState",
+      "@type": "rdfs:Class",
+      "rdfs:subClassOf": { "@id": "oa:State" },
+      "rdfs:label": "Semantic Hash State",
+      "rdfs:comment": "Captures the structural hash of a target resource at authoring time. Used by Tap doctor to detect structural drift without re-running the tap — a cheap O(1) Merkle-root comparison. Properties: tap:rootHash (FNV-1a over sub-hashes), tap:selectors (population + semantic hash), tap:endpoints (observed JSON shape hashes), tap:jsonLdValues (Layer-1 cross-validation snapshot).",
+      "rdfs:isDefinedBy": { "@id": "https://taprun.dev/ns/tap-v1" }
+    },
+
+    {
+      "@id": "tap:extracting",
+      "@type": "oa:Motivation",
+      "rdfs:label": "extracting",
+      "rdfs:comment": "Program-level data extraction. Distinct from the human-oriented `oa:identifying` motivation — this declares that the annotation compiles an executable program (a .tap.js) to retrieve data from the target resource. A consumer that cannot execute the program still sees a valid Annotation with selector + state for the identified data location.",
+      "rdfs:isDefinedBy": { "@id": "https://taprun.dev/ns/tap-v1" }
+    },
+
+    {
+      "@id": "tap:rootHash",
+      "@type": "rdf:Property",
+      "rdfs:label": "rootHash",
+      "rdfs:comment": "FNV-1a Merkle root hash over all captured sub-hashes (selectors, endpoints, globals). Enables O(1) drift detection: if the root changes the tap may be STALE or BROKEN.",
+      "rdfs:domain": { "@id": "tap:SemanticHashState" },
+      "rdfs:range": { "@id": "xsd:string" },
+      "rdfs:isDefinedBy": { "@id": "https://taprun.dev/ns/tap-v1" }
+    },
+
+    {
+      "@id": "tap:selectors",
+      "@type": "rdf:Property",
+      "rdfs:label": "selectors",
+      "rdfs:comment": "Captured selector population summary — count and ARIA/semantic hash. Opaque JSON object; Tap is the authoritative consumer.",
+      "rdfs:domain": { "@id": "tap:SemanticHashState" },
+      "rdfs:isDefinedBy": { "@id": "https://taprun.dev/ns/tap-v1" }
+    },
+
+    {
+      "@id": "tap:endpoints",
+      "@type": "rdf:Property",
+      "rdfs:label": "endpoints",
+      "rdfs:comment": "Captured network endpoints observed during forge, each with URL and JSON response shape hash (keys + types). Array of objects; Tap is the authoritative consumer.",
+      "rdfs:domain": { "@id": "tap:SemanticHashState" },
+      "rdfs:isDefinedBy": { "@id": "https://taprun.dev/ns/tap-v1" }
+    },
+
+    {
+      "@id": "tap:jsonLdValues",
+      "@type": "rdf:Property",
+      "rdfs:label": "jsonLdValues",
+      "rdfs:comment": "Snapshot of Layer-1 structured values (JSON-LD / Schema.org field → value) captured at authoring time. Doctor uses these for cross-layer validation — if DOM extraction disagrees with the declared JSON-LD value, the tap navigated to the wrong structural location (layer-mismatch verdict).",
+      "rdfs:domain": { "@id": "tap:SemanticHashState" },
+      "rdfs:isDefinedBy": { "@id": "https://taprun.dev/ns/tap-v1" }
+    },
+
+    {
+      "@id": "tap:health",
+      "@type": "rdf:Property",
+      "rdfs:label": "health",
+      "rdfs:comment": "Health contract for a read tap — declarative gates (min_rows, non_empty fields, etc.) that doctor evaluates to decide HEALTHY vs BROKEN. Opaque JSON object.",
+      "rdfs:domain": { "@id": "oa:Annotation" },
+      "rdfs:isDefinedBy": { "@id": "https://taprun.dev/ns/tap-v1" }
+    },
+
+    {
+      "@id": "tap:args",
+      "@type": "rdf:Property",
+      "rdfs:label": "args",
+      "rdfs:comment": "Argument schema for a tap — parameter name → { type, default, description }. Opaque JSON object; drives tap.run input validation and MCP tool schemas.",
+      "rdfs:domain": { "@id": "oa:Annotation" },
+      "rdfs:isDefinedBy": { "@id": "https://taprun.dev/ns/tap-v1" }
+    },
+
+    {
+      "@id": "tap:site",
+      "@type": "rdf:Property",
+      "rdfs:label": "site",
+      "rdfs:comment": "Site identifier — the logical namespace a tap belongs to (e.g. `github`, `reddit`). Part of the `{site}/{name}` coordinate used everywhere in Tap.",
+      "rdfs:domain": { "@id": "oa:Annotation" },
+      "rdfs:range": { "@id": "xsd:string" },
+      "rdfs:isDefinedBy": { "@id": "https://taprun.dev/ns/tap-v1" }
+    },
+
+    {
+      "@id": "tap:name",
+      "@type": "rdf:Property",
+      "rdfs:label": "name",
+      "rdfs:comment": "Tap identifier within a site namespace (e.g. `trending`, `publish`). Together with tap:site forms the unique `{site}/{name}` coordinate.",
+      "rdfs:domain": { "@id": "oa:Annotation" },
+      "rdfs:range": { "@id": "xsd:string" },
+      "rdfs:isDefinedBy": { "@id": "https://taprun.dev/ns/tap-v1" }
+    },
+
+    {
+      "@id": "tap:intent",
+      "@type": "rdf:Property",
+      "rdfs:label": "intent",
+      "rdfs:comment": "Tap direction — `read` (idempotent data retrieval; doctor runs automatically) or `write` (side-effecting action; doctor skips unless opted in). Drives whether verification may safely re-execute the tap.",
+      "rdfs:domain": { "@id": "oa:Annotation" },
+      "rdfs:range": { "@id": "xsd:string" },
+      "rdfs:isDefinedBy": { "@id": "https://taprun.dev/ns/tap-v1" }
+    },
+
+    {
+      "@id": "tap:verdict",
+      "@type": "rdf:Property",
+      "rdfs:label": "verdict",
+      "rdfs:comment": "Doctor verdict on an assessing annotation — one of `healthy`, `broken`, `stale`, `layer-mismatch`.",
+      "rdfs:range": { "@id": "xsd:string" },
+      "rdfs:isDefinedBy": { "@id": "https://taprun.dev/ns/tap-v1" }
+    },
+
+    {
+      "@id": "tap:compiledFromLayer",
+      "@type": "rdf:Property",
+      "rdfs:label": "compiledFromLayer",
+      "rdfs:comment": "Trust layer (1-4) the tap was compiled from. 1 = explicit declarations (JSON-LD, Open Graph, agents.json). 2 = data contracts (API, SSR globals). 3 = semantic structure (ARIA, headings). 4 = implementation details (CSS classes). Derived from target.selector via selectorLayer(). See Appendix A of the Tap Web Annotation migration plan.",
+      "rdfs:range": { "@id": "xsd:integer" },
+      "rdfs:isDefinedBy": { "@id": "https://taprun.dev/ns/tap-v1" }
+    },
+
+    {
+      "@id": "tap:recommendedLayer",
+      "@type": "rdf:Property",
+      "rdfs:label": "recommendedLayer",
+      "rdfs:comment": "Layer doctor recommends re-forging from, when a higher-trust layer is available than the one the tap currently uses. Nullable.",
+      "rdfs:range": { "@id": "xsd:integer" },
+      "rdfs:isDefinedBy": { "@id": "https://taprun.dev/ns/tap-v1" }
+    },
+
+    {
+      "@id": "tap:crossValidation",
+      "@type": "rdf:Property",
+      "rdfs:label": "crossValidation",
+      "rdfs:comment": "Layer-cross-validation record — `{ layer1Value, observedValue, disagreement }`. Populated when Layer-1 (JSON-LD) says one thing and the tap's extraction returns another. Fires the `layer-mismatch` verdict.",
+      "rdfs:isDefinedBy": { "@id": "https://taprun.dev/ns/tap-v1" }
+    },
+
+    {
+      "@id": "tap:suggestions",
+      "@type": "rdf:Property",
+      "rdfs:label": "suggestions",
+      "rdfs:comment": "Ordered list of actionable diagnostic suggestions attached to an assessing annotation — each suggestion names a specific fix (refresh fingerprint, re-forge from Layer N, check auth, etc.).",
+      "rdfs:isDefinedBy": { "@id": "https://taprun.dev/ns/tap-v1" }
+    }
+  ]
+}
