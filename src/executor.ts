@@ -283,6 +283,12 @@ export interface TapResult {
   };
   trace?: TraceStep[];
   /**
+   * Pipe execution trace — one entry per sub-step when the tap is a pipe.
+   * Absent for leaf taps. Structure: { nodes: PipeTraceNode[], rounds: string[][] }.
+   * Use to localize failures in multi-stage pipes without re-running.
+   */
+  pipe?: PipeTrace;
+  /**
    * Unique identifier for this run, emitted since 2026-04-11 with T_trace.
    * Present on every runTap invocation; `tap.trace(run_id)` looks up the
    * persisted TapTrace with the same id for post-mortem inspection.
@@ -1061,6 +1067,11 @@ export async function runTap(
     count: rows.length,
     timing: { run_ms: totalMs, total_ms: totalMs },
     trace: traceSteps,
+    // Pipe trace: only present for pipe taps. Each entry = one sub-step
+    // (site, name, args, rows_out, duration, cache_hit). Lets callers
+    // debug which step of a multi-stage pipe produced/consumed what
+    // without re-running. Leaf taps omit this field.
+    ...(capturedPipeTrace ? { pipe: capturedPipeTrace } : {}),
     run_id: runId,
     "prov:wasDerivedFrom": provChain,
     "prov:generatedAtTime": new Date().toISOString(),
