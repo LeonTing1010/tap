@@ -708,12 +708,36 @@ export async function listTaps(dirs: string[]): Promise<TapModule[]> {
   );
 }
 
+/**
+ * Closed union of every event type written to ~/.tap/logs/tap.jsonl.
+ *
+ * Adding a new event requires extending this union — TypeScript then
+ * forces every appendLog call site to either match an existing variant
+ * or supply the new shape exhaustively. Layer-1 enforcement of "shape
+ * is correct" replaces the previous Record<string, unknown> footgun
+ * (caller could silently ship a typo'd field).
+ *
+ * The "who may call appendLog" invariant is separately enforced by
+ * src/test/observability_test.ts (allowlist of file paths). That's a
+ * layer-4 grep guard, but TypeScript has no per-file visibility, so
+ * grep is the strongest available layer for that invariant.
+ */
+export type TapLogEvent =
+  | { event: "run"; site: string; name: string; run_id: string; ms: number; rows: number; error?: string; sid?: string }
+  | { event: "tool"; tool: string; ms: number; ok: boolean; error?: string; sid?: string }
+  | { event: "forge_inspect"; url: string; ms: number; strategies: number }
+  | { event: "forge_save"; site: string; name: string; path: string; strategy: string; score: number; rounds: number; verify_errors?: Array<Record<string, unknown>>; warnings?: number; git?: string | null }
+  | { event: "forge_verify"; url: string; ms: number; ok: boolean }
+  | { event: "forge_pipe"; goal: string; ok: boolean; rounds: number; ai_calls: number; confidence: number }
+  | { event: "heal"; site: string; name: string; tap_path: string; tap_url?: string; inspect_status: string; inspect_ms: number; code_bytes: number; doctor_status: string; doctor_score?: number; doctor_rows?: number; doctor_ms?: number; error?: string; issues?: unknown }
+  | { event: "manifest_refresh"; site: string; name: string; manifest_path: string; old_root_hash: string | null; new_root_hash: string; changed: boolean };
+
 /** Append a log entry to ~/.tap/logs/tap.jsonl. Auto-rotates: keeps last 30 days. */
 let _lastRotation = 0;
 const ROTATION_INTERVAL_MS = 24 * 60 * 60 * 1000; // check once per day
 const MAX_LOG_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
-export async function appendLog(entry: Record<string, unknown>): Promise<void> {
+export async function appendLog(entry: TapLogEvent): Promise<void> {
   try {
     const home = Deno.env.get("TAP_HOME") || `${Deno.env.get("HOME")}/.tap`;
     const dir = `${home}/logs`;
