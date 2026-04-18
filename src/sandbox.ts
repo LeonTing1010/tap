@@ -119,7 +119,7 @@ export async function runInSandbox(
         if (typeof mod.tap !== "function") {
           throw new Error("Tap " + mod.site + "/" + mod.name + " must define tap(handle, args)");
         }
-        const rows = await mod.tap(tap, ${JSON.stringify(args)});
+        const rows = await mod.tap.call(mod, tap, ${JSON.stringify(args)});
         self.postMessage({ type: "return", value: rows });
       } catch (e) {
         self.postMessage({ type: "return", error: String(e) });

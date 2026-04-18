@@ -954,7 +954,7 @@ export async function runTap(
         localPipe,
       )) as unknown[];
     } else {
-      rawRows = (await tapFn(tap, resolvedArgs)) as unknown[];
+      rawRows = (await tapFn.call(mod, tap, resolvedArgs)) as unknown[];
     }
     // Apply limit if specified (formerly extract-format-only)
     if (Array.isArray(rawRows) && resolvedArgs.limit) {
