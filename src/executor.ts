@@ -441,11 +441,18 @@ export async function checkHealth(
   if (tap.health.min_rows && result.count < tap.health.min_rows) {
     issues.push(`min_rows: expected ${tap.health.min_rows}, got ${result.count}`);
   }
-  if (tap.health.non_empty && result.rows.length > 0) {
-    for (const col of tap.health.non_empty) {
-      const empty = result.rows.filter(r => !r[col] || r[col] === "");
-      if (empty.length > 0) {
-        issues.push(`non_empty: ${empty.length}/${result.rows.length} rows have empty "${col}"`);
+  if (tap.health.non_empty) {
+    if (result.rows.length === 0) {
+      // Declaring non_empty intends "these columns must have values" — 0 rows = no values = violation.
+      // Without this branch, a tap that silently drops to 0 rows (shadow-ban, API drift) passes health
+      // as long as min_rows isn't also declared.
+      issues.push(`non_empty: no rows returned (declared columns: ${tap.health.non_empty.join(", ")})`);
+    } else {
+      for (const col of tap.health.non_empty) {
+        const empty = result.rows.filter(r => !r[col] || r[col] === "");
+        if (empty.length > 0) {
+          issues.push(`non_empty: ${empty.length}/${result.rows.length} rows have empty "${col}"`);
+        }
       }
     }
   }
@@ -1002,11 +1009,25 @@ export async function runTap(
       const localPipe = tapDirs
         ? (pipe: unknown) => (tap.pipe as (p: unknown) => Promise<unknown>)(pipe)
         : undefined;
+      // Mirror localPipe for handle.run — tap.run was already wired above
+      // (line ~835) to load sub-taps from disk and invoke runTap. Without
+      // this, sandboxed composite taps (demand/snapshot, demand/broadcast)
+      // forward handle.run as an RPC to the runtime and fail with
+      // "Unknown method: run" at the extension bridge.
+      const localRun = tapDirs
+        ? (site: string, name: string, subArgs: Record<string, unknown>) =>
+            (tap.run as (s: string, n: string, a: Record<string, unknown>) => Promise<unknown>)(
+              site,
+              name,
+              subArgs,
+            )
+        : undefined;
       rawRows = (await runInSandbox(
         opts.tapPath,
         resolvedArgs,
         tracingSend,
         localPipe,
+        localRun,
       )) as unknown[];
     } else {
       rawRows = (await tapFn.call(mod, tap, resolvedArgs)) as unknown[];

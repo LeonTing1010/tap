@@ -47,6 +47,17 @@ export const SANDBOX_ALLOWED_METHODS: Set<string> = new Set([
  *  The sandbox only whitelists `pipe` when this handler is provided. */
 export type LocalPipeHandler = (pipe: unknown) => Promise<unknown>;
 
+/** Local run handler — executes a sub-tap composition (`handle.run(site, name, args)`)
+ *  against the real executor closure. Needed because `tap.run` is an executor
+ *  primitive (loads .tap.js from disk, invokes runTap), not a runtime RPC —
+ *  forwarding it via `send` reaches the extension bridge which rejects
+ *  "Unknown method: run". */
+export type LocalRunHandler = (
+  site: string,
+  name: string,
+  args: Record<string, unknown>,
+) => Promise<unknown>;
+
 /**
  * Run a tap's run() function in a sandboxed Worker.
  * The tap can only call tap.* methods via message passing.
@@ -65,6 +76,7 @@ export async function runInSandbox(
   args: Record<string, unknown>,
   send: RpcSend,
   localPipe?: LocalPipeHandler,
+  localRun?: LocalRunHandler,
 ): Promise<unknown[]> {
   // Worker code: import tap, create proxy handle, call run()
   const workerCode = `
@@ -171,6 +183,34 @@ export async function runInSandbox(
           // the whitelist lets `pipe` through so the worker-side check
           // doesn't throw prematurely, but the actual rejection happens
           // here at the boundary where we know whether it's supported.
+          // `run` is a sub-tap composition primitive, not a runtime RPC.
+          // The executor wires tap.run locally at executor.ts:835 for the
+          // non-sandbox path; here we route to the same closure via
+          // localRun. Without this, `send("tool", "tap.run", ...)` reaches
+          // the extension bridge which throws "Unknown method: run".
+          if (methodName === "run") {
+            if (!localRun) {
+              worker.postMessage({
+                id: msg.id,
+                type: "error",
+                error:
+                  "handle.run() is not available in this sandbox — the executor did not wire a local run handler. " +
+                  "Run with sandbox:false (noSandbox:true) for taps that compose sub-taps.",
+              });
+              return;
+            }
+            try {
+              const site = params[0] as string;
+              const name = params[1] as string;
+              const subArgs = (params[2] as Record<string, unknown>) || {};
+              const rows = await localRun(site, name, subArgs);
+              worker.postMessage({ id: msg.id, type: "result", value: rows });
+            } catch (err) {
+              worker.postMessage({ id: msg.id, type: "error", error: String(err) });
+            }
+            return;
+          }
+
           if (methodName === "pipe") {
             if (!localPipe) {
               worker.postMessage({
