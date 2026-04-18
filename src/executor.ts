@@ -8,7 +8,7 @@
 import { createTapHandle, type RpcSend } from "./page.ts";
 import { type Pipe, type PipeTrace, runPipeWithTrace } from "./pipe.ts";
 import { runInSandbox } from "./sandbox.ts";
-import { makeRunId, type TapTrace, writeTapTrace } from "./trace.ts";
+import { applyPersistRowsPolicy, makeRunId, type TapTrace, writeTapTrace } from "./trace.ts";
 
 export interface TapArgSpec {
   type: string;
@@ -249,6 +249,12 @@ export interface TapModule {
    * browser-backed RpcSend.
    */
   capabilities?: string[];
+  /**
+   * Controls whether returned rows are persisted in the TapTrace on disk
+   * for `tap.trace(run_id)` replay. See `applyPersistRowsPolicy` in
+   * trace.ts. Defaults: "auto" for read taps, "never" for write taps.
+   */
+  persist_rows?: "auto" | "always" | "never" | `sample:${number}`;
   cleanup?: (tap: unknown) => Promise<void>;
   url?: string | ((args: Record<string, unknown>) => string);
   waitFor?: string;
@@ -1038,6 +1044,10 @@ export async function runTap(
   // pipe trace — just the top-level metadata + row count. The RPC-level
   // trace (traceSteps, from tracingSend above) stays attached to the
   // returned TapResult, since that's what existing consumers expect.
+  const persistedRows = applyPersistRowsPolicy(typedRows, {
+    persist_rows: mod.persist_rows,
+    intent: mod.intent,
+  });
   const successTrace: TapTrace = {
     run_id: runId,
     site: mod.site,
@@ -1049,6 +1059,7 @@ export async function runTap(
     rows_out: rows.length,
     args: resolvedArgs,
     ...(capturedPipeTrace ? { pipe: capturedPipeTrace } : {}),
+    ...persistedRows,
   };
   await writeTapTrace(successTrace);
 

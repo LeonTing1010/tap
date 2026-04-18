@@ -2,8 +2,9 @@
  * Trace persistence — the disk side of the post-run dual.
  *
  * `runPipeWithTrace` produces in-memory PipeTrace objects. This module
- * gives them a home on disk at `~/.tap/traces/{run_id}.json` so they
- * survive the process that produced them, letting:
+ * gives them a home on disk at `~/.tap/traces/{run_id}.json` (or
+ * `{run_id}.json.gz` when gzipped) so they survive the process that
+ * produced them, letting:
  *
  *   - `tap.trace(run_id)` — AI agents read a trace minutes after the
  *     failing run via MCP, for retry-with-context loops
@@ -23,18 +24,28 @@
  *      given a run_id, and concurrent writes don't need locking.
  *   5. Filename = run_id. Run_id format = base36 timestamp + 6 hex chars.
  *      The timestamp prefix makes `ls -1` chronologically sorted for free.
+ *   6. gzip past 50KB serialized. Rows persistence (per #20) can produce
+ *      multi-KB payloads; auto-gzip keeps a 100-row reddit search at ~10KB
+ *      on disk instead of ~50KB. Filename gains `.gz` suffix on compress.
+ *      readTapTrace transparently picks the right one.
  *
  * What's NOT here (deliberately):
  *   - Full RPC-level trace embedding. That's already in TapResult.trace
  *     (via runTap's tracingSend). TapTrace is the pipe-level post-mortem;
  *     the RPC-level detail lives alongside in TapResult and can be
  *     stapled together at read time if both are needed.
- *   - Compression. Traces are small (~KB per pipe). Premature optimization.
  *   - Database / index. Flat files are enough for the volume involved.
  *     If someone ships 10k taps/day and needs query, add a SQLite index then.
  */
 
 import type { PipeTrace } from "./pipe.ts";
+
+/** gzip compression kicks in above this serialized size (in bytes). */
+const GZIP_THRESHOLD_BYTES = 50 * 1024;
+/** Default `auto` policy: persist all rows when JSON payload is below this. */
+const AUTO_PERSIST_BYTES = 100 * 1024;
+/** Default `auto` fallback when payload is too large: keep this many rows. */
+const AUTO_SAMPLE_FALLBACK = 10;
 
 /** Top-level trace written to disk for every runTap invocation. */
 export interface TapTrace {
@@ -64,6 +75,64 @@ export interface TapTrace {
   pipe?: PipeTrace;
   /** Top-level args the tap was called with. */
   args: Record<string, unknown>;
+  /**
+   * The rows the tap returned, persisted per the module's `persist_rows`
+   * policy. May be partial (see `rows_truncated`). Absent when the
+   * policy resolved to "never" or the tap had `intent: "write"`.
+   */
+  rows?: unknown[];
+  /**
+   * Set when `rows` is a sample rather than the full result. The
+   * difference between `rows.length` and `total` tells the reader
+   * how many rows were dropped.
+   */
+  rows_truncated?: { sampled: number; total: number; reason: "size" | "policy" };
+}
+
+/**
+ * Decide what to persist into TapTrace.rows based on the module's
+ * `persist_rows` field. Pure function — no I/O, no module mutation.
+ *
+ *   intent="write"          → never persist (PII safety)
+ *   persist_rows="never"    → never persist
+ *   persist_rows="always"   → full rows
+ *   persist_rows="sample:N" → first N + total count
+ *   persist_rows="auto"|undefined →
+ *      full rows if JSON payload < 100KB,
+ *      else first 10 rows + count
+ */
+export function applyPersistRowsPolicy(
+  rows: unknown[],
+  opts: { persist_rows?: string; intent?: "read" | "write" } = {},
+): { rows?: unknown[]; rows_truncated?: { sampled: number; total: number; reason: "size" | "policy" } } {
+  if (opts.intent === "write") return {};
+  const policy = opts.persist_rows || "auto";
+  if (policy === "never") return {};
+  if (policy === "always") return { rows };
+
+  const sampleMatch = /^sample:(\d+)$/.exec(policy);
+  if (sampleMatch) {
+    const n = Math.max(0, parseInt(sampleMatch[1], 10));
+    if (rows.length <= n) return { rows };
+    return {
+      rows: rows.slice(0, n),
+      rows_truncated: { sampled: n, total: rows.length, reason: "policy" },
+    };
+  }
+
+  // policy === "auto" (default)
+  let estimatedBytes: number;
+  try {
+    estimatedBytes = JSON.stringify(rows).length;
+  } catch {
+    estimatedBytes = Number.MAX_SAFE_INTEGER;
+  }
+  if (estimatedBytes < AUTO_PERSIST_BYTES) return { rows };
+  if (rows.length <= AUTO_SAMPLE_FALLBACK) return { rows };
+  return {
+    rows: rows.slice(0, AUTO_SAMPLE_FALLBACK),
+    rows_truncated: { sampled: AUTO_SAMPLE_FALLBACK, total: rows.length, reason: "size" },
+  };
 }
 
 /**
@@ -106,8 +175,15 @@ export async function writeTapTrace(trace: TapTrace): Promise<void> {
   try {
     const dir = tracesDir();
     await Deno.mkdir(dir, { recursive: true }).catch(() => {});
-    const path = `${dir}/${trace.run_id}.json`;
-    await Deno.writeTextFile(path, JSON.stringify(trace, null, 2));
+    const json = JSON.stringify(trace, null, 2);
+    const bytes = new TextEncoder().encode(json);
+
+    if (bytes.byteLength >= GZIP_THRESHOLD_BYTES) {
+      const compressed = await gzipBytes(bytes);
+      await Deno.writeFile(`${dir}/${trace.run_id}.json.gz`, compressed);
+    } else {
+      await Deno.writeFile(`${dir}/${trace.run_id}.json`, bytes);
+    }
 
     // Best-effort prune. If the last prune was >24h ago, scan the dir
     // and delete anything older than 30 days. Awaited because a fire-and-
@@ -128,15 +204,42 @@ export async function writeTapTrace(trace: TapTrace): Promise<void> {
   }
 }
 
-/** Load a TapTrace by run_id. Returns null if missing or unreadable. */
+/**
+ * Load a TapTrace by run_id. Transparently handles both `.json` and
+ * `.json.gz` storage. Returns null if missing or unreadable.
+ */
 export async function readTapTrace(runId: string): Promise<TapTrace | null> {
+  const dir = tracesDir();
+  // Try uncompressed first (more common for small traces).
   try {
-    const path = `${tracesDir()}/${runId}.json`;
-    const content = await Deno.readTextFile(path);
+    const content = await Deno.readTextFile(`${dir}/${runId}.json`);
     return JSON.parse(content) as TapTrace;
+  } catch { /* fall through to .gz */ }
+  try {
+    const compressed = await Deno.readFile(`${dir}/${runId}.json.gz`);
+    const json = await gunzipToText(compressed);
+    return JSON.parse(json) as TapTrace;
   } catch {
     return null;
   }
+}
+
+/**
+ * gzip a byte buffer using Deno's CompressionStream. Returns a single
+ * Uint8Array containing the gzipped output.
+ */
+async function gzipBytes(input: Uint8Array): Promise<Uint8Array> {
+  const ab = input.buffer.slice(input.byteOffset, input.byteOffset + input.byteLength) as ArrayBuffer;
+  const stream = new Blob([ab]).stream().pipeThrough(new CompressionStream("gzip"));
+  const buf = await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+
+/** Inverse of gzipBytes — gunzip and decode as UTF-8 text. */
+async function gunzipToText(input: Uint8Array): Promise<string> {
+  const ab = input.buffer.slice(input.byteOffset, input.byteOffset + input.byteLength) as ArrayBuffer;
+  const stream = new Blob([ab]).stream().pipeThrough(new DecompressionStream("gzip"));
+  return await new Response(stream).text();
 }
 
 /**
@@ -164,7 +267,8 @@ export async function listTapTraces(opts?: {
     const dir = tracesDir();
     const entries: string[] = [];
     for await (const entry of Deno.readDir(dir)) {
-      if (entry.isFile && entry.name.endsWith(".json")) {
+      if (!entry.isFile) continue;
+      if (entry.name.endsWith(".json") || entry.name.endsWith(".json.gz")) {
         entries.push(entry.name);
       }
     }
@@ -174,7 +278,13 @@ export async function listTapTraces(opts?: {
     for (const filename of entries) {
       if (results.length >= limit) break;
       try {
-        const raw = await Deno.readTextFile(`${dir}/${filename}`);
+        let raw: string;
+        if (filename.endsWith(".json.gz")) {
+          const compressed = await Deno.readFile(`${dir}/${filename}`);
+          raw = await gunzipToText(compressed);
+        } else {
+          raw = await Deno.readTextFile(`${dir}/${filename}`);
+        }
         const trace = JSON.parse(raw) as TapTrace;
         // Apply filters
         if (opts?.site && trace.site !== opts.site) continue;
@@ -203,7 +313,8 @@ export async function pruneTapTraces(maxAgeMs: number): Promise<number> {
   try {
     const dir = tracesDir();
     for await (const entry of Deno.readDir(dir)) {
-      if (!entry.isFile || !entry.name.endsWith(".json")) continue;
+      if (!entry.isFile) continue;
+      if (!entry.name.endsWith(".json") && !entry.name.endsWith(".json.gz")) continue;
       try {
         // Parse the base36 timestamp prefix back to a number.
         const tsPart = entry.name.split("-")[0];
