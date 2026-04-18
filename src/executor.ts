@@ -251,14 +251,6 @@ export interface TapModule {
    */
   capabilities?: string[];
   /**
-   * When true, the tap is a pipeline building block (e.g. tap/filter,
-   * tap/sort) intended to be composed inside other taps via handle.pipe —
-   * not a standalone tool agents should call directly over MCP. Hidden
-   * from default tap.list views; visible when scoped by site or
-   * site+name. See handlers.ts:handleList.
-   */
-  internal?: boolean;
-  /**
    * Controls whether returned rows are persisted in the TapTrace on disk
    * for `tap.trace(run_id)` replay. See `applyPersistRowsPolicy` in
    * trace.ts. Defaults: "auto" for read taps, "never" for write taps.
