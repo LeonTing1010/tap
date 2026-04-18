@@ -7,6 +7,7 @@
 
 import { createTapHandle, type RpcSend } from "./page.ts";
 import { type Pipe, type PipeTrace, runPipeWithTrace } from "./pipe.ts";
+import { isPipeBuiltin, PIPE_BUILTINS } from "./pipe-builtins.ts";
 import { runInSandbox } from "./sandbox.ts";
 import { applyPersistRowsPolicy, makeRunId, type TapTrace, writeTapTrace } from "./trace.ts";
 
@@ -840,6 +841,13 @@ export async function runTap(
   // tap.invoke(), which returns the full TapResult.
   if (tapDirs) {
     tap.run = async (site: string, name: string, subArgs: Record<string, unknown> = {}) => {
+      // Built-in pipe atomics dispatch in-process — no disk lookup, no
+      // sub-runTap, no provenance entry (language primitives, not user
+      // taps). Mirrors handle.pipe's built-in dispatch above.
+      if (isPipeBuiltin(site, name)) {
+        const upstreamRows = (subArgs.rows as Record<string, unknown>[] | undefined) ?? [];
+        return PIPE_BUILTINS[name](upstreamRows, subArgs);
+      }
       const tapPath = await resolveSubTap(site, name);
       const subMod = await loadTap(tapPath);
       const result = await runTap(subMod, subArgs, send, tapDirs);
@@ -857,6 +865,12 @@ export async function runTap(
     // internally; exposing it to tap authors lets them write imperative
     // compositions that still get the full result shape.
     tap.invoke = async (site: string, name: string, subArgs: Record<string, unknown> = {}) => {
+      if (isPipeBuiltin(site, name)) {
+        const upstreamRows = (subArgs.rows as Record<string, unknown>[] | undefined) ?? [];
+        const out = PIPE_BUILTINS[name](upstreamRows, subArgs);
+        const columns = out.length > 0 ? Object.keys(out[0]) : [];
+        return { rows: out, rawRows: out, columns, count: out.length, timing: { total_ms: 0 } } as TapResult;
+      }
       const tapPath = await resolveSubTap(site, name);
       const subMod = await loadTap(tapPath);
       const result = await runTap(subMod, subArgs, send, tapDirs);
@@ -905,6 +919,17 @@ export async function runTap(
   if (tapDirs) {
     tap.pipe = async (pipe: unknown) => {
       const pipeRun = async (site: string, name: string, subArgs: Record<string, unknown>) => {
+        // Built-in atomics dispatch in-process — no disk lookup, no
+        // sub-runTap, no provenance entry (they're language primitives,
+        // not user-authored taps). Shadows any user-side .tap.js with
+        // the same site/name during backward-compat migration.
+        if (isPipeBuiltin(site, name)) {
+          const fn = PIPE_BUILTINS[name];
+          const upstreamRows = (subArgs.rows as Record<string, unknown>[] | undefined) ?? [];
+          const out = fn(upstreamRows, subArgs);
+          const columns = out.length > 0 ? Object.keys(out[0]) : [];
+          return { rows: out, rawRows: out, columns, count: out.length };
+        }
         let tapPath = "";
         for (const dir of tapDirs) {
           const p = `${dir}/${site}/${name}.tap.js`;
