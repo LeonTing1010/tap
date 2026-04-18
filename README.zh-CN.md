@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="extension/icons/icon.svg" width="120" height="120" alt="Tap">
+  <img src="extension/icons/icon.svg" width="120" height="120" alt="Taprun">
 </p>
 
-<h1 align="center">Tap</h1>
+<h1 align="center">Taprun</h1>
 
 <h4 align="center">
   你的爬虫现在就是坏的。你只是还不知道。
@@ -25,7 +25,7 @@
 
 ---
 
-**Tap 把 AI 对网站的理解编译成确定性程序，然后持续监控它。** 健康合约捕获静默故障，指纹对比精确定位变更。`tap doctor` 在数据变质前就发现问题 — 不是三天以后。
+**Taprun 把 AI 对网站的理解编译成确定性程序，然后持续监控它。** 健康合约捕获静默故障，指纹对比精确定位变更。`tap doctor` 在数据变质前就发现问题 — 不是三天以后。
 
 ```
 锻造：  AI 分析网站 → 编译成 .tap.js 程序          （一次性成本）
@@ -98,7 +98,7 @@ Agent：今天最热门的仓库是... React compiler 已达 734 stars...
 Agent：好了。随时运行 `tap douban top250`，每次 $0。
 ```
 
-## 你能用 Tap 做什么？
+## 你能用 Taprun 做什么？
 
 **读取** — 从任何网站提取数据
 
@@ -147,13 +147,13 @@ tap forge "抓取 arxiv 最新论文"                # 0 字节离开你的机�
 
 ```
                      ┌─ Chrome      （你的真实浏览器会话）
-你 → AI → Tap ──────┤─ Playwright  （无头模式，服务端，CI/CD）
+你 → AI → Taprun ──────┤─ Playwright  （无头模式，服务端，CI/CD）
      编译            └─ macOS       （原生桌面应用）
 ```
 
 1. **你描述**你想要什么（自然语言或 URL）
 2. **AI 编译**成 `.tap.js` 程序 — 纯 JavaScript，可版本控制
-3. **Tap 运行**程序 — 三个运行时任选，永久运行，$0
+3. **Taprun 运行**程序 — 三个运行时任选，永久运行，$0
 
 每次成功编译都让下一次更快。140+ 社区 skills 意味着你的 Agent 已经认识 68+ 个网站。
 
@@ -177,7 +177,7 @@ tap list      # 查看所有可用 skills
 
 ## 对比
 
-|  | Tap | AI 浏览器 Agent | 传统爬虫 |
+|  | Taprun | AI 浏览器 Agent | 传统爬虫 |
 |--|-----|-----------------|----------|
 | **每次运行 AI 成本** | $0（编译一次） | 每次消耗 token | 免费 |
 | **准确性** | 确定性 | 每次不同 | 确定性 |

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Playwright MCP Alternative: Zero Tokens at Runtime — Taprun Blog</title>
+<meta name="description" content="Playwright MCP burns 114k tokens for a single workflow that a compiled program runs at zero tokens. Here's why, and what to do about it.">
+<link rel="canonical" href="https://taprun.dev/blog/playwright-mcp-token-cost-alternative.html">
+<meta property="og:title" content="Playwright MCP Alternative: Zero Tokens at Runtime">
+<meta property="og:description" content="Playwright MCP re-ingests the DOM every step. Compiled programs don't. 114k tokens → 0.">
+<meta property="og:url" content="https://taprun.dev/blog/playwright-mcp-token-cost-alternative.html">
+<meta property="og:type" content="article">
+<meta property="article:published_time" content="2026-04-18">
+<meta property="article:author" content="Leon Ting">
+<meta property="og:image" content="https://taprun.dev/social-preview.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Playwright MCP Alternative: Zero Tokens at Runtime">
+<meta name="twitter:description" content="Playwright MCP re-ingests the DOM every step. Compiled programs don't. 114k tokens → 0.">
+<meta name="twitter:image" content="https://taprun.dev/social-preview.png">
+<meta name="keywords" content="playwright mcp alternative, playwright mcp tokens, playwright mcp 200k context, zero token browser automation, mcp token cost, browser mcp alternative, taprun vs playwright mcp">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Playwright MCP Alternative: Zero Tokens at Runtime",
+  "description": "Playwright MCP burns 114k tokens for a single workflow that a compiled program runs at zero tokens. Here's why, and what to do about it.",
+  "datePublished": "2026-04-18",
+  "author": { "@type": "Person", "name": "Leon Ting", "url": "https://github.com/LeonTing1010" },
+  "publisher": { "@type": "Organization", "name": "Taprun", "url": "https://taprun.dev" },
+  "url": "https://taprun.dev/blog/playwright-mcp-token-cost-alternative.html",
+  "mainEntityOfPage": "https://taprun.dev/blog/playwright-mcp-token-cost-alternative.html"
+}
+</script>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='105' cy='115' r='55' fill='%23FFFFFF'/%3E%3Ccircle cx='85' cy='70' r='45' fill='%23FFFFFF'/%3E%3Cellipse cx='75' cy='32' rx='15' ry='22' fill='%23EF4444'/%3E%3Cellipse cx='90' cy='30' rx='12' ry='20' fill='%23DC2626'/%3E%3Cellipse cx='103' cy='35' rx='10' ry='16' fill='%23B91C1C'/%3E%3Cpath d='M 55 68 L 8 75 L 55 85 Z' fill='%23FBBF24'/%3E%3Cpath d='M 55 85 L 8 75 L 12 82 Z' fill='%23D97706'/%3E%3Ccircle cx='70' cy='65' r='14' fill='%231F2937'/%3E%3Ccircle cx='66' cy='61' r='5' fill='%23FFFFFF'/%3E%3Ccircle cx='74' cy='68' r='2.5' fill='%23FFFFFF'/%3E%3Cellipse cx='50' cy='78' rx='8' ry='5' fill='%23FECACA' opacity='0.8'/%3E%3Cellipse cx='125' cy='115' rx='35' ry='30' fill='%23818CF8'/%3E%3Cellipse cx='125' cy='115' rx='25' ry='20' fill='%236366F1'/%3E%3Ccircle cx='95' cy='130' r='25' fill='%23F9FAFB'/%3E%3Cpath d='M 145 140 L 175 185 L 155 180 L 140 145 Z' fill='%23818CF8'/%3E%3Cpath d='M 150 145 L 180 190 L 162 185 L 148 150 Z' fill='%236366F1'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0a0918; color: #e0e0e0; line-height: 1.8; }
+.container { max-width: 720px; margin: 0 auto; padding: 60px 24px; }
+h1 { font-size: 2rem; font-weight: 600; color: #fff; margin-bottom: 8px; line-height: 1.3; }
+h2 { font-size: 1.35rem; font-weight: 500; color: #fff; margin-top: 48px; margin-bottom: 16px; }
+h3 { font-size: 1.1rem; font-weight: 500; color: #fff; margin-top: 32px; margin-bottom: 12px; }
+p, li { font-size: 0.95rem; color: #b0b0b0; margin-bottom: 16px; }
+ul, ol { padding-left: 24px; }
+a { color: #818cf8; text-decoration: none; }
+a:hover { text-decoration: underline; }
+.meta { font-size: 0.85rem; color: #666; margin-bottom: 40px; }
+.back { display: inline-block; margin-bottom: 24px; font-size: 0.9rem; }
+code { background: #1a1a2e; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; font-family: 'JetBrains Mono', monospace; }
+pre { background: #111118; border: 1px solid #222; border-radius: 8px; padding: 16px 20px; overflow-x: auto; margin: 20px 0; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; line-height: 1.6; color: #c8c8d0; }
+pre .comment { color: #555; }
+pre .cmd { color: #818cf8; }
+pre .output { color: #6ee7b7; }
+pre .flag { color: #fbbf24; }
+pre .err { color: #f87171; }
+blockquote { border-left: 3px solid #6366F1; padding: 12px 16px; margin: 20px 0; background: rgba(99,102,241,0.06); border-radius: 0 8px 8px 0; }
+blockquote p { color: #a0a0b0; margin-bottom: 0; font-style: italic; }
+blockquote cite { display: block; margin-top: 8px; font-size: 0.85rem; color: #666; font-style: normal; }
+table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.9rem; }
+th, td { padding: 10px 12px; border-bottom: 1px solid #222; text-align: left; color: #b0b0b0; }
+th { color: #fff; font-weight: 500; }
+.cta { margin-top: 48px; padding: 24px; background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.2); border-radius: 12px; }
+.cta h3 { margin-top: 0; }
+.cta pre { margin-bottom: 0; }
+.separator { border: none; border-top: 1px solid #222; margin: 48px 0; }
+</style>
+<script src="https://analytics.ahrefs.com/analytics.js" data-key="G1wKuningnrw+t5LQJ+MPw" async></script>
+</head>
+<body>
+<div class="container">
+<a href="../" class="back">&larr; Taprun</a> &middot; <a href="./" class="back">Blog</a>
+<h1>Playwright MCP Alternative: Zero Tokens at Runtime</h1>
+<p class="meta">April 18, 2026 &middot; Leon Ting &middot; 6 min read</p>
+
+<p>You launch Claude with Playwright MCP. Three tool calls in, you're at 80,000 tokens. Five calls in, the context window is half full. You scroll the log and realize the model just spent 27,000 tokens reading the DOM of one page — to click a single button.</p>
+
+<p>You are not alone.</p>
+
+<blockquote>
+<p>"I got tired of playwright-mcp eating through Claude's 200K token limit. 114,000 tokens through MCP vs 27,000 tokens through CLI &mdash; for the same task."</p>
+<cite>&mdash; syntax-sherlock, Hacker News (189 points, "Playwright Skill" launch)</cite>
+</blockquote>
+
+<h2>Why Playwright MCP Burns Context</h2>
+
+<p>Every <code>page.click(selector)</code>, <code>browser_snapshot</code>, and <code>locator</code> call the model issues round-trips a DOM payload, an a11y snapshot, and a status response. The LLM reads all of it. Then it plans the next action. Then it reads another snapshot. The loop compounds.</p>
+
+<p>For a single 10-step workflow you pay for the model to re-ingest the page 10 times, reason over 10 planning prompts, and emit 10 tool calls. The page barely changed. The plan barely changed. You paid anyway.</p>
+
+<h2>Runtime LLM Is the Wrong Layer</h2>
+
+<p>Here's a user on r/AI_Agents who figured this out without an MCP spec in front of him:</p>
+
+<blockquote>
+<p>"The AI runs the workflow <em>once</em>, learns the pattern, then it executes without the LLM &mdash; making it 100x cheaper and way more reliable. My monthly LLM costs went from $200 to $2."</p>
+<cite>&mdash; u/Omega0Alpha, r/AI_Agents</cite>
+</blockquote>
+
+<p>That's the architecture. AI participates at authoring time. Runtime is deterministic. Taprun ships this as two commands.</p>
+
+<h2>How Taprun Runs at Zero Tokens</h2>
+
+<pre><span class="comment"># 1. Forge — AI participates once, writes a program</span>
+<span class="cmd">$</span> tap forge <span class="flag">"publish a post to X"</span>
+<span class="output">&#10004; Saved: x/publish.tap.js  (157 lines)</span>
+
+<span class="comment"># 2. Run — zero AI, zero tokens, deterministic</span>
+<span class="cmd">$</span> tap x publish <span class="flag">--title "hello" --body "first post"</span>
+<span class="output">&#10004; Posted  (1.8s, $0.00, 0 tokens)</span></pre>
+
+<p>The first command uses AI the way MCP expects &mdash; DOM snapshot, planning, selector discovery. It does this <em>once</em> and writes a <code>.tap.js</code> program to disk. Every subsequent execution runs the program directly. No LLM round-trip. No tokens. No planning loop.</p>
+
+<h2>The MCP Host Still Drives</h2>
+
+<p>If you use Claude Code, Cursor, or any MCP host, Taprun plugs in the same as Playwright MCP:</p>
+
+<pre><span class="comment"># .mcp.json</span>
+{
+  <span class="flag">"mcpServers"</span>: {
+    <span class="flag">"taprun"</span>: { <span class="flag">"command"</span>: <span class="flag">"tap"</span>, <span class="flag">"args"</span>: [<span class="flag">"mcp"</span>] }
+  }
+}</pre>
+
+<p>The difference is what happens after the tool call. Playwright MCP hands the model a DOM snapshot and says <em>you figure it out</em>. Taprun hands the model the name of a pre-compiled program and says <em>I already figured it out &mdash; here's the result</em>. A <code>tap.run</code> call returns rows, not raw HTML. 27k → 0 tokens per execution.</p>
+
+<h2>When to Use Which</h2>
+
+<table>
+<tr><th></th><th>Playwright MCP</th><th>Taprun</th></tr>
+<tr><td>One-off exploration</td><td>&#10004; Best fit</td><td><code>tap forge</code> works, overkill</td></tr>
+<tr><td>Repeated workflow (&gt;3 runs)</td><td>Burns tokens each run</td><td>&#10004; Forge once, $0/run</td></tr>
+<tr><td>Long agent sessions</td><td>Context fills fast</td><td>&#10004; Tool calls return rows</td></tr>
+<tr><td>Deterministic output</td><td>LLM-variable</td><td>&#10004; Same input &rarr; same output</td></tr>
+<tr><td>Token cost per step</td><td>~11k&ndash;27k</td><td>0</td></tr>
+</table>
+
+<p>Playwright MCP is a fine prototype tool. For anything you do more than three times, you want a compiled program.</p>
+
+<h2>Caveat: Forge Is Not Free</h2>
+
+<p>Forging has a one-time token cost &mdash; typically 2&ndash;5k tokens depending on site complexity. Break-even against Playwright MCP (at ~27k tokens per invocation) is well under a single run. After that, every execution is $0 and 0 tokens.</p>
+
+<h2>When It Actually Breaks</h2>
+
+<p>Sites change. That's the one thing compiled programs can't control. But when they do, <code>tap doctor</code> emits a structural diff &mdash; exactly which selectors moved, which API endpoints disappeared, what the new DOM looks like. You hand that diff to your agent and it patches the program. You never re-enter the 27k-token-per-step loop to rediscover the same page from scratch.</p>
+
+<h2>Related</h2>
+<ul>
+<li><a href="mcp-authoring-zero-token-execution.html">MCP Is the Authoring Layer. Execution Should Cost Zero Tokens.</a></li>
+<li><a href="programs-beat-prompts.html">Programs Beat Prompts: Why AI Should Write Code, Not Run It</a></li>
+<li><a href="deterministic-vs-ai-browser-automation.html">Deterministic vs AI Browser Automation</a></li>
+</ul>
+
+<hr class="separator">
+
+<div class="cta">
+<h3>Try it now</h3>
+<pre><span class="comment"># Install (macOS / Linux)</span>
+<span class="cmd">curl</span> -fsSL https://taprun.dev/install.sh | sh
+
+<span class="comment"># Connect to Claude Code / Cursor / any MCP host</span>
+<span class="cmd">tap</span> setup
+
+<span class="comment"># Forge once, run forever at $0</span>
+<span class="cmd">tap</span> forge <span class="flag">"your workflow here"</span></pre>
+<p style="margin-top: 16px; margin-bottom: 0;"><a href="https://taprun.dev/">Homepage</a> &middot; <a href="https://github.com/LeonTing1010/tap">GitHub</a> &middot; 140+ pre-forged skills across 68+ sites</p>
+</div>
+
+</div>
+<script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "91c486def20e49999fa55db9040ec94d"}'></script>
+</body>
+</html>

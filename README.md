@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="extension/icons/icon.svg" width="120" height="120" alt="Tap">
+  <img src="extension/icons/icon.svg" width="120" height="120" alt="Taprun">
 </p>
 
-<h1 align="center">Tap</h1>
+<h1 align="center">Taprun</h1>
 
 <h4 align="center">
   Your scraper is broken right now. You just don't know it yet.
@@ -25,7 +25,7 @@
 
 ---
 
-**Tap compiles AI understanding into deterministic programs. Then monitors them.** Health contracts catch silent failures. Structural state diffs tell you exactly what changed. `tap doctor` detects breakage before your data goes stale — not three days later.
+**Taprun compiles AI understanding into deterministic programs. Then monitors them.** Health contracts catch silent failures. Structural state diffs tell you exactly what changed. `tap doctor` detects breakage before your data goes stale — not three days later.
 
 ```
 Forge:    AI inspects the site → compiles a .tap.js program       (one-time cost)
@@ -148,14 +148,14 @@ tap forge "scrape arxiv recent papers"            # 0 bytes leave your machine
 ## How It Works
 
 ```
-                     ┌─ Chrome      (your real browser sessions)
-You → AI → Tap ──────┤─ Playwright  (headless, server, CI/CD)
-     compile         └─ macOS       (native desktop apps)
+                        ┌─ Chrome      (your real browser sessions)
+You → AI → Taprun ──────┤─ Playwright  (headless, server, CI/CD)
+     compile            └─ macOS       (native desktop apps)
 ```
 
 1. **You describe** what you want (natural language or URL)
 2. **AI compiles** it into a `.tap.js` program — plain JavaScript, version-controlled
-3. **Tap runs** the program on any of three runtimes — forever, at $0
+3. **Taprun runs** the program on any of three runtimes — forever, at $0
 
 Every successful compilation makes the next one faster. 140+ community skills mean your agent already knows 68+ websites.
 
@@ -177,9 +177,9 @@ tap update    # Install / update all skills
 tap list      # See everything available
 ```
 
-## How Tap Compares
+## How Taprun Compares
 
-|  | Tap | AI Browser Agents | Traditional Scrapers |
+|  | Taprun | AI Browser Agents | Traditional Scrapers |
 |--|-----|-------------------|---------------------|
 | **AI cost per run** | $0 (compile once) | Tokens every run | Free |
 | **Accuracy** | Deterministic | Varies per run | Deterministic |

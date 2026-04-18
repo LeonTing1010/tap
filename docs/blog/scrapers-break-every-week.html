@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your Scrapers Break Every Week. Here's Why tap doctor Exists — Taprun Blog</title>
+<meta name="description" content="10-15% of scrapers break every week when sites change. Most fail silently — returning empty arrays for days. tap doctor catches the break, tap doctor --diff tells you what moved.">
+<link rel="canonical" href="https://taprun.dev/blog/scrapers-break-every-week.html">
+<meta property="og:title" content="Your Scrapers Break Every Week. Here's Why tap doctor Exists">
+<meta property="og:description" content="Health contracts + structural diffs make silent scraper failure impossible.">
+<meta property="og:url" content="https://taprun.dev/blog/scrapers-break-every-week.html">
+<meta property="og:type" content="article">
+<meta property="article:published_time" content="2026-04-18">
+<meta property="article:author" content="Leon Ting">
+<meta property="og:image" content="https://taprun.dev/social-preview.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Your Scrapers Break Every Week. Here's Why tap doctor Exists">
+<meta name="twitter:description" content="Health contracts + structural diffs make silent scraper failure impossible.">
+<meta name="twitter:image" content="https://taprun.dev/social-preview.png">
+<meta name="keywords" content="scraper breaks every week, scraper maintenance, scraper selector drift, automatic scraper diagnostics, selector broke, scraper health check, tap doctor">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Your Scrapers Break Every Week. Here's Why tap doctor Exists",
+  "description": "10-15% of scrapers break every week when sites change. Most fail silently. tap doctor catches the break, --diff tells you what moved.",
+  "datePublished": "2026-04-18",
+  "author": { "@type": "Person", "name": "Leon Ting", "url": "https://github.com/LeonTing1010" },
+  "publisher": { "@type": "Organization", "name": "Taprun", "url": "https://taprun.dev" },
+  "url": "https://taprun.dev/blog/scrapers-break-every-week.html",
+  "mainEntityOfPage": "https://taprun.dev/blog/scrapers-break-every-week.html"
+}
+</script>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='105' cy='115' r='55' fill='%23FFFFFF'/%3E%3Ccircle cx='85' cy='70' r='45' fill='%23FFFFFF'/%3E%3Cellipse cx='75' cy='32' rx='15' ry='22' fill='%23EF4444'/%3E%3Cellipse cx='90' cy='30' rx='12' ry='20' fill='%23DC2626'/%3E%3Cellipse cx='103' cy='35' rx='10' ry='16' fill='%23B91C1C'/%3E%3Cpath d='M 55 68 L 8 75 L 55 85 Z' fill='%23FBBF24'/%3E%3Cpath d='M 55 85 L 8 75 L 12 82 Z' fill='%23D97706'/%3E%3Ccircle cx='70' cy='65' r='14' fill='%231F2937'/%3E%3Ccircle cx='66' cy='61' r='5' fill='%23FFFFFF'/%3E%3Ccircle cx='74' cy='68' r='2.5' fill='%23FFFFFF'/%3E%3Cellipse cx='50' cy='78' rx='8' ry='5' fill='%23FECACA' opacity='0.8'/%3E%3Cellipse cx='125' cy='115' rx='35' ry='30' fill='%23818CF8'/%3E%3Cellipse cx='125' cy='115' rx='25' ry='20' fill='%236366F1'/%3E%3Ccircle cx='95' cy='130' r='25' fill='%23F9FAFB'/%3E%3Cpath d='M 145 140 L 175 185 L 155 180 L 140 145 Z' fill='%23818CF8'/%3E%3Cpath d='M 150 145 L 180 190 L 162 185 L 148 150 Z' fill='%236366F1'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0a0918; color: #e0e0e0; line-height: 1.8; }
+.container { max-width: 720px; margin: 0 auto; padding: 60px 24px; }
+h1 { font-size: 2rem; font-weight: 600; color: #fff; margin-bottom: 8px; line-height: 1.3; }
+h2 { font-size: 1.35rem; font-weight: 500; color: #fff; margin-top: 48px; margin-bottom: 16px; }
+h3 { font-size: 1.1rem; font-weight: 500; color: #fff; margin-top: 32px; margin-bottom: 12px; }
+p, li { font-size: 0.95rem; color: #b0b0b0; margin-bottom: 16px; }
+ul, ol { padding-left: 24px; }
+a { color: #818cf8; text-decoration: none; }
+a:hover { text-decoration: underline; }
+.meta { font-size: 0.85rem; color: #666; margin-bottom: 40px; }
+.back { display: inline-block; margin-bottom: 24px; font-size: 0.9rem; }
+code { background: #1a1a2e; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; font-family: 'JetBrains Mono', monospace; }
+pre { background: #111118; border: 1px solid #222; border-radius: 8px; padding: 16px 20px; overflow-x: auto; margin: 20px 0; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; line-height: 1.6; color: #c8c8d0; }
+pre .comment { color: #555; }
+pre .cmd { color: #818cf8; }
+pre .output { color: #6ee7b7; }
+pre .flag { color: #fbbf24; }
+pre .err { color: #f87171; }
+blockquote { border-left: 3px solid #6366F1; padding: 12px 16px; margin: 20px 0; background: rgba(99,102,241,0.06); border-radius: 0 8px 8px 0; }
+blockquote p { color: #a0a0b0; margin-bottom: 0; font-style: italic; }
+blockquote cite { display: block; margin-top: 8px; font-size: 0.85rem; color: #666; font-style: normal; }
+.cta { margin-top: 48px; padding: 24px; background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.2); border-radius: 12px; }
+.cta h3 { margin-top: 0; }
+.cta pre { margin-bottom: 0; }
+.separator { border: none; border-top: 1px solid #222; margin: 48px 0; }
+</style>
+<script src="https://analytics.ahrefs.com/analytics.js" data-key="G1wKuningnrw+t5LQJ+MPw" async></script>
+</head>
+<body>
+<div class="container">
+<a href="../" class="back">&larr; Taprun</a> &middot; <a href="./" class="back">Blog</a>
+<h1>Your Scrapers Break Every Week. Here's Why <code>tap doctor</code> Exists.</h1>
+<p class="meta">April 18, 2026 &middot; Leon Ting &middot; 6 min read</p>
+
+<p>Somewhere in your infrastructure, 10% of your scrapers stopped working this week. You'll find out on Thursday when the dashboard looks funny. On Friday you'll figure out which one. On Monday you'll fix it. The week after, a different 10% will break.</p>
+
+<p>This is not a worst-case. It's the modal experience for anyone operating more than a handful of scrapers in production:</p>
+
+<blockquote>
+<p>"About 10&ndash;15% of my scrapers break EVERY WEEK due to website changes."</p>
+<cite>&mdash; r/webscraping, 376 upvotes</cite>
+</blockquote>
+
+<blockquote>
+<p>"Every time a website redesigns or updates their layout, I'm manually fixing selectors and rewriting parts of the workflow. It's eating up hours every month."</p>
+<cite>&mdash; ByteForge, Latenode community</cite>
+</blockquote>
+
+<blockquote>
+<p>"My selectors got wiped twice in one month. Headless Puppeteer handles around ten portals fine. Push it to fifty and localStorage breaks, IP bans hit, random modals destroy everything."</p>
+<cite>&mdash; r/webscraping, scaling 100+ vendor dashboards</cite>
+</blockquote>
+
+<p>The common shape: sites change on their own clock, your selectors don't, and the gap between "broken" and "you noticed" is measured in days.</p>
+
+<h2>Why Silent Failure Is the Worst Case</h2>
+
+<p>Scrapers rarely crash. They return empty arrays. Downstream systems happily consume empty data. Dashboards render. Reports ship. Nobody pages:</p>
+
+<blockquote>
+<p>"Instead of throwing an error when a page structure changes, they return empty arrays... A scraper that fails silently poisons your data for days or weeks before anyone notices."</p>
+<cite>&mdash; BinaryBits</cite>
+</blockquote>
+
+<p>A crash would be kind. The scraper telling you nothing is the expensive part.</p>
+
+<h2>What a Health Contract Looks Like</h2>
+
+<p>A tap is a small JavaScript program. Every tap declares what "healthy" output means:</p>
+
+<pre><span class="comment">// built into every tap</span>
+health: {
+  min_rows: 5,                    <span class="comment">// fewer than 5 rows → fail</span>
+  non_empty: [<span class="flag">"title"</span>],            <span class="comment">// title must never be blank</span>
+  pattern: { price: <span class="flag">/^\$\d+(\.\d{2})?$/</span> }  <span class="comment">// prices must look like prices</span>
+}</pre>
+
+<p>Now the scraper can't quietly lie. Either the contract is satisfied or the run is flagged.</p>
+
+<h2><code>tap doctor</code> &mdash; Check Everything, Get the Diff</h2>
+
+<pre><span class="cmd">$</span> tap doctor
+<span class="output">hackernews/hot    &#10004; ok     30 rows  (245ms)</span>
+<span class="err">amazon/product    &#10008; fail   0 rows   min_rows: expected &ge;5, got 0</span>
+<span class="output">github/trending   &#10004; ok     25 rows  (1.2s)</span>
+<span class="err">shopify/checkout  &#10008; fail   3 rows   pattern: price "TBD" does not match /^\$\d+/</span>
+<span class="output">reddit/hot        &#10004; ok     25 rows  (890ms)</span></pre>
+
+<p>Two failures surfaced. One is a site structure change (0 rows). One is a product-data change (price format mismatch). Neither would crash. Neither would fill Sentry. <code>tap doctor</code> catches both because the <em>contract</em> catches both.</p>
+
+<h2>Structural Diff: What Actually Changed</h2>
+
+<p>Knowing a tap is broken is step one. Step two is fixing it &mdash; which requires knowing <em>what</em> moved. Taprun stores a structural fingerprint (DOM shape + captured API endpoints) from the last healthy run. When a run fails the contract, <code>tap doctor --diff</code> emits the delta:</p>
+
+<pre><span class="cmd">$</span> tap doctor amazon product <span class="flag">--diff</span>
+<span class="output">- selector .product-title   → 30 matches  (expected)</span>
+<span class="err">+ selector .product-title   → 0 matches   (broken)</span>
+<span class="err">+ selector .a-color-price   → 0 matches</span>
+<span class="output">+ selector [data-testid=price]  → 30 matches  (new)</span>
+<span class="output">→ site renamed class "a-color-price" to data-testid="price"</span></pre>
+
+<p>That diff is the fix spec. Paste it into your agent and ask for a patch. Pro tier does it automatically on a cron.</p>
+
+<h2>The Real Cost You're Replacing</h2>
+
+<blockquote>
+<p>"The single biggest cost in web scraping is not servers or proxies. It is developer time. If you manage 500 scrapers, you are essentially a full-time firefighter."</p>
+<cite>&mdash; Self-Repairing Scrapers, r/WebDataDiggers</cite>
+</blockquote>
+
+<p>That firefighter role is what <code>tap doctor</code> eliminates. Not by preventing breakage &mdash; sites change, that's fine &mdash; but by making breakage <em>immediately visible and diagnosable</em>. You replace "manual spot checks" with "a 10-second report."</p>
+
+<h2>Run It On What You Have Now</h2>
+
+<pre><span class="comment"># Install</span>
+<span class="cmd">curl</span> -fsSL https://taprun.dev/install.sh | sh
+
+<span class="comment"># Check health of everything you've forged</span>
+<span class="cmd">tap</span> doctor
+
+<span class="comment"># Schedule a daily check at 6am</span>
+<span class="cmd">tap</span> doctor <span class="flag">--schedule "0 6 * * *"</span>
+
+<span class="comment"># Emit the structural diff for a broken tap</span>
+<span class="cmd">tap</span> doctor amazon product <span class="flag">--diff</span>
+
+<span class="comment"># Auto-heal (Pro) — AI reads the diff and patches</span>
+<span class="cmd">tap</span> doctor <span class="flag">--auto</span></pre>
+
+<h2>Related</h2>
+<ul>
+<li><a href="your-scraper-is-broken.html">Your Scraper Is Broken Right Now. You Just Don't Know It Yet.</a></li>
+<li><a href="health-contracts-catch-silent-failures.html">Health Contracts Catch What Pydantic Can't</a></li>
+<li><a href="websites-change-automation-shouldnt-stop.html">Websites Change. Your Automation Shouldn't Stop.</a></li>
+</ul>
+
+<hr class="separator">
+
+<div class="cta">
+<h3>Try it now</h3>
+<pre><span class="comment"># Zero-install via npx</span>
+<span class="cmd">npx</span> -y @taprun/cli doctor
+
+<span class="comment"># Or install permanently</span>
+<span class="cmd">curl</span> -fsSL https://taprun.dev/install.sh | sh
+<span class="cmd">tap</span> doctor</pre>
+<p style="margin-top: 16px; margin-bottom: 0;"><a href="https://taprun.dev/">Homepage</a> &middot; <a href="https://github.com/LeonTing1010/tap">GitHub</a> &middot; 140+ pre-forged skills with health contracts built in</p>
+</div>
+
+</div>
+<script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "91c486def20e49999fa55db9040ec94d"}'></script>
+</body>
+</html>
