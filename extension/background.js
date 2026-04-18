@@ -311,13 +311,21 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       return {}
     }
 
+
     case 'nav': {
       const origTabId = tabId
+      // Resolve current tab state. If the session's tab was closed behind our
+      // back, chrome.tabs.get throws — fall through to "create new tab" and
+      // rebind to the sessionId below (self-heal path).
+      let current = null
+      if (tabId) {
+        try { current = await chrome.tabs.get(tabId) }
+        catch { tabId = null }
+      }
       if (!tabId) {
         const tab = await chrome.tabs.create({ url: params.url, active: false })
         tabId = tab.id
       } else {
-        const current = await chrome.tabs.get(tabId)
         const isInternal = current.url?.startsWith('chrome://') || current.url?.startsWith('data:')
         if (isInternal && !fromDaemon) {
           // Popup/content-script path: the user is actively looking at a
@@ -336,15 +344,28 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       }
       await waitForTabLoad(tabId, params.url)
       const finalTab = await chrome.tabs.get(tabId)
-      // Update session: URL always, tabId if replaced
+      // Update session: URL always, tabId if replaced.
       let sessionUpdated = false
       for (const [, s] of sessions) {
         if (s.tabId === origTabId || s.tabId === tabId) {
           s.url = finalTab.url || params.url
-          s.tabId = tabId  // update if tab was replaced
+          s.tabId = tabId
           sessionUpdated = true
           break
         }
+      }
+      // Self-heal: daemon passed a sessionId but no matching session entry
+      // (tab was closed, SW missed the onRemoved, or entry was never created
+      // via session.create). Bind the freshly-navigated tab to that sessionId
+      // so subsequent commands resolve instead of throwing "No active tab"
+      // forever. Without this the MCP main session stays orphaned for life.
+      const sid = params._sessionId
+      if (!sessionUpdated && fromDaemon && sid && !sessions.has(sid)) {
+        sessions.set(sid, {
+          tabId, url: finalTab.url || params.url,
+          interceptActive: false, networkCapturing: false,
+        })
+        sessionUpdated = true
       }
       if (sessionUpdated) void persistSessions()
       return { frameId: 'main', tabId, url: finalTab.url || params.url }
@@ -1134,10 +1155,16 @@ async function pollLoop() {
         const { id, method: rawMethod, params, sessionId } = cmd
         const method = rawMethod?.replace?.('tap.', '') || rawMethod
         const resolvedParams = { ...(params || {}) }
-        // Resolve sessionId to tabId
-        if (sessionId && sessions.has(sessionId)) {
-          resolvedParams.tabId = sessions.get(sessionId).tabId
-          resolvedParams._sessionId = sessionId  // pass through for session commands
+        // Resolve sessionId to tabId. Always pass _sessionId through so nav can
+        // auto-heal when the session's tab was closed behind our back (user
+        // close / Chrome replace / SW missed the onRemoved event): nav creates
+        // a fresh tab and rebinds it to the original sessionId. Without this,
+        // the next command hits "No active tab" forever.
+        if (sessionId) {
+          resolvedParams._sessionId = sessionId
+          if (sessions.has(sessionId)) {
+            resolvedParams.tabId = sessions.get(sessionId).tabId
+          }
         }
 
         // Fire-and-forget: handle + report result asynchronously
