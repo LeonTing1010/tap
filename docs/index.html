@@ -61,7 +61,9 @@
       "target": "https://taprun.dev/"
     },
     "itemListElement": [
+      {"@type": "SiteNavigationElement", "name": "Build", "description": "Use cases — what you build with Taprun", "url": "https://taprun.dev/#usecases"},
       {"@type": "SiteNavigationElement", "name": "Compare", "description": "Taprun vs Browser Use, Stagehand, rtrvr.ai, Playwright MCP", "url": "https://taprun.dev/#comparison"},
+      {"@type": "SiteNavigationElement", "name": "Surfaces", "description": "CLI, MCP, Chrome extension, JSR library, Homebrew, GitHub plugin, Docker, schedulers", "url": "https://taprun.dev/#surfaces"},
       {"@type": "SiteNavigationElement", "name": "How It Works", "description": "Learn how Taprun works", "url": "https://taprun.dev/#how-it-works"},
       {"@type": "SiteNavigationElement", "name": "Skills", "description": "Browse 140+ ready-to-run skills", "url": "https://taprun.dev/skills/"},
       {"@type": "SiteNavigationElement", "name": "Pricing", "description": "View pricing plans", "url": "https://taprun.dev/#pricing"},
@@ -1103,6 +1105,278 @@ h2 .hl {
   .comparison-table tbody td { padding: 12px 10px; }
 }
 
+/* ===== Use Cases ===== */
+.usecases {
+  padding: 140px 0;
+  position: relative;
+}
+
+.usecases::before {
+  content: '';
+  position: absolute;
+  top: 10%;
+  left: -10%;
+  width: 50%;
+  height: 60%;
+  background: radial-gradient(ellipse at center, rgba(99, 102, 241, 0.06), transparent 70%);
+  pointer-events: none;
+  filter: blur(40px);
+}
+
+.usecases-header {
+  text-align: center;
+  max-width: 760px;
+  margin: 0 auto 64px;
+  position: relative;
+}
+.usecases-header .section-tag { justify-content: center; }
+.usecases-header h2 { margin-top: 14px; }
+.usecases-header .section-desc { margin: 14px auto 0; }
+
+.usecases-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  position: relative;
+}
+
+.usecase-card {
+  background: var(--bg-card);
+  border: 1px solid rgba(99, 102, 241, 0.1);
+  border-radius: var(--radius-lg);
+  padding: 28px 28px 26px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.usecase-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--indigo), transparent 60%);
+  opacity: 0.6;
+  transition: opacity 0.35s;
+}
+
+.usecase-card:hover {
+  border-color: rgba(99, 102, 241, 0.28);
+  background: var(--bg-card-hover);
+  transform: translateY(-3px);
+  box-shadow: 0 20px 40px -20px rgba(99, 102, 241, 0.25);
+}
+
+.usecase-card:hover::before { opacity: 1; }
+
+.usecase-card--gold::before { background: linear-gradient(90deg, var(--gold), transparent 60%); }
+.usecase-card--green::before { background: linear-gradient(90deg, var(--green), transparent 60%); }
+.usecase-card--red::before { background: linear-gradient(90deg, var(--red), transparent 60%); }
+
+.usecase-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-sm);
+  background: rgba(99, 102, 241, 0.12);
+  font-family: var(--font-mono);
+  font-size: 18px;
+  color: var(--indigo-bright);
+  margin-bottom: 18px;
+  letter-spacing: 0;
+}
+
+.usecase-card--gold .usecase-icon { background: rgba(251, 191, 36, 0.12); color: var(--gold); }
+.usecase-card--green .usecase-icon { background: rgba(16, 185, 129, 0.12); color: var(--green); }
+.usecase-card--red .usecase-icon { background: rgba(239, 68, 68, 0.12); color: #FCA5A5; }
+
+.usecase-card h3 {
+  font-family: var(--font-heading);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--white);
+  letter-spacing: -0.01em;
+  margin-bottom: 10px;
+  line-height: 1.3;
+}
+
+.usecase-card p {
+  font-size: 14px;
+  color: var(--text-dim);
+  line-height: 1.6;
+  margin-bottom: 14px;
+}
+
+.usecase-card p:last-child { margin-bottom: 0; }
+
+.usecase-snippet {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--indigo-light);
+  background: rgba(10, 9, 24, 0.5);
+  border: 1px solid rgba(99, 102, 241, 0.08);
+  border-radius: 6px;
+  padding: 8px 12px;
+  display: block;
+  white-space: nowrap;
+  overflow-x: auto;
+}
+.usecase-snippet .snippet-prompt { color: var(--text-muted); }
+.usecase-snippet .snippet-pipe { color: var(--gold); }
+
+.usecase-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 14px;
+}
+.usecase-meta span {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 4px 8px;
+  border-radius: 100px;
+  background: rgba(99, 102, 241, 0.08);
+  color: var(--indigo-bright);
+  border: 1px solid rgba(99, 102, 241, 0.12);
+}
+
+@media (max-width: 980px) {
+  .usecases-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 620px) {
+  .usecases-grid { grid-template-columns: 1fr; }
+}
+
+/* ===== Surfaces (form factors) ===== */
+.surfaces {
+  padding: 140px 0;
+  position: relative;
+}
+
+.surfaces::before {
+  content: '';
+  position: absolute;
+  bottom: 10%;
+  right: -10%;
+  width: 45%;
+  height: 55%;
+  background: radial-gradient(ellipse at center, rgba(251, 191, 36, 0.04), transparent 70%);
+  pointer-events: none;
+  filter: blur(50px);
+}
+
+.surfaces-header {
+  text-align: center;
+  max-width: 760px;
+  margin: 0 auto 60px;
+  position: relative;
+}
+.surfaces-header .section-tag { justify-content: center; }
+.surfaces-header h2 { margin-top: 14px; }
+.surfaces-header .section-desc { margin: 14px auto 0; }
+
+.surfaces-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  position: relative;
+}
+
+.surface-card {
+  background: linear-gradient(180deg, rgba(99, 102, 241, 0.04), transparent);
+  border: 1px solid rgba(99, 102, 241, 0.08);
+  border-radius: var(--radius-md);
+  padding: 22px 20px 20px;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  min-height: 180px;
+}
+
+.surface-card:hover {
+  border-color: rgba(99, 102, 241, 0.25);
+  background: linear-gradient(180deg, rgba(99, 102, 241, 0.08), rgba(99, 102, 241, 0.02));
+  transform: translateY(-2px);
+}
+
+.surface-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.surface-mark {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(99, 102, 241, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--indigo-bright);
+  flex-shrink: 0;
+}
+
+.surface-card--gold .surface-mark { background: rgba(251, 191, 36, 0.15); color: var(--gold); }
+.surface-card--green .surface-mark { background: rgba(16, 185, 129, 0.15); color: var(--green); }
+
+.surface-card h3 {
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--white);
+  letter-spacing: -0.005em;
+  line-height: 1.2;
+}
+
+.surface-tag {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.surface-card p {
+  font-size: 13px;
+  color: var(--text-dim);
+  line-height: 1.55;
+  flex-grow: 1;
+}
+
+.surface-cmd {
+  margin-top: 14px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--gold);
+  background: rgba(10, 9, 24, 0.4);
+  border-radius: 6px;
+  padding: 7px 10px;
+  border: 1px solid rgba(251, 191, 36, 0.08);
+  overflow-x: auto;
+  white-space: nowrap;
+}
+.surface-cmd .cmd-dim { color: var(--text-muted); }
+
+@media (max-width: 980px) {
+  .surfaces-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 520px) {
+  .surfaces-grid { grid-template-columns: 1fr; }
+}
+
 /* ===== Protocol ===== */
 .protocol {
   padding: 140px 0;
@@ -1945,8 +2219,9 @@ h2 .hl {
       <span class="nav-brand-text">tap</span>
     </a>
     <ul class="nav-links" role="list">
+      <li><a href="#usecases">Build</a></li>
       <li><a href="#comparison">Compare</a></li>
-      <li><a href="#composition">Compose</a></li>
+      <li><a href="#surfaces">Surfaces</a></li>
       <li><a href="#pricing">Pricing</a></li>
       <li><a href="https://taprun.dev/blog/" rel="noopener">Blog</a></li>
       <li><a href="https://github.com/LeonTing1010/tap" target="_blank" rel="noopener noreferrer">GitHub</a></li>
@@ -2403,6 +2678,67 @@ h2 .hl {
   </div>
 </section>
 
+<!-- ===== Use Cases (added 2026-04-19) ===== -->
+<section class="usecases" id="usecases">
+  <div class="container">
+    <div class="usecases-header">
+      <div class="section-tag reveal">What you build with it</div>
+      <h2 class="reveal">Taps built to run <span class="hl">every 5 minutes, forever.</span></h2>
+      <p class="section-desc reveal">Taprun isn&rsquo;t for one-off exploration &mdash; it&rsquo;s for the workflows you&rsquo;d run daily if they didn&rsquo;t cost $1,500/month. Here&rsquo;s what compiles-once-runs-forever actually looks like in production.</p>
+    </div>
+
+    <div class="usecases-grid">
+      <div class="usecase-card reveal">
+        <div class="usecase-icon">&#8942;&#8942;</div>
+        <h3>Daily competitive intel</h3>
+        <p>Pricing pages, feature pages, launch posts. One scan at 7am, piped into your sheet or Slack. Same runs, same output, zero tokens.</p>
+        <code class="usecase-snippet"><span class="snippet-prompt">$ </span>tap github trending <span class="snippet-pipe">|</span> tap filter lang=py</code>
+        <div class="usecase-meta"><span>cron</span><span>$0/run</span><span>Slack</span></div>
+      </div>
+
+      <div class="usecase-card usecase-card--gold reveal">
+        <div class="usecase-icon">&#8960;</div>
+        <h3>Lead aggregation at scale</h3>
+        <p>LinkedIn profiles, X bios, Reddit usernames &mdash; logged-in via the Chrome bridge, bucketed by ICP. 8,640 pulls/day at $9/mo flat, ban-risk neutralised.</p>
+        <code class="usecase-snippet"><span class="snippet-prompt">$ </span>tap linkedin people --icp founders</code>
+        <div class="usecase-meta"><span>logged-in</span><span>Chrome</span><span>CSV</span></div>
+      </div>
+
+      <div class="usecase-card usecase-card--green reveal">
+        <div class="usecase-icon">&#9679;&#9679;</div>
+        <h3>Research synthesis pipelines</h3>
+        <p>arXiv + HN + GitHub trending + Reddit + X &mdash; five taps, one pipe, delivered to Claude Code as structured rows. Tokens go to synthesis, not retrieval.</p>
+        <code class="usecase-snippet"><span class="snippet-prompt">$ </span>tap pipe arxiv hn reddit <span class="snippet-pipe">|</span> tap table</code>
+        <div class="usecase-meta"><span>MCP</span><span>pipe</span><span>deterministic</span></div>
+      </div>
+
+      <div class="usecase-card reveal">
+        <div class="usecase-icon">&#9889;</div>
+        <h3>Break detection &amp; auto-heal</h3>
+        <p>Doctor checks the structural fingerprint before the run fires. Site drifted? You get a Slack ping with the exact diff. Pro tier: taps repair themselves overnight.</p>
+        <code class="usecase-snippet"><span class="snippet-prompt">$ </span>tap doctor --auto --watch</code>
+        <div class="usecase-meta"><span>fingerprint</span><span>Slack</span><span>$0 heal</span></div>
+      </div>
+
+      <div class="usecase-card usecase-card--gold reveal">
+        <div class="usecase-icon">&#10066;</div>
+        <h3>MCP-native data streams</h3>
+        <p>Claude Code pulls rows, not HTML. 140+ taps become MCP tools in Cursor, Windsurf, Codex. Zero tokens on the read path &mdash; budget goes to reasoning.</p>
+        <code class="usecase-snippet"><span class="snippet-prompt">$ </span>claude mcp add tap <span class="snippet-pipe">--</span> tap mcp</code>
+        <div class="usecase-meta"><span>Claude Code</span><span>Cursor</span><span>Windsurf</span></div>
+      </div>
+
+      <div class="usecase-card usecase-card--red reveal">
+        <div class="usecase-icon">&#9202;</div>
+        <h3>Schedule anywhere JS runs</h3>
+        <p>systemd, launchd, GitHub Actions, Cloudflare Workers, n8n webhooks. If it executes JavaScript, it runs Taprun. No auth servers to babysit, no vendor lock.</p>
+        <code class="usecase-snippet"><span class="snippet-prompt">0 7 * * * </span>tap rdk market_scan</code>
+        <div class="usecase-meta"><span>cron</span><span>CI</span><span>CF Workers</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ===== Skills ===== -->
 <section class="skills" id="skills">
   <div class="container">
@@ -2477,6 +2813,115 @@ h2 .hl {
       <a class="site-tag" href="https://telegra.ph" target="_blank" rel="noopener">Telegraph</a>
       <a class="site-tag" href="https://jimeng.jianying.com" target="_blank" rel="noopener">Jimeng AI</a>
       <a class="site-tag" href="https://dictionary.com" target="_blank" rel="noopener">Dictionary</a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Surfaces (form factors, added 2026-04-19) ===== -->
+<section class="surfaces" id="surfaces">
+  <div class="container">
+    <div class="surfaces-header">
+      <div class="section-tag reveal">Meet you where you work</div>
+      <h2 class="reveal">One protocol. <span class="hl">Eight surfaces.</span></h2>
+      <p class="section-desc reveal">Taprun is the protocol &mdash; 8 irreducible browser operations compiled into <code>.tap.js</code>. The same program runs from your terminal, your AI agent, your CI runner, or a library your product embeds. No form factor is more real than any other.</p>
+    </div>
+
+    <div class="surfaces-grid">
+      <div class="surface-card reveal">
+        <div class="surface-head">
+          <div class="surface-mark">&gt;_</div>
+          <div>
+            <h3>CLI</h3>
+            <div class="surface-tag">terminal &middot; npx</div>
+          </div>
+        </div>
+        <p>Zero-install via <code>npx</code>, or a permanent binary from the curl installer. macOS, Linux, Windows. Offline-first.</p>
+        <div class="surface-cmd"><span class="cmd-dim">$ </span>npx -y @taprun/cli</div>
+      </div>
+
+      <div class="surface-card surface-card--gold reveal">
+        <div class="surface-head">
+          <div class="surface-mark">&diams;</div>
+          <div>
+            <h3>MCP server</h3>
+            <div class="surface-tag">Claude Code &middot; Cursor &middot; Windsurf</div>
+          </div>
+        </div>
+        <p>First-class MCP host support. 140+ taps become MCP tools. Zero tokens on the read path &mdash; a one-line config.</p>
+        <div class="surface-cmd"><span class="cmd-dim">mcp &rarr; </span>"tap": { "command": "tap" }</div>
+      </div>
+
+      <div class="surface-card reveal">
+        <div class="surface-head">
+          <div class="surface-mark">&#8862;</div>
+          <div>
+            <h3>Chrome extension</h3>
+            <div class="surface-tag">real-browser &middot; logged-in</div>
+          </div>
+        </div>
+        <p>Reuses your own browser session for Xiaohongshu, Zhihu, LinkedIn. Undetectable &mdash; the page sees a real human clicking.</p>
+        <div class="surface-cmd"><span class="cmd-dim">$ </span>tap bridge start</div>
+      </div>
+
+      <div class="surface-card surface-card--green reveal">
+        <div class="surface-head">
+          <div class="surface-mark">{ }</div>
+          <div>
+            <h3>JSR library</h3>
+            <div class="surface-tag">Deno &middot; Node &middot; 65 KB</div>
+          </div>
+        </div>
+        <p><code>@taprun/executor</code> &mdash; embed the composition engine in your product. Zero deps. 0.8 ms in-process. Serverless-friendly.</p>
+        <div class="surface-cmd"><span class="cmd-dim">import </span>{ runPipe } <span class="cmd-dim">from</span> "@taprun/executor"</div>
+      </div>
+
+      <div class="surface-card reveal">
+        <div class="surface-head">
+          <div class="surface-mark">&#8256;</div>
+          <div>
+            <h3>Homebrew</h3>
+            <div class="surface-tag">signed &middot; auto-update</div>
+          </div>
+        </div>
+        <p>Native macOS and Linux install. Signed binary, auto-updates via <code>brew upgrade</code>. One of four official install paths.</p>
+        <div class="surface-cmd"><span class="cmd-dim">$ </span>brew install taprun</div>
+      </div>
+
+      <div class="surface-card surface-card--gold reveal">
+        <div class="surface-head">
+          <div class="surface-mark">&#9881;</div>
+          <div>
+            <h3>GitHub plugin</h3>
+            <div class="surface-tag">Claude Code &middot; /taprun:*</div>
+          </div>
+        </div>
+        <p>8 engineering-methodology skills for Claude Code &mdash; <code>verify</code>, <code>writing-plans</code>, <code>run-task</code>, <code>demand-archaeologist</code>, more.</p>
+        <div class="surface-cmd"><span class="cmd-dim">$ </span>claude plugin install taprun@tap</div>
+      </div>
+
+      <div class="surface-card reveal">
+        <div class="surface-head">
+          <div class="surface-mark">&#x25A3;</div>
+          <div>
+            <h3>Docker image</h3>
+            <div class="surface-tag">CI &middot; ephemeral</div>
+          </div>
+        </div>
+        <p>Headless runtime pre-baked for CI. Runs anywhere Docker does &mdash; GitHub Actions, Fly.io, Railway, your Kubernetes cluster.</p>
+        <div class="surface-cmd"><span class="cmd-dim">$ </span>docker run ghcr.io/leonting1010/tap</div>
+      </div>
+
+      <div class="surface-card surface-card--green reveal">
+        <div class="surface-head">
+          <div class="surface-mark">&#x29C9;</div>
+          <div>
+            <h3>Scheduled runners</h3>
+            <div class="surface-tag">cron &middot; workers &middot; webhooks</div>
+          </div>
+        </div>
+        <p>systemd, launchd, GitHub Actions, Cloudflare Workers, n8n webhooks. Your host, your schedule. <code>stdout</code> pipes to anywhere.</p>
+        <div class="surface-cmd"><span class="cmd-dim">*/5 * * * * </span>tap &lt;site&gt; &lt;tap&gt;</div>
+      </div>
     </div>
   </div>
 </section>
