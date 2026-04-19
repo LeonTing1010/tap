@@ -3,18 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Taprun — Browser automation without the LLM bill. Compile once, run forever at $0.</title>
-<meta name="description" content="Browser Use costs $0.05–$2.00 per run. Taprun compiles browser interactions once — run them forever at $0. Then tap doctor catches silent failures before your data goes stale. 140+ ready-to-run skills.">
-<meta property="og:title" content="Taprun — Browser automation without the LLM bill.">
-<meta property="og:description" content="At $0.05/run, 1,000 automations/day costs $1,500/month. Taprun: compile once, run forever at $0. Then tap doctor catches silent failures before your data goes stale.">
+<title>Taprun — Browser automation where the AI runs once, not every run. $0 at runtime, forever.</title>
+<meta name="description" content="Every browser agent runs the LLM on every task — even the 25× cheaper ones. Taprun compiles browser interactions once (single AI pass), then runs deterministic JavaScript forever at $0 per execution. tap doctor catches structural drift before the run. Architecture difference, not price discount.">
+<meta property="og:title" content="Taprun — Browser automation where the AI runs once, not every run.">
+<meta property="og:description" content="Every browser agent calls the LLM on every run — even the 25× cheaper ones. Taprun moves the AI to authoring time. $0 tokens per execution. 100% deterministic. tap doctor catches drift before the run fires.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://taprun.dev/">
 <meta property="og:image" content="https://taprun.dev/social-preview.svg">
 <meta property="og:image:width" content="1280">
 <meta property="og:image:height" content="640">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Taprun — Browser automation without the LLM bill.">
-<meta name="twitter:description" content="At $0.05/run, 1,000 automations/day costs $1,500/month. Taprun: compile once, run forever at $0. Then tap doctor catches silent failures before they cost you.">
+<meta name="twitter:title" content="Taprun — AI runs once, not every run. $0 at runtime, forever.">
+<meta name="twitter:description" content="Every browser agent runs the LLM on every task — even the 25× cheaper ones. Taprun compiles once, then runs at $0 forever. Architecture difference, not price discount.">
 <meta name="twitter:image" content="https://taprun.dev/social-preview.svg">
 <meta name="keywords" content="AI coding agent protocol, MCP, model context protocol, Chrome extension, Playwright, tap protocol, forge, deterministic automation, sandbox, automatic diagnostics, macOS automation, doctor, fingerprint, website automation, AI agent, web scraping, browser automation, API auto-detection, JSON-LD, RSS, OpenAPI">
 <meta name="author" content="LeonTing1010">
@@ -61,6 +61,7 @@
       "target": "https://taprun.dev/"
     },
     "itemListElement": [
+      {"@type": "SiteNavigationElement", "name": "Compare", "description": "Taprun vs Browser Use, Stagehand, rtrvr.ai, Playwright MCP", "url": "https://taprun.dev/#comparison"},
       {"@type": "SiteNavigationElement", "name": "How It Works", "description": "Learn how Taprun works", "url": "https://taprun.dev/#how-it-works"},
       {"@type": "SiteNavigationElement", "name": "Skills", "description": "Browse 140+ ready-to-run skills", "url": "https://taprun.dev/skills/"},
       {"@type": "SiteNavigationElement", "name": "Pricing", "description": "View pricing plans", "url": "https://taprun.dev/#pricing"},
@@ -81,7 +82,8 @@
     {"@type": "Question", "name": "How is Taprun different from Zapier?", "acceptedAnswer": {"@type": "Answer", "text": "Zapier charges per task. At scale that is $40K+ per year. Taprun has zero per-execution cost. AI runs once, program runs forever."}},
     {"@type": "Question", "name": "Do I own the programs Taprun creates?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Every .tap.js file is yours. No lock-in. Cancel and your programs keep running forever."}},
     {"@type": "Question", "name": "Does Taprun work offline?", "acceptedAnswer": {"@type": "Answer", "text": "Programs run locally with zero AI calls. You only need internet when forging (AI compilation) or when the program accesses a website."}},
-    {"@type": "Question", "name": "How is Taprun different from Browser Use or Stagehand?", "acceptedAnswer": {"@type": "Answer", "text": "They call AI every run ($0.50-$2.00 each, 60-95% reliability). Taprun compiles once, runs forever at $0 with 100% consistency. 300x cheaper, 20x faster."}}
+    {"@type": "Question", "name": "How is Taprun different from Browser Use or Stagehand?", "acceptedAnswer": {"@type": "Answer", "text": "They call AI every run ($0.50-$2.00 each, 60-95% reliability). Taprun compiles once, runs forever at $0 with 100% consistency. 300x cheaper, 20x faster."}},
+    {"@type": "Question", "name": "How is Taprun different from rtrvr.ai?", "acceptedAnswer": {"@type": "Answer", "text": "rtrvr.ai is LLM-at-runtime with DOM compression — 25× cheaper per task than vision-based agents, ~26K tokens/task, ~$0.12/run. Real engineering, but every run still invokes the LLM. Taprun moves the LLM to authoring time: one compile pass, then $0 tokens at execution and 100% deterministic output. At 1,000 runs/day rtrvr needs their $499/mo Scale tier or a BYOK bill; Taprun stays $9/mo flat. Use rtrvr for agentic exploration. Use Taprun for repeating production workflows."}}
   ]
 }
 </script>
@@ -1004,6 +1006,103 @@ h2 .hl {
   flex-shrink: 0;
 }
 
+/* ===== Comparison Matrix ===== */
+.comparison {
+  padding: 140px 0;
+  position: relative;
+}
+
+.comparison-header {
+  text-align: center;
+  max-width: 880px;
+  margin: 0 auto 48px;
+}
+.comparison-header .section-tag { justify-content: center; }
+.comparison-header h2 { margin-top: 14px; }
+.comparison-header .section-desc { margin: 14px auto 0; }
+
+.comparison-scroll {
+  background: var(--bg-card);
+  border: 1px solid rgba(99, 102, 241, 0.12);
+  border-radius: var(--radius-lg);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.comparison-table {
+  width: 100%;
+  min-width: 780px;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.comparison-table thead th {
+  padding: 18px 16px;
+  text-align: left;
+  color: var(--text-dim);
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: -0.01em;
+  border-bottom: 1px solid rgba(99, 102, 241, 0.1);
+  background: linear-gradient(180deg, rgba(99, 102, 241, 0.04), transparent);
+  white-space: nowrap;
+}
+
+.comparison-table thead th.cmp-tap {
+  color: var(--indigo-bright);
+  background: linear-gradient(180deg, rgba(99, 102, 241, 0.14), rgba(99, 102, 241, 0.04));
+}
+
+.comparison-table thead th.cmp-axis { min-width: 160px; }
+
+.comparison-table tbody td {
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  color: var(--text-dim);
+  vertical-align: top;
+  line-height: 1.5;
+}
+
+.comparison-table tbody tr:last-child td { border-bottom: none; }
+
+.comparison-table tbody tr:hover td { background: rgba(99, 102, 241, 0.025); }
+
+.comparison-table td.cmp-axis {
+  color: var(--text);
+  font-weight: 600;
+  font-family: var(--font-heading);
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+}
+
+.comparison-table td.cmp-tap {
+  color: var(--green);
+  font-weight: 600;
+  background: rgba(16, 185, 129, 0.035);
+}
+
+.cmp-check { color: var(--green); font-weight: 600; }
+.cmp-cross { color: #6B7280; }
+.cmp-warn  { color: var(--gold); }
+
+.comparison-note {
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 24px;
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.comparison-note a { color: var(--indigo-bright); text-decoration: underline; }
+
+@media (max-width: 768px) {
+  .comparison-table { font-size: 13px; }
+  .comparison-table thead th,
+  .comparison-table tbody td { padding: 12px 10px; }
+}
+
 /* ===== Protocol ===== */
 .protocol {
   padding: 140px 0;
@@ -1846,6 +1945,7 @@ h2 .hl {
       <span class="nav-brand-text">tap</span>
     </a>
     <ul class="nav-links" role="list">
+      <li><a href="#comparison">Compare</a></li>
       <li><a href="#composition">Compose</a></li>
       <li><a href="#pricing">Pricing</a></li>
       <li><a href="https://taprun.dev/blog/" rel="noopener">Blog</a></li>
@@ -1872,9 +1972,9 @@ h2 .hl {
           <span class="hero-badge-dot"></span>
           v0.11.3 just shipped &nbsp;·&nbsp; 140+ skills, 0 setup
         </div>
-        <h1>Browser automation<br>without the<br><span class="hl">LLM bill.</span></h1>
-        <p class="hero-sub">Browser Use costs $0.05–$2.00 per run. At 1,000 runs/day that&rsquo;s $1,500/month in API fees. Taprun compiles browser interactions once &mdash; then runs them forever at $0. Then <code>tap doctor</code> monitors with health contracts so you catch silent failures in seconds, not days.</p>
-        <p class="hero-tagline"><strong>Compile once. Run forever at $0.</strong> 300&times; cheaper than Browser Use. 20&times; faster. Your scraper is broken right now &mdash; <code>tap doctor</code> catches it before your data goes stale.</p>
+        <h1>Browser automation<br>where the AI<br><span class="hl">runs once, not every run.</span></h1>
+        <p class="hero-sub">Every other browser agent calls the LLM on every task &mdash; even the 25&times; cheaper ones. Taprun compiles browser interactions once (single AI pass), then runs pure JavaScript forever. <strong>Zero tokens at runtime.</strong> 100% deterministic. <code>tap doctor</code> checks structural fingerprints <em>before</em> each run, so breakage detection costs zero tokens too.</p>
+        <p class="hero-tagline">1,000 runs/day: Browser Use ~$1,500/mo &middot; rtrvr.ai $500+/mo Scale tier &middot; <strong>Taprun $9/mo flat.</strong> That&rsquo;s architecture, not a discount.</p>
         <div class="hero-actions">
           <a href="#install" class="btn btn-primary">Start Free &mdash; $0/Run Forever</a>
           <a href="https://github.com/LeonTing1010/tap" class="btn btn-ghost">
@@ -2132,6 +2232,116 @@ h2 .hl {
         <p style="margin-top:20px;font-size:13px;color:var(--text-muted);">Taprun programs are plain JavaScript. No AI at runtime means no hallucinations, no timeouts, no unpredictable behavior. It either works or it doesn't &mdash; and <code>tap doctor</code> tells you which.</p>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- ===== Comparison Matrix (added 2026-04-19 after rtrvr.ai competitive analysis) ===== -->
+<section class="comparison" id="comparison">
+  <div class="container">
+    <div class="comparison-header">
+      <div class="section-tag reveal">The architectural line</div>
+      <h2 class="reveal">Every browser agent runs the LLM on every task. <span class="hl">Taprun runs it once.</span></h2>
+      <p class="section-desc reveal">25&times; cheaper than vision-based. Compressed DOM. Smaller models. Accessibility-tree extraction. All real engineering &mdash; and all still LLM-at-runtime. Taprun moved the LLM to authoring time, which is a different question entirely.</p>
+    </div>
+
+    <div class="comparison-scroll reveal">
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th class="cmp-axis">&nbsp;</th>
+            <th class="cmp-tap">Taprun</th>
+            <th>Browser Use</th>
+            <th>Stagehand</th>
+            <th>rtrvr.ai</th>
+            <th>Playwright MCP</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="cmp-axis">LLM at runtime</td>
+            <td class="cmp-tap">No &mdash; authoring only</td>
+            <td>Yes &mdash; every step</td>
+            <td>Yes &mdash; every step</td>
+            <td>Yes &mdash; every task (DOM-compressed)</td>
+            <td>Yes &mdash; DOM on every call</td>
+          </tr>
+          <tr>
+            <td class="cmp-axis">Tokens per run</td>
+            <td class="cmp-tap">0</td>
+            <td>~40K+ (vision)</td>
+            <td>~40K+ (vision)</td>
+            <td>~26K (their claim)</td>
+            <td>~114K per HN thread</td>
+          </tr>
+          <tr>
+            <td class="cmp-axis">Output consistency</td>
+            <td class="cmp-tap">100% deterministic</td>
+            <td>60&ndash;95%</td>
+            <td>60&ndash;95%</td>
+            <td>81% SOTA (their benchmark)</td>
+            <td>Varies per call</td>
+          </tr>
+          <tr>
+            <td class="cmp-axis">Cost at 1,000 runs/day</td>
+            <td class="cmp-tap">$9/mo flat</td>
+            <td>~$1,500/mo</td>
+            <td>~$1,500/mo</td>
+            <td>Scale tier $499.99/mo + overages</td>
+            <td>Your LLM bill, scaled</td>
+          </tr>
+          <tr>
+            <td class="cmp-axis">Breakage detection</td>
+            <td class="cmp-tap">Fingerprint diff <em>before</em> run</td>
+            <td>None (retry loop)</td>
+            <td>None (retry loop)</td>
+            <td>LLM re-invocation on failure</td>
+            <td>None</td>
+          </tr>
+          <tr>
+            <td class="cmp-axis">Self-healing cost</td>
+            <td class="cmp-tap">$0 (structural diff)</td>
+            <td>Per-retry tokens</td>
+            <td>Per-retry tokens</td>
+            <td>Extra LLM invocation</td>
+            <td>Per-retry tokens</td>
+          </tr>
+          <tr>
+            <td class="cmp-axis">Offline execution</td>
+            <td class="cmp-tap">Yes (pure JS)</td>
+            <td>No</td>
+            <td>No</td>
+            <td>No</td>
+            <td>No</td>
+          </tr>
+          <tr>
+            <td class="cmp-axis">Program ownership</td>
+            <td class="cmp-tap"><code>.tap.js</code> on your disk</td>
+            <td>Ephemeral</td>
+            <td>Script on disk (calls LLM)</td>
+            <td>Tasks saved in rtrvr</td>
+            <td>Session scripts</td>
+          </tr>
+          <tr>
+            <td class="cmp-axis">Form factors</td>
+            <td class="cmp-tap">CLI, MCP, Chrome ext, JSR executor</td>
+            <td>Python SDK, cloud</td>
+            <td>Node SDK</td>
+            <td>CLI, Chrome, API, MCP, WhatsApp, embeddable</td>
+            <td>MCP only</td>
+          </tr>
+          <tr>
+            <td class="cmp-axis">Pre-built library</td>
+            <td class="cmp-tap">140+ taps, 68+ sites</td>
+            <td>None</td>
+            <td>None</td>
+            <td>Task templates</td>
+            <td>None</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="comparison-note reveal">rtrvr.ai&rsquo;s multi-form-factor coverage is genuinely impressive, and DOM compression beats screenshots by 4&times;. But &ldquo;cheaper LLM-at-runtime&rdquo; and &ldquo;LLM never called at runtime&rdquo; are different architectural lines. Full breakdown: <a href="blog/rtrvr-vs-tap.html">rtrvr.ai vs Taprun</a> &middot; <a href="blog/stagehand-vs-tap.html">Stagehand vs Taprun</a> &middot; <a href="blog/playwright-mcp-token-cost-alternative.html">Playwright MCP vs Taprun</a></p>
   </div>
 </section>
 
@@ -2404,6 +2614,10 @@ h2 .hl {
       <details class="faq-item reveal" open>
         <summary>How is Taprun different from Browser Use or Stagehand?</summary>
         <div class="faq-answer">Browser Use and Stagehand call AI on every run &mdash; $0.50&ndash;$2.00 per execution, 60&ndash;95% reliability. Taprun uses AI once to create a deterministic program, then runs it forever at $0. More importantly, when websites change, <code>tap doctor</code> detects breakage and fingerprint diff tells you exactly what changed &mdash; not just "0 rows" but "the h2 a selector is gone." Taprun is infrastructure, not just a tool.</div>
+      </details>
+      <details class="faq-item reveal">
+        <summary>How is Taprun different from rtrvr.ai?</summary>
+        <div class="faq-answer"><a href="https://www.rtrvr.ai/">rtrvr.ai</a> does genuinely interesting work &mdash; DOM compression drops per-task tokens from ~114K (vision-based) to ~26K, a real 25&times; improvement they&rsquo;ve productised across Chrome, Cloud, API, MCP, and WhatsApp. But every task still invokes the LLM, so the Basic tier caps at 1,500 credits/month (~300 tasks) and their &ldquo;self-healing&rdquo; is reactive LLM re-invocation. Taprun moves the LLM to authoring time: one compile pass, then $0 tokens and 100% deterministic output forever. At 1,000 runs/day rtrvr needs the $499/mo Scale tier; Taprun stays $9/mo flat. Use rtrvr for agentic exploration. Use Taprun for repeating production workflows. Full breakdown: <a href="blog/rtrvr-vs-tap.html">rtrvr.ai vs Taprun</a>.</div>
       </details>
       <details class="faq-item reveal">
         <summary>How is Taprun different from Playwright MCP?</summary>

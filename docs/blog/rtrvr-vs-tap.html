@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>rtrvr.ai vs Taprun: Cheaper LLM-at-Runtime Still Isn't Zero Tokens — Tap Blog</title>
+<meta name="description" content="rtrvr.ai markets 25× cheaper than vision-based browser agents. But every run still invokes the LLM. Taprun compiles once, runs at $0 per execution. Here's why that architectural line matters, when rtrvr wins, and when it doesn't.">
+<meta name="keywords" content="rtrvr.ai alternative, rtrvr vs tap, DOM intelligence, browser automation cost comparison, self-healing scraper, compile once run forever, deterministic automation, LLM at authoring not runtime">
+<link rel="canonical" href="https://taprun.dev/blog/rtrvr-vs-tap.html">
+<meta property="og:title" content="rtrvr.ai vs Taprun: Cheaper LLM-at-Runtime Still Isn't Zero Tokens">
+<meta property="og:description" content="rtrvr's DOM-intelligence is 25× cheaper than vision-based agents — but still invokes the LLM on every task. Taprun moves the LLM to authoring time and runs at $0 per execution.">
+<meta property="og:url" content="https://taprun.dev/blog/rtrvr-vs-tap.html">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://taprun.dev/social-preview.png">
+<meta property="article:published_time" content="2026-04-19">
+<meta property="article:author" content="Leon Ting">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="rtrvr.ai vs Taprun: Cheaper LLM-at-Runtime Still Isn't Zero Tokens">
+<meta name="twitter:description" content="25× cheaper than vision-based ≠ zero tokens. Where rtrvr.ai wins, where it doesn't, and why the authoring/runtime boundary is an architectural question, not a price question.">
+<meta name="twitter:image" content="https://taprun.dev/social-preview.png">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='105' cy='115' r='55' fill='%23FFFFFF'/%3E%3Ccircle cx='85' cy='70' r='45' fill='%23FFFFFF'/%3E%3Cellipse cx='75' cy='32' rx='15' ry='22' fill='%23EF4444'/%3E%3Cellipse cx='90' cy='30' rx='12' ry='20' fill='%23DC2626'/%3E%3Cellipse cx='103' cy='35' rx='10' ry='16' fill='%23B91C1C'/%3E%3Cpath d='M 55 68 L 8 75 L 55 85 Z' fill='%23FBBF24'/%3E%3Cpath d='M 55 85 L 8 75 L 12 82 Z' fill='%23D97706'/%3E%3Ccircle cx='70' cy='65' r='14' fill='%231F2937'/%3E%3Ccircle cx='66' cy='61' r='5' fill='%23FFFFFF'/%3E%3Ccircle cx='74' cy='68' r='2.5' fill='%23FFFFFF'/%3E%3Cellipse cx='50' cy='78' rx='8' ry='5' fill='%23FECACA' opacity='0.8'/%3E%3Cellipse cx='125' cy='115' rx='35' ry='30' fill='%23818CF8'/%3E%3Cellipse cx='125' cy='115' rx='25' ry='20' fill='%236366F1'/%3E%3Ccircle cx='95' cy='130' r='25' fill='%23F9FAFB'/%3E%3Cpath d='M 145 140 L 175 185 L 155 180 L 140 145 Z' fill='%23818CF8'/%3E%3Cpath d='M 150 145 L 180 190 L 162 185 L 148 150 Z' fill='%236366F1'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "rtrvr.ai vs Taprun: Cheaper LLM-at-Runtime Still Isn't Zero Tokens",
+  "description": "rtrvr.ai markets 25× cheaper than vision-based browser agents. But every run still invokes the LLM. Taprun moves the LLM to authoring time and runs at $0 per execution.",
+  "datePublished": "2026-04-19",
+  "author": { "@type": "Person", "name": "Leon Ting", "url": "https://github.com/LeonTing1010" },
+  "publisher": { "@type": "Organization", "name": "Tap", "url": "https://taprun.dev" },
+  "url": "https://taprun.dev/blog/rtrvr-vs-tap.html",
+  "mainEntityOfPage": "https://taprun.dev/blog/rtrvr-vs-tap.html"
+}
+</script>
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0a0918; color: #e0e0e0; line-height: 1.8; }
+.container { max-width: 720px; margin: 0 auto; padding: 60px 24px; }
+h1 { font-size: 2rem; font-weight: 600; color: #fff; margin-bottom: 8px; line-height: 1.3; }
+h2 { font-size: 1.35rem; font-weight: 500; color: #fff; margin-top: 48px; margin-bottom: 16px; }
+p, li { font-size: 0.95rem; color: #b0b0b0; margin-bottom: 16px; }
+ul, ol { padding-left: 24px; }
+a { color: #818cf8; text-decoration: none; }
+a:hover { text-decoration: underline; }
+.meta { font-size: 0.85rem; color: #666; margin-bottom: 40px; }
+.back { display: inline-block; margin-bottom: 24px; font-size: 0.9rem; }
+code { background: #1a1a2e; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; font-family: 'JetBrains Mono', monospace; }
+pre { background: #111118; border: 1px solid #222; border-radius: 8px; padding: 16px 20px; overflow-x: auto; margin: 20px 0; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; line-height: 1.6; color: #c8c8d0; }
+pre .comment { color: #555; }
+pre .cmd { color: #818cf8; }
+pre .output { color: #6ee7b7; }
+pre .flag { color: #fbbf24; }
+blockquote { border-left: 3px solid #6366F1; padding: 12px 16px; margin: 20px 0; background: rgba(99,102,241,0.06); border-radius: 0 8px 8px 0; }
+blockquote p { color: #a0a0b0; margin-bottom: 0; font-style: italic; }
+blockquote cite { display: block; margin-top: 8px; font-size: 0.85rem; color: #666; font-style: normal; }
+table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid #222; font-size: 0.9rem; }
+th { color: #fff; font-weight: 500; }
+td { color: #b0b0b0; }
+.highlight-row td { color: #6ee7b7; font-weight: 500; }
+.cta { margin-top: 48px; padding: 24px; background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.2); border-radius: 12px; }
+.cta h3 { color: #fff; font-size: 1.1rem; margin-bottom: 12px; margin-top: 0; }
+.cta pre { margin-bottom: 0; }
+hr { border: none; border-top: 1px solid #222; margin: 48px 0; }
+</style>
+<script src="https://analytics.ahrefs.com/analytics.js" data-key="G1wKuningnrw+t5LQJ+MPw" async></script>
+</head>
+<body>
+<div class="container">
+<a href="../" class="back">&larr; Tap</a> &middot; <a href="./" class="back">Blog</a>
+<h1>rtrvr.ai vs Taprun: Cheaper LLM-at-Runtime Still Isn't Zero Tokens</h1>
+<p class="meta">April 19, 2026 &middot; Leon Ting &middot; 7 min read</p>
+
+<p><a href="https://www.rtrvr.ai/">rtrvr.ai</a> is a polished entrant in the browser-agent space. Their architecture is genuinely interesting &mdash; &ldquo;DOM-native&rdquo; processing with &ldquo;Smart DOM Compression&rdquo;, 25&times; cheaper than vision-based alternatives, 81% SOTA accuracy on their reported benchmark. They ship Chrome extension, Cloud dashboard, API, MCP server, CLI, and even a WhatsApp bot. Their landing page lists 10 named competitors. The pricing mirrors Taprun almost exactly &mdash; $9.99 / $29.99 / $99.99 / $499.99 per month.</p>
+
+<p>So when I first read their docs, the obvious question was: do they do what Taprun does? Because if they do, Taprun is in trouble.</p>
+
+<p>They don&rsquo;t. And the reason sits on a single architectural line every browser-agent tool has to pick a side of.</p>
+
+<h2>The line: is the LLM at authoring, or at runtime?</h2>
+
+<p>There are two fundamentally different ways to point an LLM at a browser:</p>
+
+<ol>
+<li><strong>LLM at runtime.</strong> The model is called every time the automation executes. Each run is an inference pass. Optimisations make that pass smaller &mdash; DOM compression, accessibility trees instead of screenshots, smaller models &mdash; but the pass is still there.</li>
+<li><strong>LLM at authoring.</strong> The model is called once, during setup. It reads the site, figures out the structure, and emits a deterministic program. From then on, the program runs. The LLM never gets called again.</li>
+</ol>
+
+<p>Browser Use, Stagehand, Playwright MCP, and rtrvr.ai all sit on side (1). They differ in <em>how</em> they call the LLM &mdash; vision vs DOM, big model vs small model, whole page vs compressed &mdash; but not in <em>whether</em> they call it.</p>
+
+<p>Taprun sits on side (2). <code>tap forge</code> runs the LLM once to author a <code>.tap.js</code> file. <code>tap.run</code> executes that file forever with zero inference.</p>
+
+<p>This distinction isn&rsquo;t marketing. It&rsquo;s Python vs compiled C. Both evaluate expressions; one evaluates at runtime, the other at compile time. You pick based on whether the workload repeats.</p>
+
+<h2>Where rtrvr.ai is genuinely strong</h2>
+
+<p>Credit where it&rsquo;s due. rtrvr gets a lot right:</p>
+
+<ul>
+<li><strong>Form-factor breadth.</strong> Chrome extension, Cloud dashboard, Sheets integration, REST API, MCP server, CLI, embeddable widget, WhatsApp bot. Each one hits a different user at a different moment. This is good distribution design.</li>
+<li><strong>&ldquo;No CDP = No Failures&rdquo; framing.</strong> Chrome DevTools Protocol automation is bot-detectable; their architecture avoids it. This is a real reliability argument.</li>
+<li><strong>25&times; cheaper vs vision.</strong> Replacing screenshots (~114K tokens) with accessibility trees and DOM compression (~26K tokens) is a meaningful improvement. Their claimed $0.12 per task is genuine progress.</li>
+<li><strong>BYOK path.</strong> &ldquo;Bring your own key or local endpoint&rdquo; collapses their cost to roughly your LLM provider&rsquo;s invoice. Clever.</li>
+<li><strong>Explicit competitive comparison.</strong> They list 10 competitors by name on their landing page. It&rsquo;s confident. It invites comparison. That&rsquo;s a good sign.</li>
+</ul>
+
+<p>If your use case is agentic exploration &mdash; new sites, unknown tasks, one-off interactions &mdash; rtrvr is a serious tool. I&rsquo;d reach for it myself.</p>
+
+<h2>Where the LLM-at-runtime model hits a ceiling</h2>
+
+<p>The ceiling isn&rsquo;t quality. It&rsquo;s structural.</p>
+
+<p><strong>Per-run cost scales linearly with runs.</strong> 26K tokens per task &times; 1,000 runs/day = 26M tokens/day. At Gemini Flash Lite rates that&rsquo;s real money; at Gemini Pro rates it&rsquo;s ~$260/day. rtrvr&rsquo;s own pricing acknowledges this: the Basic tier is 1,500 credits/month, which at &ldquo;5 credits/task&rdquo; is ~300 tasks. A single production workflow running every 5 minutes eats that budget in three days.</p>
+
+<p><strong>Output variance is by design.</strong> When the same page, same prompt, same task produces slightly different extractions across runs, you can&rsquo;t build monitoring around it. Row count fluctuation isn&rsquo;t &ldquo;a bug&rdquo; when the system is designed to re-interpret the page every time. The 81% SOTA accuracy number is a fine benchmark result, but it means 19% of invocations are wrong in some way, and you don&rsquo;t know which 19%.</p>
+
+<p><strong>&ldquo;Self-healing&rdquo; still pays tokens to heal.</strong> Every browser-agent tool in this category markets &ldquo;self-healing&rdquo;. What they mean is: when the selector breaks, the LLM re-runs to figure out the new one. That&rsquo;s real, and it&rsquo;s useful &mdash; but it is <em>reactive</em>. The task has already failed (or silently returned garbage) before healing kicks in, and every heal is another inference pass.</p>
+
+<h2>What Taprun does differently (not just cheaper &mdash; structurally different)</h2>
+
+<p>Taprun moves the LLM to authoring time. Once.</p>
+
+<pre><span class="comment"># Authoring: LLM inspects once, emits deterministic code</span>
+<span class="cmd">$ tap forge</span> <span class="flag">https://reddit.com/r/programming</span>
+<span class="output">&#10003; Inspected: REST API detected at oauth.reddit.com</span>
+<span class="output">&#10003; Verified: 25 rows, score 95/100</span>
+<span class="output">&#10003; Saved: reddit/hot.tap.js  (pure JavaScript, on your disk)</span>
+
+<span class="comment"># Runtime: no LLM, no tokens, same output every time</span>
+<span class="cmd">$ tap reddit hot</span>     <span class="comment"># 25 rows, ~200 ms, $0.00</span>
+<span class="cmd">$ tap reddit hot</span>     <span class="comment"># 25 rows, ~200 ms, $0.00</span>
+<span class="cmd">$ tap reddit hot</span>     <span class="comment"># 25 rows, ~200 ms, $0.00</span></pre>
+
+<p>Because the output is deterministic, monitoring is tractable. Because execution is deterministic, row count <em>is</em> a health signal. Because the program is on your disk, it works offline and doesn&rsquo;t depend on anyone&rsquo;s cloud.</p>
+
+<p>And the &ldquo;self-healing&rdquo; axis flips from reactive to proactive:</p>
+
+<pre><span class="cmd">$ tap doctor --auto reddit hot</span>
+<span class="output">&#10007; selector div.thing &mdash; gone since last run</span>
+<span class="output">&#9888; fingerprint diff: &uarr; 2 structural changes</span>
+<span class="output">&#10003; heal bundle ready &mdash; current code + git history + page snapshot</span></pre>
+
+<p><code>tap doctor</code> checks a structural fingerprint <em>before</em> the run fires. If the site drifted, the run doesn&rsquo;t even start &mdash; you get a diff of what changed and a bundle your AI agent can patch offline. No retry tokens. No silent bad data.</p>
+
+<h2>The comparison table</h2>
+
+<table>
+<tr><th></th><th>rtrvr.ai</th><th>Taprun</th></tr>
+<tr><td><strong>Model</strong></td><td>Interpreter (LLM per task, DOM-compressed)</td><td>Compiler (LLM at forge time)</td></tr>
+<tr><td><strong>LLM calls per run</strong></td><td>Every task</td><td class="highlight-row">0 (after first compile)</td></tr>
+<tr><td><strong>Tokens per run</strong></td><td>~26K (claimed)</td><td class="highlight-row">0</td></tr>
+<tr><td><strong>Cost at 1,000 runs/day</strong></td><td>&ge; Scale tier ($499.99/mo) or BYOK bill</td><td class="highlight-row">$9/mo flat</td></tr>
+<tr><td><strong>Output consistency</strong></td><td>81% SOTA (stated benchmark)</td><td class="highlight-row">100% deterministic</td></tr>
+<tr><td><strong>Break detection</strong></td><td>Reactive (heal after failure)</td><td class="highlight-row">Proactive (fingerprint before run)</td></tr>
+<tr><td><strong>Offline execution</strong></td><td>No (needs LLM)</td><td class="highlight-row">Yes (pure JS)</td></tr>
+<tr><td><strong>Program ownership</strong></td><td>Tasks saved to rtrvr</td><td class="highlight-row">.tap.js on your disk</td></tr>
+<tr><td><strong>Form factors</strong></td><td>Chrome ext, Cloud, API, MCP, CLI, WhatsApp, embeddable</td><td>CLI, MCP, Chrome ext, JSR executor</td></tr>
+<tr><td><strong>Pre-built skills</strong></td><td>Task library (rtrvr-authored)</td><td>140+ taps across 68+ sites (on your disk)</td></tr>
+</table>
+
+<h2>Where the numbers actually land</h2>
+
+<p>Take a workflow that runs every 5 minutes &mdash; 288 runs/day, ~8,640 runs/month. Not extreme; this is a single production scraper.</p>
+
+<ul>
+<li><strong>Browser Use:</strong> 8,640 &times; $0.50 = $4,320/month (lower bound)</li>
+<li><strong>rtrvr.ai Basic ($9.99):</strong> 1,500 credits / 5 per task = 300 tasks. You&rsquo;re over budget by day two. Need Scale ($499.99) &mdash; 60,000 credits covers ~12,000 tasks. BYOK path lowers the number but your Gemini bill replaces it.</li>
+<li><strong>Taprun Free:</strong> 8,640 runs &times; $0 = $0/month. You keep the $9 if you want AI to forge new taps for you; you keep the $29 if you want auto-repair on cron.</li>
+</ul>
+
+<p>At 10 runs a day, none of this matters. At 10 runs a minute, it&rsquo;s the only thing that matters.</p>
+
+<h2>When to pick each</h2>
+
+<p><strong>Pick rtrvr.ai when:</strong></p>
+<ul>
+<li>You&rsquo;re doing agentic exploration &mdash; new sites, undefined tasks, high variance in what you&rsquo;re extracting</li>
+<li>You want a polished cloud dashboard and don&rsquo;t mind hosted state</li>
+<li>You need WhatsApp or embeddable widget form factors</li>
+<li>Your per-task count stays under ~300/month, or you&rsquo;re comfortable with a $499/mo scale tier</li>
+</ul>
+
+<p><strong>Pick Taprun when:</strong></p>
+<ul>
+<li>You run the same automation more than once &mdash; and want to know that the output is the same every time</li>
+<li>You want the program on your disk, version-controlled, not saved in someone&rsquo;s dashboard</li>
+<li>You want structural fingerprint diffs, not retry loops, as your breakage story</li>
+<li>Your scale is &ldquo;every 5 minutes forever&rdquo; and you want the bill to stay $9/mo</li>
+<li>You want to keep working offline and in sandboxed environments where outbound LLM calls aren&rsquo;t allowed</li>
+</ul>
+
+<p>They&rsquo;re not really competitors &mdash; they&rsquo;re different tools for different moments. Use rtrvr to figure out <em>what</em> you want to extract. Use Taprun once you know.</p>
+
+<h2>The one-line summary</h2>
+
+<p>rtrvr made LLM-at-runtime 25&times; cheaper than the vision-based baseline. Taprun made it zero. Those aren&rsquo;t points on the same line.</p>
+
+<div class="cta">
+<h3>Compile your first automation</h3>
+<pre><span class="cmd">$ npx -y @taprun/cli --version</span>
+<span class="cmd">$ tap forge</span> <span class="flag">https://news.ycombinator.com</span>  <span class="comment"># one-time LLM pass</span>
+<span class="cmd">$ tap hackernews hot</span>            <span class="comment"># $0 per run, forever</span></pre>
+</div>
+
+</div>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "a3b2c1d0e4f5"}'></script>
+</body>
+</html>

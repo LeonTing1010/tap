@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://taprun.dev/</loc><lastmod>2026-04-11</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://taprun.dev/</loc><lastmod>2026-04-19</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>
   <url><loc>https://taprun.dev/install.html</loc><lastmod>2026-04-09</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://taprun.dev/changelog.html</loc><lastmod>2026-04-11</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://taprun.dev/blog/</loc><lastmod>2026-04-13</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://taprun.dev/blog/</loc><lastmod>2026-04-19</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://taprun.dev/blog/rtrvr-vs-tap.html</loc><lastmod>2026-04-19</lastmod><changefreq>monthly</changefreq><priority>0.95</priority></url>
   <url><loc>https://taprun.dev/blog/health-contracts-catch-silent-failures.html</loc><lastmod>2026-04-13</lastmod><changefreq>monthly</changefreq><priority>0.95</priority></url>
   <url><loc>https://taprun.dev/blog/mcp-authoring-zero-token-execution.html</loc><lastmod>2026-04-13</lastmod><changefreq>monthly</changefreq><priority>0.95</priority></url>
   <url><loc>https://taprun.dev/blog/interface-protocol.html</loc><lastmod>2026-04-13</lastmod><changefreq>monthly</changefreq><priority>0.95</priority></url>

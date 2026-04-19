@@ -6,7 +6,15 @@
 <description>Engineering insights on browser automation, AI agents, and deterministic programs.</description>
 <language>en-us</language>
 <atom:link href="https://taprun.dev/blog/feed.xml" rel="self" type="application/rss+xml"/>
-<lastBuildDate>Sat, 11 Apr 2026 00:00:00 +0000</lastBuildDate>
+<lastBuildDate>Sun, 19 Apr 2026 00:00:00 +0000</lastBuildDate>
+
+<item>
+<title>rtrvr.ai vs Taprun: Cheaper LLM-at-Runtime Still Isn't Zero Tokens</title>
+<link>https://taprun.dev/blog/rtrvr-vs-tap.html</link>
+<description>rtrvr.ai made LLM-at-runtime 25× cheaper than vision-based agents — real engineering, 26K tokens per task instead of 114K. But Taprun moves the LLM to authoring time and runs at $0 per execution. Here's the architectural line every browser-agent tool has to pick a side of, where rtrvr is genuinely strong, and where the per-run-token ceiling eventually breaks the model.</description>
+<pubDate>Sun, 19 Apr 2026 00:00:00 +0000</pubDate>
+<guid>https://taprun.dev/blog/rtrvr-vs-tap.html</guid>
+</item>
 
 <item>
 <title>How We Turned Tap's Engine Into a 0.8 ms Library (and Measured a 294× Speedup)</title>
