@@ -8,7 +8,11 @@
 import { createTapHandle, type RpcSend } from "./page.ts";
 import { type Pipe, type PipeTrace, runPipeWithTrace } from "./pipe.ts";
 import { isPipeBuiltin, PIPE_BUILTINS } from "./pipe-builtins.ts";
-import { runInSandbox } from "./sandbox.ts";
+// Phase 5 — runInSandbox deleted along with sandbox.ts. Legacy .tap.js
+// code no longer executes inside a Deno Worker; callers either pass a
+// PlanDerivedTapModule (from handleRunResolveAny's migrate-on-read
+// path) OR a legacy TapModule whose body runs inline via tapFn.call
+// below. The prior sandbox branch is gone entirely.
 import { applyPersistRowsPolicy, makeRunId, type TapTrace, writeTapTrace } from "./trace.ts";
 
 export interface TapArgSpec {
@@ -768,7 +772,7 @@ export async function runTap(
   args: Record<string, unknown>,
   send: RpcSend,
   tapDirs?: string[],
-  opts?: { sessionId?: string; tapPath?: string; sandbox?: boolean },
+  opts?: { sessionId?: string; tapPath?: string },
 ): Promise<TapResult> {
   // Tab identity is managed by SessionManager in the extension.
   // Executor does not track tabId — session routing is handled by createSessionSend.
@@ -960,17 +964,10 @@ export async function runTap(
   // Resolve the tap function. Three cases in order of priority:
   //   1. Explicit mod.tap — user-authored function body (imperative taps)
   //   2. Static mod.pipe — synthesize a tap function that forwards to
-  //      handle.pipe. Pipe-only taps don't need arbitrary code; the DSL
-  //      is declarative data, which is why sandbox (below) can be skipped
-  //      for this case.
+  //      handle.pipe.
   //   3. Neither set — invalid, throw.
-  //
-  // `isPipeOnly` is used below to decide whether the sandbox Worker runs
-  // (Tension 3: pipe-only taps are pure data flow, sandboxing them adds
-  // overhead for zero isolation benefit — sub-taps called by the pipe
-  // executor still get their own sandbox decisions based on their own
-  // module shape).
-  const isPipeOnly = !mod.tap && !!mod.pipe;
+  // Post-Phase 5: execution is always inline (tapFn.call). The historical
+  // sandbox-Worker branch was removed along with sandbox.ts.
   const tapFn: TapModule["tap"] = mod.tap
     ? mod.tap
     : mod.pipe
@@ -988,50 +985,13 @@ export async function runTap(
     if (!tapFn) {
       throw new Error(`Tap ${mod.site}/${mod.name} must define a tap(handle, args) function OR a pipe: {...} declaration`);
     }
-    // Sandbox: run in isolated Deno Worker with zero permissions.
-    // Tap code can only call tap.* via message passing — no filesystem, no network.
-    //
-    // EXCEPTION: pipe-only taps skip the sandbox. The tap body has no
-    // arbitrary code — it's just `handle.pipe(mod.pipe)`. The real
-    // isolation happens per sub-tap inside the pipe executor, not here.
-    //
-    // For imperative-with-pipe taps (mod.tap() that internally calls
-    // handle.pipe({...})), we route handle.pipe through a localPipe
-    // handler so the sandbox worker can compose sub-taps via the real
-    // executor closure. Without this, handle.pipe would be forwarded as
-    // an RPC call to the daemon, which has no handler for it — that was
-    // the "operation 'pipe' is restricted" wall that blocked every
-    // imperative-with-pipe tap running through the CLI subprocess path.
-    if (opts?.sandbox !== false && opts?.tapPath && !isPipeOnly) {
-      // Only expose local pipe composition when tapDirs is configured.
-      // Without tapDirs, tap.pipe throws a clear error anyway, so the
-      // sandbox's default rejection message is more informative.
-      const localPipe = tapDirs
-        ? (pipe: unknown) => (tap.pipe as (p: unknown) => Promise<unknown>)(pipe)
-        : undefined;
-      // Mirror localPipe for handle.run — tap.run was already wired above
-      // (line ~835) to load sub-taps from disk and invoke runTap. Without
-      // this, sandboxed composite taps (demand/snapshot, demand/broadcast)
-      // forward handle.run as an RPC to the runtime and fail with
-      // "Unknown method: run" at the extension bridge.
-      const localRun = tapDirs
-        ? (site: string, name: string, subArgs: Record<string, unknown>) =>
-            (tap.run as (s: string, n: string, a: Record<string, unknown>) => Promise<unknown>)(
-              site,
-              name,
-              subArgs,
-            )
-        : undefined;
-      rawRows = (await runInSandbox(
-        opts.tapPath,
-        resolvedArgs,
-        tracingSend,
-        localPipe,
-        localRun,
-      )) as unknown[];
-    } else {
-      rawRows = (await tapFn.call(mod, tap, resolvedArgs)) as unknown[];
-    }
+    // Phase 5 — no more Worker sandbox. Every tap body runs inline: for
+    // plan-derived modules, mod.tap() dispatches through plan-runtime
+    // (pure data → structural ops + JSONata expressions); for the rare
+    // legacy module that slipped past migrate-on-read, its tap() runs
+    // in the Deno process directly. The `sandbox` opts flag is accepted
+    // for backwards compatibility but no longer branches execution.
+    rawRows = (await tapFn.call(mod, tap, resolvedArgs)) as unknown[];
     // Apply limit if specified (formerly extract-format-only)
     if (Array.isArray(rawRows) && resolvedArgs.limit) {
       rawRows = rawRows.slice(0, resolvedArgs.limit as number);
