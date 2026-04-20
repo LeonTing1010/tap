@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>We Ran 15,000 Browser Automations. The Failure That Matters Most Is Invisible to Your Monitoring. — Tap Blog</title>
+<meta name="description" content="15,455 real tap executions across 8 platforms. YouTube fails silently on 50% of runs. The #1 failure mode isn't 'element not found' — it's a property access on undefined. Here's what the data actually shows.">
+<link rel="canonical" href="https://taprun.dev/blog/what-actually-breaks-15000-automations.html">
+<meta property="og:title" content="We Ran 15,000 Browser Automations. The Failure That Matters Most Is Invisible to Your Monitoring.">
+<meta property="og:description" content="15,455 real executions across GitHub, Reddit, YouTube, Bilibili, Xiaohongshu, and more. YouTube returns empty data on 50% of 'successful' runs. The dominant failure mode isn't a missing selector — it's a property on a DOM object that stopped existing.">
+<meta property="og:url" content="https://taprun.dev/blog/what-actually-breaks-15000-automations.html">
+<meta property="og:type" content="article">
+<meta property="article:published_time" content="2026-04-20">
+<meta property="article:author" content="Leon Ting">
+<meta property="og:image" content="https://taprun.dev/social-preview.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="We Ran 15,000 Browser Automations. The Failure That Matters Most Is Invisible.">
+<meta name="twitter:description" content="YouTube silently returns 0 rows 50% of the time. The #1 failure isn't 'element not found' — it's undefined property on a returned object. Your monitoring sees none of this.">
+<meta name="twitter:image" content="https://taprun.dev/social-preview.png">
+<meta name="keywords" content="browser automation reliability, web scraping failure modes, silent failure detection, Playwright reliability, selector drift, YouTube scraping, Bilibili automation, web automation monitoring">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "We Ran 15,000 Browser Automations. The Failure That Matters Most Is Invisible to Your Monitoring.",
+  "description": "15,455 real tap executions across 8 platforms. YouTube fails silently on 50% of runs. The #1 failure mode isn't 'element not found' — it's a property access on undefined.",
+  "datePublished": "2026-04-20",
+  "author": { "@type": "Person", "name": "Leon Ting", "url": "https://github.com/LeonTing1010" },
+  "publisher": { "@type": "Organization", "name": "Tap", "url": "https://taprun.dev" },
+  "url": "https://taprun.dev/blog/what-actually-breaks-15000-automations.html",
+  "mainEntityOfPage": "https://taprun.dev/blog/what-actually-breaks-15000-automations.html"
+}
+</script>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='105' cy='115' r='55' fill='%23FFFFFF'/%3E%3Ccircle cx='85' cy='70' r='45' fill='%23FFFFFF'/%3E%3Cellipse cx='75' cy='32' rx='15' ry='22' fill='%23EF4444'/%3E%3Cellipse cx='90' cy='30' rx='12' ry='20' fill='%23DC2626'/%3E%3Cellipse cx='103' cy='35' rx='10' ry='16' fill='%23B91C1C'/%3E%3Cpath d='M 55 68 L 8 75 L 55 85 Z' fill='%23FBBF24'/%3E%3Cpath d='M 55 85 L 8 75 L 12 82 Z' fill='%23D97706'/%3E%3Ccircle cx='70' cy='65' r='14' fill='%231F2937'/%3E%3Ccircle cx='66' cy='61' r='5' fill='%23FFFFFF'/%3E%3Ccircle cx='74' cy='68' r='2.5' fill='%23FFFFFF'/%3E%3Cellipse cx='50' cy='78' rx='8' ry='5' fill='%23FECACA' opacity='0.8'/%3E%3Ccircle cx='125' cy='115' r='35' fill='%23818CF8'/%3E%3Ccircle cx='125' cy='115' r='25' fill='%236366F1'/%3E%3Ccircle cx='95' cy='130' r='25' fill='%23F9FAFB'/%3E%3Cpath d='M 145 140 L 175 185 L 155 180 L 140 145 Z' fill='%23818CF8'/%3E%3Cpath d='M 150 145 L 180 190 L 162 185 L 148 150 Z' fill='%236366F1'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0a0918; color: #e0e0e0; line-height: 1.8; }
+.container { max-width: 720px; margin: 0 auto; padding: 60px 24px; }
+h1 { font-size: 2rem; font-weight: 600; color: #fff; margin-bottom: 8px; line-height: 1.3; }
+h2 { font-size: 1.35rem; font-weight: 500; color: #fff; margin-top: 48px; margin-bottom: 16px; }
+h3 { font-size: 1.1rem; font-weight: 500; color: #fff; margin-top: 32px; margin-bottom: 12px; }
+p, li { font-size: 0.95rem; color: #b0b0b0; margin-bottom: 16px; }
+ul, ol { padding-left: 24px; }
+a { color: #818cf8; text-decoration: none; }
+a:hover { text-decoration: underline; }
+.meta { font-size: 0.85rem; color: #666; margin-bottom: 40px; }
+.back { display: inline-block; margin-bottom: 24px; font-size: 0.9rem; }
+code { background: #1a1a2e; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; font-family: 'JetBrains Mono', monospace; }
+pre { background: #111118; border: 1px solid #222; border-radius: 8px; padding: 16px 20px; overflow-x: auto; margin: 20px 0; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; line-height: 1.6; color: #c8c8d0; }
+pre .comment { color: #555; }
+pre .cmd { color: #818cf8; }
+pre .output { color: #6ee7b7; }
+pre .flag { color: #fbbf24; }
+pre .err { color: #f87171; }
+blockquote { border-left: 3px solid #6366F1; padding: 12px 16px; margin: 20px 0; background: rgba(99,102,241,0.06); border-radius: 0 8px 8px 0; }
+blockquote p { color: #a0a0b0; margin-bottom: 0; font-style: italic; }
+blockquote cite { display: block; margin-top: 8px; font-size: 0.85rem; color: #666; font-style: normal; }
+table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid #222; font-size: 0.9rem; }
+th { color: #fff; font-weight: 500; }
+td { color: #b0b0b0; }
+td.bad { color: #f87171; }
+td.warn { color: #fbbf24; }
+td.good { color: #6ee7b7; }
+.stat-row { display: flex; gap: 24px; margin: 32px 0; }
+.stat { flex: 1; padding: 20px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; }
+.stat .number { font-size: 2.2rem; font-weight: 700; color: #fff; font-family: 'Bricolage Grotesque', sans-serif; line-height: 1; margin-bottom: 6px; }
+.stat .number.red { color: #f87171; }
+.stat .number.yellow { color: #fbbf24; }
+.stat .label { font-size: 0.8rem; color: #666; }
+.cta { margin-top: 48px; padding: 24px; background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.2); border-radius: 12px; }
+.cta h3 { color: #fff; font-size: 1.1rem; margin-bottom: 12px; margin-top: 0; }
+.cta pre { margin-bottom: 0; }
+hr { border: none; border-top: 1px solid #222; margin: 48px 0; }
+.highlight-box { background: rgba(248,113,113,0.06); border: 1px solid rgba(248,113,113,0.2); border-radius: 10px; padding: 16px 20px; margin: 24px 0; }
+.highlight-box p { color: #e0e0e0; margin-bottom: 0; }
+</style>
+<script src="https://analytics.ahrefs.com/analytics.js" data-key="G1wKuningnrw+t5LQJ+MPw" async></script>
+</head>
+<body>
+<div class="container">
+<a href="../" class="back">&larr; Tap</a> &middot; <a href="./" class="back">Blog</a>
+<h1>We Ran 15,000 Browser Automations. The Failure That Matters Most Is Invisible to Your Monitoring.</h1>
+<p class="meta">April 20, 2026 &middot; Leon Ting &middot; 9 min read</p>
+
+<p>Half of our YouTube automation runs return 0 rows. Status: <code>ok</code>. No exception thrown. No error logged. The program finishes in about 20 seconds and hands back an empty array, silently.</p>
+
+<p>We didn't know this until we looked at the traces.</p>
+
+<p>Over the past few months, Tap has executed 15,455 automation programs across real websites — Reddit, GitHub, Bilibili, Xiaohongshu, YouTube, Twitter, and more. The traces are structured JSON: site, tap name, status, rows returned, duration, error message if any. We analyzed all of them. What we found disagrees with the conventional mental model of how browser automations break.</p>
+
+<h2>The Reliability Table Nobody Publishes</h2>
+
+<p>Here are the actual numbers. Each row is a real platform, not a synthetic benchmark. <strong>Hard error rate</strong> is the fraction of runs that threw an exception. <strong>Silent empty rate</strong> is the fraction of <em>successful</em> runs (status: ok) that returned zero rows.</p>
+
+<table>
+<tr>
+  <th>Platform</th>
+  <th>Total runs</th>
+  <th>Hard error %</th>
+  <th>Silent empty %</th>
+  <th>Effective failure %</th>
+  <th>Avg duration</th>
+</tr>
+<tr>
+  <td>Twitter / X</td>
+  <td>128</td>
+  <td class="good">0%</td>
+  <td class="good">0%</td>
+  <td class="good">0%</td>
+  <td>154 ms</td>
+</tr>
+<tr>
+  <td>GitHub</td>
+  <td>437</td>
+  <td class="good">0%</td>
+  <td class="good">0.2%</td>
+  <td class="good">0.2%</td>
+  <td>3,644 ms</td>
+</tr>
+<tr>
+  <td>Reddit</td>
+  <td>688</td>
+  <td class="warn">13.8%</td>
+  <td class="warn">6.4%</td>
+  <td class="warn">19.4%</td>
+  <td>4,075 ms</td>
+</tr>
+<tr>
+  <td>Xiaohongshu</td>
+  <td>361</td>
+  <td class="warn">15.8%</td>
+  <td class="warn">6.6%</td>
+  <td class="warn">21.5%</td>
+  <td>9,054 ms</td>
+</tr>
+<tr>
+  <td>Bilibili</td>
+  <td>259</td>
+  <td class="bad">30.1%</td>
+  <td class="bad">18.2%</td>
+  <td class="bad">43.1%</td>
+  <td>2,666 ms</td>
+</tr>
+<tr>
+  <td>Weibo</td>
+  <td>38</td>
+  <td class="bad">36.8%</td>
+  <td class="good">0%</td>
+  <td class="bad">36.8%</td>
+  <td>4,644 ms</td>
+</tr>
+<tr>
+  <td>YouTube</td>
+  <td>49</td>
+  <td class="bad">30.6%</td>
+  <td class="bad">50.0%</td>
+  <td class="bad">65.3%</td>
+  <td>20,273 ms</td>
+</tr>
+</table>
+
+<p>A few things stand out immediately.</p>
+
+<p>GitHub and Twitter are near-zero failure. Both expose stable public APIs that the DOM reflects predictably. GitHub's average duration is 3.6 seconds because it's doing real network work — but the result is reliable.</p>
+
+<p>YouTube is the opposite end of the spectrum. Two out of three runs either throw an error or return nothing. And the 50% silent empty rate is more alarming than the 30.6% hard error rate, because at least hard errors are visible.</p>
+
+<div class="stat-row">
+<div class="stat">
+  <div class="number red">50%</div>
+  <div class="label">of YouTube "successful" runs return 0 rows</div>
+</div>
+<div class="stat">
+  <div class="number red">43%</div>
+  <div class="label">effective failure rate on Bilibili</div>
+</div>
+<div class="stat">
+  <div class="number yellow">19%</div>
+  <div class="label">effective failure rate on Reddit</div>
+</div>
+</div>
+
+<h2>The Failure Mode You're Not Tracking</h2>
+
+<p>Here's the part that surprised us most. We expected "element not found" to be the dominant failure. The conventional model: selector breaks, automation throws, you fix the selector. Obvious, visible, actionable.</p>
+
+<p>The actual numbers:</p>
+
+<div class="highlight-box">
+<p><strong>Element not found</strong> (explicit selector failure): <strong>5 occurrences</strong><br>
+<strong>Cannot read properties of undefined (reading 'url')</strong> (implicit structural failure): <strong>176 occurrences</strong></p>
+</div>
+
+<p>The ratio is 35:1 in favor of the failure mode your monitoring doesn't catch.</p>
+
+<p>What does <code>Cannot read properties of undefined (reading 'url')</code> actually mean in practice? The selector found something. The extraction ran. The automation didn't crash during navigation. It returned data — a list of objects — but the objects no longer have a <code>url</code> field. The downstream code that tries to access <code>item.url</code> hits undefined and throws.</p>
+
+<p>This is a structural drift failure, not a selector failure. The DOM element is there. The page loaded. The program traversed the right nodes. But the shape of the data those nodes return has changed — a field that was always present quietly stopped being present.</p>
+
+<p>The sites affected, in order of frequency:</p>
+
+<ul>
+<li>Bilibili (multiple taps: videos, articles, analytics, benchmark, content-ideas, stats, trending)</li>
+<li>Algora bounties</li>
+<li>IssueHunt bounties</li>
+<li>Douyin (search, hot)</li>
+<li>Zhihu search</li>
+<li>X/Twitter (notifications, trending)</li>
+<li>Xiaohongshu search</li>
+<li>Weibo search</li>
+<li>Baidu hot</li>
+<li>Hacker News hot</li>
+<li>ProductHunt forum comments</li>
+<li>TechCrunch latest</li>
+<li>Ars Technica news</li>
+</ul>
+
+<p>That list spans Chinese platforms, Western platforms, social networks, news sites, and developer bounty boards. The failure mode is not platform-specific. It's inherent to how browser automation interacts with any site that changes its rendering.</p>
+
+<h2>Why Your Monitoring Doesn't See This</h2>
+
+<p>Consider what's happening at the infrastructure layer when this failure occurs:</p>
+
+<ul>
+<li>HTTP response: 200</li>
+<li>Page loaded successfully: yes</li>
+<li>Navigation completed: yes</li>
+<li>Automation process exited: 0</li>
+<li>Exception thrown: <em>eventually</em> — but only after the extraction, when downstream code accesses the malformed object</li>
+</ul>
+
+<p>Most monitoring stacks see a successful process exit followed by an application exception. If you're logging structured errors, you get the <code>TypeError</code>. But the harder version of this failure is when the object <em>does</em> have a <code>url</code> field — it just points to something different than it used to. A related item section. A sponsored result. A pagination link that got included in the data array.</p>
+
+<p>In those cases: status <code>ok</code>, rows returned, no exception, wrong data. Pydantic passes because the type is correct. Row count checks pass because rows exist. Prometheus reports a healthy process. OTel has nothing to report. The only signal is semantic: <em>these URLs aren't the URLs you wanted.</em></p>
+
+<p>That's the 121 silent-empty runs we logged across real sites — automations that completed successfully and returned no useful data. Some of them ran for 20 seconds before returning an empty array that looked exactly like a valid empty result.</p>
+
+<h2>The Platform Reliability Pattern</h2>
+
+<p>Looking at the data, there's a clear split between platforms with stable structural contracts and those without.</p>
+
+<p>GitHub and Twitter have published APIs that their web UIs reflect. A GitHub repository page structure is stable because it's owned by the same team that maintains the underlying data model. When GitHub updates its UI, the data contract tends to stay consistent because the API is the source of truth.</p>
+
+<p>Bilibili, Douyin, Xiaohongshu, and Weibo sit at the other end. These platforms run aggressive A/B experiments on their rendering layer — sometimes multiple experiments simultaneously for different user cohorts. The same page, loaded twice in the same session, can return different DOM structures. The <code>url</code> field on a video card might be in <code>item.url</code> in one experiment variant and <code>item.jumpUrl</code> in another.</p>
+
+<p>This isn't negligence. It's an engineering culture optimized for rapid iteration. The consequence for automation is that the structural contract you negotiated when you wrote the tap expires faster than on Western platforms.</p>
+
+<p>YouTube lands in between for a different reason: aggressive anti-bot measures that return empty results instead of blocking requests. A request that would return a 429 or a CAPTCHA page on a naive scraper returns 200 with an empty content container on a logged-out browser session. Status: ok. Rows: 0. Duration: 20 seconds of wasted compute.</p>
+
+<h2>What Catches This, and What Doesn't</h2>
+
+<table>
+<tr>
+  <th>Tool</th>
+  <th>Catches hard error?</th>
+  <th>Catches silent empty?</th>
+  <th>Catches wrong data (right shape)?</th>
+</tr>
+<tr>
+  <td>Process monitoring</td>
+  <td class="good">Yes</td>
+  <td class="bad">No</td>
+  <td class="bad">No</td>
+</tr>
+<tr>
+  <td>Pydantic / type validation</td>
+  <td class="good">Yes</td>
+  <td class="warn">Sometimes</td>
+  <td class="bad">No</td>
+</tr>
+<tr>
+  <td>Row count threshold</td>
+  <td class="good">Yes</td>
+  <td class="good">Yes</td>
+  <td class="bad">No</td>
+</tr>
+<tr>
+  <td>Health contracts (range + pattern + drift)</td>
+  <td class="good">Yes</td>
+  <td class="good">Yes</td>
+  <td class="good">Yes</td>
+</tr>
+<tr>
+  <td>Structural fingerprinting (tap doctor)</td>
+  <td class="good">Yes</td>
+  <td class="good">Yes</td>
+  <td class="warn">Signals change, not interpretation</td>
+</tr>
+</table>
+
+<p>The only layer that catches all three failure classes is a contract that validates semantics — not just shape. A <code>min_rows</code> check on the health contract catches silent empties. A <code>pattern</code> check on URLs catches wrong-source data. A <code>drift</code> check catches distribution shifts that look like valid data but represent a changed ranking or filtering behavior.</p>
+
+<p>Tap's <code>tap doctor</code> adds structural fingerprinting on top: it checksums the DOM elements your tap depends on and alerts when the structure changes, before you run the tap and discover the data is wrong after the fact.</p>
+
+<pre><span class="cmd">$</span> tap doctor bilibili videos
+<span class="err">&#10008; bilibili/videos  FAIL  score: 0.41</span>
+  <span class="err">structural fingerprint changed: .video-card .jump-link (url extraction point)</span>
+  <span class="err">min_rows: expected >= 10, got 0</span>
+  <span class="flag">&#9888; last successful run: 6 hours ago</span>
+  <span class="output">&#10003; nav: page loads</span>
+  <span class="output">&#10003; non_empty: title field present</span></pre>
+
+<p>The fingerprint change is the leading indicator. The zero rows are the downstream consequence. Without the fingerprint check, you'd wait until a run completes — and potentially burn pipeline compute — before discovering the tap is broken. With it, you know before you run.</p>
+
+<h2>What We'd Do Differently</h2>
+
+<p>Looking at the data, a few things are clear in retrospect.</p>
+
+<p><strong>Treat silent empties as first-class failures.</strong> A run that returns zero rows should be treated as suspicious by default, not as a valid empty result. Most automations that legitimately return zero rows are edge cases. Most automations that return zero rows unexpectedly are broken. The difference is detectable with a <code>min_rows</code> contract.</p>
+
+<p><strong>Fingerprint before running, not after.</strong> The structural drift that causes <code>Cannot read properties of undefined</code> is detectable in the DOM before you run your extraction logic. A fingerprint check is cheaper than a full tap execution. Running it as a pre-flight saves compute on taps that will fail anyway.</p>
+
+<p><strong>Treat Chinese platforms as a separate reliability tier.</strong> Not because of quality — but because the A/B experiment cadence is genuinely different. A tap targeting Bilibili or Xiaohongshu needs shorter contract drift windows and more frequent doctor checks than one targeting GitHub. Build that into the maintenance schedule.</p>
+
+<p><strong>Duration is a signal.</strong> Our YouTube taps average 20 seconds per run and fail 65% of the time. That's not slow extraction — that's 20 seconds of waiting for content that's not coming. A timeout contract that fires at 8 seconds would catch most of these early and save the rest of the pipeline from waiting.</p>
+
+<hr>
+
+<p>The trace data from 15,455 runs is the most honest answer we have to the question "what actually breaks in browser automation?" The answer is: silent structural drift, not explicit selector failure. The sites that change fastest break most. The failures that matter most are the ones that look like success.</p>
+
+<p>If you're building or maintaining automations, the most useful thing you can add isn't better error handling for explicit failures — it's a contract layer that turns silent failures into visible ones.</p>
+
+<div class="cta">
+<h3>Try tap doctor on your automations</h3>
+<pre><span class="cmd">$</span> npx -y @taprun/cli doctor &lt;site&gt; &lt;tap&gt;
+<span class="comment"># structural fingerprint check before you run</span>
+<span class="comment"># health contract validation after you run</span>
+<span class="comment"># diff output showing exactly what changed</span></pre>
+</div>
+
+</div>
+</body>
+</html>

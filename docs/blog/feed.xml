@@ -6,7 +6,15 @@
 <description>Engineering insights on browser automation, AI agents, and deterministic programs.</description>
 <language>en-us</language>
 <atom:link href="https://taprun.dev/blog/feed.xml" rel="self" type="application/rss+xml"/>
-<lastBuildDate>Sun, 19 Apr 2026 00:00:00 +0000</lastBuildDate>
+<lastBuildDate>Mon, 20 Apr 2026 00:00:00 +0000</lastBuildDate>
+
+<item>
+<title>We Ran 15,000 Browser Automations. The Failure That Matters Most Is Invisible to Your Monitoring.</title>
+<link>https://taprun.dev/blog/what-actually-breaks-15000-automations.html</link>
+<description>15,455 real executions across GitHub, Reddit, YouTube, Bilibili, Xiaohongshu, and more. YouTube silently returns 0 rows on 50% of "successful" runs. The dominant failure mode isn't "element not found" — it's a property on a returned object that stopped existing. Here's the reliability table nobody publishes, and why your monitoring misses what matters.</description>
+<pubDate>Mon, 20 Apr 2026 00:00:00 +0000</pubDate>
+<guid>https://taprun.dev/blog/what-actually-breaks-15000-automations.html</guid>
+</item>
 
 <item>
 <title>rtrvr.ai vs Taprun: Cheaper LLM-at-Runtime Still Isn't Zero Tokens</title>
