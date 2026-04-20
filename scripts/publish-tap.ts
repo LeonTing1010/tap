@@ -17,7 +17,7 @@ import { parse } from "https://deno.land/std@0.224.0/flags/mod.ts"
 import { dirname, fromFileUrl, join, resolve } from "https://deno.land/std@0.224.0/path/mod.ts"
 
 const args = parse(Deno.args, {
-  boolean: ["dry-run", "skip-pr", "help"],
+  boolean: ["dry-run", "skip-pr", "auto-merge", "help"],
   string: ["layer", "layer-source", "doctor", "checked"],
   default: { layer: "?", "layer-source": "unspecified", doctor: "", checked: "" },
 })
@@ -32,6 +32,7 @@ publish-tap <site> <name> [options]
   --checked <date>    YYYY-MM-DD of last doctor run (defaults to today)
   --dry-run           Write files but don't commit or push
   --skip-pr           Commit + push branches, skip PR creation
+  --auto-merge        Enable GitHub auto-merge on created PRs (merges on CI green)
 `)
   Deno.exit(args.help ? 0 : 1)
 }
@@ -248,30 +249,55 @@ if (args["skip-pr"]) {
   Deno.exit(0)
 }
 
-async function ghPr(cwd: string, base: string, head: string, title: string, body: string) {
+async function ghPr(cwd: string, base: string, head: string, title: string, body: string): Promise<string | null> {
   const r = await run(["gh", "pr", "create", "--base", base, "--head", head, "--title", title, "--body", body], cwd)
-  if (r.code === 0) console.log(`  PR: ${r.stdout.trim()}`)
-  else console.error(`  gh pr create failed: ${r.stderr}`)
+  if (r.code === 0) {
+    const url = r.stdout.trim()
+    console.log(`  PR: ${url}`)
+    return url
+  }
+  console.error(`  gh pr create failed: ${r.stderr}`)
+  return null
+}
+
+async function enableAutoMerge(cwd: string, prUrl: string) {
+  // --auto requires branch protection with required checks OR repo auto-merge enabled.
+  // Fall back to immediate squash-merge if auto can't be scheduled.
+  const tryAuto = await run(["gh", "pr", "merge", prUrl, "--auto", "--squash", "--delete-branch"], cwd)
+  if (tryAuto.code === 0) {
+    console.log(`  auto-merge queued: ${prUrl}`)
+    return
+  }
+  const stderr = tryAuto.stderr.toLowerCase()
+  if (stderr.includes("auto-merge") || stderr.includes("not eligible")) {
+    const immediate = await run(["gh", "pr", "merge", prUrl, "--squash", "--delete-branch"], cwd)
+    if (immediate.code === 0) console.log(`  merged immediately: ${prUrl}`)
+    else console.error(`  merge failed: ${immediate.stderr}`)
+  } else {
+    console.error(`  auto-merge failed: ${tryAuto.stderr}`)
+  }
 }
 
 if (publicResult && !publicResult.skipped && !publicResult.error) {
-  await ghPr(
+  const prUrl = await ghPr(
     publicRoot,
     publicResult.baseBranch!,
     branchName,
     `taps: add ${site}/${name} presentation`,
     `Auto-generated page for \`${site}/${name}\`. Layer ${layer} (${layerSource}).\n\nPreview: https://taprun.dev/taps/${site}/${name}`,
   )
+  if (prUrl && args["auto-merge"]) await enableAutoMerge(publicRoot, prUrl)
 }
 
 if (skillsResult && !skillsResult.skipped && !skillsResult.error) {
-  await ghPr(
+  const prUrl = await ghPr(
     tapSkillsRoot,
     skillsResult.baseBranch!,
     branchName,
     `showcase: add ${site}/${name} (L${layer} ${layerSource})`,
     `${description}\n\nHealth: \`${JSON.stringify(health)}\``,
   )
+  if (prUrl && args["auto-merge"]) await enableAutoMerge(tapSkillsRoot, prUrl)
 }
 
 console.log("done.")
