@@ -15,15 +15,17 @@
 <meta property="og:image" content="https://taprun.dev/social-preview.png">
 {% include head-common.html %}
 
+{% assign tap_pages = site.pages | where_exp: "p", "p.layout == 'tap'" | sort: "site_name" %}
+
 <script type="application/ld+json">
 {
   "@context": ["http://www.w3.org/ns/anno.jsonld", "https://taprun.dev/ns/tap-v1"],
   "@type": "AnnotationCollection",
   "id": "https://taprun.dev/taps/",
   "label": "Taprun tap library",
-  "total": 1,
+  "total": {{ tap_pages.size }},
   "items": [
-    "https://taprun.dev/taps/producthunt/relevant"
+    {% for tap in tap_pages %}"https://taprun.dev{{ tap.url | remove: '.html' }}"{% unless forloop.last %},{% endunless %}{% endfor %}
   ]
 }
 </script>
@@ -56,27 +58,40 @@ footer a { color:#6366f1; }
 <nav class="crumbs"><a href="/">taprun</a> / taps</nav>
 
 <h1>Taps</h1>
-<p class="intro">Each tap is a compiled browser program. One-time AI authoring (<code>forge</code>), then deterministic execution at $0 per run. Below are public taps — source lives at <a href="https://github.com/LeonTing1010/tap-skills">tap-skills</a>, presentation here.</p>
+<p class="intro">Each tap is a compiled browser program. One-time AI authoring (<code>forge</code>), then deterministic execution at $0 per run. Source lives in <a href="https://github.com/LeonTing1010/tap-skills">tap-skills</a>; presentation here. Every tap on this page is also a machine-readable <a href="/ns/tap-v1/">W3C Annotation</a>.</p>
 
-<p class="empty">Showcase in progress. More taps land as their doctor contracts tighten.</p>
+{% if tap_pages.size == 0 %}
+<p class="empty">Showcase in progress.</p>
+{% endif %}
 
+{% assign sites = tap_pages | map: "site_name" | uniq %}
+{% for s in sites %}
 <div class="site">
-  <p class="site-name">producthunt</p>
+  <p class="site-name">{{ s }}</p>
   <table>
     <thead><tr><th>tap</th><th>layer</th><th>doctor</th><th>description</th></tr></thead>
     <tbody>
+      {% assign site_taps = tap_pages | where: "site_name", s | sort: "tap_name" %}
+      {% for tap in site_taps %}
       <tr>
-        <td><a href="/taps/producthunt/relevant">relevant</a></td>
-        <td><span class="layer">L1</span></td>
-        <td><span class="doc-ok">● healthy (2026-04-20)</span></td>
-        <td>Recent PH launches matching keywords, via /feed Atom.</td>
+        <td><a href="{{ tap.url | remove: '.html' }}">{{ tap.tap_name }}</a></td>
+        <td><span class="layer">L{{ tap.layer }}</span></td>
+        <td>
+          {% if tap.doctor_verdict == "healthy" %}<span class="doc-ok">● healthy ({{ tap.doctor_checked }})</span>{% endif %}
+          {% if tap.doctor_verdict == "stale" %}<span class="doc-stale">● stale ({{ tap.doctor_checked }})</span>{% endif %}
+          {% if tap.doctor_verdict == "broken" %}<span class="doc-broken">● broken ({{ tap.doctor_checked }})</span>{% endif %}
+          {% unless tap.doctor_verdict %}<span class="empty">—</span>{% endunless %}
+        </td>
+        <td>{{ tap.description }}</td>
       </tr>
+      {% endfor %}
     </tbody>
   </table>
 </div>
+{% endfor %}
 
 <footer>
-  Every tap on this page is also a machine-readable <a href="/ns/tap-v1/">W3C Annotation</a>. Fetch the <code>.jsonld</code> sibling to consume programmatically.
+  Fetch any tap's <code>.jsonld</code> sibling for programmatic consumption. Each page embeds the same annotation inline as <code>&lt;script type="application/ld+json"&gt;</code>.
 </footer>
 
 </body>
