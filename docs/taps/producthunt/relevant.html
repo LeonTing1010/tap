@@ -1,0 +1,53 @@
+---
+layout: tap
+site_name: producthunt
+tap_name: relevant
+description: "Find recent Product Hunt launches matching keywords. Pulls from the official /feed Atom (declarative, L1-stable). Filters by title+tagline keyword match."
+intent: read
+layer: 1
+layer_source: "Atom feed (/feed)"
+columns:
+  - rank
+  - title
+  - tagline
+  - maker
+  - published
+  - url
+args:
+  - name: keywords
+    type: string
+    default: "agent,automation,workflow,mcp,browser,scraper,cli,devtool,prompt,llm,coding,copilot"
+    description: Comma-separated; matches title+tagline (case-insensitive). Empty = no filter.
+  - name: limit
+    type: int
+    default: 20
+    description: Max rows returned
+args_json: |
+  {
+    "keywords": {"type":"string","default":"agent,automation,workflow,mcp,browser,scraper,cli,devtool,prompt,llm,coding,copilot","description":"Comma-separated; matches title+tagline (case-insensitive)."},
+    "limit": {"type":"int","default":20}
+  }
+health_json: |
+  {"min_rows":3,"non_empty":["title","url"]}
+example_args: ""
+doctor_verdict: healthy
+doctor_checked: "2026-04-20"
+source_url: https://github.com/LeonTing1010/tap-skills/blob/main/producthunt/relevant.tap.json
+license: MIT
+---
+
+<section>
+  <h2>Why this tap exists</h2>
+  <p>Product Hunt's <code>/search</code> page is client-rendered — <code>og:title</code> returns the site shell, not product data. The <code>/categories/{slug}</code> pages SSR product cards but mix three layout types (banners, rankings, launches) so DOM heuristics drift every few weeks.</p>
+  <p>PH's own <a href="https://www.producthunt.com/llms.txt"><code>llms.txt</code></a> declares <code>/feed</code> as a stable Atom endpoint. This tap fetches that feed (through a page-context <code>fetch()</code> to inherit origin + cookies), parses entries with <code>DOMParser</code>, and filters by keyword match. Result: Layer 1, no selector fragility.</p>
+</section>
+
+<section>
+  <h2>Sample output</h2>
+  <pre><code>rank  title          tagline                                       maker            published    url
+1     EchoTube       Fast, private Open Source YouTube client      Aditya Yadav     2026-04-19   /products/echotube-open-source-youtube-client
+2     Sillage        Grow your revenue faster with signal agents   Rajiv Ayyangar   2026-04-15   /products/sillage
+3     PangeAI        Agent-driven spatial analysis                 Rajiv Ayyangar   2026-04-15   /products/pangeai
+4     Dune           Context-aware Mac keypad to automate flows    Rohan Chaubey    2026-04-16   /products/dune-4
+5     MaxHermes      World's first cloud sandbox Hermes Agent      Zac Zuo          2026-04-19   /products/minimax</code></pre>
+</section>

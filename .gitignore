@@ -12,3 +12,8 @@ node_modules/
 .idea/
 *.swp
 *.swo
+
+# Jekyll local preview (GH Pages uses its own locked stack)
+docs/_site/
+docs/.jekyll-cache/
+docs/Gemfile.lock

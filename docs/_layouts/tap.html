@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ page.site_name }}/{{ page.tap_name }} — Taprun</title>
+<meta name="description" content="{{ page.description }}">
+<link rel="canonical" href="https://taprun.dev{{ page.url }}">
+<meta property="og:title" content="{{ page.site_name }}/{{ page.tap_name }} — Taprun">
+<meta property="og:description" content="{{ page.description }}">
+<meta property="og:url" content="https://taprun.dev{{ page.url }}">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://taprun.dev/social-preview.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ page.site_name }}/{{ page.tap_name }}">
+<meta name="twitter:description" content="{{ page.description }}">
+{% include head-common.html %}
+
+<script type="application/ld+json">
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev{{ page.url }}",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/{{ page.site_name }}/{{ page.tap_name }}",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": {{ page.site_name | jsonify }},
+    "name": {{ page.tap_name | jsonify }},
+    "intent": {{ page.intent | default: "read" | jsonify }},
+    "description": {{ page.description | jsonify }},
+    "columns": {{ page.columns | jsonify }},
+    "args": {{ page.args_json | default: "{}" }},
+    "health": {{ page.health_json | default: "{}" }}
+  },
+  "seeAlso": "https://taprun.dev{{ page.url }}{{ page.tap_name }}.jsonld"
+}
+</script>
+
+<style>
+:root { --fg:#111; --mut:#666; --bg:#fff; --card:#f8f8f9; --border:#e5e5e8; --ok:#16a34a; --warn:#ca8a04; --err:#dc2626; --code:#1f2937; --code-fg:#e5e7eb; --accent:#6366f1; }
+body { font-family:'Plus Jakarta Sans',system-ui,sans-serif; max-width:860px; margin:0 auto; padding:2rem 1.25rem 6rem; color:var(--fg); background:var(--bg); line-height:1.55; }
+nav.crumbs { font-size:.85rem; color:var(--mut); margin-bottom:1.5rem; }
+nav.crumbs a { color:var(--mut); text-decoration:none; }
+nav.crumbs a:hover { color:var(--accent); }
+h1 { font-family:'Bricolage Grotesque',sans-serif; font-size:2.1rem; line-height:1.15; margin:0 0 .3rem; font-weight:600; }
+h1 .slash { color:var(--mut); font-weight:400; }
+.desc { color:var(--mut); font-size:1.05rem; margin:0 0 1.25rem; }
+.badges { display:flex; flex-wrap:wrap; gap:.4rem; margin:0 0 2rem; }
+.badge { font-size:.72rem; font-family:'JetBrains Mono',monospace; padding:.22rem .5rem; border-radius:4px; background:var(--card); border:1px solid var(--border); color:var(--fg); }
+.badge.layer { background:#eef2ff; border-color:#c7d2fe; color:#4338ca; }
+.badge.doctor-ok { background:#f0fdf4; border-color:#bbf7d0; color:var(--ok); }
+.badge.doctor-stale { background:#fefce8; border-color:#fef08a; color:var(--warn); }
+.badge.doctor-broken { background:#fef2f2; border-color:#fecaca; color:var(--err); }
+section { margin:0 0 2.25rem; }
+h2 { font-family:'Bricolage Grotesque',sans-serif; font-size:1.15rem; font-weight:600; margin:0 0 .7rem; padding-bottom:.35rem; border-bottom:1px solid var(--border); }
+table { width:100%; border-collapse:collapse; font-size:.93rem; }
+th, td { text-align:left; padding:.45rem .6rem; border-bottom:1px solid var(--border); vertical-align:top; }
+th { font-weight:500; color:var(--mut); font-size:.82rem; text-transform:uppercase; letter-spacing:.03em; }
+code { font-family:'JetBrains Mono',monospace; font-size:.88em; background:var(--card); padding:.1em .35em; border-radius:3px; }
+pre { background:var(--code); color:var(--code-fg); padding:1rem 1.15rem; border-radius:6px; overflow-x:auto; font-size:.82rem; line-height:1.55; }
+pre code { background:transparent; color:inherit; padding:0; font-size:inherit; }
+.run { background:var(--card); border:1px solid var(--border); border-radius:6px; padding:.9rem 1.1rem; font-family:'JetBrains Mono',monospace; font-size:.85rem; }
+.meta { display:grid; grid-template-columns:max-content 1fr; gap:.4rem 1.2rem; font-size:.92rem; }
+.meta dt { color:var(--mut); }
+.meta dd { margin:0; }
+.meta dd a { color:var(--accent); text-decoration:none; }
+.meta dd a:hover { text-decoration:underline; }
+footer { margin-top:4rem; padding-top:1.5rem; border-top:1px solid var(--border); color:var(--mut); font-size:.85rem; display:flex; justify-content:space-between; flex-wrap:wrap; gap:1rem; }
+footer a { color:var(--mut); }
+</style>
+</head>
+<body>
+
+<nav class="crumbs"><a href="/">taprun</a> / <a href="/taps/">taps</a> / <a href="/taps/{{ page.site_name }}/">{{ page.site_name }}</a> / {{ page.tap_name }}</nav>
+
+<h1>{{ page.site_name }}<span class="slash">/</span>{{ page.tap_name }}</h1>
+<p class="desc">{{ page.description }}</p>
+
+<div class="badges">
+  <span class="badge layer">Layer {{ page.layer | default: "?" }} · {{ page.layer_source | default: "unspecified" }}</span>
+  <span class="badge">intent: {{ page.intent | default: "read" }}</span>
+  {% if page.doctor_verdict == "healthy" %}<span class="badge doctor-ok">● doctor: healthy ({{ page.doctor_checked }})</span>{% endif %}
+  {% if page.doctor_verdict == "stale" %}<span class="badge doctor-stale">● doctor: stale ({{ page.doctor_checked }})</span>{% endif %}
+  {% if page.doctor_verdict == "broken" %}<span class="badge doctor-broken">● doctor: broken ({{ page.doctor_checked }})</span>{% endif %}
+</div>
+
+<section>
+  <h2>Run it</h2>
+  <div class="run">tap run {{ page.site_name }} {{ page.tap_name }}{% if page.example_args %} {{ page.example_args }}{% endif %}</div>
+</section>
+
+<section>
+  <h2>What it returns</h2>
+  <table><thead><tr><th>column</th><th>type</th></tr></thead>
+    <tbody>
+    {% for col in page.columns %}<tr><td><code>{{ col }}</code></td><td>text</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</section>
+
+{% if page.args and page.args.size > 0 %}
+<section>
+  <h2>Arguments</h2>
+  <table><thead><tr><th>arg</th><th>type</th><th>default</th><th>description</th></tr></thead>
+    <tbody>
+    {% for arg in page.args %}<tr><td><code>{{ arg.name }}</code></td><td>{{ arg.type }}</td><td><code>{{ arg.default }}</code></td><td>{{ arg.description }}</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+
+{{ content }}
+
+<section>
+  <h2>Provenance</h2>
+  <dl class="meta">
+    <dt>Source</dt><dd><a href="{{ page.source_url }}">{{ page.source_url | replace: "https://github.com/", "" }}</a></dd>
+    <dt>Machine format</dt><dd><a href="{{ page.tap_name }}.jsonld">{{ page.tap_name }}.jsonld</a> (W3C Annotation)</dd>
+    <dt>Last doctor run</dt><dd>{{ page.doctor_checked | default: "never" }}</dd>
+    <dt>License</dt><dd>{{ page.license | default: "MIT" }}</dd>
+  </dl>
+</section>
+
+<footer>
+  <span>This page IS a W3C Annotation. <a href="{{ page.tap_name }}.jsonld">View the raw annotation</a>.</span>
+  <span><a href="/ns/tap-v1/">tap-v1 namespace</a></span>
+</footer>
+
+</body>
+</html>

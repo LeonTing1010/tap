@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Taps — Taprun</title>
+<meta name="description" content="Tap library: compiled browser programs as W3C Annotations. Each tap is a named, reproducible data extraction with a live health contract.">
+<link rel="canonical" href="https://taprun.dev/taps/">
+<meta property="og:title" content="Taps — Taprun">
+<meta property="og:description" content="Compiled browser programs as W3C Annotations. Each tap has a named site, stable args, and a live doctor verdict.">
+<meta property="og:url" content="https://taprun.dev/taps/">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://taprun.dev/social-preview.png">
+{% include head-common.html %}
+
+<script type="application/ld+json">
+{
+  "@context": ["http://www.w3.org/ns/anno.jsonld", "https://taprun.dev/ns/tap-v1"],
+  "@type": "AnnotationCollection",
+  "id": "https://taprun.dev/taps/",
+  "label": "Taprun tap library",
+  "total": 1,
+  "items": [
+    "https://taprun.dev/taps/producthunt/relevant"
+  ]
+}
+</script>
+
+<style>
+body { font-family:'Plus Jakarta Sans',system-ui,sans-serif; max-width:860px; margin:0 auto; padding:2rem 1.25rem 6rem; color:#111; line-height:1.55; }
+nav.crumbs { font-size:.85rem; color:#666; margin-bottom:1.5rem; }
+nav.crumbs a { color:#666; text-decoration:none; }
+h1 { font-family:'Bricolage Grotesque',sans-serif; font-size:2.1rem; margin:0 0 .5rem; font-weight:600; }
+.intro { color:#555; font-size:1.05rem; margin:0 0 2.5rem; }
+h2 { font-family:'Bricolage Grotesque',sans-serif; font-size:1.2rem; margin:2rem 0 .8rem; padding-bottom:.3rem; border-bottom:1px solid #e5e5e8; }
+.site { margin:2rem 0; }
+.site-name { font-family:'JetBrains Mono',monospace; color:#666; font-size:.95rem; margin:0 0 .5rem; }
+table { width:100%; border-collapse:collapse; font-size:.93rem; }
+th, td { text-align:left; padding:.55rem .6rem; border-bottom:1px solid #e5e5e8; }
+th { font-weight:500; color:#666; font-size:.8rem; text-transform:uppercase; letter-spacing:.03em; }
+td a { color:#6366f1; text-decoration:none; font-family:'JetBrains Mono',monospace; font-weight:500; }
+td a:hover { text-decoration:underline; }
+.layer { font-family:'JetBrains Mono',monospace; font-size:.8rem; color:#4338ca; background:#eef2ff; padding:.1em .4em; border-radius:3px; }
+.doc-ok { color:#16a34a; font-size:.85rem; }
+.doc-stale { color:#ca8a04; font-size:.85rem; }
+.doc-broken { color:#dc2626; font-size:.85rem; }
+.empty { color:#999; font-size:.85rem; font-style:italic; }
+footer { margin-top:4rem; padding-top:1.5rem; border-top:1px solid #e5e5e8; color:#666; font-size:.85rem; }
+footer a { color:#6366f1; }
+</style>
+</head>
+<body>
+
+<nav class="crumbs"><a href="/">taprun</a> / taps</nav>
+
+<h1>Taps</h1>
+<p class="intro">Each tap is a compiled browser program. One-time AI authoring (<code>forge</code>), then deterministic execution at $0 per run. Below are public taps — source lives at <a href="https://github.com/LeonTing1010/tap-skills">tap-skills</a>, presentation here.</p>
+
+<p class="empty">Showcase in progress. More taps land as their doctor contracts tighten.</p>
+
+<div class="site">
+  <p class="site-name">producthunt</p>
+  <table>
+    <thead><tr><th>tap</th><th>layer</th><th>doctor</th><th>description</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><a href="/taps/producthunt/relevant.html">relevant</a></td>
+        <td><span class="layer">L1</span></td>
+        <td><span class="doc-ok">● healthy (2026-04-20)</span></td>
+        <td>Recent PH launches matching keywords, via /feed Atom.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<footer>
+  Every tap on this page is also a machine-readable <a href="/ns/tap-v1/">W3C Annotation</a>. Fetch the <code>.jsonld</code> sibling to consume programmatically.
+</footer>
+
+</body>
+</html>

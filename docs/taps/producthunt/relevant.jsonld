@@ -1,0 +1,41 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/producthunt/relevant",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/producthunt/relevant",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "producthunt",
+    "name": "relevant",
+    "intent": "read",
+    "description": "Find recent PH launches matching keywords. L1 source: PH Atom feed /feed parsed via page-context fetch.",
+    "columns": ["rank", "title", "tagline", "maker", "published", "url"],
+    "args": {
+      "keywords": {
+        "type": "string",
+        "default": "agent,automation,workflow,mcp,browser,scraper,cli,devtool,prompt,llm,coding,copilot",
+        "description": "Comma-separated keywords; matches against title+tagline case-insensitive. Empty string = no filter."
+      },
+      "limit": {
+        "type": "int",
+        "default": 20
+      }
+    },
+    "health": {"min_rows": 3, "non_empty": ["title", "url"]},
+    "tap:layer": 1,
+    "tap:layerSource": "Atom feed (/feed)"
+  },
+  "prov:wasGeneratedBy": {
+    "@type": "Activity",
+    "id": "tap:forge:producthunt.com:relevant",
+    "used": ["https://www.producthunt.com/feed"]
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/producthunt/relevant.tap.json",
+    "https://taprun.dev/taps/producthunt/relevant.html"
+  ]
+}
