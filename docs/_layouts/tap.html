@@ -33,8 +33,8 @@
     "intent": {{ page.intent | default: "read" | jsonify }},
     "description": {{ page.description | jsonify }},
     "columns": {{ page.columns | jsonify }},
-    "args": {{ page.args_json | default: "{}" }},
-    "health": {{ page.health_json | default: "{}" }}
+    "args": {{ page.args_json }},
+    "health": {{ page.health_json }}
   },
   "seeAlso": "https://taprun.dev{{ page.url }}{{ page.tap_name }}.jsonld"
 }
