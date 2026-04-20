@@ -27,10 +27,10 @@
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
   "name": "Taprun",
-  "description": "Taprun compiles AI understanding of websites into deterministic programs that run forever for $0 per execution. Doctor + fingerprint diffs catch silent failures. Health contracts verify data correctness. 140+ ready-to-run skills.",
+  "description": "Taprun compiles AI understanding of websites into deterministic programs that run forever for $0 per execution. Doctor + fingerprint diffs catch silent failures. Health contracts verify data correctness. 65+ ready-to-run skills.",
   "url": "https://taprun.dev/",
   "downloadUrl": "https://github.com/LeonTing1010/tap/releases/latest",
-  "softwareVersion": "0.11.3",
+  "softwareVersion": "0.13.0",
   "operatingSystem": "macOS, Linux, Windows",
   "applicationCategory": "DeveloperApplication",
   "author": {
@@ -41,7 +41,7 @@
   "codeRepository": "https://github.com/LeonTing1010/tap",
   "keywords": ["AI agents", "MCP", "tap protocol", "forge", "deterministic automation", "Chrome extension", "Playwright", "sandbox", "doctor", "fingerprint", "health contracts", "silent failure detection", "API auto-detection"],
   "offers": [
-    {"@type": "Offer", "price": "0", "priceCurrency": "USD", "description": "Free — 140+ skills in any MCP agent, API auto-detection forge, doctor, watch. 3-day trial on paid features."},
+    {"@type": "Offer", "price": "0", "priceCurrency": "USD", "description": "Free — 65+ skills in any MCP agent, API auto-detection forge, doctor, watch. 3-day trial on paid features."},
     {"@type": "Offer", "price": "9", "priceCurrency": "USD", "description": "Hacker — AI creates taps for you. Full forge pipeline in Claude Code, Cursor, any MCP host. BYOK."},
     {"@type": "Offer", "price": "29", "priceCurrency": "USD", "description": "Pro — Taps run themselves. Auto-repair, auto-refresh, scheduled runs, team server. 100% local-first."}
   ]
@@ -65,7 +65,7 @@
       {"@type": "SiteNavigationElement", "name": "Compare", "description": "Taprun vs Browser Use, Stagehand, rtrvr.ai, Playwright MCP", "url": "https://taprun.dev/#comparison"},
       {"@type": "SiteNavigationElement", "name": "Surfaces", "description": "CLI, MCP, Chrome extension, JSR library, Homebrew, GitHub plugin, Docker, schedulers", "url": "https://taprun.dev/#surfaces"},
       {"@type": "SiteNavigationElement", "name": "How It Works", "description": "Learn how Taprun works", "url": "https://taprun.dev/#how-it-works"},
-      {"@type": "SiteNavigationElement", "name": "Skills", "description": "Browse 140+ ready-to-run skills", "url": "https://taprun.dev/skills/"},
+      {"@type": "SiteNavigationElement", "name": "Skills", "description": "Browse 65+ ready-to-run skills", "url": "https://taprun.dev/skills/"},
       {"@type": "SiteNavigationElement", "name": "Pricing", "description": "View pricing plans", "url": "https://taprun.dev/#pricing"},
       {"@type": "SiteNavigationElement", "name": "Blog", "description": "Read our blog", "url": "https://taprun.dev/blog/"},
       {"@type": "SiteNavigationElement", "name": "GitHub", "description": "View source on GitHub", "url": "https://github.com/LeonTing1010/tap"}
@@ -78,8 +78,8 @@
   "@context": "https://schema.org",
   "@type": "FAQPage",
   "mainEntity": [
-    {"@type": "Question", "name": "Do I need to be a developer to use Taprun?", "acceptedAnswer": {"@type": "Answer", "text": "Taprun is a CLI tool. The core workflow is two commands: tap forge and tap site name. 140+ pre-built taps work with zero setup."}},
-    {"@type": "Question", "name": "Is my data safe?", "acceptedAnswer": {"@type": "Answer", "text": "Taprun programs run in a sandboxed Worker with zero permissions. Your data never leaves your machine. Everything runs locally."}},
+    {"@type": "Question", "name": "Do I need to be a developer to use Taprun?", "acceptedAnswer": {"@type": "Answer", "text": "Taprun is a CLI tool. The core workflow is two commands: tap forge and tap site name. 65+ pre-built taps work with zero setup."}},
+    {"@type": "Question", "name": "Is my data safe?", "acceptedAnswer": {"@type": "Answer", "text": "Taprun programs are deterministic data plans, not arbitrary JavaScript. The runtime dispatches a closed 25-op vocabulary — no runtime eval, no new Worker, no dynamic import. Your data never leaves your machine."}},
     {"@type": "Question", "name": "What happens when a website changes?", "acceptedAnswer": {"@type": "Answer", "text": "tap doctor --auto detects the breakage and packages diagnostics: current code, fingerprint diff, the last 3 commits to the tap, and a fresh page inspection. Free users hand that bundle to their AI (Claude Code, Cursor, BYOK forge). Pro users let their AI (BYOK) patch and ship the fix automatically on cron."}},
     {"@type": "Question", "name": "How is Taprun different from Zapier?", "acceptedAnswer": {"@type": "Answer", "text": "Zapier charges per task. At scale that is $40K+ per year. Taprun has zero per-execution cost. AI runs once, program runs forever."}},
     {"@type": "Question", "name": "Do I own the programs Taprun creates?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Every .tap.js file is yours. No lock-in. Cancel and your programs keep running forever."}},
@@ -2246,7 +2246,7 @@ h2 .hl {
       <div class="hero-content">
         <div class="hero-badge">
           <span class="hero-badge-dot"></span>
-          v0.11.3 just shipped &nbsp;·&nbsp; 140+ skills, 0 setup
+          v0.13.0 just shipped &nbsp;·&nbsp; 65+ skills, 0 setup
         </div>
         <h1>Browser automation<br>where the AI<br><span class="hl">runs once, not every run.</span></h1>
         <p class="hero-sub">Every other browser agent calls the LLM on every task &mdash; even the 25&times; cheaper ones. Taprun compiles browser interactions once (single AI pass), then runs pure JavaScript forever. <strong>Zero tokens at runtime.</strong> 100% deterministic. <code>tap doctor</code> checks structural fingerprints <em>before</em> each run, so breakage detection costs zero tokens too.</p>
@@ -2326,7 +2326,7 @@ h2 .hl {
 <div class="container stats-bar reveal">
   <div class="stats-inner">
     <div class="stat">
-      <div class="stat-value">140+</div>
+      <div class="stat-value">65+</div>
       <div class="stat-label">Ready-to-run skills</div>
     </div>
     <div class="stat">
@@ -2607,7 +2607,7 @@ h2 .hl {
           </tr>
           <tr>
             <td class="cmp-axis">Pre-built library</td>
-            <td class="cmp-tap">140+ taps, 68+ sites</td>
+            <td class="cmp-tap">65+ taps, 40+ sites</td>
             <td>None</td>
             <td>None</td>
             <td>Task templates</td>
@@ -2724,7 +2724,7 @@ h2 .hl {
       <div class="usecase-card usecase-card--gold reveal">
         <div class="usecase-icon">&#10066;</div>
         <h3>MCP-native data streams</h3>
-        <p>Claude Code pulls rows, not HTML. 140+ taps become MCP tools in Cursor, Windsurf, Codex. Zero tokens on the read path &mdash; budget goes to reasoning.</p>
+        <p>Claude Code pulls rows, not HTML. 65+ taps become MCP tools in Cursor, Windsurf, Codex. Zero tokens on the read path &mdash; budget goes to reasoning.</p>
         <code class="usecase-snippet"><span class="snippet-prompt">$ </span>claude mcp add tap <span class="snippet-pipe">--</span> tap mcp</code>
         <div class="usecase-meta"><span>Claude Code</span><span>Cursor</span><span>Windsurf</span></div>
       </div>
@@ -2745,7 +2745,7 @@ h2 .hl {
   <div class="container">
     <div class="skills-header">
       <div class="section-tag reveal">Skills gallery</div>
-      <h2 class="reveal">140+ taps, <span class="hl">ready to run right now.</span></h2>
+      <h2 class="reveal">65+ taps, <span class="hl">ready to run right now.</span></h2>
       <p class="section-desc reveal">GitHub trending. Reddit front page. Hacker News top posts. X profiles. arXiv papers. 68+ sites and growing &mdash; no forging needed, just run.</p>
     </div>
 
@@ -2848,7 +2848,7 @@ h2 .hl {
             <div class="surface-tag">Claude Code &middot; Cursor &middot; Windsurf</div>
           </div>
         </div>
-        <p>First-class MCP host support. 140+ taps become MCP tools. Zero tokens on the read path &mdash; a one-line config.</p>
+        <p>First-class MCP host support. 65+ taps become MCP tools. Zero tokens on the read path &mdash; a one-line config.</p>
         <div class="surface-cmd"><span class="cmd-dim">mcp &rarr; </span>"tap": { "command": "tap" }</div>
       </div>
 
@@ -2950,7 +2950,7 @@ h2 .hl {
         <div class="install-step-num">2</div>
         <div>
           <h4>Connect Your AI Agent <span style="font-family:var(--font-mono);font-size:11px;color:var(--green);font-weight:600;margin-left:6px;">Free</span></h4>
-          <p>Add to your MCP config (Claude Code, Cursor, Windsurf, Codex, any MCP host). 140+ skills, free &mdash; no extension, no setup, works immediately.</p>
+          <p>Add to your MCP config (Claude Code, Cursor, Windsurf, Codex, any MCP host). 65+ skills, free &mdash; no extension, no setup, works immediately.</p>
           <div class="code-block"><span class="hl-dim">{</span> <span class="cmd">"mcpServers"</span><span class="hl-dim">:</span> <span class="hl-dim">{</span> <span class="cmd">"tap"</span><span class="hl-dim">:</span> <span class="hl-dim">{</span> <span class="cmd">"command"</span><span class="hl-dim">:</span> <span style="color:var(--gold)">"tap"</span><span class="hl-dim">,</span> <span class="cmd">"args"</span><span class="hl-dim">:</span> <span class="hl-dim">[</span><span style="color:var(--gold)">"mcp"</span><span class="hl-dim">]</span> <span class="hl-dim">} } }</span></div>
         </div>
       </div>
@@ -2985,10 +2985,10 @@ h2 .hl {
         </div>
         <div class="price-amount"><span class="currency">$</span>0</div>
         <div class="price-label">You run it.</div>
-        <p class="price-poem">140+ taps, free inside Claude Code, Cursor, or your terminal. Install, run, done.</p>
+        <p class="price-poem">65+ taps, free inside Claude Code, Cursor, or your terminal. Install, run, done.</p>
         <div class="price-divider"></div>
         <ul class="price-features">
-          <li><span class="bullet">+</span> <strong>140+ community skills</strong> in any MCP agent (Claude Code, Cursor, Windsurf)</li>
+          <li><span class="bullet">+</span> <strong>65+ community skills</strong> in any MCP agent (Claude Code, Cursor, Windsurf)</li>
           <li><span class="bullet">+</span> <code>tap forge &lt;url&gt;</code> &mdash; create taps from terminal (sites with API/JSON-LD/RSS compile without AI)</li>
           <li><span class="bullet">+</span> <code>tap doctor</code> &mdash; health checks + fingerprint diff + diagnostics</li>
           <li><span class="bullet">+</span> <code>tap watch</code> &mdash; monitor changes, pipe to anywhere</li>
@@ -3043,7 +3043,7 @@ h2 .hl {
     </div>
 
     <p class="pricing-proof reveal">
-      <code>tap v0.11.3</code><span class="proof-sep">·</span>deterministic execution<span class="proof-sep">·</span><code>$0</code>/run
+      <code>tap v0.13.0</code><span class="proof-sep">·</span>deterministic execution<span class="proof-sep">·</span><code>$0</code>/run
     </p>
   </div>
 </section>
@@ -3091,7 +3091,7 @@ h2 .hl {
       </details>
       <details class="faq-item reveal">
         <summary>Is my data safe?</summary>
-        <div class="faq-answer">Taprun programs run in a sandboxed Worker with zero permissions &mdash; no filesystem, no network, no subprocess access. Your data never leaves your machine.</div>
+        <div class="faq-answer">Taprun programs are deterministic data plans, not arbitrary JavaScript &mdash; the runtime dispatches a closed 25-op vocabulary with no runtime <code>eval</code>, no <code>new Worker</code>, and no dynamic <code>import()</code>. Your data never leaves your machine.</div>
       </details>
       <details class="faq-item reveal">
         <summary>Is web scraping with Taprun legal?</summary>
@@ -3099,7 +3099,7 @@ h2 .hl {
       </details>
       <details class="faq-item reveal">
         <summary>Do I need to be a developer?</summary>
-        <div class="faq-answer">Basic terminal familiarity helps. The core workflow is two commands: <code>tap forge "what you want"</code> and <code>tap site name</code>. 140+ pre-built taps work with zero setup.</div>
+        <div class="faq-answer">Basic terminal familiarity helps. The core workflow is two commands: <code>tap forge "what you want"</code> and <code>tap site name</code>. 65+ pre-built taps work with zero setup.</div>
       </details>
     </div>
   </div>
@@ -3128,7 +3128,7 @@ h2 .hl {
       <path d="M 150 145 L 180 190 L 162 185 L 148 150 Z" fill="#6366F1"/>
     </svg>
     <h2>Compile once. Monitor always.<br><span class="hl">Catch failures before your data goes stale.</span></h2>
-    <p class="section-desc">140+ skills ready to run. <code>tap doctor</code> catches breakage before your data goes stale. Your programs, on your disk, forever.</p>
+    <p class="section-desc">65+ skills ready to run. <code>tap doctor</code> catches breakage before your data goes stale. Your programs, on your disk, forever.</p>
     <div class="hero-actions">
       <a href="#install" class="btn btn-primary">Start Free &mdash; $0/Run Forever</a>
       <a href="https://github.com/LeonTing1010/tap" class="btn btn-ghost">View on GitHub</a>
