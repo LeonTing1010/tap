@@ -94,8 +94,12 @@ const intent: string = body.intent || "read"
 const columns: string[] = body.columns || []
 const argsObj: Record<string, any> = body.args || {}
 const health = body.health || {}
-const layer = String(args.layer) || "?"
-const layerSource = String(args["layer-source"]) || "unspecified"
+// CLI flags win; otherwise fall back to body["tap:layer"]/body["tap:layerSource"]
+// (which lets CI auto-publish read metadata directly from the source plan).
+const layer = args.layer !== "?" ? String(args.layer) : String(body["tap:layer"] ?? "?")
+const layerSource = args["layer-source"] !== "unspecified"
+  ? String(args["layer-source"])
+  : String(body["tap:layerSource"] ?? "unspecified")
 const doctorVerdict = String(args.doctor) || ""
 
 function yamlEscape(s: string): string {
