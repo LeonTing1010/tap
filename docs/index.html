@@ -3,18 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Taprun — Browser automation where the AI runs once, not every run. $0 at runtime, forever.</title>
-<meta name="description" content="Every browser agent runs the LLM on every task — even the 25× cheaper ones. Taprun compiles browser interactions once (single AI pass), then runs deterministic JavaScript forever at $0 per execution. tap doctor catches structural drift before the run. Architecture difference, not price discount.">
-<meta property="og:title" content="Taprun — Browser automation where the AI runs once, not every run.">
-<meta property="og:description" content="Every browser agent calls the LLM on every run — even the 25× cheaper ones. Taprun moves the AI to authoring time. $0 tokens per execution. 100% deterministic. tap doctor catches drift before the run fires.">
+<title>Taprun — Compile once. Run forever. Diff the drift.</title>
+<meta name="description" content="Browser automation that doesn't burn tokens every run. Taprun compiles the AI's understanding of a site once, replays it deterministically forever, and catches structural drift before your data goes stale. For teams tired of AI-at-runtime fragility.">
+<meta property="og:title" content="Taprun — Compile once. Run forever. Diff the drift.">
+<meta property="og:description" content="AI at authoring time, not runtime. Zero prompt-injection surface, zero context loss, zero tokens per execution. When the site changes, Taprun tells you before production breaks.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://taprun.dev/">
 <meta property="og:image" content="https://taprun.dev/social-preview.svg">
 <meta property="og:image:width" content="1280">
 <meta property="og:image:height" content="640">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Taprun — AI runs once, not every run. $0 at runtime, forever.">
-<meta name="twitter:description" content="Every browser agent runs the LLM on every task — even the 25× cheaper ones. Taprun compiles once, then runs at $0 forever. Architecture difference, not price discount.">
+<meta name="twitter:title" content="Taprun — Compile once. Run forever. Diff the drift.">
+<meta name="twitter:description" content="Browser automation that compiles once and runs forever. Zero tokens at runtime. Catches drift before it breaks.">
 <meta name="twitter:image" content="https://taprun.dev/social-preview.svg">
 <meta name="keywords" content="AI coding agent protocol, MCP, model context protocol, Chrome extension, Playwright, tap protocol, forge, deterministic automation, sandbox, automatic diagnostics, macOS automation, doctor, fingerprint, website automation, AI agent, web scraping, browser automation, API auto-detection, JSON-LD, RSS, OpenAPI">
 <meta name="author" content="LeonTing1010">
@@ -27,7 +27,7 @@
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
   "name": "Taprun",
-  "description": "Taprun compiles AI understanding of websites into deterministic programs that run forever for $0 per execution. Doctor + fingerprint diffs catch silent failures. Health contracts verify data correctness. 65+ ready-to-run skills.",
+  "description": "Browser automation that compiles AI understanding once, runs deterministically forever at zero tokens, and detects structural drift before production breaks. Three-part lifecycle: compile, run, diff.",
   "url": "https://taprun.dev/",
   "downloadUrl": "https://github.com/LeonTing1010/tap/releases/latest",
   "softwareVersion": "0.13.0",
@@ -61,12 +61,9 @@
       "target": "https://taprun.dev/"
     },
     "itemListElement": [
-      {"@type": "SiteNavigationElement", "name": "Build", "description": "Use cases — what you build with Taprun", "url": "https://taprun.dev/#usecases"},
-      {"@type": "SiteNavigationElement", "name": "Compare", "description": "Taprun vs Browser Use, Stagehand, rtrvr.ai, Playwright MCP", "url": "https://taprun.dev/#comparison"},
-      {"@type": "SiteNavigationElement", "name": "Surfaces", "description": "CLI, MCP, Chrome extension, JSR library, Homebrew, GitHub plugin, Docker, schedulers", "url": "https://taprun.dev/#surfaces"},
-      {"@type": "SiteNavigationElement", "name": "How It Works", "description": "Learn how Taprun works", "url": "https://taprun.dev/#how-it-works"},
-      {"@type": "SiteNavigationElement", "name": "Skills", "description": "Browse 65+ ready-to-run skills", "url": "https://taprun.dev/skills/"},
+      {"@type": "SiteNavigationElement", "name": "Install", "description": "Install Taprun in 2 minutes", "url": "https://taprun.dev/#install"},
       {"@type": "SiteNavigationElement", "name": "Pricing", "description": "View pricing plans", "url": "https://taprun.dev/#pricing"},
+      {"@type": "SiteNavigationElement", "name": "Skills", "description": "Browse 65+ ready-to-run skills", "url": "https://taprun.dev/taps/"},
       {"@type": "SiteNavigationElement", "name": "Blog", "description": "Read our blog", "url": "https://taprun.dev/blog/"},
       {"@type": "SiteNavigationElement", "name": "GitHub", "description": "View source on GitHub", "url": "https://github.com/LeonTing1010/tap"}
     ]
@@ -78,14 +75,9 @@
   "@context": "https://schema.org",
   "@type": "FAQPage",
   "mainEntity": [
-    {"@type": "Question", "name": "Do I need to be a developer to use Taprun?", "acceptedAnswer": {"@type": "Answer", "text": "Taprun is a CLI tool. The core workflow is two commands: tap forge and tap site name. 65+ pre-built taps work with zero setup."}},
-    {"@type": "Question", "name": "Is my data safe?", "acceptedAnswer": {"@type": "Answer", "text": "Taprun programs are deterministic data plans, not arbitrary JavaScript. The runtime dispatches a closed 25-op vocabulary — no runtime eval, no new Worker, no dynamic import. Your data never leaves your machine."}},
-    {"@type": "Question", "name": "What happens when a website changes?", "acceptedAnswer": {"@type": "Answer", "text": "tap doctor --auto detects the breakage and packages diagnostics: current code, fingerprint diff, the last 3 commits to the tap, and a fresh page inspection. Free users hand that bundle to their AI (Claude Code, Cursor, BYOK forge). Pro users let their AI (BYOK) patch and ship the fix automatically on cron."}},
-    {"@type": "Question", "name": "How is Taprun different from Zapier?", "acceptedAnswer": {"@type": "Answer", "text": "Zapier charges per task. At scale that is $40K+ per year. Taprun has zero per-execution cost. AI runs once, program runs forever."}},
-    {"@type": "Question", "name": "Do I own the programs Taprun creates?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Every .tap.js file is yours. No lock-in. Cancel and your programs keep running forever."}},
-    {"@type": "Question", "name": "Does Taprun work offline?", "acceptedAnswer": {"@type": "Answer", "text": "Programs run locally with zero AI calls. You only need internet when forging (AI compilation) or when the program accesses a website."}},
-    {"@type": "Question", "name": "How is Taprun different from Browser Use or Stagehand?", "acceptedAnswer": {"@type": "Answer", "text": "They call AI every run ($0.50-$2.00 each, 60-95% reliability). Taprun compiles once, runs forever at $0 with 100% consistency. 300x cheaper, 20x faster."}},
-    {"@type": "Question", "name": "How is Taprun different from rtrvr.ai?", "acceptedAnswer": {"@type": "Answer", "text": "rtrvr.ai is LLM-at-runtime with DOM compression — 25× cheaper per task than vision-based agents, ~26K tokens/task, ~$0.12/run. Real engineering, but every run still invokes the LLM. Taprun moves the LLM to authoring time: one compile pass, then $0 tokens at execution and 100% deterministic output. At 1,000 runs/day rtrvr needs their $499/mo Scale tier or a BYOK bill; Taprun stays $9/mo flat. Use rtrvr for agentic exploration. Use Taprun for repeating production workflows."}}
+    {"@type": "Question", "name": "What does 'compile once' mean?", "acceptedAnswer": {"@type": "Answer", "text": "AI runs once at authoring time to capture a site's stable structural addresses (JSON-LD, OpenAPI, ARIA, RSS) — not to generate fragile CSS selectors. The compiled program is then replayed deterministically, no LLM at runtime."}},
+    {"@type": "Question", "name": "What happens when the site changes?", "acceptedAnswer": {"@type": "Answer", "text": "Run `tap doctor`. It compares captured fingerprints against the live page and flags drift — before your data goes stale. On Pro, `tap heal` proposes an AI-written fix; `tap refresh` rebaselines after human approval."}},
+    {"@type": "Question", "name": "Is my data safe?", "acceptedAnswer": {"@type": "Answer", "text": "Everything runs on your machine. Programs are structured data plans (closed 25-op vocabulary), not arbitrary JavaScript. No runtime eval, no new Worker, no cloud exfiltration. See the SECURITY.md in the public repo."}}
   ]
 }
 </script>
@@ -2219,11 +2211,9 @@ h2 .hl {
       <span class="nav-brand-text">tap</span>
     </a>
     <ul class="nav-links" role="list">
-      <li><a href="#usecases">Build</a></li>
-      <li><a href="#comparison">Compare</a></li>
-      <li><a href="#surfaces">Surfaces</a></li>
+      <li><a href="#how">How it works</a></li>
       <li><a href="#pricing">Pricing</a></li>
-      <li><a href="/taps/">Taps</a></li>
+      <li><a href="/taps/">Skills</a></li>
       <li><a href="https://taprun.dev/blog/" rel="noopener">Blog</a></li>
       <li><a href="https://github.com/LeonTing1010/tap" target="_blank" rel="noopener noreferrer">GitHub</a></li>
       <li><a href="#install" class="nav-cta">Get Started <span aria-hidden="true">→</span></a></li>
@@ -2246,13 +2236,13 @@ h2 .hl {
       <div class="hero-content">
         <div class="hero-badge">
           <span class="hero-badge-dot"></span>
-          v0.13.0 just shipped &nbsp;·&nbsp; 65+ skills, 0 setup
+          v0.13.0 &nbsp;·&nbsp; local-first &nbsp;·&nbsp; zero tokens at runtime
         </div>
-        <h1>Browser automation<br>where the AI<br><span class="hl">runs once, not every run.</span></h1>
-        <p class="hero-sub">Every other browser agent calls the LLM on every task &mdash; even the 25&times; cheaper ones. Taprun compiles browser interactions once (single AI pass), then runs pure JavaScript forever. <strong>Zero tokens at runtime.</strong> 100% deterministic. <code>tap doctor</code> checks structural fingerprints <em>before</em> each run, so breakage detection costs zero tokens too.</p>
-        <p class="hero-tagline">1,000 runs/day: Browser Use ~$1,500/mo &middot; rtrvr.ai $500+/mo Scale tier &middot; <strong>Taprun $9/mo flat.</strong> That&rsquo;s architecture, not a discount.</p>
+        <h1>Compile once.<br>Run forever.<br><span class="hl">Diff the drift.</span></h1>
+        <p class="hero-sub">Browser automation for teams tired of AI-at-runtime fragility. The AI compiles your workflow once &mdash; captures the site&rsquo;s stable structural addresses, not brittle CSS selectors. Then plays it back deterministically, forever. When the site changes, <code>tap doctor</code> tells you <em>before</em> production breaks.</p>
+        <p class="hero-tagline">Used daily inside Claude Code, Cursor, Windsurf, and any MCP host. <strong>Your machine. Your browser. Your session.</strong></p>
         <div class="hero-actions">
-          <a href="#install" class="btn btn-primary">Start Free &mdash; $0/Run Forever</a>
+          <a href="#install" class="btn btn-primary">Install in 2 Minutes</a>
           <a href="https://github.com/LeonTing1010/tap" class="btn btn-ghost">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
             View on GitHub
@@ -2322,607 +2312,74 @@ h2 .hl {
   </div>
 </section>
 
-<!-- ===== Stats Bar ===== -->
-<div class="container stats-bar reveal">
-  <div class="stats-inner">
-    <div class="stat">
-      <div class="stat-value">65+</div>
-      <div class="stat-label">Ready-to-run skills</div>
-    </div>
-    <div class="stat">
-      <div class="stat-value">$0</div>
-      <div class="stat-label">At runtime, forever</div>
-    </div>
-    <div class="stat">
-      <div class="stat-value">&lt;1s</div>
-      <div class="stat-label">Per execution</div>
-    </div>
-    <div class="stat">
-      <div class="stat-value">&infin;</div>
-      <div class="stat-label">Runs, no limits</div>
-    </div>
-  </div>
-</div>
-
-<!-- ===== How it Works ===== -->
-<section class="how-it-works" id="idea">
+<!-- ===== Three pillars (replaces 8 old sections: stats, how-it-works, composition, reliability, comparison, protocol, use-cases, skills, surfaces) ===== -->
+<style>
+  .evidence { padding: 96px 0 64px; position: relative; }
+  .evidence-intro { max-width: 720px; margin: 0 auto 64px; text-align: center; }
+  .evidence-intro h2 { font-family: var(--font-heading); font-weight: 800; font-size: clamp(28px, 4vw, 42px); letter-spacing: -0.03em; line-height: 1.15; color: var(--white); margin-bottom: 18px; }
+  .evidence-intro p { font-size: 17px; line-height: 1.7; color: var(--text-dim); }
+  .evidence-grid { display: grid; grid-template-columns: 1fr; gap: 28px; max-width: 960px; margin: 0 auto; }
+  .evidence-card { background: linear-gradient(135deg, rgba(99, 102, 241, 0.06), rgba(99, 102, 241, 0.02)); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: var(--radius-lg); padding: 40px 44px; position: relative; transition: border-color 0.3s, transform 0.3s; }
+  .evidence-card:hover { border-color: rgba(99, 102, 241, 0.35); transform: translateY(-2px); }
+  .evidence-card::before { content: attr(data-num); position: absolute; top: 24px; right: 32px; font-family: var(--font-mono); font-size: 13px; color: var(--text-muted); font-weight: 600; letter-spacing: 0.1em; }
+  .evidence-card h3 { font-family: var(--font-heading); font-weight: 800; font-size: clamp(24px, 3.2vw, 34px); letter-spacing: -0.02em; color: var(--white); margin-bottom: 16px; line-height: 1.2; }
+  .evidence-card h3 .hl { color: var(--indigo-bright); }
+  .evidence-claim { font-size: 16px; line-height: 1.65; color: var(--text); margin-bottom: 24px; }
+  .evidence-claim code { background: rgba(99, 102, 241, 0.1); padding: 2px 7px; border-radius: 5px; color: var(--indigo-bright); font-size: 0.88em; }
+  .evidence-claim em { color: var(--gold); font-style: normal; font-weight: 600; }
+  .evidence-quote { border-left: 3px solid var(--indigo); padding: 14px 20px; margin: 0; background: rgba(99, 102, 241, 0.04); border-radius: 0 8px 8px 0; font-size: 14px; line-height: 1.6; color: var(--text-dim); font-style: italic; }
+  .evidence-quote cite { display: block; margin-top: 10px; font-size: 12px; color: var(--text-muted); font-style: normal; }
+  .evidence-quote cite a { color: var(--indigo-bright); text-decoration: none; border-bottom: 1px dotted rgba(165, 180, 252, 0.4); }
+  .evidence-quote cite a:hover { border-bottom-color: var(--indigo-bright); }
+  @media (min-width: 900px) {
+    .evidence-grid { grid-template-columns: 1fr; gap: 24px; }
+    .evidence-card { display: grid; grid-template-columns: 80px 1fr; align-items: start; gap: 36px; padding: 44px 48px; }
+    .evidence-card::before { position: static; font-size: 48px; font-family: var(--font-heading); font-weight: 800; color: var(--indigo-light); opacity: 0.4; letter-spacing: -0.02em; grid-row: 1 / span 3; align-self: start; }
+    .evidence-card-body { grid-column: 2; }
+  }
+</style>
+<section class="evidence" id="how">
   <div class="container">
-    <div class="how-inner">
-      <div class="how-text">
-        <div class="section-tag reveal">Do the math</div>
-        <h2 class="reveal">Your AI browser agent costs <span class="hl">more than you think.</span></h2>
-        <p class="section-desc reveal">A 10-step workflow with Browser-Use or Stagehand calls the LLM on every step &mdash; 10 API round-trips, $0.50&ndash;$2.00, every single run.</p>
-        <p class="section-desc reveal">Run it 100&times;/day: <strong>$50&ndash;$200/day.</strong> At production scale: <strong>$3,600/month minimum.</strong></p>
-        <p class="section-desc reveal">The LLM figured out how to use that website once. Why is it figuring it out again on every run?</p>
-        <p class="section-desc reveal" style="color:var(--indigo-bright);font-weight:600;">The first run needs AI. Every run after that doesn't. Taprun charges $0 from run 2 onward.</p>
-      </div>
-      <div class="forge-flow reveal">
-        <div class="forge-step forge-step--ai">
-          <div class="forge-step-num">01</div>
-          <div>
-            <h4>Inspect</h4>
-            <p>Agent analyzes the interface &mdash; structure, APIs, auth, data patterns</p>
-            <span class="forge-cost">~5K tokens / ~$0.05</span>
-          </div>
-        </div>
-        <div class="forge-step forge-step--ai">
-          <div class="forge-step-num">02</div>
-          <div>
-            <h4>Verify</h4>
-            <p>Agent runs the program live, validates results match expectations</p>
-            <span class="forge-cost">~10K tokens / ~$0.10 (1-3 rounds)</span>
-          </div>
-        </div>
-        <div class="forge-step forge-step--ai">
-          <div class="forge-step-num">03</div>
-          <div>
-            <h4>Save</h4>
-            <p>Crystallize as .tap.js &mdash; pure JavaScript, deterministic, version-controlled</p>
-            <span class="forge-cost">~1K tokens / ~$0.01</span>
-          </div>
-        </div>
-        <div class="forge-step forge-step--run">
-          <div class="forge-step-num">&infin;</div>
-          <div>
-            <h4>Run</h4>
-            <p>Execute forever. No AI, no tokens, instant results. The program just works.</p>
-            <span class="forge-cost">$0.00 forever</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ===== Composition (added 2026-04-11) ===== -->
-<!-- Three-layer narrative for the composition era:
-     1. tap.pipe DSL — the declarative surface tap authors write
-     2. @taprun/executor — the embeddable engine products import
-     3. RDK showcase — the real economic result (294x speedup, $135/mo saved)
-     This section reuses protocol-layer styles; no new CSS required. -->
-<section class="protocol" id="composition">
-  <div class="container">
-    <div class="protocol-header">
-      <div class="section-tag reveal">Composition &mdash; new April 2026</div>
-      <h2 class="reveal">Chain any tap into any other tap. <span class="hl">Forever, for free.</span></h2>
-      <p class="section-desc reveal">Single taps compose into whole workflows. Reddit Demand Kit <small style="opacity:.75">(renamed PostGhost in April 2026)</small> saw a <strong>294&times; speedup</strong> and zero LLM cost per invocation when they compiled their <code>market_scan</code> prompt into a pipe.</p>
+    <div class="evidence-intro reveal">
+      <h2>Built for teams tired of AI-at-runtime fragility.</h2>
+      <p>Every browser agent in the market today invokes an LLM on every task. Claude for Chrome. Atlas. Browser Use. Stagehand. The ones that compile still let the LLM pick selectors freely. Every one of them has the same three architectural failure modes. Taprun fixes them at the architecture level.</p>
     </div>
 
-    <div class="protocol-layers">
-      <div class="protocol-layer layer-scripts reveal">
-        <div class="protocol-layer-head">
-          <h3>1. Declare &mdash; <code>tap.pipe({ steps, return })</code></h3>
-          <span class="protocol-layer-count">JavaScript, not YAML</span>
+    <div class="evidence-grid">
+
+      <article class="evidence-card reveal" data-num="01">
+        <div class="evidence-card-body">
+          <h3>Compile <span class="hl">once.</span></h3>
+          <p class="evidence-claim">AI runs exactly once — at authoring time. It captures the site's stable structural addresses (JSON-LD, OpenAPI, ARIA landmarks, RSS) instead of brittle CSS selectors the next deploy will wipe out. The compiled program is <em>data</em>, not code: a 25-op closed vocabulary that can't eval, can't spawn workers, can't reach the network outside declared endpoints.</p>
+          <blockquote class="evidence-quote">
+            "LLMs frequently generate CSS class selectors or XPath rather than Playwright's recommended getByRole / getByLabel / getByText approach, even when accessible-name selectors would work. The generated code can 'work' on first run but break on the first layout tweak."
+            <cite>— jimmypk, <a href="https://news.ycombinator.com/item?id=47780971" rel="noopener">HN discussion on a deterministic-automation launch, 2026-04-15</a></cite>
+          </blockquote>
         </div>
-        <div class="primitives">
-          <span class="prim">steps DAG</span>
-          <span class="prim">$ref binding</span>
-          <span class="prim">auto-parallel</span>
-          <span class="prim">run cache</span>
-          <span class="prim">cycle detection</span>
-          <span class="prim">schema contracts</span>
+      </article>
+
+      <article class="evidence-card reveal" data-num="02">
+        <div class="evidence-card-body">
+          <h3>Run <span class="hl">forever.</span></h3>
+          <p class="evidence-claim">Zero LLM calls at runtime. Zero prompt-injection surface. Zero context-window loss. Zero tokens per execution. Same input → same output, every time. The compile-time captured structure becomes a boring, deterministic playback — which is exactly what production workloads want.</p>
+          <blockquote class="evidence-quote">
+            "same input → different outputs / works in testing → breaks randomly in production / retries magically 'fix' things. The agent wasn't wrong. The environment was inconsistent. <strong>The biggest improvement I made wasn't prompt tuning. It was stabilizing the execution environment.</strong>"
+            <cite>— r/AI_Agents, <a href="https://www.reddit.com/r/AI_Agents/comments/1seme42/" rel="noopener">"Most agent problems are actually environment problems", 2026-04-07</a></cite>
+          </blockquote>
         </div>
-      </div>
+      </article>
 
-      <div class="protocol-arrow">&darr;</div>
-
-      <div class="protocol-layer layer-builtin reveal">
-        <div class="protocol-layer-head">
-          <h3>2. Embed &mdash; <code>jsr:@taprun/executor</code></h3>
-          <span class="protocol-layer-count">65 KB &middot; zero deps &middot; MIT</span>
+      <article class="evidence-card reveal" data-num="03">
+        <div class="evidence-card-body">
+          <h3>Diff the <span class="hl">drift.</span></h3>
+          <p class="evidence-claim"><code>tap doctor</code> compares the captured fingerprint against the live page and flags structural drift <em>before</em> your data goes stale. <code>tap heal</code> proposes an AI-written patch on Pro. <code>tap refresh</code> re-baselines only after a human approves. Lifecycle as a first-class primitive — not an afterthought retry loop.</p>
+          <blockquote class="evidence-quote">
+            "I'd be curious whether you measure success as 'initial generation works' or 'the same flow still passes after small DOM/layout changes a week later' — that's the boundary between a neat demo and something a team can rely on."
+            <cite>— potter098, <a href="https://news.ycombinator.com/item?id=47780971" rel="noopener">HN, 2026-04-15 (question left unanswered by the compile-only competitor)</a></cite>
+          </blockquote>
         </div>
-        <div class="primitives">
-          <span class="prim">Deno + Node</span>
-          <span class="prim">in-process runPipe</span>
-          <span class="prim">no subprocess fork</span>
-          <span class="prim">serverless-friendly</span>
-          <span class="prim">live on JSR</span>
-        </div>
-      </div>
+      </article>
 
-      <div class="protocol-arrow">&darr;</div>
-
-      <div class="protocol-layer layer-runtime reveal">
-        <div class="protocol-layer-head">
-          <h3>3. Result &mdash; 26,000 LLM tokens &rarr; 0 tokens per run</h3>
-          <span class="protocol-layer-count">measured on a real product</span>
-        </div>
-        <div class="primitives">
-          <span class="prim">$0.15/call &rarr; $0</span>
-          <span class="prim">break-even &lt; 1 call</span>
-          <span class="prim">$135/mo saved</span>
-          <span class="prim">0.8 ms in-process</span>
-          <span class="prim">233 ms subprocess</span>
-          <span class="prim">294&times; speedup</span>
-        </div>
-      </div>
-    </div>
-
-    <p class="section-desc reveal" style="text-align:center;margin-top:32px;max-width:720px;margin-left:auto;margin-right:auto;">
-      Read the full story:
-      <a href="blog/composable-taps-are-just-javascript.html" style="color:var(--indigo-bright);text-decoration:underline;">why JS not YAML</a>
-      &middot;
-      <a href="blog/rdk-compiled-pipes-from-llm-prompts.html" style="color:var(--indigo-bright);text-decoration:underline;">RDK case study</a>
-      &middot;
-      <a href="blog/taprun-executor-0-8-ms-library.html" style="color:var(--indigo-bright);text-decoration:underline;">engine extraction</a>
-      &middot;
-      <a href="https://jsr.io/@taprun/executor" style="color:var(--indigo-bright);text-decoration:underline;">@taprun/executor on JSR</a>
-    </p>
-  </div>
-</section>
-
-<!-- ===== Reliability ===== -->
-<section class="why-tap" id="reliability">
-  <div class="container">
-    <div class="why-header">
-      <div class="section-tag reveal">How doctor catches it</div>
-      <h2 class="reveal">Health contracts + fingerprint diffs. <span class="hl">Not retry loops.</span></h2>
-      <p class="section-desc reveal">Websites change their DOM. APIs shift. Selectors silently die. <code>tap doctor</code> runs health contracts (<code>range</code>, <code>pattern</code>, <code>drift</code>) and compares semantic fingerprints &mdash; catching silent failures before your data goes stale.</p>
-    </div>
-
-    <div class="why-grid">
-      <div class="why-card why-card--safe reveal">
-        <div class="why-card-tag">Automatic diagnostics</div>
-        <h3>Doctor catches breakage before your data goes stale.</h3>
-        <p><code>tap doctor</code> runs health contracts after every execution. Fingerprint diff (semantic, ARIA-based &mdash; survives CSS-in-JS rebuilds) tells you exactly what changed &mdash; not just "0 rows," but the precise selector that disappeared and the API schema that shifted. <code>--auto</code> packages diagnostics: current code, git history, and a fresh page snapshot. You (or your AI agent) read the diff and decide how to fix it &mdash; no black-box retry loops.</p>
-        <div class="code-block" style="margin-top:18px;">
-          <span class="hl-dim">$ </span><span class="cmd">tap doctor --auto github trending</span><br>
-          <span style="color:var(--red)">&#10007;</span> <span class="dim">selector</span> <code>h2.repo-name</code> <span class="dim">&mdash; gone since last run</span><br>
-          <span style="color:var(--gold)">&#9888;</span> <span class="dim">fingerprint diff:</span> <span style="color:var(--gold)">&uarr; 3 structural changes</span><br>
-          <span style="color:var(--green)">&#10003;</span> <span class="dim">heal bundle ready &mdash; current code + git history + page snapshot</span>
-        </div>
-        <div class="why-compare" style="margin-top:18px;">
-          <div><span class="good">&#10003; Taprun</span> <span class="dim">&mdash; you (or your agent) know within the hour, with the exact diff</span></div>
-          <div><span class="bad">&#10007; Browser-Use</span> <span class="dim">&mdash; empty arrays, three days of garbage data</span></div>
-        </div>
-      </div>
-      <div class="why-card why-card--accurate reveal">
-        <div class="why-card-tag">Deterministic</div>
-        <h3>100% consistent results. Not 60–95%.</h3>
-        <p>Browser-Use and Stagehand re-interpret the page on every run &mdash; the same page, the same task, different results each time. A compiled tap is deterministic code: the same input always produces the same output.</p>
-        <div class="why-compare" style="margin-top:20px;">
-          <div><span class="good">&#10003; Taprun</span> <span class="dim">&mdash; 100% consistency, deterministic program</span></div>
-          <div><span class="bad">&#10007; Browser-Use</span> <span class="dim">&mdash; 60&ndash;95% reliability, AI decides each time</span></div>
-          <div><span class="bad">&#10007; Stagehand</span> <span class="dim">&mdash; same reliability floor, same per-run cost</span></div>
-        </div>
-        <p style="margin-top:20px;font-size:13px;color:var(--text-muted);">Taprun programs are plain JavaScript. No AI at runtime means no hallucinations, no timeouts, no unpredictable behavior. It either works or it doesn't &mdash; and <code>tap doctor</code> tells you which.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ===== Comparison Matrix (added 2026-04-19 after rtrvr.ai competitive analysis) ===== -->
-<section class="comparison" id="comparison">
-  <div class="container">
-    <div class="comparison-header">
-      <div class="section-tag reveal">The architectural line</div>
-      <h2 class="reveal">Every browser agent runs the LLM on every task. <span class="hl">Taprun runs it once.</span></h2>
-      <p class="section-desc reveal">25&times; cheaper than vision-based. Compressed DOM. Smaller models. Accessibility-tree extraction. All real engineering &mdash; and all still LLM-at-runtime. Taprun moved the LLM to authoring time, which is a different question entirely.</p>
-    </div>
-
-    <div class="comparison-scroll reveal">
-      <table class="comparison-table">
-        <thead>
-          <tr>
-            <th class="cmp-axis">&nbsp;</th>
-            <th class="cmp-tap">Taprun</th>
-            <th>Browser Use</th>
-            <th>Stagehand</th>
-            <th>rtrvr.ai</th>
-            <th>Playwright MCP</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td class="cmp-axis">LLM at runtime</td>
-            <td class="cmp-tap">No &mdash; authoring only</td>
-            <td>Yes &mdash; every step</td>
-            <td>Yes &mdash; every step</td>
-            <td>Yes &mdash; every task (DOM-compressed)</td>
-            <td>Yes &mdash; DOM on every call</td>
-          </tr>
-          <tr>
-            <td class="cmp-axis">Tokens per run</td>
-            <td class="cmp-tap">0</td>
-            <td>~40K+ (vision)</td>
-            <td>~40K+ (vision)</td>
-            <td>~26K (their claim)</td>
-            <td>~114K per HN thread</td>
-          </tr>
-          <tr>
-            <td class="cmp-axis">Output consistency</td>
-            <td class="cmp-tap">100% deterministic</td>
-            <td>60&ndash;95%</td>
-            <td>60&ndash;95%</td>
-            <td>81% SOTA (their benchmark)</td>
-            <td>Varies per call</td>
-          </tr>
-          <tr>
-            <td class="cmp-axis">Cost at 1,000 runs/day</td>
-            <td class="cmp-tap">$9/mo flat</td>
-            <td>~$1,500/mo</td>
-            <td>~$1,500/mo</td>
-            <td>Scale tier $499.99/mo + overages</td>
-            <td>Your LLM bill, scaled</td>
-          </tr>
-          <tr>
-            <td class="cmp-axis">Breakage detection</td>
-            <td class="cmp-tap">Fingerprint diff <em>before</em> run</td>
-            <td>None (retry loop)</td>
-            <td>None (retry loop)</td>
-            <td>LLM re-invocation on failure</td>
-            <td>None</td>
-          </tr>
-          <tr>
-            <td class="cmp-axis">Self-healing cost</td>
-            <td class="cmp-tap">$0 (structural diff)</td>
-            <td>Per-retry tokens</td>
-            <td>Per-retry tokens</td>
-            <td>Extra LLM invocation</td>
-            <td>Per-retry tokens</td>
-          </tr>
-          <tr>
-            <td class="cmp-axis">Offline execution</td>
-            <td class="cmp-tap">Yes (pure JS)</td>
-            <td>No</td>
-            <td>No</td>
-            <td>No</td>
-            <td>No</td>
-          </tr>
-          <tr>
-            <td class="cmp-axis">Program ownership</td>
-            <td class="cmp-tap"><code>.tap.js</code> on your disk</td>
-            <td>Ephemeral</td>
-            <td>Script on disk (calls LLM)</td>
-            <td>Tasks saved in rtrvr</td>
-            <td>Session scripts</td>
-          </tr>
-          <tr>
-            <td class="cmp-axis">Form factors</td>
-            <td class="cmp-tap">CLI, MCP, Chrome ext, JSR executor</td>
-            <td>Python SDK, cloud</td>
-            <td>Node SDK</td>
-            <td>CLI, Chrome, API, MCP, WhatsApp, embeddable</td>
-            <td>MCP only</td>
-          </tr>
-          <tr>
-            <td class="cmp-axis">Pre-built library</td>
-            <td class="cmp-tap">65+ taps, 40+ sites</td>
-            <td>None</td>
-            <td>None</td>
-            <td>Task templates</td>
-            <td>None</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <p class="comparison-note reveal">rtrvr.ai&rsquo;s multi-form-factor coverage is genuinely impressive, and DOM compression beats screenshots by 4&times;. But &ldquo;cheaper LLM-at-runtime&rdquo; and &ldquo;LLM never called at runtime&rdquo; are different architectural lines. Full breakdown: <a href="blog/rtrvr-vs-tap.html">rtrvr.ai vs Taprun</a> &middot; <a href="blog/stagehand-vs-tap.html">Stagehand vs Taprun</a> &middot; <a href="blog/playwright-mcp-token-cost-alternative.html">Playwright MCP vs Taprun</a></p>
-  </div>
-</section>
-
-<!-- ===== Protocol ===== -->
-<section class="protocol" id="protocol">
-  <div class="container">
-    <div class="protocol-header">
-      <div class="section-tag reveal">How it works</div>
-      <h2 class="reveal">AI does the hard part once. <span class="hl">Then it never has to again.</span></h2>
-      <p class="section-desc reveal">Three steps. One time. After that, your task runs forever for free.</p>
-    </div>
-
-    <div class="protocol-layers">
-      <div class="protocol-layer layer-scripts reveal">
-        <div class="protocol-layer-head">
-          <h3>1. Forge &mdash; AI inspects the site once</h3>
-          <span class="protocol-layer-count">~5 minutes, one time</span>
-        </div>
-        <div class="primitives">
-          <span class="prim">DOM structure</span>
-          <span class="prim">API endpoints</span>
-          <span class="prim">auth strategy</span>
-          <span class="prim">data patterns</span>
-        </div>
-      </div>
-
-      <div class="protocol-arrow">&darr;</div>
-
-      <div class="protocol-layer layer-builtin reveal">
-        <div class="protocol-layer-head">
-          <h3>2. Compile &mdash; AI writes a deterministic <code>.tap.js</code></h3>
-          <span class="protocol-layer-count">verified + fingerprinted</span>
-        </div>
-        <div class="primitives">
-          <span class="prim">pure JavaScript</span>
-          <span class="prim">version-controlled</span>
-          <span class="prim">runs on your disk</span>
-          <span class="prim">no lock-in</span>
-        </div>
-      </div>
-
-      <div class="protocol-arrow">&darr;</div>
-
-      <div class="protocol-layer layer-runtime reveal">
-        <div class="protocol-layer-head">
-          <h3>3. Run &mdash; <code>tap.run</code> executes the program forever</h3>
-          <span class="protocol-layer-count">no LLM &middot; no tokens &middot; &lt;1s</span>
-        </div>
-        <div class="primitives">
-          <span class="prim">$0 per run</span>
-          <span class="prim">100% deterministic</span>
-          <span class="prim">offline-capable</span>
-          <span class="prim">same result every time</span>
-        </div>
-      </div>
-    </div>
-
-    <p class="section-desc reveal" style="text-align:center;margin-top:32px;max-width:600px;margin-left:auto;margin-right:auto;">When the site changes, doctor detects it. AI fixes the tap. Back to step 3. <strong style="color:var(--indigo-bright);">You didn't touch anything.</strong></p>
-  </div>
-</section>
-
-<!-- ===== Use Cases (added 2026-04-19) ===== -->
-<section class="usecases" id="usecases">
-  <div class="container">
-    <div class="usecases-header">
-      <div class="section-tag reveal">What you build with it</div>
-      <h2 class="reveal">Taps built to run <span class="hl">every 5 minutes, forever.</span></h2>
-      <p class="section-desc reveal">Taprun isn&rsquo;t for one-off exploration &mdash; it&rsquo;s for the workflows you&rsquo;d run daily if they didn&rsquo;t cost $1,500/month. Here&rsquo;s what compiles-once-runs-forever actually looks like in production.</p>
-    </div>
-
-    <div class="usecases-grid">
-      <div class="usecase-card reveal">
-        <div class="usecase-icon">&#8942;&#8942;</div>
-        <h3>Daily competitive intel</h3>
-        <p>Pricing pages, feature pages, launch posts. One scan at 7am, piped into your sheet or Slack. Same runs, same output, zero tokens.</p>
-        <code class="usecase-snippet"><span class="snippet-prompt">$ </span>tap github trending <span class="snippet-pipe">|</span> tap filter lang=py</code>
-        <div class="usecase-meta"><span>cron</span><span>$0/run</span><span>Slack</span></div>
-      </div>
-
-      <div class="usecase-card usecase-card--gold reveal">
-        <div class="usecase-icon">&#8960;</div>
-        <h3>Lead aggregation at scale</h3>
-        <p>LinkedIn profiles, X bios, Reddit usernames &mdash; logged-in via the Chrome bridge, bucketed by ICP. 8,640 pulls/day at $9/mo flat, ban-risk neutralised.</p>
-        <code class="usecase-snippet"><span class="snippet-prompt">$ </span>tap linkedin people --icp founders</code>
-        <div class="usecase-meta"><span>logged-in</span><span>Chrome</span><span>CSV</span></div>
-      </div>
-
-      <div class="usecase-card usecase-card--green reveal">
-        <div class="usecase-icon">&#9679;&#9679;</div>
-        <h3>Research synthesis pipelines</h3>
-        <p>arXiv + HN + GitHub trending + Reddit + X &mdash; five taps, one pipe, delivered to Claude Code as structured rows. Tokens go to synthesis, not retrieval.</p>
-        <code class="usecase-snippet"><span class="snippet-prompt">$ </span>tap pipe arxiv hn reddit <span class="snippet-pipe">|</span> tap table</code>
-        <div class="usecase-meta"><span>MCP</span><span>pipe</span><span>deterministic</span></div>
-      </div>
-
-      <div class="usecase-card reveal">
-        <div class="usecase-icon">&#9889;</div>
-        <h3>Break detection &amp; auto-heal</h3>
-        <p>Doctor checks the structural fingerprint before the run fires. Site drifted? You get a Slack ping with the exact diff. Pro tier: taps repair themselves overnight.</p>
-        <code class="usecase-snippet"><span class="snippet-prompt">$ </span>tap doctor --auto --watch</code>
-        <div class="usecase-meta"><span>fingerprint</span><span>Slack</span><span>$0 heal</span></div>
-      </div>
-
-      <div class="usecase-card usecase-card--gold reveal">
-        <div class="usecase-icon">&#10066;</div>
-        <h3>MCP-native data streams</h3>
-        <p>Claude Code pulls rows, not HTML. 65+ taps become MCP tools in Cursor, Windsurf, Codex. Zero tokens on the read path &mdash; budget goes to reasoning.</p>
-        <code class="usecase-snippet"><span class="snippet-prompt">$ </span>claude mcp add tap <span class="snippet-pipe">--</span> tap mcp</code>
-        <div class="usecase-meta"><span>Claude Code</span><span>Cursor</span><span>Windsurf</span></div>
-      </div>
-
-      <div class="usecase-card usecase-card--red reveal">
-        <div class="usecase-icon">&#9202;</div>
-        <h3>Schedule anywhere JS runs</h3>
-        <p>systemd, launchd, GitHub Actions, Cloudflare Workers, n8n webhooks. If it executes JavaScript, it runs Taprun. No auth servers to babysit, no vendor lock.</p>
-        <code class="usecase-snippet"><span class="snippet-prompt">0 7 * * * </span>tap rdk market_scan</code>
-        <div class="usecase-meta"><span>cron</span><span>CI</span><span>CF Workers</span></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ===== Skills ===== -->
-<section class="skills" id="skills">
-  <div class="container">
-    <div class="skills-header">
-      <div class="section-tag reveal">Skills gallery</div>
-      <h2 class="reveal">65+ taps, <span class="hl">ready to run right now.</span></h2>
-      <p class="section-desc reveal">GitHub trending. Reddit front page. Hacker News top posts. X profiles. arXiv papers. 68+ sites and growing &mdash; no forging needed, just run.</p>
-    </div>
-
-    <div class="skills-categories reveal">
-      <div class="skill-cat">
-        <div class="skill-cat-icon">&uarr;</div>
-        <h4>Trending</h4>
-        <p>31 skills across news, social, dev, and finance platforms</p>
-      </div>
-      <div class="skill-cat">
-        <div class="skill-cat-icon">&#x1F50D;</div>
-        <h4>Search</h4>
-        <p>11 skills for cross-platform content discovery</p>
-      </div>
-      <div class="skill-cat">
-        <div class="skill-cat-icon">&#x25CE;</div>
-        <h4>Deep Read</h4>
-        <p>Detail, comments, and thread expansion across 7 platforms</p>
-      </div>
-      <div class="skill-cat">
-        <div class="skill-cat-icon">&#x270E;</div>
-        <h4>Write</h4>
-        <p>17 skills for publishing, posting, and messaging</p>
-      </div>
-    </div>
-
-    <div class="skills-grid reveal">
-      <a class="site-tag" href="https://github.com" target="_blank" rel="noopener">GitHub</a>
-      <a class="site-tag" href="https://news.ycombinator.com" target="_blank" rel="noopener">Hacker News</a>
-      <a class="site-tag" href="https://reddit.com" target="_blank" rel="noopener">Reddit</a>
-      <a class="site-tag" href="https://x.com" target="_blank" rel="noopener">X / Twitter</a>
-      <a class="site-tag" href="https://youtube.com" target="_blank" rel="noopener">YouTube</a>
-      <a class="site-tag" href="https://bsky.app" target="_blank" rel="noopener">Bluesky</a>
-      <a class="site-tag" href="https://producthunt.com" target="_blank" rel="noopener">Product Hunt</a>
-      <a class="site-tag" href="https://stackoverflow.com" target="_blank" rel="noopener">Stack Overflow</a>
-      <a class="site-tag" href="https://dev.to" target="_blank" rel="noopener">Dev.to</a>
-      <a class="site-tag" href="https://medium.com" target="_blank" rel="noopener">Medium</a>
-      <a class="site-tag" href="https://lobste.rs" target="_blank" rel="noopener">Lobsters</a>
-      <a class="site-tag" href="https://arxiv.org" target="_blank" rel="noopener">arXiv</a>
-      <a class="site-tag" href="https://wikipedia.org" target="_blank" rel="noopener">Wikipedia</a>
-      <a class="site-tag" href="https://bilibili.com" target="_blank" rel="noopener">Bilibili</a>
-      <a class="site-tag" href="https://zhihu.com" target="_blank" rel="noopener">Zhihu</a>
-      <a class="site-tag" href="https://weibo.com" target="_blank" rel="noopener">Weibo</a>
-      <a class="site-tag" href="https://xiaohongshu.com" target="_blank" rel="noopener">Xiaohongshu</a>
-      <a class="site-tag" href="https://douyin.com" target="_blank" rel="noopener">Douyin</a>
-      <a class="site-tag" href="https://weixin.qq.com" target="_blank" rel="noopener">WeChat</a>
-      <a class="site-tag" href="https://douban.com" target="_blank" rel="noopener">Douban</a>
-      <a class="site-tag" href="https://juejin.cn" target="_blank" rel="noopener">Juejin</a>
-      <a class="site-tag" href="https://v2ex.com" target="_blank" rel="noopener">V2EX</a>
-      <a class="site-tag" href="https://36kr.com" target="_blank" rel="noopener">36Kr</a>
-      <a class="site-tag" href="https://toutiao.com" target="_blank" rel="noopener">Toutiao</a>
-      <a class="site-tag" href="https://baidu.com" target="_blank" rel="noopener">Baidu</a>
-      <a class="site-tag" href="https://sspai.com" target="_blank" rel="noopener">SSPai</a>
-      <a class="site-tag" href="https://weread.qq.com" target="_blank" rel="noopener">WeRead</a>
-      <a class="site-tag" href="https://xueqiu.com" target="_blank" rel="noopener">Xueqiu</a>
-      <a class="site-tag" href="https://trends.google.com" target="_blank" rel="noopener">Google Trends</a>
-      <a class="site-tag" href="https://coingecko.com" target="_blank" rel="noopener">CoinGecko</a>
-      <a class="site-tag" href="https://store.steampowered.com" target="_blank" rel="noopener">Steam</a>
-      <a class="site-tag" href="https://crates.io" target="_blank" rel="noopener">Crates.io</a>
-      <a class="site-tag" href="https://pypi.org" target="_blank" rel="noopener">PyPI</a>
-      <a class="site-tag" href="https://pixiv.net" target="_blank" rel="noopener">Pixiv</a>
-      <a class="site-tag" href="https://linkedin.com" target="_blank" rel="noopener">LinkedIn</a>
-      <a class="site-tag" href="https://notion.so" target="_blank" rel="noopener">Notion</a>
-      <a class="site-tag" href="https://discord.com" target="_blank" rel="noopener">Discord</a>
-      <a class="site-tag" href="https://slack.com" target="_blank" rel="noopener">Slack</a>
-      <a class="site-tag" href="https://telegra.ph" target="_blank" rel="noopener">Telegraph</a>
-      <a class="site-tag" href="https://jimeng.jianying.com" target="_blank" rel="noopener">Jimeng AI</a>
-      <a class="site-tag" href="https://dictionary.com" target="_blank" rel="noopener">Dictionary</a>
-    </div>
-  </div>
-</section>
-
-<!-- ===== Surfaces (form factors, added 2026-04-19) ===== -->
-<section class="surfaces" id="surfaces">
-  <div class="container">
-    <div class="surfaces-header">
-      <div class="section-tag reveal">Meet you where you work</div>
-      <h2 class="reveal">One protocol. <span class="hl">Eight surfaces.</span></h2>
-      <p class="section-desc reveal">Taprun is the protocol &mdash; 8 irreducible browser operations compiled into <code>.tap.js</code>. The same program runs from your terminal, your AI agent, your CI runner, or a library your product embeds. No form factor is more real than any other.</p>
-    </div>
-
-    <div class="surfaces-grid">
-      <div class="surface-card reveal">
-        <div class="surface-head">
-          <div class="surface-mark">&gt;_</div>
-          <div>
-            <h3>CLI</h3>
-            <div class="surface-tag">terminal &middot; npx</div>
-          </div>
-        </div>
-        <p>Zero-install via <code>npx</code>, or a permanent binary from the curl installer. macOS, Linux, Windows. Offline-first.</p>
-        <div class="surface-cmd"><span class="cmd-dim">$ </span>npx -y @taprun/cli</div>
-      </div>
-
-      <div class="surface-card surface-card--gold reveal">
-        <div class="surface-head">
-          <div class="surface-mark">&diams;</div>
-          <div>
-            <h3>MCP server</h3>
-            <div class="surface-tag">Claude Code &middot; Cursor &middot; Windsurf</div>
-          </div>
-        </div>
-        <p>First-class MCP host support. 65+ taps become MCP tools. Zero tokens on the read path &mdash; a one-line config.</p>
-        <div class="surface-cmd"><span class="cmd-dim">mcp &rarr; </span>"tap": { "command": "tap" }</div>
-      </div>
-
-      <div class="surface-card reveal">
-        <div class="surface-head">
-          <div class="surface-mark">&#8862;</div>
-          <div>
-            <h3>Chrome extension</h3>
-            <div class="surface-tag">real-browser &middot; logged-in</div>
-          </div>
-        </div>
-        <p>Reuses your own browser session for Xiaohongshu, Zhihu, LinkedIn. Undetectable &mdash; the page sees a real human clicking.</p>
-        <div class="surface-cmd"><span class="cmd-dim">$ </span>tap bridge start</div>
-      </div>
-
-      <div class="surface-card surface-card--green reveal">
-        <div class="surface-head">
-          <div class="surface-mark">{ }</div>
-          <div>
-            <h3>JSR library</h3>
-            <div class="surface-tag">Deno &middot; Node &middot; 65 KB</div>
-          </div>
-        </div>
-        <p><code>@taprun/executor</code> &mdash; embed the composition engine in your product. Zero deps. 0.8 ms in-process. Serverless-friendly.</p>
-        <div class="surface-cmd"><span class="cmd-dim">import </span>{ runPipe } <span class="cmd-dim">from</span> "@taprun/executor"</div>
-      </div>
-
-      <div class="surface-card reveal">
-        <div class="surface-head">
-          <div class="surface-mark">&#8256;</div>
-          <div>
-            <h3>Homebrew</h3>
-            <div class="surface-tag">signed &middot; auto-update</div>
-          </div>
-        </div>
-        <p>Native macOS and Linux install. Signed binary, auto-updates via <code>brew upgrade</code>. One of four official install paths.</p>
-        <div class="surface-cmd"><span class="cmd-dim">$ </span>brew install taprun</div>
-      </div>
-
-      <div class="surface-card surface-card--gold reveal">
-        <div class="surface-head">
-          <div class="surface-mark">&#9881;</div>
-          <div>
-            <h3>GitHub plugin</h3>
-            <div class="surface-tag">Claude Code &middot; /taprun:*</div>
-          </div>
-        </div>
-        <p>8 engineering-methodology skills for Claude Code &mdash; <code>verify</code>, <code>writing-plans</code>, <code>run-task</code>, <code>demand-archaeologist</code>, more.</p>
-        <div class="surface-cmd"><span class="cmd-dim">$ </span>claude plugin install taprun@tap</div>
-      </div>
-
-      <div class="surface-card reveal">
-        <div class="surface-head">
-          <div class="surface-mark">&#x25A3;</div>
-          <div>
-            <h3>Docker image</h3>
-            <div class="surface-tag">CI &middot; ephemeral</div>
-          </div>
-        </div>
-        <p>Headless runtime pre-baked for CI. Runs anywhere Docker does &mdash; GitHub Actions, Fly.io, Railway, your Kubernetes cluster.</p>
-        <div class="surface-cmd"><span class="cmd-dim">$ </span>docker run ghcr.io/leonting1010/tap</div>
-      </div>
-
-      <div class="surface-card surface-card--green reveal">
-        <div class="surface-head">
-          <div class="surface-mark">&#x29C9;</div>
-          <div>
-            <h3>Scheduled runners</h3>
-            <div class="surface-tag">cron &middot; workers &middot; webhooks</div>
-          </div>
-        </div>
-        <p>systemd, launchd, GitHub Actions, Cloudflare Workers, n8n webhooks. Your host, your schedule. <code>stdout</code> pipes to anywhere.</p>
-        <div class="surface-cmd"><span class="cmd-dim">*/5 * * * * </span>tap &lt;site&gt; &lt;tap&gt;</div>
-      </div>
     </div>
   </div>
 </section>
@@ -3048,63 +2505,6 @@ h2 .hl {
   </div>
 </section>
 
-<!-- ===== FAQ ===== -->
-<section class="faq" id="faq">
-  <div class="container">
-    <div class="faq-header">
-      <div class="section-tag reveal">FAQ</div>
-      <h2 class="reveal">Common questions</h2>
-    </div>
-
-    <div class="faq-list">
-      <details class="faq-item reveal" open>
-        <summary>How is Taprun different from Browser Use or Stagehand?</summary>
-        <div class="faq-answer">Browser Use and Stagehand call AI on every run &mdash; $0.50&ndash;$2.00 per execution, 60&ndash;95% reliability. Taprun uses AI once to create a deterministic program, then runs it forever at $0. More importantly, when websites change, <code>tap doctor</code> detects breakage and fingerprint diff tells you exactly what changed &mdash; not just "0 rows" but "the h2 a selector is gone." Taprun is infrastructure, not just a tool.</div>
-      </details>
-      <details class="faq-item reveal">
-        <summary>How is Taprun different from rtrvr.ai?</summary>
-        <div class="faq-answer"><a href="https://www.rtrvr.ai/">rtrvr.ai</a> does genuinely interesting work &mdash; DOM compression drops per-task tokens from ~114K (vision-based) to ~26K, a real 25&times; improvement they&rsquo;ve productised across Chrome, Cloud, API, MCP, and WhatsApp. But every task still invokes the LLM, so the Basic tier caps at 1,500 credits/month (~300 tasks) and their &ldquo;self-healing&rdquo; is reactive LLM re-invocation. Taprun moves the LLM to authoring time: one compile pass, then $0 tokens and 100% deterministic output forever. At 1,000 runs/day rtrvr needs the $499/mo Scale tier; Taprun stays $9/mo flat. Use rtrvr for agentic exploration. Use Taprun for repeating production workflows. Full breakdown: <a href="blog/rtrvr-vs-tap.html">rtrvr.ai vs Taprun</a>.</div>
-      </details>
-      <details class="faq-item reveal">
-        <summary>How is Taprun different from Playwright MCP?</summary>
-        <div class="faq-answer">Playwright MCP hands the model a DOM snapshot on every tool call &mdash; one HN thread measured 114k tokens through MCP vs 27k through CLI for the same task, and Claude's 200k context fills in a handful of steps. Taprun uses <code>tap forge</code> once to compile a workflow into a <code>.tap.js</code> program, then <code>tap.run</code> returns rows (not raw HTML) at zero tokens per execution. Same MCP host, same browser &mdash; but the model stops paying to re-read the page it already understands. See <a href="/blog/playwright-mcp-token-cost-alternative.html">the full breakdown</a>.</div>
-      </details>
-      <details class="faq-item reveal">
-        <summary>What happens when a website changes?</summary>
-        <div class="faq-answer"><code>tap doctor</code> detects breakage via health contracts and shows you exactly what changed (fingerprint diff: which selectors disappeared, which API schemas shifted). <strong>Free</strong> users can re-forge the tap or hand the diagnostics to their AI. <strong>Hacker</strong> users let their AI agent fix it in chat. <strong>Pro</strong> users don't even notice &mdash; taps auto-repair overnight and Slack pings when it's done.</div>
-      </details>
-      <details class="faq-item reveal">
-        <summary>Can I use my own AI key?</summary>
-        <div class="faq-answer">Yes. <code>tap config set ai.key sk-ant-xxx</code> lets you bring your own Claude or OpenAI key. Works with any OpenAI-compatible provider (DeepSeek, Ollama, etc.).</div>
-      </details>
-      <details class="faq-item reveal">
-        <summary>How is this different from Zapier or n8n?</summary>
-        <div class="faq-answer">Zapier charges per task ($0.01&ndash;$0.05 each). At scale, that's $40K+/year. Taprun has zero per-execution cost &mdash; AI runs once, program runs forever for free.</div>
-      </details>
-      <details class="faq-item reveal">
-        <summary>Do I own the programs Taprun creates?</summary>
-        <div class="faq-answer">Yes. Every <code>.tap.js</code> file is a plain JavaScript program on your disk. No lock-in, no cloud dependency. Cancel and your programs keep running forever.</div>
-      </details>
-      <details class="faq-item reveal">
-        <summary>Does Taprun work offline?</summary>
-        <div class="faq-answer">Programs run locally with zero AI calls &mdash; no internet needed for execution. You only need connectivity when forging a new program (AI compilation) or when the program accesses a website. The programs themselves are plain JavaScript on your disk.</div>
-      </details>
-      <details class="faq-item reveal">
-        <summary>Is my data safe?</summary>
-        <div class="faq-answer">Taprun programs are deterministic data plans, not arbitrary JavaScript &mdash; the runtime dispatches a closed 25-op vocabulary with no runtime <code>eval</code>, no <code>new Worker</code>, and no dynamic <code>import()</code>. Your data never leaves your machine.</div>
-      </details>
-      <details class="faq-item reveal">
-        <summary>Is web scraping with Taprun legal?</summary>
-        <div class="faq-answer">Taprun prioritizes <code>tap.fetch()</code> (API calls) over DOM scraping. APIs are structured, stable, and carry less legal risk than screen-scraping. When APIs aren't available, Taprun uses standard browser rendering &mdash; the same way a human would access the page. Always check a site's terms of service.</div>
-      </details>
-      <details class="faq-item reveal">
-        <summary>Do I need to be a developer?</summary>
-        <div class="faq-answer">Basic terminal familiarity helps. The core workflow is two commands: <code>tap forge "what you want"</code> and <code>tap site name</code>. 65+ pre-built taps work with zero setup.</div>
-      </details>
-    </div>
-  </div>
-</section>
-
 <!-- ===== Final CTA ===== -->
 <section class="final-cta">
   <div class="final-cta-glow"></div>
@@ -3127,10 +2527,10 @@ h2 .hl {
       <path d="M 145 140 L 175 185 L 155 180 L 140 145 Z" fill="#818CF8"/>
       <path d="M 150 145 L 180 190 L 162 185 L 148 150 Z" fill="#6366F1"/>
     </svg>
-    <h2>Compile once. Monitor always.<br><span class="hl">Catch failures before your data goes stale.</span></h2>
-    <p class="section-desc">65+ skills ready to run. <code>tap doctor</code> catches breakage before your data goes stale. Your programs, on your disk, forever.</p>
+    <h2>Compile once. Run forever.<br><span class="hl">Diff the drift.</span></h2>
+    <p class="section-desc">Your programs on your disk. Your browser with your sessions. Zero tokens per run. When the site changes, you hear about it first.</p>
     <div class="hero-actions">
-      <a href="#install" class="btn btn-primary">Start Free &mdash; $0/Run Forever</a>
+      <a href="#install" class="btn btn-primary">Install in 2 Minutes</a>
       <a href="https://github.com/LeonTing1010/tap" class="btn btn-ghost">View on GitHub</a>
     </div>
   </div>
@@ -3158,7 +2558,7 @@ h2 .hl {
           <path d="M 145 140 L 175 185 L 155 180 L 140 145 Z" fill="#818CF8"/>
           <path d="M 150 145 L 180 190 L 162 185 L 148 150 Z" fill="#6366F1"/>
         </svg>
-        tap &mdash; Automate any website
+        Taprun &mdash; Compile once. Run forever. Diff the drift.
       </div>
       <ul class="footer-links">
         <li><a href="https://github.com/LeonTing1010/tap">GitHub</a></li>
