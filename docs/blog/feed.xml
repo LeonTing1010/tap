@@ -6,7 +6,23 @@
 <description>Engineering insights on browser automation, AI agents, and deterministic programs.</description>
 <language>en-us</language>
 <atom:link href="https://taprun.dev/blog/feed.xml" rel="self" type="application/rss+xml"/>
-<lastBuildDate>Mon, 20 Apr 2026 00:00:00 +0000</lastBuildDate>
+<lastBuildDate>Wed, 22 Apr 2026 00:00:00 +0000</lastBuildDate>
+
+<item>
+<title>Install Tap MCP in Claude Code, Cursor, Cline, Windsurf, or VS Code — 60 Seconds Each</title>
+<link>https://taprun.dev/blog/install-tap-in-any-mcp-host.html</link>
+<description>Tap is an MCP server for authenticated browser automation — it runs in your own Chrome on your real logged-in sessions. Here's how to connect it to every major MCP host, with the exact config paths each one uses under the hood.</description>
+<pubDate>Wed, 22 Apr 2026 00:00:00 +0000</pubDate>
+<guid>https://taprun.dev/blog/install-tap-in-any-mcp-host.html</guid>
+</item>
+
+<item>
+<title>The Authenticated Browser MCP: Why Cloud Tools Can't See Your Logged-In State</title>
+<link>https://taprun.dev/blog/authenticated-browser-mcp.html</link>
+<description>Playwright MCP, BrowserBase MCP, and Firecrawl MCP all operate on fresh or anonymous browsers. None of them can touch your logged-in Shopify, HubSpot, or Gmail. Here's why that gap is architectural — and why it matters for anyone building real AI agents.</description>
+<pubDate>Wed, 22 Apr 2026 00:00:00 +0000</pubDate>
+<guid>https://taprun.dev/blog/authenticated-browser-mcp.html</guid>
+</item>
 
 <item>
 <title>We Ran 15,000 Browser Automations. The Failure That Matters Most Is Invisible to Your Monitoring.</title>

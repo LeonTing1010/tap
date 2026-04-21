@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The authenticated browser MCP: why cloud tools can't see your logged-in state — Tap Blog</title>
+<meta name="description" content="Playwright MCP, BrowserBase MCP, and Firecrawl MCP all operate on fresh or anonymous browsers. None of them can see your logged-in Shopify, HubSpot, or Gmail. Here's why that gap is architectural — and why it matters for anyone building real AI agents.">
+<meta name="keywords" content="authenticated browser MCP, MCP browser automation, Playwright MCP, BrowserBase MCP, Firecrawl MCP, Claude Code browser tool, AI agent authenticated access, logged-in browser automation">
+<link rel="canonical" href="https://taprun.dev/blog/authenticated-browser-mcp.html">
+<meta property="og:title" content="The authenticated browser MCP: why cloud tools can't see your logged-in state">
+<meta property="og:description" content="Playwright MCP, BrowserBase, Firecrawl all run fresh or anonymous browsers. Real work lives behind auth. Here's the architectural gap — and what to do about it.">
+<meta property="og:url" content="https://taprun.dev/blog/authenticated-browser-mcp.html">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://taprun.dev/social-preview.png">
+<meta property="article:published_time" content="2026-04-22">
+<meta property="article:author" content="Leon Ting">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="The authenticated browser MCP: why cloud tools can't see your logged-in state">
+<meta name="twitter:description" content="Playwright MCP, BrowserBase, Firecrawl all run fresh or anonymous browsers. Real work lives behind auth. Here's the architectural gap.">
+<meta name="twitter:image" content="https://taprun.dev/social-preview.png">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='105' cy='115' r='55' fill='%23FFFFFF'/%3E%3Ccircle cx='85' cy='70' r='45' fill='%23FFFFFF'/%3E%3Cellipse cx='75' cy='32' rx='15' ry='22' fill='%23EF4444'/%3E%3Cellipse cx='90' cy='30' rx='12' ry='20' fill='%23DC2626'/%3E%3Cellipse cx='103' cy='35' rx='10' ry='16' fill='%23B91C1C'/%3E%3Cpath d='M 55 68 L 8 75 L 55 85 Z' fill='%23FBBF24'/%3E%3Cpath d='M 55 85 L 8 75 L 12 82 Z' fill='%23D97706'/%3E%3Ccircle cx='70' cy='65' r='14' fill='%231F2937'/%3E%3Ccircle cx='66' cy='61' r='5' fill='%23FFFFFF'/%3E%3Ccircle cx='74' cy='68' r='2.5' fill='%23FFFFFF'/%3E%3Cellipse cx='50' cy='78' rx='8' ry='5' fill='%23FECACA' opacity='0.8'/%3E%3Cellipse cx='125' cy='115' rx='35' ry='30' fill='%23818CF8'/%3E%3Cellipse cx='125' cy='115' rx='25' ry='20' fill='%236366F1'/%3E%3Ccircle cx='95' cy='130' r='25' fill='%23F9FAFB'/%3E%3Cpath d='M 145 140 L 175 185 L 155 180 L 140 145 Z' fill='%23818CF8'/%3E%3Cpath d='M 150 145 L 180 190 L 162 185 L 148 150 Z' fill='%236366F1'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "The authenticated browser MCP: why cloud tools can't see your logged-in state",
+  "description": "Playwright MCP, BrowserBase, and Firecrawl all operate on fresh or anonymous browsers. None see your logged-in Shopify, HubSpot, or Gmail. Here's why that gap is architectural.",
+  "datePublished": "2026-04-22",
+  "author": { "@type": "Person", "name": "Leon Ting", "url": "https://github.com/LeonTing1010" },
+  "publisher": { "@type": "Organization", "name": "Tap", "url": "https://taprun.dev" },
+  "url": "https://taprun.dev/blog/authenticated-browser-mcp.html",
+  "mainEntityOfPage": "https://taprun.dev/blog/authenticated-browser-mcp.html"
+}
+</script>
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0a0918; color: #e0e0e0; line-height: 1.8; }
+.container { max-width: 720px; margin: 0 auto; padding: 60px 24px; }
+h1 { font-size: 2rem; font-weight: 600; color: #fff; margin-bottom: 8px; line-height: 1.3; }
+h2 { font-size: 1.35rem; font-weight: 500; color: #fff; margin-top: 48px; margin-bottom: 16px; }
+h3 { font-size: 1.1rem; font-weight: 500; color: #fff; margin-top: 32px; margin-bottom: 12px; }
+p, li { font-size: 0.95rem; color: #b0b0b0; margin-bottom: 16px; }
+ul, ol { padding-left: 24px; }
+a { color: #818cf8; text-decoration: none; }
+a:hover { text-decoration: underline; }
+.meta { font-size: 0.85rem; color: #666; margin-bottom: 40px; }
+.back { display: inline-block; margin-bottom: 24px; font-size: 0.9rem; }
+code { background: #1a1a2e; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; font-family: 'JetBrains Mono', monospace; }
+pre { background: #111118; border: 1px solid #222; border-radius: 8px; padding: 16px 20px; overflow-x: auto; margin: 20px 0; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; line-height: 1.6; color: #c8c8d0; }
+pre .comment { color: #555; }
+pre .cmd { color: #818cf8; }
+pre .output { color: #6ee7b7; }
+pre .flag { color: #fbbf24; }
+blockquote { border-left: 3px solid #6366F1; padding: 12px 16px; margin: 20px 0; background: rgba(99,102,241,0.06); border-radius: 0 8px 8px 0; }
+blockquote p { color: #a0a0b0; margin-bottom: 0; font-style: italic; }
+blockquote cite { display: block; margin-top: 8px; font-size: 0.85rem; color: #666; font-style: normal; }
+table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid #222; font-size: 0.9rem; }
+th { color: #fff; font-weight: 500; }
+td { color: #b0b0b0; }
+.check { color: #6ee7b7; }
+.cross { color: #f87171; }
+.tilde { color: #fbbf24; }
+.cta { margin-top: 48px; padding: 24px; background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.2); border-radius: 12px; }
+.cta h3 { color: #fff; font-size: 1.1rem; margin-bottom: 12px; margin-top: 0; }
+.cta pre { margin-bottom: 0; }
+hr { border: none; border-top: 1px solid #222; margin: 48px 0; }
+</style>
+<script src="https://analytics.ahrefs.com/analytics.js" data-key="G1wKuningnrw+t5LQJ+MPw" async></script>
+</head>
+<body>
+<div class="container">
+<a href="../" class="back">&larr; Tap</a> &middot; <a href="./" class="back">Blog</a>
+<h1>The authenticated browser MCP: why cloud tools can't see your logged-in state</h1>
+<p class="meta">April 22, 2026 &middot; Leon Ting &middot; 7 min read</p>
+
+<p>I asked Claude Code to summarize my unfulfilled Shopify orders this morning. Claude reached for its browser tool. The tool opened a fresh Chromium instance, navigated to <code>admin.shopify.com</code>, and came back with: <code>Log in to continue</code>.</p>
+
+<p>Of course. My browser is logged in. Claude's browser isn't.</p>
+
+<p>This small friction points at something structural. The MCP browser tools shipping today — <a href="https://github.com/executeautomation/mcp-playwright">Playwright MCP</a>, <a href="https://github.com/browserbase/mcp-server-browserbase">BrowserBase MCP</a>, <a href="https://github.com/mendableai/firecrawl-mcp-server">Firecrawl MCP</a> — all solve browser automation for AI agents. None of them can touch your real accounts.</p>
+
+<p>That's not a missing feature. It's an architectural property of where the browser runs.</p>
+
+<h2>What each MCP browser tool actually does</h2>
+
+<p>Pull their source and read what <code>browser_navigate</code> and <code>browser_extract</code> mean in each:</p>
+
+<table>
+<tr><th>Tool</th><th>Browser runs in</th><th>Session state</th><th>Can access your logged-in Shopify?</th></tr>
+<tr><td>Playwright MCP</td><td>Fresh Chromium, spawned per session</td><td>Empty — no cookies, no localStorage, no IndexedDB</td><td class="cross">No</td></tr>
+<tr><td>BrowserBase MCP</td><td>Managed cloud Chromium</td><td>Empty — anonymous browser on their infrastructure</td><td class="cross">No</td></tr>
+<tr><td>Firecrawl MCP</td><td>Server-side crawler</td><td>Public-web only — scrapes what anonymous visitors see</td><td class="cross">No</td></tr>
+<tr><td>Stagehand (when run via MCP wrapper)</td><td>Fresh Playwright instance</td><td>Empty unless you manually inject cookies</td><td class="cross">No</td></tr>
+<tr><td>Bardeen (Chrome extension)</td><td class="check">Your Chrome</td><td class="check">Your real session</td><td class="check">Yes — but no MCP, visual-only</td></tr>
+</table>
+
+<p>Four technically-excellent tools, all architecturally blind to what 90% of your web workflow actually lives on: your SaaS accounts, your vendor portals, your internal dashboards, your email.</p>
+
+<h2>Why this gap is architectural, not a bug</h2>
+
+<p>Cloud browser tools can't just "add login support." The reasons are structural:</p>
+
+<h3>1. Cookies can't legally or safely travel to a cloud browser</h3>
+
+<p>Your <code>shopify.com</code> session cookie is scoped to your device. Even if a cloud service asked for it, you'd be handing over the actual authentication token to a third party. That's a liability the user doesn't want, and a liability the vendor doesn't want.</p>
+
+<p>Some tools try to sidestep this by having you log in through them. But then they hold your credentials. Same problem, slightly laundered.</p>
+
+<h3>2. Browser fingerprints betray cloud origin</h3>
+
+<p>Many services — Google, LinkedIn, most banks — flag logins from unfamiliar IP / device fingerprints. A browser spawned on an AWS host will trip 2FA, device verification, or an outright block, even if you somehow shared the right cookie.</p>
+
+<p>The only fingerprint that won't trip these is the one on your actual machine.</p>
+
+<h3>3. 2FA and re-auth flows need you physically present</h3>
+
+<p>Even if the cookie worked and the fingerprint didn't trip detection, a session renewal will ask for TOTP or a device prompt. The cloud browser can't answer. The human sitting at the cloud browser's owner's desk also can't — because they're not at that browser.</p>
+
+<p>These three combine into a hard wall: <strong>cloud browsers cannot sustainably operate on a real user's authenticated accounts</strong>, no matter how much engineering is thrown at it.</p>
+
+<h2>What real AI-agent work actually looks like</h2>
+
+<p>If you list the automations people actually want their Claude Code / Cursor / Cline agents to run, the auth-walled ones dominate:</p>
+
+<ul>
+<li><strong>"Every morning, summarize my Shopify unfulfilled orders to Slack"</strong> — Shopify admin requires auth</li>
+<li><strong>"Pull this week's closed-won deals from HubSpot into Notion"</strong> — HubSpot requires auth</li>
+<li><strong>"Check my Wise balance and alert if below $X"</strong> — banking requires auth</li>
+<li><strong>"Download PDF invoices from my three vendor portals"</strong> — vendor portals require auth</li>
+<li><strong>"Read my Gmail for contracts and summarize obligations"</strong> — Gmail requires auth</li>
+<li><strong>"Check whether our staging environment deployed the latest commit"</strong> — company dashboards require auth</li>
+<li><strong>"Pull active conversations from Intercom and route to CRM"</strong> — Intercom requires auth</li>
+</ul>
+
+<p>None of these are solvable by Playwright MCP, BrowserBase, or Firecrawl. Not because those tools are bad — they're all excellent at what they do. But what they do is operate on the public web or a fresh sandbox, and your real work lives in logged-in surfaces.</p>
+
+<h2>The category nobody named yet: authenticated browser MCP</h2>
+
+<p>This is a coherent category with clear requirements:</p>
+
+<ul>
+<li>Runs in the user's real Chrome (or their real Playwright browser, if they use Chromium-based profiles)</li>
+<li>Operates on the user's real session — whatever cookies, localStorage, IndexedDB are already there</li>
+<li>Accessible to AI agents over MCP, not visual-only like a Bardeen or a PhantomBuster</li>
+<li>Doesn't send the user's data to any cloud — the whole blast radius is the user's local device</li>
+<li>Produces reusable, inspectable, versionable automation programs, not one-shot actions</li>
+</ul>
+
+<p>There's exactly one MCP server in that quadrant today that I'm aware of: <strong>Tap</strong>. Not because Tap is clever — because the architectural constraints force this shape, and nobody else started from those constraints.</p>
+
+<h2>How Tap fills the gap</h2>
+
+<p>Tap is an MCP server that does three things:</p>
+
+<ol>
+<li><strong>Forge</strong>: "Track my Shopify unfulfilled orders" → AI inspects shopify.com, finds the stable structured sources (API endpoints, ARIA landmarks, Schema.org markup, RSS when available), compiles a deterministic program that reads from the most stable source. No per-step LLM call at runtime.</li>
+<li><strong>Run</strong>: the program runs in your local Chrome (or Playwright on your machine, or macOS) using your real session. Your 2FA state, your device fingerprint, your cookies — all of it is already there because it's <em>your browser</em>.</li>
+<li><strong>Doctor</strong>: when the site structure drifts in a way that would break the program, Tap detects it before your data goes wrong. Not a generic "the script crashed" signal — a structural drift detector that knows what the program was supposed to read.</li>
+</ol>
+
+<p>The thing Tap does that a cloud competitor can't is step 2. Steps 1 and 3 are replicable. Step 2 is architectural.</p>
+
+<h2>When cloud browser MCP is the right choice</h2>
+
+<p>To be clear — cloud browser MCP tools aren't inferior, they're specialized:</p>
+
+<ul>
+<li><strong>Firecrawl</strong> is the best tool for scraping public content at scale for RAG pipelines</li>
+<li><strong>BrowserBase</strong> is the best tool for running scheduled public-web automation without tying up your local machine</li>
+<li><strong>Playwright MCP</strong> is the best tool for testing your own web app against a clean-state browser</li>
+</ul>
+
+<p>Use them when the target data is public. Use an authenticated browser MCP when the target data is behind your login.</p>
+
+<h2>Try it</h2>
+
+<p>If you're using Claude Code or Cursor and you've hit the "Log in to continue" wall, install Tap:</p>
+
+<div class="cta">
+<h3>Install (60 seconds)</h3>
+<pre><span class="cmd">curl -fsSL https://taprun.dev/install.sh | bash</span>
+<span class="cmd">tap mcp connect claude</span>  <span class="comment"># or: cursor, cline, continue</span>
+<span class="cmd">tap bridge start</span>        <span class="comment"># links your real Chrome</span></pre>
+</div>
+
+<p>Then ask Claude Code to do one of the auth-walled tasks above. Tap forges a program using your logged-in session. The program is yours — inspectable at <code>~/.tap/taps/</code>, re-runnable at zero AI cost, self-diagnosing when the site changes.</p>
+
+<p>Free tier is substantial: 65+ community-built taps on 40+ sites, full doctor, full Tier 0 forge, watch, MCP read ops. Paid tiers unlock AI-powered forge ($9/mo) and auto-heal + scheduling ($29/mo).</p>
+
+<p>If Claude Code keeps hitting login walls for you, that wall is not going away — the cloud MCP tools are architecturally on the wrong side of it. Tap is on your side.</p>
+
+<hr>
+
+<p class="meta">Related reading:</p>
+<ul>
+<li><a href="./stagehand-vs-tap.html">Stagehand vs Tap: AI browser automation compared</a></li>
+<li><a href="./deterministic-vs-ai-browser-automation.html">Deterministic vs AI browser automation</a></li>
+<li><a href="./programs-beat-prompts.html">Programs beat prompts</a></li>
+</ul>
+
+</div>
+</body>
+</html>

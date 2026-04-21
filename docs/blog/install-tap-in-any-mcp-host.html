@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Install Tap MCP in Claude Code, Cursor, Cline, Windsurf, or VS Code — 60 seconds each — Tap Blog</title>
+<meta name="description" content="Tap is an MCP server that runs in your own Chrome on your logged-in sessions. Here's how to connect it to every major MCP host: Claude Code, Cursor, Cline, Windsurf, and VS Code.">
+<meta name="keywords" content="Tap MCP install, Claude Code MCP server, Cursor MCP server, Cline MCP server, Windsurf MCP server, VS Code MCP server, browser automation MCP install">
+<link rel="canonical" href="https://taprun.dev/blog/install-tap-in-any-mcp-host.html">
+<meta property="og:title" content="Install Tap MCP in Claude Code, Cursor, Cline, Windsurf, or VS Code — 60 seconds each">
+<meta property="og:description" content="Tap is an MCP server for authenticated browser automation. Connect it to any major MCP host with one command.">
+<meta property="og:url" content="https://taprun.dev/blog/install-tap-in-any-mcp-host.html">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://taprun.dev/social-preview.png">
+<meta property="article:published_time" content="2026-04-22">
+<meta property="article:author" content="Leon Ting">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Install Tap MCP in Claude Code, Cursor, Cline, Windsurf, or VS Code">
+<meta name="twitter:description" content="Tap is an MCP server for authenticated browser automation. Connect it to any major MCP host with one command.">
+<meta name="twitter:image" content="https://taprun.dev/social-preview.png">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='105' cy='115' r='55' fill='%23FFFFFF'/%3E%3Ccircle cx='85' cy='70' r='45' fill='%23FFFFFF'/%3E%3Cellipse cx='75' cy='32' rx='15' ry='22' fill='%23EF4444'/%3E%3Cellipse cx='90' cy='30' rx='12' ry='20' fill='%23DC2626'/%3E%3Cellipse cx='103' cy='35' rx='10' ry='16' fill='%23B91C1C'/%3E%3Cpath d='M 55 68 L 8 75 L 55 85 Z' fill='%23FBBF24'/%3E%3Cpath d='M 55 85 L 8 75 L 12 82 Z' fill='%23D97706'/%3E%3Ccircle cx='70' cy='65' r='14' fill='%231F2937'/%3E%3Ccircle cx='66' cy='61' r='5' fill='%23FFFFFF'/%3E%3Ccircle cx='74' cy='68' r='2.5' fill='%23FFFFFF'/%3E%3Cellipse cx='50' cy='78' rx='8' ry='5' fill='%23FECACA' opacity='0.8'/%3E%3Cellipse cx='125' cy='115' rx='35' ry='30' fill='%23818CF8'/%3E%3Cellipse cx='125' cy='115' rx='25' ry='20' fill='%236366F1'/%3E%3Ccircle cx='95' cy='130' r='25' fill='%23F9FAFB'/%3E%3Cpath d='M 145 140 L 175 185 L 155 180 L 140 145 Z' fill='%23818CF8'/%3E%3Cpath d='M 150 145 L 180 190 L 162 185 L 148 150 Z' fill='%236366F1'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Install Tap MCP in Claude Code, Cursor, Cline, Windsurf, or VS Code — 60 seconds each",
+  "description": "Tap is an MCP server for authenticated browser automation. Here's how to connect it to every major MCP host.",
+  "datePublished": "2026-04-22",
+  "author": { "@type": "Person", "name": "Leon Ting", "url": "https://github.com/LeonTing1010" },
+  "publisher": { "@type": "Organization", "name": "Tap", "url": "https://taprun.dev" },
+  "url": "https://taprun.dev/blog/install-tap-in-any-mcp-host.html",
+  "mainEntityOfPage": "https://taprun.dev/blog/install-tap-in-any-mcp-host.html"
+}
+</script>
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0a0918; color: #e0e0e0; line-height: 1.8; }
+.container { max-width: 720px; margin: 0 auto; padding: 60px 24px; }
+h1 { font-size: 2rem; font-weight: 600; color: #fff; margin-bottom: 8px; line-height: 1.3; }
+h2 { font-size: 1.35rem; font-weight: 500; color: #fff; margin-top: 48px; margin-bottom: 16px; }
+h3 { font-size: 1.05rem; font-weight: 500; color: #fff; margin-top: 32px; margin-bottom: 12px; }
+p, li { font-size: 0.95rem; color: #b0b0b0; margin-bottom: 16px; }
+ul, ol { padding-left: 24px; }
+a { color: #818cf8; text-decoration: none; }
+a:hover { text-decoration: underline; }
+.meta { font-size: 0.85rem; color: #666; margin-bottom: 40px; }
+.back { display: inline-block; margin-bottom: 24px; font-size: 0.9rem; }
+code { background: #1a1a2e; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; font-family: 'JetBrains Mono', monospace; }
+pre { background: #111118; border: 1px solid #222; border-radius: 8px; padding: 16px 20px; overflow-x: auto; margin: 20px 0; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; line-height: 1.6; color: #c8c8d0; }
+pre .comment { color: #555; }
+pre .cmd { color: #818cf8; }
+pre .output { color: #6ee7b7; }
+pre .flag { color: #fbbf24; }
+blockquote { border-left: 3px solid #6366F1; padding: 12px 16px; margin: 20px 0; background: rgba(99,102,241,0.06); border-radius: 0 8px 8px 0; }
+blockquote p { color: #a0a0b0; margin-bottom: 0; font-style: italic; }
+table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid #222; font-size: 0.9rem; }
+th { color: #fff; font-weight: 500; }
+td { color: #b0b0b0; }
+td code { font-size: 0.85em; }
+.cta { margin-top: 48px; padding: 24px; background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.2); border-radius: 12px; }
+.cta h3 { color: #fff; font-size: 1.1rem; margin-bottom: 12px; margin-top: 0; }
+.cta pre { margin-bottom: 0; }
+hr { border: none; border-top: 1px solid #222; margin: 48px 0; }
+.host-card { background: #111118; border: 1px solid #222; border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+.host-card h3 { margin-top: 0; color: #fff; display: flex; align-items: center; gap: 12px; }
+.host-card .refpath { font-size: 0.8rem; color: #666; font-family: 'JetBrains Mono', monospace; }
+</style>
+<script src="https://analytics.ahrefs.com/analytics.js" data-key="G1wKuningnrw+t5LQJ+MPw" async></script>
+</head>
+<body>
+<div class="container">
+<a href="../" class="back">&larr; Tap</a> &middot; <a href="./" class="back">Blog</a>
+<h1>Install Tap MCP in Claude Code, Cursor, Cline, Windsurf, or VS Code</h1>
+<p class="meta">April 22, 2026 &middot; Leon Ting &middot; 4 min read</p>
+
+<p>Tap is an <a href="https://modelcontextprotocol.io/">MCP</a> server for <a href="authenticated-browser-mcp.html">authenticated browser automation</a> — it runs in your own Chrome on your real logged-in sessions. This guide shows how to connect Tap to every major MCP host, in about 60 seconds each.</p>
+
+<p>If you already have Tap installed, skip to your host below. Otherwise, install first:</p>
+
+<pre><span class="cmd">curl -fsSL https://taprun.dev/install.sh | bash</span></pre>
+
+<h2>One command for all five hosts</h2>
+
+<p>Tap's <code>mcp connect</code> command auto-detects every MCP host installed on your machine and writes the correct config for each one. For most users, this is all you need:</p>
+
+<pre><span class="cmd">tap mcp connect</span>
+<span class="output">
+✓ Claude Code    registered    ~/.claude.json
+✓ Cursor         registered    ~/.cursor/mcp.json
+✓ Cline          registered    ~/Library/Application Support/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json
+✓ Windsurf       skipped       (not installed)
+✓ VS Code        skipped       (not installed)
+</span></pre>
+
+<p>Done — restart your host and Tap is available as an MCP tool.</p>
+
+<p>If you want to be explicit, or auto-detect gets it wrong, target a single host:</p>
+
+<pre><span class="cmd">tap mcp connect claude-code</span>
+<span class="cmd">tap mcp connect cursor</span>
+<span class="cmd">tap mcp connect cline</span>
+<span class="cmd">tap mcp connect windsurf</span>
+<span class="cmd">tap mcp connect vscode</span></pre>
+
+<h2>What actually gets written</h2>
+
+<p>Each host has its own config file with its own schema. Tap's adapter layer handles each correctly — you don't have to think about it, but here's what's happening under the hood for transparency.</p>
+
+<div class="host-card">
+<h3>Claude Code</h3>
+<p class="refpath">~/.claude.json &middot; top-level <code>mcpServers</code> map</p>
+<pre>{
+  <span class="flag">"mcpServers"</span>: {
+    <span class="flag">"tap"</span>: {
+      <span class="flag">"command"</span>: <span class="output">"tap"</span>,
+      <span class="flag">"args"</span>: [<span class="output">"mcp"</span>, <span class="output">"start"</span>]
+    }
+  }
+}</pre>
+<p>Ref: <a href="https://code.claude.com/docs/en/mcp.md">code.claude.com/docs/en/mcp.md</a></p>
+</div>
+
+<div class="host-card">
+<h3>Cursor</h3>
+<p class="refpath">~/.cursor/mcp.json &middot; same schema as Claude Code</p>
+<p>Cursor uses the identical <code>mcpServers</code> map format. After registration, open Cursor's settings → MCP Servers to verify Tap appears.</p>
+<p>Ref: <a href="https://docs.cursor.com/context/model-context-protocol">docs.cursor.com/context/model-context-protocol</a></p>
+</div>
+
+<div class="host-card">
+<h3>Cline</h3>
+<p class="refpath">&lt;vscode-user-dir&gt;/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json</p>
+<p>Cline is a VS Code extension, so its config lives inside VS Code's extension storage (not alongside user settings). Same <code>mcpServers</code> schema. After registration, open Cline's settings panel in VS Code — Tap will show up under "MCP Servers".</p>
+<p>Note: if you run Cline inside Cursor instead of VS Code, the config path moves to Cursor's user dir. Current auto-detect targets the VS Code path; for Cursor-resident Cline, edit the config file manually or file an issue.</p>
+<p>Ref: <a href="https://github.com/cline/cline">github.com/cline/cline</a></p>
+</div>
+
+<div class="host-card">
+<h3>Windsurf</h3>
+<p class="refpath">~/.codeium/windsurf/mcp_config.json &middot; same schema as Claude Code</p>
+<p>Windsurf is Codeium's MCP host. Config lives under <code>~/.codeium/windsurf/</code>, not <code>~/.windsurf/</code> — that path doesn't exist in any real install.</p>
+<p>Ref: <a href="https://docs.windsurf.com/windsurf/cascade/mcp">docs.windsurf.com/windsurf/cascade/mcp</a></p>
+</div>
+
+<div class="host-card">
+<h3>VS Code</h3>
+<p class="refpath">&lt;vscode-user-dir&gt;/mcp.json &middot; top-level <code>servers</code> (NOT <code>mcpServers</code>)</p>
+<p>VS Code is the odd one out. It uses a top-level <code>servers</code> key and each entry requires a <code>type: "stdio"</code> field. Tap's adapter handles this automatically:</p>
+<pre>{
+  <span class="flag">"servers"</span>: {
+    <span class="flag">"tap"</span>: {
+      <span class="flag">"type"</span>: <span class="output">"stdio"</span>,
+      <span class="flag">"command"</span>: <span class="output">"tap"</span>,
+      <span class="flag">"args"</span>: [<span class="output">"mcp"</span>, <span class="output">"start"</span>]
+    }
+  }
+}</pre>
+<p>The user-data dir varies by OS: macOS <code>~/Library/Application Support/Code/User/</code>, Linux <code>~/.config/Code/User/</code>, Windows <code>%APPDATA%/Code/User/</code>.</p>
+<p>Ref: <a href="https://code.visualstudio.com/docs/copilot/customization/mcp-servers">code.visualstudio.com/docs/copilot/customization/mcp-servers</a></p>
+</div>
+
+<h2>Verifying the registration worked</h2>
+
+<p>After connecting, run:</p>
+
+<pre><span class="cmd">tap mcp doctor</span>
+<span class="output">
+✓ Claude Code    registered &amp; handshake ok    tap v0.12.3
+✓ Cursor         registered &amp; handshake ok    tap v0.12.3
+✓ Cline          registered but host not open   (start Cline to verify)
+</span></pre>
+
+<p>Doctor does a real JSON-RPC <code>initialize</code> round-trip against each registered server, so a green check means "Claude/Cursor/Cline can actually invoke tap", not just "a config file exists". Silent config-present-but-server-broken is one of the most confusing MCP failures; doctor rules it out.</p>
+
+<h2>Troubleshooting</h2>
+
+<h3>"Host not detected"</h3>
+<p>Tap's detection checks for the host's config dir, not whether the host is running. If you've installed Claude Code / Cursor / etc. but never opened it, the config dir may not exist yet. Open the host once, then re-run <code>tap mcp connect</code>.</p>
+
+<h3>"Registered but host doesn't see Tap"</h3>
+<p>Most hosts need a restart to pick up MCP config changes. Quit the host fully (Cmd+Q on macOS, not just close-window) and relaunch. VS Code specifically: the <code>mcp.json</code> file is read on workspace open, so reload your window.</p>
+
+<h3>"Cline's config path isn't what I expected"</h3>
+<p>Cline stores its MCP config inside VS Code's extension global storage. If you've installed Cline in a VS Code fork (Cursor, VSCodium, etc.), its config path differs. The current auto-detect targets vanilla VS Code. For other forks, pass the config explicitly or file a request for the fork you need.</p>
+
+<h3>"tap: command not found" during install</h3>
+<p>The installer adds <code>~/.tap/bin</code> to your PATH via your shell's rc file. Open a new terminal after install, or source your rc manually: <code>source ~/.zshrc</code> (or <code>~/.bashrc</code>).</p>
+
+<h2>What to do next</h2>
+
+<p>Once connected, ask your MCP host to do something behind authentication. A few that work out of the box with the <a href="https://github.com/LeonTing1010/tap-skills">community tap library</a>:</p>
+
+<ul>
+<li><em>"Show me my last 5 GitHub notifications"</em></li>
+<li><em>"Summarize my Twitter home timeline from this morning"</em></li>
+<li><em>"List HackerNews front page stories scoring over 100"</em></li>
+</ul>
+
+<p>These taps already exist in the community pack and will run without any forging. To build a new one against a site you care about — your Shopify admin, your HubSpot, your internal dashboard — ask your host to forge one:</p>
+
+<blockquote><p>"Use tap to forge a program that pulls my Shopify unfulfilled orders and returns them as a table."</p></blockquote>
+
+<p>Your host will call <code>forge.inspect</code> on shopify.com, walk through the structural layers, and compile a deterministic program you can run forever. The program lives at <code>~/.tap/taps/shopify/unfulfilled-orders.tap.json</code> — inspectable, diffable, yours.</p>
+
+<div class="cta">
+<h3>Start here</h3>
+<pre><span class="cmd">curl -fsSL https://taprun.dev/install.sh | bash</span>
+<span class="cmd">tap mcp connect</span>
+<span class="cmd">tap bridge start</span>       <span class="comment"># link Tap to your real Chrome</span></pre>
+</div>
+
+<hr>
+
+<p class="meta">Related reading:</p>
+<ul>
+<li><a href="./authenticated-browser-mcp.html">The authenticated browser MCP: why cloud tools can't see your logged-in state</a></li>
+<li><a href="./programs-beat-prompts.html">Programs beat prompts</a></li>
+<li><a href="./mcp-authoring-zero-token-execution.html">MCP authoring, zero-token execution</a></li>
+</ul>
+
+</div>
+</body>
+</html>
