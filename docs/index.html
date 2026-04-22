@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Taprun — Compile once. Run forever. Diff the drift.</title>
+<title>Taprun — Compile once. Keep it forever. Outrun the drift.</title>
 <meta name="description" content="Browser automation that doesn't burn tokens every run. Taprun compiles the AI's understanding of a site once, replays it deterministically forever, and catches structural drift before your data goes stale. For teams tired of AI-at-runtime fragility.">
-<meta property="og:title" content="Taprun — Compile once. Run forever. Diff the drift.">
+<meta property="og:title" content="Taprun — Compile once. Keep it forever. Outrun the drift.">
 <meta property="og:description" content="AI at authoring time, not runtime. Zero prompt-injection surface, zero context loss, zero tokens per execution. When the site changes, Taprun tells you before production breaks.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://taprun.dev/">
@@ -13,7 +13,7 @@
 <meta property="og:image:width" content="1280">
 <meta property="og:image:height" content="640">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Taprun — Compile once. Run forever. Diff the drift.">
+<meta name="twitter:title" content="Taprun — Compile once. Keep it forever. Outrun the drift.">
 <meta name="twitter:description" content="Browser automation that compiles once and runs forever. Zero tokens at runtime. Catches drift before it breaks.">
 <meta name="twitter:image" content="https://taprun.dev/social-preview.svg">
 <meta name="keywords" content="AI coding agent protocol, MCP, model context protocol, Chrome extension, Playwright, tap protocol, forge, deterministic automation, sandbox, automatic diagnostics, macOS automation, doctor, fingerprint, website automation, AI agent, web scraping, browser automation, API auto-detection, JSON-LD, RSS, OpenAPI">
@@ -418,45 +418,29 @@ section { position: relative; }
   overflow: hidden;
 }
 
-/* Ambient glow */
+/* One committed accent — kill the gold + red ambient blurs for a single
+   indigo pool behind the headline. Strength register: commit to one thing. */
 .hero-glow-1 {
   position: absolute;
-  width: 700px; height: 700px;
-  top: -200px; left: -150px;
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.18), transparent 70%);
+  width: 820px; height: 820px;
+  top: -240px; left: -200px;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.28), transparent 68%);
   border-radius: 50%;
-  filter: blur(80px);
+  filter: blur(90px);
   pointer-events: none;
 }
-.hero-glow-2 {
-  position: absolute;
-  width: 500px; height: 500px;
-  bottom: -100px; right: -100px;
-  background: radial-gradient(circle, rgba(251, 191, 36, 0.06), transparent 70%);
-  border-radius: 50%;
-  filter: blur(80px);
-  pointer-events: none;
-}
-.hero-glow-3 {
-  position: absolute;
-  width: 400px; height: 400px;
-  top: 40%; right: 10%;
-  background: radial-gradient(circle, rgba(239, 68, 68, 0.06), transparent 70%);
-  border-radius: 50%;
-  filter: blur(100px);
-  pointer-events: none;
-}
+.hero-glow-2, .hero-glow-3 { display: none; }
 
 .hero-inner {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 60px;
+  grid-template-columns: 1.25fr 0.75fr;
+  gap: 56px;
   align-items: center;
   position: relative;
   z-index: 1;
 }
 
-.hero-content { max-width: 560px; }
+.hero-content { max-width: 680px; }
 
 .hero-badge {
   display: inline-flex;
@@ -477,30 +461,26 @@ section { position: relative; }
   width: 7px; height: 7px;
   background: var(--gold);
   border-radius: 50%;
-  animation: badge-pulse 2s ease-in-out infinite;
   box-shadow: 0 0 8px rgba(251, 191, 36, 0.4);
-}
-
-@keyframes badge-pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(0.7); }
 }
 
 .hero h1 {
   font-family: var(--font-heading);
-  font-size: clamp(40px, 5.2vw, 64px);
+  font-size: clamp(56px, 9vw, 120px);
   font-weight: 800;
-  line-height: 1.08;
+  line-height: 0.92;
   color: var(--white);
-  margin-bottom: 24px;
-  letter-spacing: -0.035em;
+  margin-bottom: 28px;
+  letter-spacing: -0.045em;
 }
 
+/* Strength-register highlight: thick gold bar struck through the last beat. */
 .hero h1 .hl {
-  background: linear-gradient(135deg, var(--gold) 0%, #F59E0B 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--white);
+  background-image: linear-gradient(to top, var(--gold) 0, var(--gold) 0.16em, transparent 0.16em);
+  padding: 0 0.04em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
 }
 
 .hero-sub {
@@ -584,18 +564,16 @@ section { position: relative; }
 
 .hero-bird-wrap {
   position: relative;
-  width: 240px;
-  height: 240px;
-  animation: bird-float 4s ease-in-out infinite;
+  width: 160px;
+  height: 160px;
+  opacity: 0.75;
 }
 
 .hero-bird-wrap svg {
   width: 100%;
   height: 100%;
-  filter: drop-shadow(0 20px 60px rgba(99, 102, 241, 0.25));
+  filter: drop-shadow(0 16px 48px rgba(99, 102, 241, 0.2));
 }
-
-/* Bird orbit rings removed per design direction */
 
 @keyframes bird-float {
   0%, 100% { transform: translateY(0); }
@@ -2242,7 +2220,7 @@ h2 .hl {
           <span class="hero-badge-dot"></span>
           v0.13.0 &nbsp;·&nbsp; local-first &nbsp;·&nbsp; zero tokens at runtime
         </div>
-        <h1>Compile once.<br>Run forever.<br><span class="hl">Diff the drift.</span></h1>
+        <h1>Compile once.<br>Keep it forever.<br><span class="hl">Outrun the drift.</span></h1>
         <p class="hero-sub">Browser automation for teams tired of AI-at-runtime fragility. The AI compiles your workflow once &mdash; captures the site&rsquo;s stable structural addresses, not brittle CSS selectors. Then plays it back deterministically, forever. When the site changes, <code>tap doctor</code> tells you <em>before</em> production breaks.</p>
         <p class="hero-tagline">Used daily inside Claude Code, Cursor, Windsurf, and any MCP host. <strong>Your machine. Your browser. Your session.</strong></p>
         <div class="hero-actions">
@@ -2636,7 +2614,7 @@ h2 .hl {
       <path d="M 145 140 L 175 185 L 155 180 L 140 145 Z" fill="#818CF8"/>
       <path d="M 150 145 L 180 190 L 162 185 L 148 150 Z" fill="#6366F1"/>
     </svg>
-    <h2>Compile once. Run forever.<br><span class="hl">Diff the drift.</span></h2>
+    <h2>Compile once. Keep it forever.<br><span class="hl">Outrun the drift.</span></h2>
     <p class="section-desc">Your programs on your disk. Your browser with your sessions. Zero tokens per run. When the site changes, you hear about it first.</p>
     <div class="hero-actions">
       <a href="#install" class="btn btn-primary">Install in 2 Minutes</a>
@@ -2669,7 +2647,7 @@ h2 .hl {
           <path d="M 145 140 L 175 185 L 155 180 L 140 145 Z" fill="#818CF8"/>
           <path d="M 150 145 L 180 190 L 162 185 L 148 150 Z" fill="#6366F1"/>
         </svg>
-        Taprun &mdash; Compile once. Run forever. Diff the drift.
+        Taprun &mdash; Compile once. Keep it forever. Outrun the drift.
       </div>
       <ul class="footer-links">
         <li><a href="https://github.com/LeonTing1010/tap">GitHub</a></li>
