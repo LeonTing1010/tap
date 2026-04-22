@@ -66,7 +66,7 @@ curl -fsSL https://taprun.dev/install.sh | sh
 Works with Claude Code, Cursor, Windsurf, or any MCP-compatible agent — no extension needed:
 
 ```json
-{ "mcpServers": { "tap": { "command": "tap", "args": ["mcp"] } } }
+{ "mcpServers": { "tap": { "command": "npx", "args": ["-y", "@taprun/cli", "mcp", "start"] } } }
 ```
 
 Or auto-configure all installed agents:

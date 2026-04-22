@@ -66,7 +66,7 @@ curl -fsSL https://taprun.dev/install.sh | sh
 适用于 Claude Code、Cursor、Windsurf 或任何 MCP 兼容的 Agent — 不需要浏览器扩展：
 
 ```json
-{ "mcpServers": { "tap": { "command": "tap", "args": ["mcp"] } } }
+{ "mcpServers": { "tap": { "command": "npx", "args": ["-y", "@taprun/cli", "mcp", "start"] } } }
 ```
 
 或一键配置所有已安装的 Agent：

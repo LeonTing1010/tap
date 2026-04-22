@@ -37,7 +37,7 @@ startCommand:
         default: "extension"
   commandFunction: |-
     (config) => ({
-      command: 'tap',
-      args: ['mcp', 'start'],
+      command: 'npx',
+      args: ['-y', '@taprun/cli', 'mcp', 'start'],
       env: config.runtime === 'playwright' ? { TAP_RUNTIME: 'playwright' } : {}
     })
