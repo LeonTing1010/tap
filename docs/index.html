@@ -2515,7 +2515,7 @@ h2 .hl {
   <div class="press-colophon">
     <div class="press-colophon-install">
       <span class="colophon-label">Set this text</span>
-      <code class="colophon-code">brew install taprun</code>
+      <code class="colophon-code">brew install LeonTing1010/tap/taprun</code>
     </div>
     <div class="press-colophon-cta">
       <a href="#install" class="press-cta press-cta--primary">Install · 2 min</a>
@@ -2700,8 +2700,9 @@ h2 .hl {
         <div class="install-step-num">1</div>
         <div>
           <h4>Install CLI</h4>
-          <p>Zero-install via npx on any Node host — or one-line curl for a permanent binary on macOS/Linux.</p>
-          <div class="code-block"><span class="prompt">$ </span><span class="cmd">npx -y @taprun/cli --version</span></div>
+          <p>Three ways to install the <code>tap</code> binary. Pick whichever fits your setup — all land in a global <code>tap</code> on your PATH, which the MCP config below expects.</p>
+          <div class="code-block"><span class="prompt">$ </span><span class="cmd">npm install -g @taprun/cli@latest</span></div>
+          <div class="code-block"><span class="prompt">$ </span><span class="cmd">brew install LeonTing1010/tap/taprun</span></div>
           <div class="code-block"><span class="prompt">$ </span><span class="cmd">curl -fsSL https://taprun.dev/install.sh | sh</span></div>
         </div>
       </div>
@@ -2710,7 +2711,7 @@ h2 .hl {
         <div>
           <h4>Connect Your AI Agent <span style="font-family:var(--font-mono);font-size:11px;color:var(--green);font-weight:600;margin-left:6px;">Free</span></h4>
           <p>Add to your MCP config (Claude Code, Cursor, Windsurf, Codex, any MCP host). 65+ skills, free &mdash; no extension, no setup, works immediately.</p>
-          <div class="code-block"><span class="hl-dim">{</span> <span class="cmd">"mcpServers"</span><span class="hl-dim">:</span> <span class="hl-dim">{</span> <span class="cmd">"tap"</span><span class="hl-dim">:</span> <span class="hl-dim">{</span> <span class="cmd">"command"</span><span class="hl-dim">:</span> <span style="color:var(--gold)">"tap"</span><span class="hl-dim">,</span> <span class="cmd">"args"</span><span class="hl-dim">:</span> <span class="hl-dim">[</span><span style="color:var(--gold)">"mcp"</span><span class="hl-dim">]</span> <span class="hl-dim">} } }</span></div>
+          <div class="code-block"><span class="hl-dim">{</span> <span class="cmd">"mcpServers"</span><span class="hl-dim">:</span> <span class="hl-dim">{</span> <span class="cmd">"tap"</span><span class="hl-dim">:</span> <span class="hl-dim">{</span> <span class="cmd">"command"</span><span class="hl-dim">:</span> <span style="color:var(--gold)">"tap"</span><span class="hl-dim">,</span> <span class="cmd">"args"</span><span class="hl-dim">:</span> <span class="hl-dim">[</span><span style="color:var(--gold)">"mcp"</span><span class="hl-dim">,</span> <span style="color:var(--gold)">"start"</span><span class="hl-dim">]</span> <span class="hl-dim">} } }</span></div>
         </div>
       </div>
       <div class="install-step reveal">
