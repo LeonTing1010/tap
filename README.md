@@ -25,7 +25,7 @@
 
 ---
 
-**Taprun compiles AI understanding into deterministic programs. Then monitors them.** Health contracts catch silent failures. Structural state diffs tell you exactly what changed. `tap doctor` detects breakage before your data goes stale — not three days later.
+**Taprun is a browser automation and web scraping MCP server for AI agents.** Point it at any site; your agent inspects the page once, compiles a deterministic program, and replays it forever — zero AI tokens at runtime, same result every call. Works with Claude Code, Cursor, Cline, Windsurf, and any MCP host. Runs in real Chrome (login sessions) or headless Playwright. Health contracts catch silent failures. Structural state diffs tell you exactly what changed. `tap doctor` detects breakage before your data goes stale — not three days later.
 
 ```
 Forge:    AI inspects the site → compiles a .tap.js program       (one-time cost)
@@ -34,7 +34,9 @@ Monitor:  tap doctor checks health contracts + structural state diffs  (catches 
 Heal:     AI reads diagnostics and patches the program            (only when needed)
 ```
 
-**MCP is the authoring layer. `tap.run` is the execution layer.** AI participates during forge (one-time). Execution is pure code — zero tokens, deterministic output. 140+ skills across 68+ sites. One binary, zero dependencies.
+**MCP is the authoring layer. `tap.run` is the execution layer.** AI participates during forge (one-time). Execution is pure code — zero tokens, deterministic output. 140+ pre-built skills across 68+ sites — Reddit, GitHub, Hacker News, LinkedIn, Twitter, YouTube, Producthunt, and more — or forge your own from any URL. One binary, zero dependencies.
+
+**Use cases:** AI agent browser automation · scheduled web scraping · structured data extraction · content monitoring · login-required site automation · multi-site data pipelines · reliability monitoring for long-running agents.
 
 ## Get Started
 
