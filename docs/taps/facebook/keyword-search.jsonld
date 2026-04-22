@@ -1,0 +1,54 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/facebook/keyword-search",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/facebook/keyword-search",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "facebook",
+    "name": "keyword-search",
+    "intent": "read",
+    "description": "Search Facebook posts by keyword (requires login). Returns author name, body text, engagement counts, and a stable post id. Author names obfuscated via Flexbox order scrambling are unscrambled at extraction time.",
+    "columns": [
+      "post_id",
+      "author_name",
+      "author_url",
+      "text",
+      "posted_at",
+      "url",
+      "like_count",
+      "comment_count",
+      "share_count",
+      "permalink",
+      "lang"
+    ],
+    "args": {
+      "keyword": {
+        "type": "string",
+        "required": true,
+        "description": "Search keyword"
+      },
+      "limit": {
+        "type": "int",
+        "default": 20,
+        "description": "Max posts to return"
+      }
+    },
+    "health": {"min_rows": 1, "non_empty": ["post_id", "author_name"]},
+    "tap:layer": 4,
+    "tap:layerSource": "DOM [role=article] with Flexbox-order unscramble for author spans"
+  },
+  "prov:wasGeneratedBy": {
+    "@type": "Activity",
+    "id": "tap:forge:facebook.com:keyword-search",
+    "used": ["https://www.facebook.com/search/posts/"]
+  },
+  "seeAlso": [
+    "https://taprun.dev/blog/facebook-anti-scraping-flexbox-order.html",
+    "https://taprun.dev/taps/facebook/keyword-search.html"
+  ]
+}

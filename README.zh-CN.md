@@ -72,7 +72,7 @@ curl -fsSL https://taprun.dev/install.sh | sh
 或一键配置所有已安装的 Agent：
 
 ```bash
-tap setup
+tap mcp connect
 ```
 
 ### 可选：Chrome 扩展（需要登录的站点）
@@ -82,10 +82,10 @@ tap setup
 ### 4. 开始使用
 
 ```bash
-tap github trending              # GitHub 热门仓库
-tap hackernews hot               # Hacker News 首页
-tap weibo hot                    # 微博热搜
-tap xiaohongshu search --keyword "AI"  # 小红书搜索
+tap github/trending              # GitHub 热门仓库
+tap hackernews/hot               # Hacker News 首页
+tap weibo/hot                    # 微博热搜
+tap xiaohongshu/search --keyword "AI"  # 小红书搜索
 ```
 
 或直接让 AI Agent 操作：
@@ -95,7 +95,7 @@ tap xiaohongshu search --keyword "AI"  # 小红书搜索
 Agent：今天最热门的仓库是... React compiler 已达 734 stars...
 
 你：   给我锻造一个豆瓣 Top250 的 tap
-Agent：好了。随时运行 `tap douban top250`，每次 $0。
+Agent：好了。随时运行 `tap douban/top250`，每次 $0。
 ```
 
 ## 你能用 Taprun 做什么？
@@ -103,28 +103,28 @@ Agent：好了。随时运行 `tap douban top250`，每次 $0。
 **读取** — 从任何网站提取数据
 
 ```bash
-tap reddit hot                   # Reddit 首页
-tap bilibili trending            # B站热门
-tap arxiv search --keyword "LLM" # arXiv 论文
+tap reddit/hot                   # Reddit 首页
+tap bilibili/trending            # B站热门
+tap arxiv/search --keyword "LLM" # arXiv 论文
 ```
 
 **写入** — 操作任何网站
 
 ```bash
-tap xiaohongshu publish --title "我的笔记" --images photo.jpg
-tap zhihu publish --title "我的文章" --content "..."
+tap xiaohongshu/publish --title "我的笔记" --images photo.jpg
+tap zhihu/publish --title "我的文章" --content "..."
 ```
 
 **监控** — 追踪变化
 
 ```bash
-tap watch github trending --every 5m
+tap watch github/trending --every 5m
 ```
 
 **组合** — 像 Unix 管道一样串联
 
 ```bash
-tap github trending | tap filter --field stars --gt 500 | tap table
+tap github/trending | tap filter --field stars --gt 500 | tap table
 ```
 
 **锻造** — 用 AI 创建新的自动化
@@ -211,7 +211,7 @@ tap list      # 查看所有可用 skills
 - [x] Unix 管道 — `tap A | tap B`
 - [x] Watch 模式 — 监控变化
 - [x] Doctor — 健康合约、指纹对比、损坏 taps 自动诊断
-- [x] 一键配置 — `tap setup` 配置所有 AI Agent
+- [x] 一键配置 — `tap mcp connect` 配置所有 AI Agent
 - [ ] Android 运行时
 - [ ] iOS 运行时
 

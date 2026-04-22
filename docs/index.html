@@ -61,6 +61,7 @@
       "target": "https://taprun.dev/"
     },
     "itemListElement": [
+      {"@type": "SiteNavigationElement", "name": "Use cases", "description": "What Taprun can do — read, write, watch, compose, forge", "url": "https://taprun.dev/#usecases"},
       {"@type": "SiteNavigationElement", "name": "Install", "description": "Install Taprun in 2 minutes", "url": "https://taprun.dev/#install"},
       {"@type": "SiteNavigationElement", "name": "Pricing", "description": "View pricing plans", "url": "https://taprun.dev/#pricing"},
       {"@type": "SiteNavigationElement", "name": "Skills", "description": "Browse 65+ ready-to-run skills", "url": "https://taprun.dev/taps/"},
@@ -2208,10 +2209,11 @@ h2 .hl {
         <path d="M 145 140 L 175 185 L 155 180 L 140 145 Z" fill="#818CF8"/>
         <path d="M 150 145 L 180 190 L 162 185 L 148 150 Z" fill="#6366F1"/>
       </svg>
-      <span class="nav-brand-text">tap</span>
+      <span class="nav-brand-text">Taprun</span>
     </a>
     <ul class="nav-links" role="list">
       <li><a href="#how">How it works</a></li>
+      <li><a href="#usecases">Use cases</a></li>
       <li><a href="#pricing">Pricing</a></li>
       <li><a href="/taps/">Skills</a></li>
       <li><a href="https://taprun.dev/blog/" rel="noopener">Blog</a></li>
@@ -2225,6 +2227,8 @@ h2 .hl {
     </button>
   </div>
 </nav>
+
+<main>
 
 <!-- ===== Hero ===== -->
 <section class="hero" id="main-content">
@@ -2384,6 +2388,88 @@ h2 .hl {
   </div>
 </section>
 
+<!-- ===== What you can do ===== -->
+<style>
+  .usecases { padding: 96px 0 80px; background: var(--bg-surface); border-top: 1px solid rgba(99, 102, 241, 0.05); }
+  .usecases-header { text-align: center; max-width: 680px; margin: 0 auto 56px; }
+  .usecases-header .section-tag { justify-content: center; }
+  .usecases-header h2 { font-family: var(--font-heading); font-weight: 800; font-size: clamp(28px, 4vw, 42px); letter-spacing: -0.03em; line-height: 1.15; color: var(--white); margin: 12px 0 18px; }
+  .usecases-header p { font-size: 17px; line-height: 1.7; color: var(--text-dim); }
+  .usecases-header p code { background: rgba(99, 102, 241, 0.1); padding: 2px 7px; border-radius: 5px; color: var(--indigo-bright); font-size: 0.9em; }
+  .usecases-grid { display: grid; grid-template-columns: 1fr; gap: 20px; max-width: 1120px; margin: 0 auto; }
+  @media (min-width: 640px) { .usecases-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 1024px) { .usecases-grid { grid-template-columns: repeat(3, 1fr); } }
+  .usecase-card { background: var(--bg-card); border: 1px solid rgba(255,255,255,0.05); border-radius: var(--radius-lg); padding: 28px 28px 24px; transition: border-color 0.3s, transform 0.3s; }
+  .usecase-card:hover { border-color: rgba(99, 102, 241, 0.2); transform: translateY(-2px); }
+  .usecase-verb { display: inline-block; font-family: var(--font-mono); font-size: 11px; font-weight: 600; color: var(--indigo-bright); text-transform: uppercase; letter-spacing: 0.12em; padding: 4px 10px; background: rgba(99, 102, 241, 0.1); border-radius: 6px; margin-bottom: 14px; }
+  .usecase-card h3 { font-family: var(--font-heading); font-weight: 700; font-size: 19px; letter-spacing: -0.01em; color: var(--white); margin-bottom: 10px; }
+  .usecase-card > p { font-size: 14.5px; line-height: 1.6; color: var(--text-dim); margin-bottom: 16px; }
+  .usecase-examples { display: flex; flex-direction: column; gap: 6px; }
+  .usecase-examples code { display: block; font-family: var(--font-mono); font-size: 12.5px; color: var(--text); background: var(--bg-deep); padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.04); white-space: nowrap; overflow-x: auto; }
+</style>
+<section class="usecases" id="usecases">
+  <div class="container">
+    <div class="usecases-header reveal">
+      <div class="section-tag">What you can do</div>
+      <h2>One tool. Five patterns. 140+ prebuilt taps.</h2>
+      <p>If the job looks like <em>read</em>, <em>write</em>, <em>watch</em>, <em>compose</em>, or <em>teach it a new site</em> — it fits. Every pattern runs at <code>$0</code> after forge.</p>
+    </div>
+
+    <div class="usecases-grid">
+      <article class="usecase-card reveal">
+        <span class="usecase-verb">Read</span>
+        <h3>Extract data from any site</h3>
+        <p>Taps return structured rows. No selector maintenance, no pagination code.</p>
+        <div class="usecase-examples">
+          <code>tap github/trending</code>
+          <code>tap hackernews/hot</code>
+          <code>tap arxiv/search --keyword "LLM"</code>
+        </div>
+      </article>
+
+      <article class="usecase-card reveal">
+        <span class="usecase-verb">Write</span>
+        <h3>Operate authenticated workflows</h3>
+        <p>Publish, upload, comment &mdash; in your real browser session with your real cookies.</p>
+        <div class="usecase-examples">
+          <code>tap xiaohongshu/publish --title "..."</code>
+          <code>tap zhihu/publish --content "..."</code>
+        </div>
+      </article>
+
+      <article class="usecase-card reveal">
+        <span class="usecase-verb">Watch</span>
+        <h3>Monitor what changes</h3>
+        <p>Poll on an interval, archive snapshots, query history for diffs and trends.</p>
+        <div class="usecase-examples">
+          <code>tap watch github/trending --every 5m</code>
+          <code>tap history github/trending --trend stars</code>
+        </div>
+      </article>
+
+      <article class="usecase-card reveal">
+        <span class="usecase-verb">Compose</span>
+        <h3>Chain like Unix pipes</h3>
+        <p>Every tap reads stdin as rows. Combine reads, filters, sorts, dedupes &mdash; all deterministic.</p>
+        <div class="usecase-examples">
+          <code>tap github/trending | tap filter --field stars --gt 500</code>
+          <code>tap reddit/hot | tap dedupe | tap table</code>
+        </div>
+      </article>
+
+      <article class="usecase-card reveal">
+        <span class="usecase-verb">Forge</span>
+        <h3>Teach it a new site</h3>
+        <p>Your AI agent inspects, picks the highest-trust structural address, compiles a program that runs forever.</p>
+        <div class="usecase-examples">
+          <code>tap forge https://news.ycombinator.com</code>
+          <code>tap forge "get Douban top 250 movies"</code>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
 <!-- ===== Install ===== -->
 <section class="install" id="install">
   <div class="container">
@@ -2415,8 +2501,7 @@ h2 .hl {
         <div class="install-step-num">3</div>
         <div>
           <h4>Need login-required sites? <span style="font-family:var(--font-mono);font-size:11px;color:var(--gold);font-weight:600;margin-left:6px;">Optional</span></h4>
-          <p>Most taps work without login. For sites that need your session (Xiaohongshu, Zhihu, etc.), install the <a href="https://chromewebstore.google.com/detail/tap/llcidejeoobdegbkolbjhfoeckphldce">Chrome Extension</a> from the Chrome Web Store for safe, undetectable automation in your real browser.</p>
-          <div class="code-block"><span class="prompt">$ </span><span class="cmd">tap update</span></div>
+          <p>Most taps work without login. For sites that need your session (Xiaohongshu, Zhihu, etc.), install the <a href="https://chromewebstore.google.com/detail/tap/llcidejeoobdegbkolbjhfoeckphldce">Chrome Extension</a> from the Chrome Web Store — safe, undetectable automation in your real browser. No CLI command needed; Taprun auto-detects the extension on next run.</p>
         </div>
       </div>
     </div>
@@ -2505,6 +2590,30 @@ h2 .hl {
   </div>
 </section>
 
+<!-- ===== FAQ ===== -->
+<section class="faq" id="faq">
+  <div class="container">
+    <div class="faq-header">
+      <div class="section-tag reveal">FAQ</div>
+      <h2 class="reveal">Questions worth asking before you install.</h2>
+    </div>
+    <div class="faq-list reveal">
+      <details class="faq-item">
+        <summary>What does "compile once" mean?</summary>
+        <div class="faq-answer">AI runs once at authoring time to capture a site's stable structural addresses (JSON-LD, OpenAPI, ARIA, RSS) &mdash; not to generate fragile CSS selectors. The compiled program is then replayed deterministically, no LLM at runtime.</div>
+      </details>
+      <details class="faq-item">
+        <summary>What happens when the site changes?</summary>
+        <div class="faq-answer">Run <code>tap doctor</code>. It compares captured fingerprints against the live page and flags drift &mdash; before your data goes stale. On Pro, <code>tap heal</code> proposes an AI-written fix; <code>tap refresh</code> rebaselines after human approval.</div>
+      </details>
+      <details class="faq-item">
+        <summary>Is my data safe?</summary>
+        <div class="faq-answer">Everything runs on your machine. Programs are structured data plans (closed 25-op vocabulary), not arbitrary JavaScript. No runtime eval, no new Worker, no cloud exfiltration. See <a href="https://github.com/LeonTing1010/tap/blob/main/SECURITY.md">SECURITY.md</a> in the public repo.</div>
+      </details>
+    </div>
+  </div>
+</section>
+
 <!-- ===== Final CTA ===== -->
 <section class="final-cta">
   <div class="final-cta-glow"></div>
@@ -2535,6 +2644,8 @@ h2 .hl {
     </div>
   </div>
 </section>
+
+</main>
 
 <!-- ===== Footer ===== -->
 <footer class="footer">

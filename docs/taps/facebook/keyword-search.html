@@ -1,0 +1,69 @@
+---
+layout: tap
+site_name: facebook
+tap_name: keyword-search
+description: "Search Facebook posts by keyword using the user's logged-in session. Unscrambles author names that Facebook obfuscates via Flexbox order reordering. Returns author, body text, engagement counts, and a stable content hash when no native post permalink is exposed."
+intent: read
+layer: 4
+layer_source: "DOM [role=article] + Flexbox-order unscramble"
+columns:
+  - post_id
+  - author_name
+  - author_url
+  - text
+  - posted_at
+  - url
+  - like_count
+  - comment_count
+  - share_count
+  - permalink
+  - lang
+args:
+  - name: keyword
+    type: string
+    required: true
+    description: Search keyword
+  - name: limit
+    type: int
+    default: 20
+    description: Max posts to return
+args_json: |
+  {
+    "keyword": {"type":"string","required":true,"description":"Search keyword"},
+    "limit": {"type":"int","default":20,"description":"Max posts to return"}
+  }
+health_json: |
+  {"min_rows":1,"non_empty":["post_id","author_name"]}
+example_args: '{"keyword":"AI automation","limit":5}'
+doctor_verdict: healthy
+doctor_checked: "2026-04-22"
+license: MIT
+---
+
+<section>
+  <h2>Why this tap exists</h2>
+  <p>Facebook's <code>/search/posts/?q=…</code> page is one of the more hostile scraping targets on the open web. It requires login, ships no <code>llms.txt</code> or RSS, rotates internal GraphQL <code>doc_id</code>s weekly, and — most interestingly — applies <strong>Flexbox-order DOM scrambling</strong> to author display names.</p>
+  <p>When a naive scraper reads <code>document.querySelectorAll('[role="article"]')[0].textContent</code>, the first block of characters looks like random noise (<code>oSodnprmmlffgfi1c3mSg…</code>) followed by readable body text. Many give up here and declare the site un-scrapable. They are wrong.</p>
+  <p>The gibberish is <em>author name characters</em> split across many <code>&lt;span&gt;</code>s, each assigned a non-zero CSS <code>order</code>. The browser's flexbox layout re-sorts them visually; <code>textContent</code> returns DOM-order, which is randomized. Post body, engagement counts, and <code>aria-label</code>s are <em>not</em> scrambled.</p>
+  <p>This tap queries the search page via the user's Chrome session, walks each <code>[role=article]</code>, and for scrambled containers (all children have length ≤ 2 <em>and</em> at least one non-zero <code>order</code>) it sorts by computed <code>order</code> and re-concatenates the text. Everything else is plain extraction.</p>
+</section>
+
+<section>
+  <h2>Sample output</h2>
+  <pre><code>post_id      author_name   author_url                              text                                                 like_count  lang
+fb_74ig3q    Snowie.Ai     https://www.facebook.com/SnowieAi       In 24 months every serious website will talk…        500         en</code></pre>
+  <p><strong>Known gaps.</strong> Facebook search cards do not expose a public post permalink href — the visible links are profile URLs plus encrypted <code>__cft__</code> tracking params. When no native post ID is found, this tap emits a content-hash id (<code>fb_…</code>) that is stable across runs for the same author+body combination, so downstream deduplication still works.</p>
+  <p><code>posted_at</code>, <code>comment_count</code>, and <code>share_count</code> are best-effort: Facebook omits or obfuscates these on some search result layouts. The tap returns empty strings rather than failing the row — use <code>tap doctor</code> to check health drift per field if you need one of them to be non-empty.</p>
+</section>
+
+<section>
+  <h2>Runtime</h2>
+  <p>Chrome bridge only. Facebook blocks anonymous and non-browser clients at the search endpoint.</p>
+  <pre><code class="cmd">tap runtime chrome
+tap facebook/keyword-search keyword="AI automation" limit=5</code></pre>
+</section>
+
+<section>
+  <h2>Case study</h2>
+  <p>Full write-up — hypothesis, wrong diagnosis, the 5-minute diagnostic, the fix — in <a href="/blog/facebook-anti-scraping-flexbox-order.html">Facebook Scrambles Author Names, Not Post Bodies</a>.</p>
+</section>

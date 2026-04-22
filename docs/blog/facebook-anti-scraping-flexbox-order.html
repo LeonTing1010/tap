@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Facebook Scrambles Author Names, Not Post Bodies — Taprun Blog</title>
+<meta name="description" content="A 5-minute diagnostic found that Facebook's anti-scraping defense only targets author display names via Flexbox order reordering. Post bodies, engagement counts, and aria-labels are plain text. Seven anti-scraping mechanisms, ranked by defeat cost.">
+<link rel="canonical" href="https://taprun.dev/blog/facebook-anti-scraping-flexbox-order.html">
+<meta property="og:title" content="Facebook Scrambles Author Names, Not Post Bodies">
+<meta property="og:description" content="A 5-minute diagnostic saved a scraping gig I almost declined. Seven anti-scraping mechanisms ranked.">
+<meta property="og:url" content="https://taprun.dev/blog/facebook-anti-scraping-flexbox-order.html">
+<meta property="og:type" content="article">
+<meta property="article:published_time" content="2026-04-22">
+<meta property="article:author" content="Leon Ting">
+<meta property="og:image" content="https://taprun.dev/social-preview.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Facebook Scrambles Author Names, Not Post Bodies">
+<meta name="twitter:description" content="Facebook's anti-scraping is 90% bluff. Here's the diagnostic that proves it.">
+<meta name="twitter:image" content="https://taprun.dev/social-preview.png">
+<meta name="keywords" content="facebook scraping, flexbox order anti-scraping, DOM text scrambling, textContent garbage, custom font scraping defense, scraper diagnostic, tap forge">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Facebook Scrambles Author Names, Not Post Bodies",
+  "description": "A 5-minute diagnostic found Facebook's anti-scraping defense only targets author display names via Flexbox order reordering. Post bodies are plain text. Seven anti-scraping mechanisms ranked by defeat cost.",
+  "datePublished": "2026-04-22",
+  "author": { "@type": "Person", "name": "Leon Ting", "url": "https://github.com/LeonTing1010" },
+  "publisher": { "@type": "Organization", "name": "Taprun", "url": "https://taprun.dev" },
+  "url": "https://taprun.dev/blog/facebook-anti-scraping-flexbox-order.html",
+  "mainEntityOfPage": "https://taprun.dev/blog/facebook-anti-scraping-flexbox-order.html"
+}
+</script>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='105' cy='115' r='55' fill='%23FFFFFF'/%3E%3Ccircle cx='85' cy='70' r='45' fill='%23FFFFFF'/%3E%3Cellipse cx='75' cy='32' rx='15' ry='22' fill='%23EF4444'/%3E%3Cellipse cx='90' cy='30' rx='12' ry='20' fill='%23DC2626'/%3E%3Cellipse cx='103' cy='35' rx='10' ry='16' fill='%23B91C1C'/%3E%3Cpath d='M 55 68 L 8 75 L 55 85 Z' fill='%23FBBF24'/%3E%3Cpath d='M 55 85 L 8 75 L 12 82 Z' fill='%23D97706'/%3E%3Ccircle cx='70' cy='65' r='14' fill='%231F2937'/%3E%3Ccircle cx='66' cy='61' r='5' fill='%23FFFFFF'/%3E%3Ccircle cx='74' cy='68' r='2.5' fill='%23FFFFFF'/%3E%3Cellipse cx='50' cy='78' rx='8' ry='5' fill='%23FECACA' opacity='0.8'/%3E%3Cellipse cx='125' cy='115' rx='35' ry='30' fill='%23818CF8'/%3E%3Cellipse cx='125' cy='115' rx='25' ry='20' fill='%236366F1'/%3E%3Ccircle cx='95' cy='130' r='25' fill='%23F9FAFB'/%3E%3Cpath d='M 145 140 L 175 185 L 155 180 L 140 145 Z' fill='%23818CF8'/%3E%3Cpath d='M 150 145 L 180 190 L 162 185 L 148 150 Z' fill='%236366F1'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0a0918; color: #e0e0e0; line-height: 1.8; }
+.container { max-width: 720px; margin: 0 auto; padding: 60px 24px; }
+h1 { font-size: 2rem; font-weight: 600; color: #fff; margin-bottom: 8px; line-height: 1.3; }
+h2 { font-size: 1.35rem; font-weight: 500; color: #fff; margin-top: 48px; margin-bottom: 16px; }
+h3 { font-size: 1.1rem; font-weight: 500; color: #fff; margin-top: 32px; margin-bottom: 12px; }
+p, li { font-size: 0.95rem; color: #b0b0b0; margin-bottom: 16px; }
+ul, ol { padding-left: 24px; }
+a { color: #818cf8; text-decoration: none; }
+a:hover { text-decoration: underline; }
+.meta { font-size: 0.85rem; color: #666; margin-bottom: 40px; }
+.back { display: inline-block; margin-bottom: 24px; font-size: 0.9rem; }
+code { background: #1a1a2e; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; font-family: 'JetBrains Mono', monospace; }
+pre { background: #111118; border: 1px solid #222; border-radius: 8px; padding: 16px 20px; overflow-x: auto; margin: 20px 0; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; line-height: 1.6; color: #c8c8d0; }
+pre .comment { color: #555; }
+pre .cmd { color: #818cf8; }
+pre .output { color: #6ee7b7; }
+pre .flag { color: #fbbf24; }
+pre .err { color: #f87171; }
+blockquote { border-left: 3px solid #6366F1; padding: 12px 16px; margin: 20px 0; background: rgba(99,102,241,0.06); border-radius: 0 8px 8px 0; }
+blockquote p { color: #a0a0b0; margin-bottom: 0; font-style: italic; }
+blockquote cite { display: block; margin-top: 8px; font-size: 0.85rem; color: #666; font-style: normal; }
+table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.9rem; }
+th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #222; color: #b0b0b0; }
+th { color: #fff; font-weight: 500; background: #111118; }
+.cta { margin-top: 48px; padding: 24px; background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.2); border-radius: 12px; }
+.cta h3 { margin-top: 0; }
+.cta pre { margin-bottom: 0; }
+.separator { border: none; border-top: 1px solid #222; margin: 48px 0; }
+</style>
+<script src="https://analytics.ahrefs.com/analytics.js" data-key="G1wKuningnrw+t5LQJ+MPw" async></script>
+</head>
+<body>
+<div class="container">
+<a href="../" class="back">&larr; Taprun</a> &middot; <a href="./" class="back">Blog</a>
+<h1>Facebook Scrambles Author Names, Not Post Bodies.</h1>
+<p class="meta">April 22, 2026 &middot; Leon Ting &middot; 7 min read</p>
+
+<p>A potential client posted on Reddit asking for a Facebook keyword-post scraper. Their budget: $500. My first instinct after looking at the page was to say no.</p>
+
+<p>Here's what a naive scraper saw when it grabbed the first <code>[role="article"]</code> on the search results page:</p>
+
+<pre><code>oSodnprmmlffgfi1c3mSg0so0d000c0uh1l40llhe09n2991imm38opar · Shared with Public
+In 24 months every serious website will talk. Get in before it's crowded.… See more
+0:00 / 0:00
+SNOWIE.AI
+$67 Lifetime Deal!</code></pre>
+
+<p>The <code>· Shared with Public</code> and the post body are readable. But that first line — the one that should be the author's name — is gibberish. <code>Snowie.Ai</code> rendered visually. <code>oSodnprm…</code> returned by <code>textContent</code>.</p>
+
+<p>I jumped to "Facebook ships custom-font character remapping at scale — this is uncompetable, decline the gig." I was wrong. Here's what the actual answer turned out to be, and why I had to write a diagnostic tap before I could see it.</p>
+
+<h2>The seven ways rendered text can escape textContent</h2>
+
+<p>Before declaring a site uncompetable, you have to know what you're looking at. There are exactly seven mechanisms by which what a human sees on screen can diverge from what <code>Node.textContent</code> returns:</p>
+
+<table>
+<thead>
+<tr><th>#</th><th>Mechanism</th><th>Defeat cost</th></tr>
+</thead>
+<tbody>
+<tr><td>1</td><td>Selector mismatch (not actually anti-scraping — you grabbed the wrong node)</td><td>Minutes</td></tr>
+<tr><td>2</td><td>CSS <code>::before</code> / <code>::after</code> content rules</td><td>Low — read computed style</td></tr>
+<tr><td>3</td><td>Flexbox <code>order</code> reordering (DOM scrambled, CSS re-sorts visually)</td><td>Low — sort children by computed <code>order</code></td></tr>
+<tr><td>4</td><td>Custom font glyph remapping (<code>.woff2</code> rebinds codepoints)</td><td>High — OCR pixels or reverse each session's font table</td></tr>
+<tr><td>5</td><td>Unicode homoglyph substitution</td><td>Low — NFKC + confusable normalize</td></tr>
+<tr><td>6</td><td>Canvas pixel rendering (no DOM text at all)</td><td>High — OCR only</td></tr>
+<tr><td>7</td><td>WebAssembly runtime decryption</td><td>Extreme — reverse the WASM module, track session keys</td></tr>
+</tbody>
+</table>
+
+<p>Each requires a different defeat strategy with wildly different economics. #1 is free (fix your selector). #4 and #6 start at ~$15K/year to maintain. #7 is measured in tens of thousands.</p>
+
+<p><strong>So the only useful question is: which one does this site use?</strong> Without a diagnostic you're guessing — and guessing wrong costs you either a scraping contract you could have fulfilled, or a contract you over-promised on.</p>
+
+<h2>The 5-minute diagnostic</h2>
+
+<p>I wrote a throwaway tap that walks the first <code>[role="article"]</code> and dumps the signals that separate the seven mechanisms:</p>
+
+<pre><code>const el = document.querySelectorAll('[role="article"]')[0];
+return {
+  textContent: el.textContent.substring(0, 300),
+  innerText:   el.innerText.substring(0, 300),
+  font_family: getComputedStyle(el).fontFamily,
+  has_canvas:  !!el.querySelector('canvas'),
+  has_wasm_in_network: /* check api_traffic for .wasm */,
+  child_sample: Array.from(el.children).slice(0,10).map(c => ({
+    tag: c.tagName,
+    order: getComputedStyle(c).order,
+    text_len: (c.textContent || '').length,
+  })),
+};</code></pre>
+
+<p>I ran it. The result killed every hypothesis except one:</p>
+
+<ul>
+  <li><code>font_family</code> = <code>system-ui, -apple-system, sans-serif</code> — Facebook is using the OS default font. <strong>Mechanism #4 ruled out</strong> (no custom <code>.woff2</code>, no glyph remapping).</li>
+  <li>No <code>&lt;canvas&gt;</code> element. <strong>#6 ruled out.</strong></li>
+  <li>No WASM in network traffic. <strong>#7 ruled out.</strong></li>
+  <li><code>innerText</code> = <code>"Snowie.Ai\no\ns\no\ne\nt\nS\nd\nn\np\nr\n…"</code>. Character-per-line. Flex-column newlines.</li>
+  <li>Child elements of the scrambled container: each contained 1–2 characters with a non-zero <code>order</code> value like <code>order: 17</code>, <code>order: 4</code>, <code>order: 23</code>.</li>
+</ul>
+
+<p>That's the signature of <strong>mechanism #3 — Flexbox <code>order</code> reordering.</strong> Facebook splits author display names into individual single-character spans and gives each a scrambled <code>order</code> value. The browser's flexbox layout re-sorts them for visual rendering. <code>textContent</code> returns DOM order, which is randomized per render.</p>
+
+<p>And <strong>only the author name</strong> gets this treatment. Post body, engagement counts, <code>aria-label</code>s, and timestamps are plain text.</p>
+
+<h2>The fix is ten lines</h2>
+
+<pre><code><span class="comment">// When children are all single-character and at least one has a non-zero CSS order,</span>
+<span class="comment">// sort by order, concat — that's the real text as the browser would paint it.</span>
+const unscramble = (el) => {
+  const kids = Array.from(el.children);
+  if (kids.length >= 4
+      && kids.every(c =&gt; (c.textContent || '').length &lt;= 2)
+      && kids.some(c =&gt; parseInt(getComputedStyle(c).order || '0') !== 0)) {
+    return kids
+      .slice()
+      .sort((a, b) =&gt; parseInt(getComputedStyle(a).order || '0')
+                     - parseInt(getComputedStyle(b).order || '0'))
+      .map(c =&gt; c.textContent)
+      .join('');
+  }
+  return (el.textContent || '').trim();
+};</code></pre>
+
+<p>With this helper wired into the tap, <code>author_name</code> extraction went from <code>"oSodnprm…"</code> to <code>"Snowie.Ai"</code>. Everything else — <code>text</code>, <code>like_count</code>, <code>lang</code> — was already plain. No OCR, no WASM reversal, no font-table reverse engineering. Ten lines.</p>
+
+<h2>What the client actually gets</h2>
+
+<p>The working tap is live at <a href="/taps/facebook/keyword-search.html">taprun.dev/taps/facebook/keyword-search</a>. Given a keyword, it returns:</p>
+
+<pre><code>post_id       author_name   author_url                            text                                              like_count  lang
+fb_74ig3q     Snowie.Ai     https://facebook.com/SnowieAi         In 24 months every serious website will talk…     500         en</code></pre>
+
+<p>Two honest caveats:</p>
+
+<ul>
+  <li><strong>No native post permalink.</strong> Facebook search result cards don't expose a <code>/posts/&lt;id&gt;/</code> href — the visible links are profile URLs with encrypted <code>__cft__</code> tracking params. When no native ID is found, the tap emits a <code>fb_&lt;hash&gt;</code> id stable across runs for the same author+body combination. Downstream deduplication still works; you just can't deep-link back to the post.</li>
+  <li><strong>Lazy-loaded pagination.</strong> The search page initially renders 1–3 results; the rest arrive as the user scrolls. The MVP tap grabs what's visible. A production version would drive scroll events in a loop until <code>limit</code> is satisfied or no new articles appear.</li>
+</ul>
+
+<h2>The generalizable lesson</h2>
+
+<p>Every time I've been asked "can you scrape &lt;site X&gt;?" and said no without running a diagnostic, I was wrong at least half the time. The reflex is understandable — the DOM returns garbage, you assume the worst — but the cost asymmetry is severe. Five minutes of running the seven-factor diagnostic versus walking away from a paying contract.</p>
+
+<p>The protocol is:</p>
+
+<ol>
+  <li>Extract textContent of the element the human can read. If it matches visible text → mechanism #1, fix your selector.</li>
+  <li>Check <code>getComputedStyle(el).fontFamily</code>. Points to a custom <code>.woff2</code>? Suspect #4.</li>
+  <li>Walk children. If many are single-character and have non-zero <code>order</code>? Mechanism #3, unscramble with ten lines.</li>
+  <li>Check for <code>&lt;canvas&gt;</code> siblings and WASM network requests. Both absent? #6 and #7 are ruled out.</li>
+  <li>Only after this do you get to say "un-scrapable."</li>
+</ol>
+
+<p>Facebook is not un-scrapable for keyword search. They've applied a low-cost obfuscation to one high-value field (the author name you might use for audience targeting) and left everything else alone. That's a reasonable product decision — enough friction to discourage casual scrapers, not enough to break accessibility tooling that depends on rendered text. As a side effect, someone who runs the diagnostic wins.</p>
+
+<div class="cta">
+  <h3>Run the tap</h3>
+  <pre><code><span class="cmd">curl -fsSL https://taprun.dev/install | sh
+tap mcp connect
+tap runtime chrome
+tap facebook/keyword-search keyword="AI automation" limit=5</span></code></pre>
+  <p style="margin-top: 16px; margin-bottom: 0;">Reference + source: <a href="/taps/facebook/keyword-search.html">/taps/facebook/keyword-search</a>.</p>
+</div>
+
+<hr class="separator">
+
+<p style="font-size: 0.85rem; color: #666;">Related: <a href="/blog/scrapers-break-every-week.html">Your Scrapers Break Every Week</a> · <a href="/blog/health-contracts-catch-silent-failures.html">Health Contracts Catch What Pydantic Can't</a> · <a href="/blog/how-companies-keep-scrapers-reliable.html">How Companies Keep Scrapers Reliable</a></p>
+
+</div>
+</body>
+</html>

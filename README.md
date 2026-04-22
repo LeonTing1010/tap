@@ -72,16 +72,16 @@ Works with Claude Code, Cursor, Windsurf, or any MCP-compatible agent — no ext
 Or auto-configure all installed agents:
 
 ```bash
-tap setup
+tap mcp connect
 ```
 
 ### 3. Go
 
 ```bash
-tap github trending              # GitHub trending repos
-tap hackernews hot               # Hacker News front page
-tap weibo hot                    # 微博热搜
-tap xiaohongshu search --keyword "AI"  # 小红书搜索
+tap github/trending              # GitHub trending repos
+tap hackernews/hot               # Hacker News front page
+tap weibo/hot                    # 微博热搜
+tap xiaohongshu/search --keyword "AI"  # 小红书搜索
 ```
 
 Or just ask your AI agent:
@@ -91,7 +91,7 @@ You:   What's trending on GitHub today?
 Agent: Here are today's top repos — React compiler hit 734 stars...
 
 You:   Forge a tap for Douban top 250 movies
-Agent: Done. Run `tap douban top250` anytime — $0 per run.
+Agent: Done. Run `tap douban/top250` anytime — $0 per run.
 ```
 
 ### Optional: Chrome Extension (for login-required sites)
@@ -103,28 +103,28 @@ Most taps work without login. For sites that need your session (Xiaohongshu, Zhi
 **Read** — Extract data from any website
 
 ```bash
-tap reddit hot                   # Reddit front page
-tap bilibili trending            # Bilibili trending
-tap arxiv search --keyword "LLM" # arXiv papers
+tap reddit/hot                   # Reddit front page
+tap bilibili/trending            # Bilibili trending
+tap arxiv/search --keyword "LLM" # arXiv papers
 ```
 
 **Write** — Operate any website
 
 ```bash
-tap xiaohongshu publish --title "My Note" --images photo.jpg
-tap zhihu publish --title "My Article" --content "..."
+tap xiaohongshu/publish --title "My Note" --images photo.jpg
+tap zhihu/publish --title "My Article" --content "..."
 ```
 
 **Watch** — Monitor changes
 
 ```bash
-tap watch github trending --every 5m
+tap watch github/trending --every 5m
 ```
 
 **Compose** — Chain like Unix pipes
 
 ```bash
-tap github trending | tap filter --field stars --gt 500 | tap table
+tap github/trending | tap filter --field stars --gt 500 | tap table
 ```
 
 **Forge** — Create new automations with AI
@@ -213,7 +213,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 - [x] Unix pipes — `tap A | tap B`
 - [x] Watch mode — monitor changes over time
 - [x] Doctor — health contracts, fingerprint diffs, automatic diagnostics for broken taps
-- [x] One-command setup — `tap setup` configures all AI agents
+- [x] One-command setup — `tap mcp connect` configures all AI agents
 - [ ] Android runtime
 - [ ] iOS runtime
 - [ ] Concurrency control — deterministic coordination for M agents operating shared accounts in parallel

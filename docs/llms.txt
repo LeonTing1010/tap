@@ -1,0 +1,82 @@
+# Taprun
+
+> Browser automation that doesn't burn tokens every run. AI forges a `.tap.json` program once at authoring time — the program replays deterministically forever, zero LLM at runtime. `tap doctor` catches structural drift before production breaks.
+
+Taprun is the tool layer, not an AI layer. Any MCP host (Claude Code, Cursor, Windsurf, Codex, Cline, Continue, VS Code) connects and gets forge + run + doctor. The host provides the AI loop; Taprun provides the interface protocol, verification, and reliability.
+
+## Vocabulary
+
+- **tap** — the protocol, the handle, the program (`.tap.json`), and the product. One word, one concept.
+- **forge** — create a tap from an observed interface (AI participates once).
+- **runtime** — a platform implementation of tap's 8 core operations. Three today: Chrome Extension, Playwright (default, zero-setup), macOS (AX API + JXA + CGEvent).
+- **interface** — the automation target (a website, a native app). External, not part of tap.
+
+## 4-Layer Trust Stack
+
+Taps bind to the highest-stability structural address available:
+
+1. **Layer 1 — Explicit declarations (~100% deterministic):** agents.json, OpenAPI, llms.txt, JSON-LD, RSS, Open Graph. SEO/legal/subscriber incentives keep these honest. Compiled to `.tap.json` with zero AI.
+2. **Layer 2 — Data contracts (~95%):** API endpoints, SSR hydration globals, WebSocket payloads. The site's own frontend depends on them.
+3. **Layer 3 — Semantic structure (~80%):** ARIA roles, heading levels, data-testid, itemprop, Schema.org. W3C-standardized, captured via fingerprint.
+4. **Layer 4 — Implementation details (~30%):** CSS classes, framework attrs (data-v-*, _ngcontent), DOM nesting. No external stability driver. Never hashed.
+
+Doctor cross-validates across layers. If Layer 1 JSON-LD says `Product.name = "iPhone 16 Pro"` but the tap's DOM extraction returns `title = "iPhone Case"`, the tap navigated to the wrong structural location — "valid type, wrong node."
+
+## Install
+
+```
+npx -y @taprun/cli --version          # zero-install (any Node host)
+curl -fsSL https://taprun.dev/install.sh | sh   # permanent binary (macOS/Linux)
+```
+
+## Connect to any MCP host
+
+```
+tap mcp connect
+```
+
+Or add manually to your MCP config:
+
+```json
+{ "mcpServers": { "tap": { "command": "tap", "args": ["mcp"] } } }
+```
+
+## First commands
+
+```
+tap github/trending              # run a community tap (slash form, not space)
+tap hackernews/hot
+tap forge https://news.ycombinator.com    # Tier 0 — compile without AI (API/JSON-LD/RSS)
+tap forge "get Hacker News top stories"   # BYOK AI path (Claude / OpenAI / Ollama)
+tap doctor                       # check fleet health
+tap watch github/trending --every 5m      # follow changes over time
+```
+
+## Pricing
+
+- **Free** — 140+ community taps, full doctor, Tier 0 forge, watch, MCP read ops. 3-day trial on paid features.
+- **Hacker ($9/mo)** — full forge pipeline through any MCP host. BYOK AI key.
+- **Pro ($29/mo)** — auto-heal, auto-refresh, scheduled runs, team MCP server. 100% local.
+
+## Security invariants
+
+- Taprun servers never push executable code to clients.
+- Taprun servers never initiate connections to user machines.
+- Tap source never leaves the user's machine (multi-machine sync, when built, is end-to-end encrypted client-side).
+- Server features are opt-in, off by default.
+- Local-first is the architectural default, not a fallback.
+
+## Authoritative links
+
+- Homepage: https://taprun.dev/
+- Install: https://taprun.dev/install.html
+- Blog: https://taprun.dev/blog/
+- Agent discovery: https://taprun.dev/.well-known/agents.json
+- Sitemap: https://taprun.dev/sitemap.xml
+- Community taps (140+, MIT): https://github.com/LeonTing1010/tap-skills
+- Public repo (extension + docs, MIT): https://github.com/LeonTing1010/tap
+- Chrome Extension: https://chromewebstore.google.com/detail/tap/llcidejeoobdegbkolbjhfoeckphldce
+
+## Contact
+
+leon@taprun.dev
