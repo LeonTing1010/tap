@@ -56,16 +56,23 @@ async function testAsync(name, fn) {
 }
 
 async function findTapFiles(dir) {
+  // Walks the tree and treats every .tap.js file's parent directory as its site.
+  // Works for both flat layouts (~/.tap/skills/site/name.tap.js) and tap-skills
+  // repo's nested layout (showcase/site/name.tap.js · community/site/name.tap.js).
   const files = []
-  for (const site of await readdir(dir)) {
-    const sitePath = join(dir, site)
-    try {
-      for (const file of await readdir(sitePath)) {
-        if (file.endsWith('.tap.js')) {
-          files.push({ site, name: basename(file, '.tap.js'), path: join(sitePath, file) })
-        }
+  const stack = [dir]
+  while (stack.length) {
+    const cur = stack.pop()
+    let entries
+    try { entries = await readdir(cur, { withFileTypes: true }) } catch { continue }
+    for (const e of entries) {
+      if (e.name.startsWith('.')) continue
+      const full = join(cur, e.name)
+      if (e.isDirectory()) stack.push(full)
+      else if (e.name.endsWith('.tap.js')) {
+        files.push({ site: basename(cur), name: basename(e.name, '.tap.js'), path: full })
       }
-    } catch { /* not a directory */ }
+    }
   }
   return files
 }
