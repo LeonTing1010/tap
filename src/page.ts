@@ -94,23 +94,6 @@ export interface Tap {
   // scheduling, $ref binding, run-scoped cache, and clear step-id errors.
   // Assigned at runtime by executor.ts when tapDirs is available.
   pipe?(pipe: unknown): Promise<unknown>;
-  // scrollUntil — lazy-feed pagination. Repeatedly scrolls (viewport or
-  // an embedded container) and counts items matching `selector` until one
-  // of: count >= min_count, count stable for stop_when_stable_for iters,
-  // or max_scrolls reached. Returns telemetry consumed by doctor's drift
-  // detection. Implemented by Playwright + Chrome extension runtimes.
-  scrollUntil?(opts: {
-    selector: string;
-    min_count?: number;
-    max_scrolls?: number;
-    settle_ms?: number;
-    stop_when_stable_for?: number;
-    container_selector?: string;
-  }): Promise<{
-    final_count: number;
-    scrolls_done: number;
-    reason: "min_reached" | "stable" | "max_reached";
-  }>;
   // invoke — like run, but returns the full TapResult (rows + columns +
   // count + rawRows + timing) instead of just rows. Preferred by
   // compositional code that needs access to meta fields. run() returns
@@ -166,11 +149,5 @@ export function createTapHandle(send: RpcSend): Tap {
       send("tool", "tap.extract", { selector, fields }) as Promise<Record<string, string>[]>,
     parseXML: (text, spec) =>
       send("tool", "tap.parseXML", { text, ...spec }) as Promise<Record<string, string>[]>,
-    scrollUntil: (opts) =>
-      send("tool", "tap.scrollUntil", { ...opts }) as Promise<{
-        final_count: number;
-        scrolls_done: number;
-        reason: "min_reached" | "stable" | "max_reached";
-      }>,
   };
 }
