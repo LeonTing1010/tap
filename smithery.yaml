@@ -1,11 +1,30 @@
 # Smithery configuration for Tap MCP server
 # https://smithery.ai/docs/config#smitheryyaml
+#
+# Tap: MCP server for browser automation.
+# Compiles AI browser intent into deterministic .tap.json plans,
+# runs on your logged-in Chrome, detects drift when sites change.
+# 65+ open community taps on 40+ sites.
 
-# Option 1: Remote server (zero install — connect via URL)
-# Users connect to: https://taprun.dev/mcp
-# 208 pre-built taps, 100 free calls/day, API key for more.
+title: "Tap — compile-once browser automation MCP"
+description: |
+  MCP server that compiles AI browser automation into deterministic
+  `.tap.json` plans (25-op closed union, zero runtime LLM), runs on
+  your logged-in Chrome (or headless Playwright), and detects drift
+  via semantic fingerprint diff when sites change. 65+ open community
+  taps on 40+ sites.
+tags:
+  - browser-automation
+  - compile-once
+  - drift-detection
+  - chrome
+  - playwright
+  - mcp
+  - deterministic
+categories:
+  - developer-tools
+  - browser-automation
 
-# Option 2: Local server (full power — runs on user's machine)
 startCommand:
   type: stdio
   configSchema:
@@ -19,6 +38,6 @@ startCommand:
   commandFunction: |-
     (config) => ({
       command: 'tap',
-      args: ['mcp'],
+      args: ['mcp', 'start'],
       env: config.runtime === 'playwright' ? { TAP_RUNTIME: 'playwright' } : {}
     })
