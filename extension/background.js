@@ -378,9 +378,31 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
     case 'screenshot': {
       const fmt = params.format || 'jpeg'
       const quality = params.quality ?? 50
+      const target = params.target
       const data = await withDebugger(tabId, async () => {
+        let clip
+        if (target) {
+          // Resolve selector → bounding rect in page context, then pass as clip.
+          // Mirrors the Playwright `locator(target).screenshot()` path used by
+          // src/runtime-playwright.ts so vision plan op behaves identically.
+          const expr = `(() => {
+            const el = document.querySelector(${JSON.stringify(target)});
+            if (!el) return null;
+            const r = el.getBoundingClientRect();
+            return { x: r.x, y: r.y, width: r.width, height: r.height };
+          })()`
+          const evalRes = await chrome.debugger.sendCommand({ tabId }, 'Runtime.evaluate', {
+            expression: expr, returnByValue: true,
+          })
+          const rect = evalRes?.result?.value
+          if (!rect) throw new Error(`screenshot: target not found: ${target}`)
+          if (rect.width <= 0 || rect.height <= 0) {
+            throw new Error(`screenshot: target has zero size: ${target}`)
+          }
+          clip = { x: rect.x, y: rect.y, width: rect.width, height: rect.height, scale: 1 }
+        }
         const result = await chrome.debugger.sendCommand({ tabId }, 'Page.captureScreenshot', {
-          format: fmt, quality,
+          format: fmt, quality, ...(clip ? { clip } : {}),
         })
         return result.data
       })
