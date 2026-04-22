@@ -99,11 +99,11 @@ console.log('\n  -- Rule 2: Wire Name Format --\n')
   const hmBody = BG_SRC.substring(hmStart)
   const caseNames = [...hmBody.matchAll(/case\s+'([^']+)'/g)].map(m => m[1])
 
-  test('handleMethod cases use bare names (tab.*/inspect.*/intercept.* namespaces allowed)', () => {
-    const allowedNs = ['tab.', 'inspect.', 'intercept.']
+  test('handleMethod cases use bare names (tab.*/inspect.*/intercept.*/session.* namespaces allowed)', () => {
+    const allowedNs = ['tab.', 'inspect.', 'intercept.', 'session.']
     const dotCases = caseNames.filter(n => n.includes('.') && !allowedNs.some(ns => n.startsWith(ns)))
     assert.equal(dotCases.length, 0,
-      `found dotted case names: ${dotCases.join(', ')} -- only tab.*/inspect.*/intercept.* namespaces allowed`)
+      `found dotted case names: ${dotCases.join(', ')} -- only tab.*/inspect.*/intercept.*/session.* namespaces allowed`)
   })
 
   test('no Tap.* or Bridge.* prefixed cases', () => {
