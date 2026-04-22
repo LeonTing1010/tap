@@ -90,30 +90,34 @@
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-  --bg-deep: #0a0918;
-  --bg-surface: #0f0d20;
-  --bg-card: #161333;
-  --bg-card-hover: #1c1840;
-  --indigo: #6366F1;
-  --indigo-light: #818CF8;
-  --indigo-bright: #A5B4FC;
-  --indigo-glow: rgba(99, 102, 241, 0.15);
-  --gold: #FBBF24;
-  --gold-dim: #D97706;
-  --red: #EF4444;
-  --red-dark: #DC2626;
-  --green: #10B981;
-  --text: #E2E0EE;
-  --text-dim: #9A94B8;
-  --text-muted: #5D5680;
-  --white: #FFFFFF;
-  --font-heading: 'Bricolage Grotesque', system-ui, sans-serif;
-  --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
+  /* Editorial letterpress palette — paper + ink + vintage accents.
+     Variable names kept (--indigo etc.) for backward compatibility
+     with section styles; the tones were re-voiced to the new aesthetic. */
+  --bg-deep: #F4EDDE;              /* cream paper */
+  --bg-surface: #EDE4CE;           /* deeper cream for alternating bands */
+  --bg-card: #E7DCBE;              /* card / quote stock */
+  --bg-card-hover: #DFD2AD;
+  --indigo: #1C2D5A;               /* vintage indigo — ink-on-paper accent */
+  --indigo-light: #384E80;
+  --indigo-bright: #5F749E;
+  --indigo-glow: rgba(28, 45, 90, 0.08);
+  --gold: #A67A2E;                 /* gold leaf */
+  --gold-dim: #7A5A22;
+  --red: #7E2B1C;                  /* proofread red */
+  --red-dark: #5A1C10;
+  --green: #3D5E3B;                /* sage, not neon */
+  --text: #14110C;                 /* deep ink */
+  --text-dim: #3B332A;             /* soft ink */
+  --text-muted: #7A6F60;           /* faded ink */
+  --white: #14110C;                /* "white" was "bright foreground text" — on paper that's ink */
+  --paper: #FAF5EB;                /* true paper-white, for text on dark chips / buttons */
+  --font-heading: 'Fraunces', 'Hoefler Text', Georgia, serif;
+  --font-body: 'Fraunces', 'Hoefler Text', Georgia, serif;
   --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
-  --radius-sm: 8px;
-  --radius-md: 14px;
-  --radius-lg: 20px;
-  --radius-xl: 28px;
+  --radius-sm: 0;                  /* no rounded corners — print aesthetic */
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
 }
 
 html { scroll-behavior: smooth; }
@@ -161,8 +165,8 @@ section { position: relative; }
   top: -100%;
   left: 50%;
   transform: translateX(-50%);
-  background: var(--indigo);
-  color: var(--white);
+  background: #14110C;
+  color: var(--paper);
   padding: 12px 24px;
   border-radius: var(--radius-md);
   font-weight: 600;
@@ -180,18 +184,18 @@ section { position: relative; }
   top: 0; left: 0; right: 0;
   z-index: 100;
   padding: 12px 0;
-  background: rgba(10, 9, 24, 0.6);
-  backdrop-filter: blur(20px) saturate(1.3);
-  -webkit-backdrop-filter: blur(20px) saturate(1.3);
-  border-bottom: 1px solid rgba(99, 102, 241, 0.04);
+  background: rgba(244, 237, 222, 0.78);   /* cream paper translucent */
+  backdrop-filter: blur(20px) saturate(1.15);
+  -webkit-backdrop-filter: blur(20px) saturate(1.15);
+  border-bottom: 1px solid rgba(20, 17, 12, 0.06);
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .nav.scrolled {
-  background: rgba(10, 9, 24, 0.92);
-  border-bottom-color: rgba(99, 102, 241, 0.1);
+  background: rgba(244, 237, 222, 0.94);
+  border-bottom-color: rgba(20, 17, 12, 0.12);
   padding: 10px 0;
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 20px rgba(20, 17, 12, 0.06);
 }
 
 .nav .container {
@@ -277,8 +281,8 @@ section { position: relative; }
   align-items: center;
   gap: 8px;
   padding: 10px 22px !important;
-  background: linear-gradient(135deg, var(--indigo), #7577F5);
-  color: var(--white) !important;
+  background: #14110C;
+  color: var(--paper) !important;
   border-radius: 100px;
   font-weight: 600 !important;
   font-size: 14px !important;
@@ -293,7 +297,7 @@ section { position: relative; }
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, #7577F5, var(--indigo-light));
+  background: #7E2B1C;  /* editorial red on hover */
   opacity: 0;
   transition: opacity 0.3s;
 }
@@ -530,21 +534,21 @@ section { position: relative; }
 }
 
 .btn-primary {
-  background: var(--indigo);
-  color: var(--white);
-  box-shadow: 0 4px 24px rgba(99, 102, 241, 0.35), 0 0 0 1px rgba(99, 102, 241, 0.1);
+  background: #14110C;
+  color: var(--paper);
+  box-shadow: 0 4px 18px rgba(20, 17, 12, 0.15);
 }
 
 .btn-primary:hover {
-  background: #7577F5;
+  background: #7E2B1C;
   transform: translateY(-2px);
-  box-shadow: 0 8px 40px rgba(99, 102, 241, 0.45), 0 0 0 1px rgba(99, 102, 241, 0.2);
+  box-shadow: 0 8px 28px rgba(126, 43, 28, 0.25);
 }
 
 .btn-ghost {
-  background: rgba(255, 255, 255, 0.04);
+  background: transparent;
   color: var(--text);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--text);
 }
 
 .btn-ghost:hover {
@@ -2291,27 +2295,36 @@ h2 .hl {
   padding-left: 1.2em;
   font-variation-settings: "SOFT" 10, "opsz" 144, "wght" 760;
 }
-/* Nav adapts to cream paper while over hero */
-body:has(.press-edition) .nav:not(.scrolled) {
-  background: rgba(244, 237, 222, 0.82);
+/* Nav adapts to cream paper while .press-edition is in view.
+   The .over-press class is toggled by an IntersectionObserver at bottom
+   of file. Works for both scrolled + unscrolled states. */
+.nav.over-press {
+  background: rgba(244, 237, 222, 0.78);
   border-bottom-color: rgba(20, 17, 12, 0.08);
+  backdrop-filter: blur(20px) saturate(1.15);
+  -webkit-backdrop-filter: blur(20px) saturate(1.15);
+  box-shadow: none;
 }
-body:has(.press-edition) .nav:not(.scrolled) .nav-brand-text,
-body:has(.press-edition) .nav:not(.scrolled) .nav-links a {
+.nav.over-press.scrolled {
+  background: rgba(244, 237, 222, 0.92);
+  border-bottom-color: rgba(20, 17, 12, 0.12);
+}
+.nav.over-press .nav-brand-text,
+.nav.over-press .nav-links a {
   color: #14110C;
 }
-body:has(.press-edition) .nav:not(.scrolled) .nav-links a:hover {
+.nav.over-press .nav-links a:hover {
   color: #7E2B1C;
 }
-body:has(.press-edition) .nav:not(.scrolled) .nav-cta {
+.nav.over-press .nav-cta {
   background: #14110C;
   box-shadow: none;
 }
-body:has(.press-edition) .nav:not(.scrolled) .nav-cta:hover {
+.nav.over-press .nav-cta:hover {
   background: #7E2B1C;
   box-shadow: 0 4px 14px rgba(126, 43, 28, 0.2);
 }
-body:has(.press-edition) .nav:not(.scrolled) .nav-brand svg {
+.nav.over-press .nav-brand svg {
   filter: none;
 }
 .press-edition .press-dek-wrap {
@@ -2921,6 +2934,21 @@ window.addEventListener('scroll', () => {
     ticking = true;
   }
 }, { passive: true });
+
+// Nav stays editorial (ink-on-cream) while the press-edition hero is
+// anywhere in the viewport. Once it leaves, revert to the dark theme
+// so the nav matches the sections below.
+const pressEl = document.querySelector('.press-edition');
+if (pressEl && 'IntersectionObserver' in window) {
+  const navPressObserver = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      nav.classList.toggle('over-press', entry.isIntersecting);
+    }
+  }, { threshold: 0, rootMargin: '-60px 0px 0px 0px' });
+  navPressObserver.observe(pressEl);
+  // Initial state — element may be in view before observer fires
+  nav.classList.add('over-press');
+}
 
 // ===== Mobile menu toggle =====
 const navToggle = document.querySelector('.nav-toggle');
