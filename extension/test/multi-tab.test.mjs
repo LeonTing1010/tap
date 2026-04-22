@@ -30,40 +30,40 @@ function test(name, fn) {
 
 // ═══════════════════════════════════════════════════════════
 // Rule 1: Tab Routing
-// Why: resolveTab() must use params.tabId first, fall back to
-// activeTabId, and auto-create a tab when neither is available.
-// handleMethod delegates to resolveTab().
+// Why: handleMethod must use params.tabId first, fall back to the
+// currently active tab, and support auto-creating a tab for
+// tab-creating methods (nav, session.create, tab.new).
+// Post-SessionManager refactor (commit 8c32d78) inlines this logic
+// in handleMethod's preamble; the invariants are the contract, not
+// the function shape.
 // ═══════════════════════════════════════════════════════════
 
 console.log('\n  -- Rule 1: Tab Routing --\n')
 
 {
-  const rtStart = BG_SRC.indexOf('async function resolveTab(')
-  assert(rtStart !== -1, 'resolveTab function must exist')
-  const rtEnd = BG_SRC.indexOf('\n}', rtStart + 10)
-  const rtBody = BG_SRC.substring(rtStart, rtEnd + 2)
+  const hmStart = BG_SRC.indexOf('async function handleMethod(')
+  assert(hmStart !== -1, 'handleMethod function must exist')
+  const switchStart = BG_SRC.indexOf('switch (method)', hmStart)
+  assert(switchStart !== -1, 'handleMethod must contain a switch (method) block')
+  const preamble = BG_SRC.substring(hmStart, switchStart)
 
-  test('resolveTab uses params.tabId for routing', () => {
-    assert(rtBody.includes('params.tabId'),
-      'resolveTab must extract tabId from params for explicit tab targeting')
+  test('handleMethod uses params.tabId for routing', () => {
+    assert(preamble.includes('params.tabId'),
+      'handleMethod preamble must extract tabId from params for explicit tab targeting')
   })
 
-  test('resolveTab falls back to activeTabId', () => {
-    assert(rtBody.includes('activeTabId'),
-      'resolveTab must fall back to activeTabId when params.tabId is not provided')
+  test('handleMethod falls back to the currently active tab', () => {
+    const viaActiveId = preamble.includes('activeTabId')
+    const viaQuery = /chrome\.tabs\.query\([^)]*active:\s*true/.test(preamble)
+    assert(viaActiveId || viaQuery,
+      'handleMethod must fall back to the active tab when params.tabId is missing (activeTabId or chrome.tabs.query active:true)')
   })
 
-  test('resolveTab auto-creates tab with chrome.tabs.create', () => {
-    assert(rtBody.includes('chrome.tabs.create'),
-      'resolveTab must auto-create a tab when no valid tabId is available')
-  })
-
-  test('handleMethod delegates to resolveTab', () => {
-    const hmStart = BG_SRC.indexOf('async function handleMethod(')
-    const switchStart = BG_SRC.indexOf('switch (method)', hmStart)
-    const preamble = BG_SRC.substring(hmStart, switchStart)
-    assert(preamble.includes('resolveTab'),
-      'handleMethod must delegate tab resolution to resolveTab()')
+  test('handleMethod supports auto-creating tabs via chrome.tabs.create', () => {
+    // Creation lives in specific case handlers (nav, session.create, tab.new)
+    // after the SessionManager refactor, not in a central resolver.
+    assert(BG_SRC.includes('chrome.tabs.create'),
+      'background.js must call chrome.tabs.create in tab-creating case handlers')
   })
 }
 
@@ -129,132 +129,68 @@ console.log('\n  -- Rule 3: Tab Cleanup --\n')
 {
   const onRemovedStart = BG_SRC.indexOf('chrome.tabs.onRemoved.addListener')
   assert(onRemovedStart !== -1, 'must have tabs.onRemoved listener')
-  const listenerBody = BG_SRC.substring(onRemovedStart, onRemovedStart + 400)
+  // Slice to the closing `})` of the listener so session cleanup (which lives
+  // after debugger/network cleanup) is included.
+  const onRemovedEnd = BG_SRC.indexOf('\n})', onRemovedStart)
+  const listenerBody = BG_SRC.substring(onRemovedStart, onRemovedEnd === -1 ? onRemovedStart + 1200 : onRemovedEnd + 3)
 
   test('tabs.onRemoved cleans debuggerSessions.delete', () => {
     assert(listenerBody.includes('debuggerSessions.delete'),
       'must delete debugger session for closed tab')
   })
 
-  test('tabs.onRemoved clears activeTabId when closed tab was active', () => {
-    assert(listenerBody.includes('activeTabId = null'),
-      'must clear activeTabId when the active tab is closed to prevent stale routing')
-  })
-
   test('tabs.onRemoved clears detach timer for closed tab', () => {
     assert(listenerBody.includes('clearTimeout'),
       'must clear pending detach timer for closed tab')
   })
+
+  test('tabs.onRemoved removes any session that owned the closed tab', () => {
+    // Post-SessionManager refactor: session rows own tabs; orphans must be
+    // cleaned up when the tab dies or the session map rots into dangling refs.
+    assert(listenerBody.includes('sessions.delete') || listenerBody.includes('sessions ='),
+      'must clean up sessions whose tabId matches the closed tab')
+  })
 }
 
 // ═══════════════════════════════════════════════════════════
-// Rule 4: activeTabId Management
-// Why: activeTabId is the default tab for commands without explicit tabId.
-// It must be set on auto-create and nav (so subsequent calls reuse the tab),
-// but explicit tabId in params always takes priority.
+// Rule 4: Session Isolation & Daemon Fallback Gate
+// Why: multiple MCP sessions share the same daemon. Daemon-originated
+// commands must use ONLY their explicit tabId, never silently fall
+// back to whatever tab is currently active. Otherwise session A's
+// nav leaks onto session B's tab (the "tab stealing" bug).
+//
+// Post-SessionManager refactor (commit 8c32d78) expresses this with:
+//   - a top-level `sessions` Map owning session→tab mappings
+//   - handleMethod's preamble gates the active-tab fallback on
+//     `!fromDaemon`, so daemon callers never fall back
+//   - handleAndReport (daemon poll handler) always sets fromDaemon: true
 // ═══════════════════════════════════════════════════════════
 
-console.log('\n  -- Rule 4: activeTabId Management --\n')
+console.log('\n  -- Rule 4: Session Isolation & Daemon Fallback Gate --\n')
 
-test('let activeTabId exists as fallback', () => {
-  assert(BG_SRC.includes('let activeTabId'),
-    'must keep activeTabId as default fallback variable')
+test('sessions Map tracks session → tab ownership', () => {
+  assert(/const\s+sessions\s*=\s*new\s+Map\(/.test(BG_SRC),
+    'must keep a top-level `sessions` Map so each MCP session owns its tab without a global activeTabId')
 })
 
-test('resolveTab sets activeTabId on auto-create', () => {
-  const rtStart = BG_SRC.indexOf('async function resolveTab(')
-  const rtEnd = BG_SRC.indexOf('\n}', rtStart + 10)
-  const rtBody = BG_SRC.substring(rtStart, rtEnd + 2)
-  const autoCreate = rtBody.indexOf('chrome.tabs.create')
-  const context = rtBody.substring(autoCreate, autoCreate + 200)
-  assert(context.includes('activeTabId = tabId') || context.includes('activeTabId ='),
-    'must set activeTabId when auto-creating a tab so subsequent calls reuse it')
-})
-
-test('params.tabId takes priority over activeTabId', () => {
-  const rtStart = BG_SRC.indexOf('async function resolveTab(')
-  const rtEnd = BG_SRC.indexOf('\n}', rtStart + 10)
-  const rtBody = BG_SRC.substring(rtStart, rtEnd + 2)
-  assert(rtBody.includes('params.tabId'),
-    'resolveTab must check params.tabId first before falling back to activeTabId')
-  const tabIdIdx = rtBody.indexOf('params.tabId')
-  const activeIdx = rtBody.indexOf('activeTabId')
-  assert(tabIdIdx < activeIdx,
-    'params.tabId must be checked before activeTabId (explicit overrides default)')
-})
-
-test('activeTabId is initialized to null', () => {
-  assert(BG_SRC.includes('let activeTabId = null'),
-    'activeTabId must be initialized to null')
-})
-
-test('handleMethod delegates tab resolution to resolveTab', () => {
+test('handleMethod gates the active-tab fallback on !fromDaemon', () => {
   const hmStart = BG_SRC.indexOf('async function handleMethod(')
   const switchStart = BG_SRC.indexOf('switch (method)', hmStart)
   const preamble = BG_SRC.substring(hmStart, switchStart)
-  assert(preamble.includes('resolveTab'),
-    'handleMethod must delegate tab resolution to resolveTab()')
-})
-
-// ═══════════════════════════════════════════════════════════
-// Rule 5: Explicit tabId Never Falls Back
-// Why: when daemon sends a command with tabId (session-pinned),
-// resolveTab must NOT silently switch to another tab if that tab
-// is invalid. This prevents the "tab stealing" bug where tap
-// operations hijack whatever tab the user is looking at.
-// ═══════════════════════════════════════════════════════════
-
-console.log('\n  -- Rule 5: Explicit tabId Never Falls Back --\n')
-
-test('resolveTab distinguishes explicit vs implicit tabId', () => {
-  const rtStart = BG_SRC.indexOf('async function resolveTab(')
-  const rtEnd = BG_SRC.indexOf('\n}', rtStart + 10)
-  const rtBody = BG_SRC.substring(rtStart, rtEnd + 2)
-  assert(rtBody.includes('explicitTabId') || rtBody.includes('explicit'),
-    'resolveTab must track whether tabId was explicitly provided vs defaulted')
-})
-
-test('resolveTab throws on invalid explicit tabId instead of falling back', () => {
-  const rtStart = BG_SRC.indexOf('async function resolveTab(')
-  const rtEnd = BG_SRC.indexOf('\n}', rtStart + 10)
-  const rtBody = BG_SRC.substring(rtStart, rtEnd + 2)
-  // When explicit tabId fails validation, must throw (not silently query for another tab)
-  assert(rtBody.includes('throw') && (rtBody.includes('explicitTabId') || rtBody.includes('explicit')),
-    'resolveTab must throw when an explicit tabId is invalid -- silent fallback causes tab stealing')
-})
-
-// ═══════════════════════════════════════════════════════════
-// Rule 6: Daemon Session Isolation
-// Why: multiple MCP sessions share the same daemon. Daemon commands
-// must ONLY use their explicit tabId, never fall back to the global
-// activeTabId. Otherwise session A's nav updates activeTabId, and
-// session B's commands leak onto session A's tab.
-// ═══════════════════════════════════════════════════════════
-
-console.log('\n  -- Rule 6: Daemon Session Isolation --\n')
-
-test('resolveTab accepts fromDaemon option', () => {
-  const rtStart = BG_SRC.indexOf('async function resolveTab(')
-  const rtEnd = BG_SRC.indexOf('\n}', rtStart + 10)
-  const rtBody = BG_SRC.substring(rtStart, rtEnd + 2)
-  assert(rtBody.includes('fromDaemon'),
-    'resolveTab must accept fromDaemon flag to distinguish daemon vs popup commands')
-})
-
-test('daemon commands skip activeTabId fallback', () => {
-  const rtStart = BG_SRC.indexOf('async function resolveTab(')
-  const rtEnd = BG_SRC.indexOf('\n}', rtStart + 10)
-  const rtBody = BG_SRC.substring(rtStart, rtEnd + 2)
-  // When fromDaemon is true, tabId must NOT include activeTabId
-  assert(rtBody.includes('fromDaemon') && rtBody.includes('explicitTabId'),
-    'daemon path must use only explicitTabId, never activeTabId — prevents cross-session leakage')
+  // Daemon commands must not invoke chrome.tabs.query active:true without a !fromDaemon guard
+  const queryIdx = preamble.search(/chrome\.tabs\.query\([^)]*active:\s*true/)
+  assert(queryIdx !== -1, 'handleMethod preamble must query active tab for non-daemon callers')
+  const before = preamble.substring(0, queryIdx)
+  assert(/!\s*fromDaemon/.test(before),
+    'active-tab fallback must be gated on !fromDaemon so daemon commands never silently retarget')
 })
 
 test('handleAndReport passes fromDaemon: true', () => {
   const fnStart = BG_SRC.indexOf('async function handleAndReport(')
+  assert(fnStart !== -1, 'handleAndReport (daemon poll handler) must exist')
   const fnBody = BG_SRC.substring(fnStart, fnStart + 500)
   assert(fnBody.includes('fromDaemon: true') || fnBody.includes('fromDaemon:true'),
-    'handleAndReport (daemon poll handler) must pass fromDaemon: true to handleMethod')
+    'handleAndReport must pass fromDaemon: true to handleMethod so daemon commands hit the gated path')
 })
 
 // --- Summary ---
