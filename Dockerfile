@@ -1,13 +1,8 @@
-FROM denoland/deno:2.2.2
+# Tap MCP server — used by Glama and other MCP registries to build & inspect.
+# Tap-core is proprietary; this Dockerfile installs the published npm package.
+FROM node:20-slim
 
-WORKDIR /app
-
-# Copy source
-COPY src/ src/
-COPY deno.json .
-
-# Cache dependencies
-RUN deno cache --no-check src/cli.ts
+RUN npm install -g @taprun/cli@latest
 
 # MCP server runs on stdin/stdout
-ENTRYPOINT ["deno", "run", "--allow-all", "--no-check", "--unstable-worker-options", "src/cli.ts", "mcp"]
+ENTRYPOINT ["tap", "mcp", "start"]
