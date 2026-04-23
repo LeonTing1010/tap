@@ -15,6 +15,7 @@
 <meta name="twitter:title" content="{{ page.site_name }}/{{ page.tap_name }}">
 <meta name="twitter:description" content="{{ page.description }}">
 {% include head-common.html %}
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,300..900,0..100;1,9..144,300..900,0..100&display=swap" rel="stylesheet">
 
 <script type="application/ld+json">
 {
@@ -41,94 +42,470 @@
 </script>
 
 <style>
-:root { --fg:#111; --mut:#666; --bg:#fff; --card:#f8f8f9; --border:#e5e5e8; --ok:#16a34a; --warn:#ca8a04; --err:#dc2626; --code:#1f2937; --code-fg:#e5e7eb; --accent:#6366f1; }
-body { font-family:'Plus Jakarta Sans',system-ui,sans-serif; max-width:860px; margin:0 auto; padding:2rem 1.25rem 6rem; color:var(--fg); background:var(--bg); line-height:1.55; }
-nav.crumbs { font-size:.85rem; color:var(--mut); margin-bottom:1.5rem; }
-nav.crumbs a { color:var(--mut); text-decoration:none; }
-nav.crumbs a:hover { color:var(--accent); }
-h1 { font-family:'Bricolage Grotesque',sans-serif; font-size:2.1rem; line-height:1.15; margin:0 0 .3rem; font-weight:600; }
-h1 .slash { color:var(--mut); font-weight:400; }
-.desc { color:var(--mut); font-size:1.05rem; margin:0 0 1.25rem; }
-.badges { display:flex; flex-wrap:wrap; gap:.4rem; margin:0 0 2rem; }
-.badge { font-size:.72rem; font-family:'JetBrains Mono',monospace; padding:.22rem .5rem; border-radius:4px; background:var(--card); border:1px solid var(--border); color:var(--fg); }
-.badge.layer { background:#eef2ff; border-color:#c7d2fe; color:#4338ca; }
-.badge.doctor-ok { background:#f0fdf4; border-color:#bbf7d0; color:var(--ok); }
-.badge.doctor-stale { background:#fefce8; border-color:#fef08a; color:var(--warn); }
-.badge.doctor-broken { background:#fef2f2; border-color:#fecaca; color:var(--err); }
-section { margin:0 0 2.25rem; }
-h2 { font-family:'Bricolage Grotesque',sans-serif; font-size:1.15rem; font-weight:600; margin:0 0 .7rem; padding-bottom:.35rem; border-bottom:1px solid var(--border); }
-table { width:100%; border-collapse:collapse; font-size:.93rem; }
-th, td { text-align:left; padding:.45rem .6rem; border-bottom:1px solid var(--border); vertical-align:top; }
-th { font-weight:500; color:var(--mut); font-size:.82rem; text-transform:uppercase; letter-spacing:.03em; }
-code { font-family:'JetBrains Mono',monospace; font-size:.88em; background:var(--card); padding:.1em .35em; border-radius:3px; }
-pre { background:var(--code); color:var(--code-fg); padding:1rem 1.15rem; border-radius:6px; overflow-x:auto; font-size:.82rem; line-height:1.55; }
-pre code { background:transparent; color:inherit; padding:0; font-size:inherit; }
-.run { background:var(--card); border:1px solid var(--border); border-radius:6px; padding:.9rem 1.1rem; font-family:'JetBrains Mono',monospace; font-size:.85rem; }
-.meta { display:grid; grid-template-columns:max-content 1fr; gap:.4rem 1.2rem; font-size:.92rem; }
-.meta dt { color:var(--mut); }
-.meta dd { margin:0; }
-.meta dd a { color:var(--accent); text-decoration:none; }
-.meta dd a:hover { text-decoration:underline; }
-footer { margin-top:4rem; padding-top:1.5rem; border-top:1px solid var(--border); color:var(--mut); font-size:.85rem; display:flex; justify-content:space-between; flex-wrap:wrap; gap:1rem; }
-footer a { color:var(--mut); }
+:root {
+  --bg-deep: #F4EDDE;
+  --bg-surface: #EDE4CE;
+  --bg-card: #E7DCBE;
+  --indigo: #1C2D5A;
+  --indigo-light: #384E80;
+  --gold: #A67A2E;
+  --gold-dim: #7A5A22;
+  --red: #7E2B1C;
+  --red-dark: #5A1C10;
+  --green: #3D5E3B;
+  --text: #14110C;
+  --text-dim: #3B332A;
+  --text-muted: #7A6F60;
+  --paper: #FAF5EB;
+  --font-heading: 'Fraunces', 'Hoefler Text', Georgia, serif;
+  --font-body: 'Fraunces', 'Hoefler Text', Georgia, serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+}
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-body);
+  background: var(--bg-deep);
+  color: var(--text);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Masthead strip */
+.masthead-strip {
+  border-bottom: 1px solid rgba(20, 17, 12, 0.18);
+  padding: 14px 0;
+  position: relative;
+  z-index: 2;
+}
+.masthead-strip .row {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 0 32px;
+  display: grid;
+  grid-template-columns: max-content 1fr max-content;
+  gap: 20px;
+  align-items: baseline;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--text-muted);
+}
+.masthead-strip a { color: var(--text-dim); text-decoration: none; transition: color 0.2s; }
+.masthead-strip a:hover { color: var(--red); }
+.masthead-strip .brand {
+  font-family: var(--font-heading);
+  font-style: italic;
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  text-transform: none;
+}
+.masthead-strip .crumbs { justify-self: center; text-align: center; font-size: 10.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.masthead-strip .crumbs .sep { color: var(--gold); margin: 0 8px; }
+.masthead-strip .crumbs .here { color: var(--text); }
+
+/* Container */
+.wrap {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 72px 32px 120px;
+}
+
+/* Hero */
+.entry-kicker {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+}
+.entry-kicker::before {
+  content: '—';
+  color: var(--gold);
+  margin-right: 12px;
+}
+h1.entry-title {
+  font-family: var(--font-heading);
+  font-weight: 300;
+  font-style: italic;
+  font-size: clamp(44px, 6.5vw, 80px);
+  line-height: 1;
+  letter-spacing: -0.035em;
+  margin-bottom: 20px;
+  font-variation-settings: "SOFT" 100, "opsz" 144;
+  word-break: break-word;
+}
+h1.entry-title .slash {
+  color: var(--gold);
+  font-weight: 400;
+  font-style: italic;
+  margin: 0 4px;
+}
+h1.entry-title .tap-part {
+  color: var(--red);
+  font-weight: 400;
+}
+.entry-desc {
+  font-family: var(--font-heading);
+  font-style: italic;
+  font-weight: 300;
+  font-size: 22px;
+  line-height: 1.45;
+  color: var(--text-dim);
+  max-width: 680px;
+  margin-bottom: 32px;
+  font-variation-settings: "SOFT" 100;
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 56px;
+  padding-bottom: 32px;
+  border-bottom: 1px solid var(--text);
+}
+.badge {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  border: 1px solid var(--text);
+  background: transparent;
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.badge .dot { width: 7px; height: 7px; border-radius: 100px; display: inline-block; }
+.badge.layer {
+  border-color: var(--gold-dim);
+  color: var(--gold-dim);
+  font-family: var(--font-heading);
+  font-style: italic;
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  padding: 2px 11px;
+}
+.badge.intent { border-color: var(--indigo); color: var(--indigo); }
+.badge.doctor-ok { color: var(--green); border-color: var(--green); }
+.badge.doctor-ok .dot { background: var(--green); box-shadow: 0 0 0 3px rgba(61, 94, 59, 0.12); }
+.badge.doctor-stale { color: var(--gold-dim); border-color: var(--gold-dim); }
+.badge.doctor-stale .dot { background: var(--gold); box-shadow: 0 0 0 3px rgba(166, 122, 46, 0.15); }
+.badge.doctor-broken { color: var(--red); border-color: var(--red); }
+.badge.doctor-broken .dot { background: var(--red); box-shadow: 0 0 0 3px rgba(126, 43, 28, 0.15); }
+
+/* Sections */
+section.block { margin-bottom: 56px; }
+h2.section-head {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(20, 17, 12, 0.15);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+h2.section-head::before {
+  content: '§';
+  color: var(--gold);
+  font-family: var(--font-heading);
+  font-style: italic;
+  font-size: 16px;
+  margin-right: 10px;
+  letter-spacing: 0;
+}
+
+/* Run-it block — letterpress dark-ink card */
+.run-card {
+  background: #14110C;
+  color: var(--paper);
+  padding: 24px 28px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  line-height: 1.55;
+  position: relative;
+  border: 1px solid var(--text);
+  overflow-x: auto;
+}
+.run-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n2'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n2)'/%3E%3C/svg%3E");
+  opacity: 0.06;
+  pointer-events: none;
+}
+.run-card .prompt { color: var(--gold); user-select: none; }
+.run-card .cmd-word { color: var(--paper); font-weight: 500; }
+.run-card .arg { color: #B8C5DD; }
+
+/* Tables */
+table.ledger {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14.5px;
+  border-top: 1px solid var(--text);
+  border-bottom: 1px solid var(--text);
+}
+table.ledger thead th {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 10.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-align: left;
+  padding: 14px 12px;
+  border-bottom: 1px solid var(--text);
+  background: transparent;
+}
+table.ledger tbody td {
+  padding: 14px 12px;
+  border-bottom: 1px solid rgba(20, 17, 12, 0.08);
+  vertical-align: top;
+  font-family: var(--font-heading);
+  font-weight: 300;
+  font-size: 15px;
+  color: var(--text-dim);
+  font-variation-settings: "SOFT" 100;
+}
+table.ledger tbody tr:last-child td { border-bottom: none; }
+table.ledger tbody tr:hover { background: rgba(28, 45, 90, 0.035); }
+table.ledger code {
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  color: var(--indigo);
+  background: rgba(28, 45, 90, 0.08);
+  padding: 1px 6px;
+  font-style: normal;
+  font-weight: 500;
+}
+table.ledger td.type {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+  text-transform: lowercase;
+  letter-spacing: 0.02em;
+  font-style: normal;
+}
+
+/* Provenance dl */
+dl.provenance {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 14px 32px;
+  border-top: 1px solid var(--text);
+  padding-top: 20px;
+}
+dl.provenance dt {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding-top: 3px;
+}
+dl.provenance dd {
+  font-family: var(--font-heading);
+  font-style: italic;
+  font-weight: 300;
+  font-size: 16px;
+  color: var(--text);
+  font-variation-settings: "SOFT" 100;
+}
+dl.provenance dd a {
+  color: var(--indigo);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+dl.provenance dd a:hover { color: var(--red); }
+dl.provenance dd code {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--indigo);
+  background: rgba(28, 45, 90, 0.08);
+  padding: 1px 6px;
+  font-style: normal;
+}
+
+/* Free-form content from page markdown */
+.page-content {
+  font-family: var(--font-heading);
+  font-weight: 300;
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--text-dim);
+  font-variation-settings: "SOFT" 100;
+}
+.page-content p { margin-bottom: 1.1em; }
+.page-content h3 {
+  font-family: var(--font-heading);
+  font-style: italic;
+  font-weight: 600;
+  font-size: 22px;
+  color: var(--text);
+  margin: 2em 0 0.6em;
+  font-variation-settings: "SOFT" 100;
+}
+.page-content code {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--indigo);
+  background: rgba(28, 45, 90, 0.08);
+  padding: 1px 6px;
+  font-style: normal;
+}
+.page-content pre {
+  background: #14110C;
+  color: var(--paper);
+  padding: 20px 24px;
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  line-height: 1.55;
+  border: 1px solid var(--text);
+  overflow-x: auto;
+  margin: 1.4em 0;
+}
+.page-content pre code { background: transparent; color: inherit; padding: 0; font-size: inherit; }
+.page-content a { color: var(--indigo); text-decoration: underline; text-underline-offset: 3px; }
+.page-content a:hover { color: var(--red); }
+
+/* Colophon footer */
+footer.colophon {
+  margin-top: 80px;
+  padding-top: 24px;
+  border-top: 1px solid var(--text);
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+footer.colophon a { color: var(--text-dim); text-decoration: none; transition: color 0.2s; }
+footer.colophon a:hover { color: var(--red); }
+footer.colophon .ornament { color: var(--gold); letter-spacing: 0.6em; }
+
+@media (max-width: 640px) {
+  .wrap { padding: 48px 20px 80px; }
+  .masthead-strip .row { grid-template-columns: 1fr max-content; padding: 0 20px; }
+  .masthead-strip .crumbs { display: none; }
+  h1.entry-title { font-size: clamp(36px, 10vw, 56px); }
+  .entry-desc { font-size: 18px; }
+  .badges { gap: 8px; margin-bottom: 40px; padding-bottom: 24px; }
+  dl.provenance { grid-template-columns: 1fr; gap: 4px 0; }
+  dl.provenance dt { padding-top: 14px; }
+  table.ledger { font-size: 13.5px; }
+  table.ledger thead th, table.ledger tbody td { padding: 10px 8px; }
+  footer.colophon { font-size: 10px; }
+}
 </style>
 </head>
 <body>
 
-<nav class="crumbs"><a href="/">taprun</a> / <a href="/taps/">taps</a> / {{ page.site_name }} / {{ page.tap_name }}</nav>
+<header class="masthead-strip">
+  <div class="row">
+    <a href="/" class="brand">Taprun</a>
+    <nav class="crumbs">
+      <a href="/taps/">Library</a>
+      <span class="sep">§</span>
+      <span>{{ page.site_name }}</span>
+      <span class="sep">§</span>
+      <span class="here">{{ page.tap_name }}</span>
+    </nav>
+    <a href="https://github.com/LeonTing1010/tap-skills" rel="noopener">source&nbsp;↗</a>
+  </div>
+</header>
 
-<h1>{{ page.site_name }}<span class="slash">/</span>{{ page.tap_name }}</h1>
-<p class="desc">{{ page.description }}</p>
+<main class="wrap">
+  <div class="entry-kicker">Entry · {{ page.site_name }}</div>
+  <h1 class="entry-title">{{ page.site_name }}<span class="slash">/</span><span class="tap-part">{{ page.tap_name }}</span></h1>
+  {% if page.description %}<p class="entry-desc">{{ page.description }}</p>{% endif %}
 
-<div class="badges">
-  <span class="badge layer">Layer {{ page.layer | default: "?" }} · {{ page.layer_source | default: "unspecified" }}</span>
-  <span class="badge">intent: {{ page.intent | default: "read" }}</span>
-  {% if page.doctor_verdict == "healthy" %}<span class="badge doctor-ok">● doctor: healthy ({{ page.doctor_checked }})</span>{% endif %}
-  {% if page.doctor_verdict == "stale" %}<span class="badge doctor-stale">● doctor: stale ({{ page.doctor_checked }})</span>{% endif %}
-  {% if page.doctor_verdict == "broken" %}<span class="badge doctor-broken">● doctor: broken ({{ page.doctor_checked }})</span>{% endif %}
-</div>
+  <div class="badges">
+    <span class="badge layer">L{{ page.layer | default: "?" }} · {{ page.layer_source | default: "unspecified" }}</span>
+    <span class="badge intent">intent: {{ page.intent | default: "read" }}</span>
+    {% if page.doctor_verdict == "healthy" %}<span class="badge doctor-ok"><span class="dot"></span>doctor: healthy{% if page.doctor_checked %} · {{ page.doctor_checked }}{% endif %}</span>{% endif %}
+    {% if page.doctor_verdict == "stale" %}<span class="badge doctor-stale"><span class="dot"></span>doctor: stale{% if page.doctor_checked %} · {{ page.doctor_checked }}{% endif %}</span>{% endif %}
+    {% if page.doctor_verdict == "broken" %}<span class="badge doctor-broken"><span class="dot"></span>doctor: broken{% if page.doctor_checked %} · {{ page.doctor_checked }}{% endif %}</span>{% endif %}
+  </div>
 
-<section>
-  <h2>Run it</h2>
-  <div class="run">tap run {{ page.site_name }} {{ page.tap_name }}{% if page.example_args %} {{ page.example_args }}{% endif %}</div>
-</section>
+  <section class="block">
+    <h2 class="section-head"><span>Run it</span></h2>
+    <div class="run-card"><span class="prompt">$</span> <span class="cmd-word">tap run</span> <span class="arg">{{ page.site_name }} {{ page.tap_name }}{% if page.example_args %} {{ page.example_args }}{% endif %}</span></div>
+  </section>
 
-<section>
-  <h2>What it returns</h2>
-  <table><thead><tr><th>column</th><th>type</th></tr></thead>
-    <tbody>
-    {% for col in page.columns %}<tr><td><code>{{ col }}</code></td><td>text</td></tr>{% endfor %}
-    </tbody>
-  </table>
-</section>
+  <section class="block">
+    <h2 class="section-head"><span>What it returns</span></h2>
+    <table class="ledger">
+      <thead><tr><th>Column</th><th>Type</th></tr></thead>
+      <tbody>
+        {% for col in page.columns %}<tr><td><code>{{ col }}</code></td><td class="type">text</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </section>
 
-{% if page.args and page.args.size > 0 %}
-<section>
-  <h2>Arguments</h2>
-  <table><thead><tr><th>arg</th><th>type</th><th>default</th><th>description</th></tr></thead>
-    <tbody>
-    {% for arg in page.args %}<tr><td><code>{{ arg.name }}</code></td><td>{{ arg.type }}</td><td><code>{{ arg.default }}</code></td><td>{{ arg.description }}</td></tr>{% endfor %}
-    </tbody>
-  </table>
-</section>
-{% endif %}
+  {% if page.args and page.args.size > 0 %}
+  <section class="block">
+    <h2 class="section-head"><span>Arguments</span></h2>
+    <table class="ledger">
+      <thead><tr><th>Name</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        {% for arg in page.args %}<tr><td><code>{{ arg.name }}</code></td><td class="type">{{ arg.type }}</td><td><code>{{ arg.default }}</code></td><td>{{ arg.description }}</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </section>
+  {% endif %}
 
-{{ content }}
+  {% if content and content != "" %}
+  <section class="block">
+    <div class="page-content">{{ content }}</div>
+  </section>
+  {% endif %}
 
-<section>
-  <h2>Provenance</h2>
-  <dl class="meta">
-    <dt>Source</dt><dd><a href="{{ page.source_url }}">{{ page.source_url | replace: "https://github.com/", "" }}</a></dd>
-    <dt>Machine format</dt><dd><a href="{{ page.tap_name }}.jsonld">{{ page.tap_name }}.jsonld</a> (W3C Annotation)</dd>
-    <dt>Last doctor run</dt><dd>{{ page.doctor_checked | default: "never" }}</dd>
-    <dt>License</dt><dd>{{ page.license | default: "MIT" }}</dd>
-  </dl>
-</section>
+  <section class="block">
+    <h2 class="section-head"><span>Provenance</span></h2>
+    <dl class="provenance">
+      <dt>Source</dt><dd><a href="{{ page.source_url }}">{{ page.source_url | replace: "https://github.com/", "" }}</a></dd>
+      <dt>Machine format</dt><dd><a href="{{ page.tap_name }}.jsonld"><code>{{ page.tap_name }}.jsonld</code></a> &mdash; W3C Annotation</dd>
+      <dt>Last doctor run</dt><dd>{{ page.doctor_checked | default: "never" }}</dd>
+      <dt>License</dt><dd>{{ page.license | default: "MIT" }}</dd>
+    </dl>
+  </section>
 
-<footer>
-  <span>This page IS a W3C Annotation. <a href="{{ page.tap_name }}.jsonld">View the raw annotation</a>.</span>
-  <span><a href="/ns/tap-v1/">tap-v1 namespace</a></span>
-</footer>
+  <footer class="colophon">
+    <span>This page <em style="font-style:italic;font-weight:600;">is</em> a W3C Annotation &mdash; <a href="{{ page.tap_name }}.jsonld">view raw</a></span>
+    <span class="ornament">◆ ◈ ◆</span>
+    <a href="/ns/tap-v1/">tap-v1 namespace ↗</a>
+  </footer>
+</main>
 
 </body>
 </html>
