@@ -1,0 +1,51 @@
+name: Sync tap pages from tap-skills
+
+on:
+  schedule:
+    - cron: '0 2 * * 1'   # Mondays 02:00 UTC — runs before the Monday-morning digest
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-tap-skills
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout public
+        uses: actions/checkout@v4
+
+      - name: Checkout tap-skills
+        uses: actions/checkout@v4
+        with:
+          repository: LeonTing1010/tap-skills
+          path: .tap-skills
+          ref: main
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Generate tap pages
+        run: |
+          deno run --allow-read --allow-write --allow-import \
+            scripts/generate-tap-pages.ts \
+            --source .tap-skills \
+            --out docs/taps
+
+      - name: Commit if changed
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add docs/taps
+          if git diff --cached --quiet; then
+            echo "No changes — tap-skills in sync."
+            exit 0
+          fi
+          NUM=$(git diff --cached --name-only | wc -l | tr -d ' ')
+          git commit -m "sync: tap-skills pages (auto, $NUM files)"
+          git push
