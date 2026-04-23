@@ -1,0 +1,27 @@
+name: Publish @taprun/executor to JSR
+
+on:
+  push:
+    tags: [ "executor-v*" ]
+    paths:
+      - "packages/executor/**"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  id-token: write   # required for JSR OIDC auth (no PAT needed)
+
+concurrency:
+  group: publish-executor
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Publish
+        run: cd packages/executor && deno publish
