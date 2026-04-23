@@ -35,7 +35,8 @@ jobs:
           deno run --allow-read --allow-write --allow-import \
             scripts/generate-tap-pages.ts \
             --source .tap-skills \
-            --out docs/taps
+            --out docs/taps \
+            --force
 
       - name: Commit if changed
         run: |

@@ -22,6 +22,14 @@ if (!args.source || !args.out) {
 const INCLUDE = ["showcase", "community", "skills"];
 const REPO = "LeonTing1010/tap-skills";
 
+// Hand-crafted pages the generator must never overwrite even with --force.
+// Keyed by `${site}/${name}`. Extend this when a page gets authored by hand
+// (richer body, expert-written "why it exists" section, per-tap screenshots).
+const PRESERVE_HAND_CRAFTED = new Set([
+  "producthunt/relevant",
+  "facebook/keyword-search",
+]);
+
 interface TapPlan {
   body: {
     site: string;
@@ -44,13 +52,15 @@ interface Outcome {
 
 const outcomes: Outcome[] = [];
 
+// Pass 1: collect all plans so Related-taps rendering has full catalog.
+interface CollectedPlan { plan: TapPlan; planRel: string }
+const allPlans: CollectedPlan[] = [];
 for (const top of INCLUDE) {
   const topDir = `${args.source}/${top}`;
   try { await Deno.stat(topDir); } catch { continue; }
   for await (const siteEntry of Deno.readDir(topDir)) {
     if (!siteEntry.isDirectory) continue;
     const siteDir = `${topDir}/${siteEntry.name}`;
-    // Dedupe: if both .tap.json and .tap.js exist for same name, prefer .tap.json.
     const seen = new Set<string>();
     const files: Array<{ name: string; ext: string }> = [];
     for await (const f of Deno.readDir(siteDir)) {
@@ -58,7 +68,7 @@ for (const top of INCLUDE) {
       if (f.name.endsWith(".tap.json")) files.push({ name: f.name, ext: ".tap.json" });
       else if (f.name.endsWith(".tap.js")) files.push({ name: f.name, ext: ".tap.js" });
     }
-    files.sort((a, b) => a.ext.localeCompare(b.ext)); // .tap.js first, .tap.json second, so .tap.json wins dedup
+    files.sort((a, b) => a.ext.localeCompare(b.ext));
     for (const f of files) {
       const base = f.name.replace(/\.tap\.(json|js)$/, "");
       if (seen.has(base)) continue;
@@ -73,24 +83,44 @@ for (const top of INCLUDE) {
           outcomes.push({ path: srcPath, rel: planRel, status: "skipped-invalid", reason: "missing body.site/name" });
           continue;
         }
-        const outPath = `${args.out}/${plan.body.site}/${plan.body.name}.html`;
-        let exists = false;
-        try { await Deno.stat(outPath); exists = true; } catch { /* not found */ }
-        if (exists && !args.force) {
-          outcomes.push({ path: outPath, rel: planRel, status: "skipped-exists" });
-          continue;
-        }
-        const html = renderPage(plan, planRel);
-        if (!args.dryRun) {
-          await Deno.mkdir(`${args.out}/${plan.body.site}`, { recursive: true });
-          await Deno.writeTextFile(outPath, html);
-        }
-        outcomes.push({ path: outPath, rel: planRel, status: exists ? "written-forced" : "written" });
+        allPlans.push({ plan, planRel });
       } catch (e) {
         outcomes.push({ path: srcPath, rel: planRel, status: "skipped-invalid", reason: e instanceof Error ? e.message : String(e) });
       }
     }
   }
+}
+
+// Build site → siblings index for Related-taps rendering.
+const siteIndex = new Map<string, Array<{ name: string; description: string }>>();
+for (const { plan } of allPlans) {
+  const s = plan.body.site;
+  if (!siteIndex.has(s)) siteIndex.set(s, []);
+  siteIndex.get(s)!.push({ name: plan.body.name, description: plan.body.description ?? "" });
+}
+
+// Pass 2: render each page now that siblings are known.
+for (const { plan, planRel } of allPlans) {
+  const key = `${plan.body.site}/${plan.body.name}`;
+  const outPath = `${args.out}/${plan.body.site}/${plan.body.name}.html`;
+  let exists = false;
+  try { await Deno.stat(outPath); exists = true; } catch { /* not found */ }
+  // Hand-crafted allowlist always wins, even over --force.
+  if (exists && PRESERVE_HAND_CRAFTED.has(key)) {
+    outcomes.push({ path: outPath, rel: planRel, status: "skipped-exists", reason: "hand-crafted allowlist" });
+    continue;
+  }
+  if (exists && !args.force) {
+    outcomes.push({ path: outPath, rel: planRel, status: "skipped-exists" });
+    continue;
+  }
+  const siblings = (siteIndex.get(plan.body.site) ?? []).filter((s) => s.name !== plan.body.name).slice(0, 5);
+  const html = renderPage(plan, planRel, siblings);
+  if (!args.dryRun) {
+    await Deno.mkdir(`${args.out}/${plan.body.site}`, { recursive: true });
+    await Deno.writeTextFile(outPath, html);
+  }
+  outcomes.push({ path: outPath, rel: planRel, status: exists ? "written-forced" : "written" });
 }
 
 // ─── Load a legacy .tap.js and coerce into TapPlan-shaped object ────────────
@@ -125,7 +155,7 @@ if (invalid.length > 0) {
 }
 
 // ─── Page renderer ───────────────────────────────────────────────
-function renderPage(plan: TapPlan, planRel: string): string {
+function renderPage(plan: TapPlan, planRel: string, siblings: Array<{ name: string; description: string }> = []): string {
   const b = plan.body;
   const desc = b.description ?? `${b.site}/${b.name} — a Taprun tap.`;
   const intent = b.intent ?? "read";
@@ -168,6 +198,24 @@ function renderPage(plan: TapPlan, planRel: string): string {
   ].join("\n");
 
   const mcpInvoke = `tap.run({ site: ${JSON.stringify(b.site)}, name: ${JSON.stringify(b.name)}${exampleArgs ? `, args: ${JSON.stringify(ex)}` : ""} })`;
+  const mcpConfig = `{
+  "mcpServers": {
+    "tap": {
+      "command": "tap",
+      "args": ["mcp", "start"]
+    }
+  }
+}`;
+
+  const relatedSection = siblings.length > 0
+    ? `
+<section>
+  <h2>Related ${b.site} taps</h2>
+  <table><thead><tr><th>tap</th><th>description</th></tr></thead><tbody>
+${siblings.map((s) => `    <tr><td><a href="/taps/${b.site}/${s.name}"><code>${b.site}/${s.name}</code></a></td><td>${escapeHtml(s.description)}</td></tr>`).join("\n")}
+  </tbody></table>
+</section>`
+    : "";
 
   const body = `
 <section>
@@ -176,17 +224,27 @@ function renderPage(plan: TapPlan, planRel: string): string {
 </section>
 
 <section>
-  <h2>How to call it</h2>
-  <p>From your terminal once Tap is installed:</p>
+  <h2>Install Taprun once</h2>
+  <p>Taprun ships as a single MCP server exposing a catalog of compiled taps. One-time setup on macOS / Linux:</p>
+  <pre><code>brew install LeonTing1010/tap/taprun
+tap mcp connect</code></pre>
+  <p>Or drop this into your <code>claude_desktop_config.json</code> (works identically in Claude Code, Cursor, Cline, Windsurf — any MCP host):</p>
+  <pre><code>${escapeHtml(mcpConfig)}</code></pre>
+</section>
+
+<section>
+  <h2>Call <code>${b.site}/${b.name}</code></h2>
+  <p>Terminal, once installed:</p>
   <pre><code>tap run ${b.site}/${b.name}${exampleArgs ? " " + exampleArgs : ""}</code></pre>
-  <p>Or from an MCP-aware client (Claude Code, Cursor, Cline) — the exact same plan runs deterministically without re-inferring the site structure:</p>
+  <p>From the MCP host — exact same compiled plan, deterministic replay, zero LLM tokens:</p>
   <pre><code>${escapeHtml(mcpInvoke)}</code></pre>
 </section>
 
 <section>
   <h2>Why compile it once</h2>
-  <p>This plan was forged once — the AI read <code>${b.site}</code>, picked stable structural addresses, and saved them to a <code>.tap.json</code>. Every replay since then has used zero LLM tokens. When <code>${b.site}</code> ships a site change that breaks the extraction, <code>tap doctor</code> surfaces it before your data goes stale.</p>
+  <p>This plan was forged once — the AI read <code>${b.site}</code>, picked stable structural addresses (JSON-LD, ARIA, RSS, or declared API endpoints, in that priority order), and saved them to a <code>.tap.json</code>. Every replay since then has used zero LLM tokens. When <code>${b.site}</code> ships a site change that breaks the extraction, <code>tap doctor</code> surfaces it before your data goes stale — not after your pipeline silently writes garbage for a week.</p>
 </section>
+${relatedSection}
 `;
 
   return frontmatter + "\n" + body + "\n";
