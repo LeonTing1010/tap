@@ -215,6 +215,12 @@ tap list      # 查看所有可用 skills
 - [ ] Android 运行时
 - [ ] iOS 运行时
 
+## 支持
+
+- [GitHub Discussions](https://github.com/LeonTing1010/tap/discussions) — 问答、想法、成果分享
+- [support@taprun.dev](mailto:support@taprun.dev) — 授权、私密反馈、咨询
+- [Issues](https://github.com/LeonTing1010/tap/issues) — Bug 报告
+
 ## 许可证
 
 Chrome 扩展和文档：[MIT](LICENSE)。社区 skills：[MIT](https://github.com/LeonTing1010/tap-skills/blob/main/LICENSE)。

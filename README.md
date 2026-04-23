@@ -220,6 +220,12 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 - [ ] iOS runtime
 - [ ] Concurrency control — deterministic coordination for M agents operating shared accounts in parallel
 
+## Support
+
+- [GitHub Discussions](https://github.com/LeonTing1010/tap/discussions) — Q&A, ideas, show & tell
+- [support@taprun.dev](mailto:support@taprun.dev) — licensing, private feedback, consulting
+- [Issues](https://github.com/LeonTing1010/tap/issues) — bug reports
+
 ## License
 
 Chrome Extension & docs: [MIT](LICENSE). Community skills: [MIT](https://github.com/LeonTing1010/tap-skills/blob/main/LICENSE).
