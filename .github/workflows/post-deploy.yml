@@ -1,0 +1,46 @@
+name: Post-deploy hooks
+
+on:
+  workflow_run:
+    workflows: ["pages-build-deployment"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      purge_cf:
+        description: "Also purge Cloudflare cache"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  gsc-ping:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Ping GSC sitemap
+        env:
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          GOOGLE_REFRESH_TOKEN: ${{ secrets.GOOGLE_REFRESH_TOKEN }}
+        run: deno run --allow-net --allow-env scripts/gsc-ping.ts
+
+  cf-purge:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.purge_cf }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Purge Cloudflare cache
+        env:
+          CF_PURGE_TOKEN: ${{ secrets.CF_PURGE_TOKEN }}
+          CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
+        run: |
+          curl -sf -X POST "https://api.cloudflare.com/client/v4/zones/${CF_ZONE_ID}/purge_cache" \
+            -H "Authorization: Bearer ${CF_PURGE_TOKEN}" \
+            -H "Content-Type: application/json" \
+            --data '{"purge_everything":true}' \
+            | python3 -c "import sys,json; r=json.load(sys.stdin); print('purge success:', r.get('success')); sys.exit(0 if r.get('success') else 1)"
