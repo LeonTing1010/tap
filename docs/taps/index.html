@@ -359,14 +359,14 @@ body::before {
   font-weight: 600;
   font-style: italic;
   font-size: 13px;
-  color: var(--gold-dim);
-  border: 1px solid var(--gold-dim);
   padding: 2px 11px;
   align-self: start;
   margin-top: 2px;
   letter-spacing: 0.02em;
   font-variation-settings: "SOFT" 100;
 }
+.layer-stamp.is-read { color: var(--green); border: 1px solid var(--green); }
+.layer-stamp.is-write { color: var(--red-dark); border: 1px solid var(--red-dark); }
 
 .doctor-chip {
   align-self: start;
@@ -494,7 +494,7 @@ body::before {
 <header class="masthead-strip">
   <div class="row">
     <a href="/" class="brand">Taprun</a>
-    <span class="center">Reference Edition<span class="ornament-dot">◆</span>Tap Library<span class="ornament-dot">◆</span>Layers&nbsp;1–5</span>
+    <span class="center">Reference Edition<span class="ornament-dot">◆</span>Tap Library<span class="ornament-dot">◆</span>Compiled Catalog</span>
     <a href="https://github.com/LeonTing1010/tap-skills" rel="noopener">source&nbsp;↗</a>
   </div>
 </header>
@@ -535,7 +535,8 @@ body::before {
         <a class="tap-name" href="{{ tap.url | remove: '.html' }}">{{ tap.tap_name }}</a>
         {% if tap.description %}<div class="desc">{{ tap.description }}</div>{% endif %}
       </div>
-      <div class="layer-stamp">L{{ tap.layer | default: "?" }}</div>
+      {% assign t_intent = tap.intent | default: "read" %}
+      <div class="layer-stamp is-{{ t_intent }}" title="{% if t_intent == 'write' %}Performs side effects — publishes, posts, or modifies data.{% else %}Read-only — safe to run.{% endif %}">{% if t_intent == "write" %}write{% else %}read-only{% endif %}</div>
       {% if tap.doctor_verdict == "healthy" %}
         <div class="doctor-chip healthy"><span class="dot"></span>Healthy{% if tap.doctor_checked %}<span class="check">· {{ tap.doctor_checked }}</span>{% endif %}</div>
       {% elsif tap.doctor_verdict == "stale" %}

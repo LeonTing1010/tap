@@ -450,8 +450,9 @@ footer.colophon .ornament { color: var(--gold); letter-spacing: 0.6em; }
   {% if page.description %}<p class="entry-desc">{{ page.description }}</p>{% endif %}
 
   <div class="badges">
-    <span class="badge layer">L{{ page.layer | default: "?" }} · {{ page.layer_source | default: "unspecified" }}</span>
-    <span class="badge intent">intent: {{ page.intent | default: "read" }}</span>
+    {% assign p_intent = page.intent | default: "read" %}
+    <span class="badge intent">{% if p_intent == "write" %}modifies data (write){% else %}read-only{% endif %}</span>
+    {% if page.layer_source %}<span class="badge layer">source: {{ page.layer_source }}</span>{% endif %}
     {% if page.doctor_verdict == "healthy" %}<span class="badge doctor-ok"><span class="dot"></span>doctor: healthy{% if page.doctor_checked %} · {{ page.doctor_checked }}{% endif %}</span>{% endif %}
     {% if page.doctor_verdict == "stale" %}<span class="badge doctor-stale"><span class="dot"></span>doctor: stale{% if page.doctor_checked %} · {{ page.doctor_checked }}{% endif %}</span>{% endif %}
     {% if page.doctor_verdict == "broken" %}<span class="badge doctor-broken"><span class="dot"></span>doctor: broken{% if page.doctor_checked %} · {{ page.doctor_checked }}{% endif %}</span>{% endif %}
