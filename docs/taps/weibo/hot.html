@@ -2,22 +2,36 @@
 layout: tap
 site_name: weibo
 tap_name: hot
-description: "Weibo hot search trending topics"
+description: "Weibo hot search - Real-time trending topics from Weibo (Chinese Twitter), including rank, topic, tag, heat value, and URL. Extracted from SSR-rendered table, supports public anonymous access."
 intent: read
-columns: []
-args: []
+columns: ["rank", "title", "tag", "hot", "url"]
+args: ["limit"]
 args_json: |
-  {}
+  {"limit":{"type":"int","default":50,"description":"Maximum number of items to return"}}
 health_json: |
-  {"min_rows":10,"non_empty":["title"]}
-example_args: ""
+  {"min_rows":20,"non_empty":["title"]}
+example_args: '{"limit": 30}'
 source_url: https://github.com/LeonTing1010/tap-skills/blob/main/showcase/weibo/hot.tap.js
 license: MIT
 ---
 
 <section>
   <h2>What it does</h2>
-  <p>Weibo hot search trending topics</p>
+  <p>Extracts real-time trending topics from Weibo (微博), China's largest microblogging platform similar to Twitter/X. Returns hot search topics with ranking, title, category tags, heat values, and direct links. Data is extracted from the SSR-rendered hot search table and supports public anonymous access.</p>
+</section>
+
+<section>
+  <h2>Columns</h2>
+  <table>
+    <thead><tr><th>Column</th><th>Type</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td>rank</td><td>string</td><td>Ranking position (1-50)</td></tr>
+      <tr><td>title</td><td>string</td><td>Hot topic/trending keyword</td></tr>
+      <tr><td>tag</td><td>string</td><td>Category tag (e.g., 热, 新, 荐)</td></tr>
+      <tr><td>hot</td><td>string</td><td>Heat value / search volume</td></tr>
+      <tr><td>url</td><td>string</td><td>Direct link to search results</td></tr>
+    </tbody>
+  </table>
 </section>
 
 <section>
@@ -25,12 +39,12 @@ license: MIT
   <p>Taprun ships as a single MCP server exposing a catalog of compiled taps. One-time setup on macOS / Linux:</p>
   <pre><code>brew install LeonTing1010/tap/taprun
 tap mcp connect</code></pre>
-  <p>Or drop this into your <code>claude_desktop_config.json</code> (works identically in Claude Code, Cursor, Cline, Windsurf — any MCP host):</p>
+  <p>Or drop this into your <code>claude_desktop_config.json</code>:</p>
   <pre><code>{
-  &quot;mcpServers&quot;: {
-    &quot;tap&quot;: {
-      &quot;command&quot;: &quot;tap&quot;,
-      &quot;args&quot;: [&quot;mcp&quot;, &quot;start&quot;]
+  "mcpServers": {
+    "tap": {
+      "command": "tap",
+      "args": ["mcp", "start"]
     }
   }
 }</code></pre>
@@ -39,14 +53,16 @@ tap mcp connect</code></pre>
 <section>
   <h2>Call <code>weibo/hot</code></h2>
   <p>Terminal, once installed:</p>
-  <pre><code>tap run weibo/hot</code></pre>
-  <p>From the MCP host — exact same compiled plan, deterministic replay, zero LLM tokens:</p>
-  <pre><code>tap.run({ site: &quot;weibo&quot;, name: &quot;hot&quot; })</code></pre>
+  <pre><code>tap run weibo/hot --limit 30</code></pre>
+  <p>From the MCP host:</p>
+  <pre><code>tap.run({ site: "weibo", name: "hot", args: { limit: 30 } })</code></pre>
 </section>
 
 <section>
-  <h2>Why compile it once</h2>
-  <p>This plan was forged once — the AI read <code>weibo</code>, picked stable structural addresses (JSON-LD, ARIA, RSS, or declared API endpoints, in that priority order), and saved them to a <code>.tap.json</code>. Every replay since then has used zero LLM tokens. When <code>weibo</code> ships a site change that breaks the extraction, <code>tap doctor</code> surfaces it before your data goes stale — not after your pipeline silently writes garbage for a week.</p>
+  <h2>Related weibo taps</h2>
+  <table><thead><tr><th>tap</th><th>description</th></tr></thead><tbody>
+    <tr><td><a href="/taps/weibo/search"><code>weibo/search</code></a></td><td>Search Weibo posts</td></tr>
+    <tr><td><a href="/taps/weibo/detail"><code>weibo/detail</code></a></td><td>Read post details and comments</td></tr>
+    <tr><td><a href="/taps/weibo/post"><code>weibo/post</code></a></td><td>Publish a Weibo post</td></tr>
+  </tbody></table>
 </section>
-
-

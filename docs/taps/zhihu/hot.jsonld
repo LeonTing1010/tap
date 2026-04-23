@@ -1,0 +1,33 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/zhihu/hot",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/zhihu/hot",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "zhihu",
+    "name": "hot",
+    "intent": "read",
+    "description": "Zhihu hot topics - Extract trending topics and discussions from Zhihu (Chinese Q&A platform), including title, heat index, and URL. Supports SSR-rendered page extraction and initial state script parsing.",
+    "columns": ["rank", "title", "heat", "url"],
+    "args": {
+      "limit": {
+        "type": "int",
+        "default": 50,
+        "description": "Maximum number of items to return"
+      }
+    },
+    "health": {
+      "min_rows": 10,
+      "non_empty": ["title"]
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/showcase/zhihu/hot.tap.js",
+    "https://taprun.dev/taps/zhihu/hot.html"
+  ]
+}

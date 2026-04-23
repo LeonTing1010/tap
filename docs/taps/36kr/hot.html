@@ -1,0 +1,63 @@
+---
+layout: tap
+site_name: 36kr
+tap_name: hot
+description: "36Kr hot list - Tech and startup news from 36Kr (leading Chinese tech media), including rank, title, view count, and URL. Extracted from hot-list page with multiple selector support and JSON-LD fallback."
+intent: read
+columns: ["rank", "title", "hot", "url"]
+args: ["limit"]
+args_json: |
+  {"limit":{"type":"int","default":20,"description":"Maximum number of items to return"}}
+health_json: |
+  {"min_rows":5,"non_empty":["title"]}
+example_args: '{"limit": 10}'
+source_url: https://github.com/LeonTing1010/tap-skills/blob/main/showcase/36kr/hot.tap.js
+license: MIT
+---
+
+<section>
+  <h2>What it does</h2>
+  <p>Extracts trending tech and startup news from 36Kr (36氪), China's leading technology and entrepreneurship media platform. Returns hot articles with ranking, title, view count, and URLs. The tap uses multiple CSS selectors and JSON-LD fallback to handle site structure changes gracefully.</p>
+</section>
+
+<section>
+  <h2>Columns</h2>
+  <table>
+    <thead><tr><th>Column</th><th>Type</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td>rank</td><td>string</td><td>Article ranking position</td></tr>
+      <tr><td>title</td><td>string</td><td>Article headline</td></tr>
+      <tr><td>hot</td><td>string</td><td>View count / popularity metric</td></tr>
+      <tr><td>url</td><td>string</td><td>Direct link to article</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>Install Taprun once</h2>
+  <p>Taprun ships as a single MCP server exposing a catalog of compiled taps. One-time setup on macOS / Linux:</p>
+  <pre><code>brew install LeonTing1010/tap/taprun
+tap mcp connect</code></pre>
+  <p>Or drop this into your <code>claude_desktop_config.json</code>:</p>
+  <pre><code>{
+  "mcpServers": {
+    "tap": {
+      "command": "tap",
+      "args": ["mcp", "start"]
+    }
+  }
+}</code></pre>
+</section>
+
+<section>
+  <h2>Call <code>36kr/hot</code></h2>
+  <p>Terminal, once installed:</p>
+  <pre><code>tap run 36kr/hot --limit 10</code></pre>
+  <p>From the MCP host:</p>
+  <pre><code>tap.run({ site: "36kr", name: "hot", args: { limit: 10 } })</code></pre>
+</section>
+
+<section>
+  <h2>Why 36Kr matters</h2>
+  <p>36Kr is one of China's most influential tech media platforms, covering startup news, venture capital, and technology trends. It's an essential source for understanding the Chinese tech ecosystem and startup landscape.</p>
+</section>

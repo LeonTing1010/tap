@@ -12,12 +12,28 @@
     "site": "github",
     "name": "trending",
     "intent": "read",
-    "description": "GitHub Trending repositories",
-    "columns": [],
-    "args": {},
+    "description": "GitHub trending repositories - Get GitHub repos created in the last N days with minimum stars, filtered to AI/SaaS/devtool niches via topic and description keyword matching. Supply-side signal for solo builder category emergence.",
+    "columns": ["slug", "description", "stars", "language", "topics", "created_at", "url"],
+    "args": {
+      "days": {
+        "type": "int",
+        "default": 7,
+        "description": "Lookback window in days"
+      },
+      "min_stars": {
+        "type": "int",
+        "default": 5,
+        "description": "Minimum stars to include"
+      },
+      "per_page": {
+        "type": "int",
+        "default": 50,
+        "description": "Maximum results from API"
+      }
+    },
     "health": {
-      "min_rows": 1,
-      "non_empty": []
+      "min_rows": 3,
+      "non_empty": ["slug", "description"]
     }
   },
   "seeAlso": [

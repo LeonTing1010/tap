@@ -1,0 +1,33 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/36kr/hot",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/36kr/hot",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "36kr",
+    "name": "hot",
+    "intent": "read",
+    "description": "36Kr hot list - Tech and startup news from 36Kr (leading Chinese tech media), including rank, title, view count, and URL. Extracted from hot-list page with multiple selector support and JSON-LD fallback.",
+    "columns": ["rank", "title", "hot", "url"],
+    "args": {
+      "limit": {
+        "type": "int",
+        "default": 20,
+        "description": "Maximum number of items to return"
+      }
+    },
+    "health": {
+      "min_rows": 5,
+      "non_empty": ["title"]
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/showcase/36kr/hot.tap.js",
+    "https://taprun.dev/taps/36kr/hot.html"
+  ]
+}

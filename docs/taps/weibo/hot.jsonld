@@ -12,14 +12,18 @@
     "site": "weibo",
     "name": "hot",
     "intent": "read",
-    "description": "Weibo hot search trending topics",
-    "columns": [],
-    "args": {},
+    "description": "Weibo hot search - Real-time trending topics from Weibo (Chinese Twitter), including rank, topic, tag, heat value, and URL. Extracted from SSR-rendered table, supports public anonymous access.",
+    "columns": ["rank", "title", "tag", "hot", "url"],
+    "args": {
+      "limit": {
+        "type": "int",
+        "default": 50,
+        "description": "Maximum number of items to return"
+      }
+    },
     "health": {
-      "min_rows": 10,
-      "non_empty": [
-        "title"
-      ]
+      "min_rows": 20,
+      "non_empty": ["title"]
     }
   },
   "seeAlso": [

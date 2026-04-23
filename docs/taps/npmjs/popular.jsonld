@@ -12,18 +12,16 @@
     "site": "npmjs",
     "name": "popular",
     "intent": "read",
-    "description": "npm most popular packages by weekly downloads",
-    "columns": [],
+    "description": "npm popular packages - Get the most popular JavaScript packages on npm, including rank, package name, version, description, popularity, quality, and maintenance scores. Helps developers discover high-quality open source libraries.",
+    "columns": ["rank", "name", "version", "description", "popularity", "quality", "maintenance"],
     "args": {},
     "health": {
-      "min_rows": 5,
-      "non_empty": [
-        "name"
-      ]
+      "min_rows": 20,
+      "non_empty": ["name", "description"]
     }
   },
   "seeAlso": [
-    "https://github.com/LeonTing1010/tap-skills/blob/main/community/npmjs/popular.tap.js",
+    "https://github.com/LeonTing1010/tap-skills/blob/main/showcase/npmjs/popular.tap.js",
     "https://taprun.dev/taps/npmjs/popular.html"
   ]
 }

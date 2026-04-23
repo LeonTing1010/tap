@@ -1,0 +1,38 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/reddit/hot",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/reddit/hot",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "reddit",
+    "name": "hot",
+    "intent": "read",
+    "description": "Reddit hot posts - Get hot posts from a specific subreddit, including rank, title, subreddit, score, and URL. Defaults to r/popular, supports custom subreddits for targeted content discovery.",
+    "columns": ["rank", "title", "subreddit", "score", "url"],
+    "args": {
+      "subreddit": {
+        "type": "string",
+        "default": "popular",
+        "description": "Subreddit name (without r/ prefix), defaults to popular"
+      },
+      "limit": {
+        "type": "int",
+        "default": 50,
+        "description": "Maximum number of posts to return"
+      }
+    },
+    "health": {
+      "min_rows": 10,
+      "non_empty": ["title", "url"]
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/showcase/reddit/hot.tap.js",
+    "https://taprun.dev/taps/reddit/hot.html"
+  ]
+}

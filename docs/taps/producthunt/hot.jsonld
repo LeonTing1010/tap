@@ -1,0 +1,27 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/producthunt/hot",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/producthunt/hot",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "producthunt",
+    "name": "hot",
+    "intent": "read",
+    "description": "Product Hunt hot products - Get today's trending products from Product Hunt, including rank, product name, link, description, and author. The best source for discovering new tech products and startups.",
+    "columns": ["rank", "title", "link", "description", "author"],
+    "args": {},
+    "health": {
+      "min_rows": 10,
+      "non_empty": ["title"]
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/showcase/producthunt/hot.tap.js",
+    "https://taprun.dev/taps/producthunt/hot.html"
+  ]
+}

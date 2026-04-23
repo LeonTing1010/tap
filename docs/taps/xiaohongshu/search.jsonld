@@ -1,0 +1,32 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/xiaohongshu/search",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/xiaohongshu/search",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "xiaohongshu",
+    "name": "search",
+    "intent": "read",
+    "description": "Xiaohongshu (Little Red Book) notes search - Search for notes and get detailed information including title, author, likes, comments, collects, shares, tags, description, note type, URL, note ID, and xsec_token. Extracted from SSR-rendered page for subsequent operations.",
+    "columns": ["title", "user", "likes", "comments", "collects", "shares", "tags", "desc", "type", "url", "noteId", "xsec_token"],
+    "args": {
+      "keyword": {
+        "type": "string",
+        "description": "Search keyword"
+      }
+    },
+    "health": {
+      "min_rows": 5,
+      "non_empty": ["title", "noteId"]
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/showcase/xiaohongshu/search.tap.js",
+    "https://taprun.dev/taps/xiaohongshu/search.html"
+  ]
+}
