@@ -17,6 +17,10 @@ const GSC_CLIENT = "/Users/leo/Documents/keystore/client_secret_200215826367-rjr
 const GSC_TOKEN = `${Deno.env.get("HOME")}/.google-oauth-token.ga-admin`;
 const AHREFS_PROJECT = "9680757";
 const CLARITY_PROJECT = "wcmkaafekz";
+const GA4_PROPERTY = "356723562";
+const CF_ZONE = "c0ea314ee2cd7f483c43ea91b69ea131";
+const CF_ANALYTICS_TOKEN_PATH = `${Deno.env.get("HOME")}/.cloudflare-token.analytics`;
+const GH_REPO = "LeonTing1010/tap";
 const STATE_FILE = `${Deno.env.get("HOME")}/.taprun-weekly-state.json`;
 const DAYS = 7;
 
@@ -122,6 +126,13 @@ interface WeekSnapshot {
   gscClicks: number | null;
   gscImpressions: number | null;
   gscQueries: number | null;
+  ghViews: number | null;
+  ghUniqueViewers: number | null;
+  ghClones: number | null;
+  cfPageViews: number | null;
+  cfRequests: number | null;
+  refDomainsReal: number | null;
+  refDomainsSpam: number | null;
 }
 
 async function loadState(currentWeek: string): Promise<WeekSnapshot | null> {
@@ -156,13 +167,65 @@ const fmtDelta = (cur: number | null, prev: number | null, reverse = false): str
   return ` ${arrow} ${d > 0 ? "+" : ""}${pct.toFixed(0)}%`;
 };
 
+// ─── GitHub Traffic API ──────────────────────────────────────────
+interface GhTraffic { count: number; uniques: number }
+interface GhReferrer { referrer: string; count: number; uniques: number }
+async function ghApi<T>(path: string): Promise<T | null> {
+  try {
+    const p = new Deno.Command("gh", { args: ["api", path], stdout: "piped", stderr: "piped" });
+    const { success, stdout } = await p.output();
+    if (!success) return null;
+    return JSON.parse(new TextDecoder().decode(stdout)) as T;
+  } catch {
+    return null;
+  }
+}
+
+// ─── Cloudflare Web Analytics (GraphQL) ──────────────────────────
+async function cfAnalytics(): Promise<{ requests: number; pageViews: number; uniques: number; threats: number } | null> {
+  try {
+    const token = (await Deno.readTextFile(CF_ANALYTICS_TOKEN_PATH)).trim();
+    const since = start.toISOString().slice(0, 10);
+    const q = `query { viewer { zones(filter: { zoneTag: "${CF_ZONE}" }) { httpRequests1dGroups(limit: 10, filter: { date_geq: "${since}" }) { sum { requests pageViews threats } uniq { uniques } } } } }`;
+    const res = await fetch("https://api.cloudflare.com/client/v4/graphql", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ query: q }),
+    });
+    const j = await res.json();
+    const groups = j?.data?.viewer?.zones?.[0]?.httpRequests1dGroups ?? [];
+    if (groups.length === 0) return null;
+    return groups.reduce((a: { requests: number; pageViews: number; uniques: number; threats: number }, g: { sum: { requests: number; pageViews: number; threats: number }; uniq: { uniques: number } }) => ({
+      requests: a.requests + (g.sum?.requests ?? 0),
+      pageViews: a.pageViews + (g.sum?.pageViews ?? 0),
+      uniques: a.uniques + (g.uniq?.uniques ?? 0),
+      threats: a.threats + (g.sum?.threats ?? 0),
+    }), { requests: 0, pageViews: 0, uniques: 0, threats: 0 });
+  } catch {
+    return null;
+  }
+}
+
+// GA4 Data API intentionally NOT pulled.
+//
+// With only the default `page_view` event firing on taprun.dev, GA4 returns
+// the same pageviews/sessions/sources numbers Ahrefs + CF Analytics already
+// give us — zero unique signal. Re-add this block ONCE custom events like
+// install_click / blog_scroll_complete / tap_demo_view are instrumented;
+// that's what makes GA4 earn its section in the digest.
+
 // ─── Fetch all sources in parallel ──────────────────────────────
-const [overview, sources, pages, clarity, gscToken] = await Promise.all([
+const [overview, sources, pages, clarity, refdomains, gscToken, ghViews, ghClones, ghReferrers, cf] = await Promise.all([
   runTap("ahrefs", "web-analytics-overview", { project_id: AHREFS_PROJECT, days: DAYS }),
   runTap("ahrefs", "web-analytics-sources", { project_id: AHREFS_PROJECT, days: DAYS }),
   runTap("ahrefs", "web-analytics-pages", { project_id: AHREFS_PROJECT, days: DAYS, view: "top" }),
   runTap("clarity", "dashboard-insights", { project_id: CLARITY_PROJECT, days: DAYS }),
+  runTap("ahrefs", "referring-domains", { target: "taprun.dev", project_id: AHREFS_PROJECT, mode: "subdomains" }),
   gscAccessToken(),
+  ghApi<GhTraffic>(`repos/${GH_REPO}/traffic/views`),
+  ghApi<GhTraffic>(`repos/${GH_REPO}/traffic/clones`),
+  ghApi<GhReferrer[]>(`repos/${GH_REPO}/traffic/popular/referrers`),
+  cfAnalytics(),
 ]);
 
 const gscByQuery = gscToken ? await gscQuery(gscToken, ["query"]) : [];
@@ -173,6 +236,9 @@ const gscTotals = gscToken ? await gscQuery(gscToken, []) : [];
 const ovRow = (k: string) => (overview?.find((r) => r.metric === k)?.value) ?? "";
 const clRow = (k: string) => (clarity?.find((r) => r.metric === k)?.value) ?? "";
 const pctFromStr = (s: string) => Number(s.replace("%", "")) || null;
+
+const realRefDomains = refdomains ? refdomains.filter((r) => String(r.is_spam) === "false") : null;
+const spamRefDomains = refdomains ? refdomains.filter((r) => String(r.is_spam) === "true") : null;
 
 const curSnap: WeekSnapshot = {
   week: weekLabel,
@@ -188,6 +254,13 @@ const curSnap: WeekSnapshot = {
   gscClicks: gscTotals[0] ? gscTotals[0].clicks : null,
   gscImpressions: gscTotals[0] ? gscTotals[0].impressions : null,
   gscQueries: gscByQuery.length || null,
+  ghViews: ghViews?.count ?? null,
+  ghUniqueViewers: ghViews?.uniques ?? null,
+  ghClones: ghClones?.count ?? null,
+  cfPageViews: cf?.pageViews ?? null,
+  cfRequests: cf?.requests ?? null,
+  refDomainsReal: realRefDomains?.length ?? null,
+  refDomainsSpam: spamRefDomains?.length ?? null,
 };
 
 const prev = await loadState(weekLabel);
@@ -216,6 +289,12 @@ p(`| Quick backs | ${clRow("quick_backs_pct") || "—"} |${d("clarityQuickBackPc
 p(`| GSC clicks (${DAYS}d) | ${curSnap.gscClicks ?? "—"} |${d("gscClicks")} |`);
 p(`| GSC impressions | ${curSnap.gscImpressions ?? "—"} |${d("gscImpressions")} |`);
 p(`| Distinct queries | ${curSnap.gscQueries ?? "—"} |${d("gscQueries")} |`);
+p(`| GitHub repo views | ${curSnap.ghViews ?? "—"} (${curSnap.ghUniqueViewers ?? 0} unique) |${d("ghViews")} |`);
+p(`| GitHub clones | ${curSnap.ghClones ?? "—"} |${d("ghClones")} |`);
+p(`| CF pageviews | ${curSnap.cfPageViews ?? "—"} |${d("cfPageViews")} |`);
+p(`| CF total requests | ${curSnap.cfRequests ?? "—"} |${d("cfRequests")} |`);
+p(`| **Real ref domains** | **${curSnap.refDomainsReal ?? "—"}** |${d("refDomainsReal")} |`);
+p(`| (spam ref domains) | ${curSnap.refDomainsSpam ?? "—"} |${d("refDomainsSpam")} |`);
 p(``);
 
 // ─── Traffic sources ────────────────────────────────────────
@@ -275,6 +354,46 @@ if (gscByPage.length) {
     p(`| \`${url}\` | ${r.impressions} | ${r.clicks} | ${r.position.toFixed(1)} |`);
   }
   p(``);
+}
+
+// ─── GitHub referrers ────────────────────────────────────────
+if (ghReferrers && ghReferrers.length) {
+  p(`## 🐙 GitHub repo referrers (14d — GitHub's fixed window)`);
+  p(``);
+  p(`| Referrer | Views | Unique |`);
+  p(`|---|---|---|`);
+  for (const r of ghReferrers.slice(0, 10)) {
+    p(`| ${r.referrer} | ${r.count} | ${r.uniques} |`);
+  }
+  p(``);
+}
+
+// ─── Ahrefs referring domains ────────────────────────────────
+if (refdomains && refdomains.length) {
+  p(`## 🔗 Ahrefs referring domains`);
+  p(``);
+  const real = (realRefDomains ?? []).slice(0, 15);
+  const spam = (spamRefDomains ?? []).slice(0, 5);
+  if (real.length) {
+    p(`### Real (${realRefDomains?.length ?? 0})`);
+    p(``);
+    p(`| Domain | DR | Traffic | Links | First seen |`);
+    p(`|---|---|---|---|---|`);
+    for (const r of real) {
+      p(`| ${r.domain} | ${r.dr} | ${r.traffic} | ${r.links_to_target} | ${r.first_seen} |`);
+    }
+    p(``);
+  }
+  if (spam.length) {
+    p(`<details><summary>Spam backlinks (${spamRefDomains?.length ?? 0}) — ignore, Ahrefs auto-tags</summary>`);
+    p(``);
+    p(`| Domain | DR |`);
+    p(`|---|---|`);
+    for (const r of spam) p(`| ${r.domain} | ${r.dr} |`);
+    p(``);
+    p(`</details>`);
+    p(``);
+  }
 }
 
 // ─── Action items (derived heuristics) ──────────────────────
