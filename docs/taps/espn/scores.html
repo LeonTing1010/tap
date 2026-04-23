@@ -21,15 +21,32 @@ license: MIT
 </section>
 
 <section>
-  <h2>How to call it</h2>
-  <p>From your terminal once Tap is installed:</p>
+  <h2>Install Taprun once</h2>
+  <p>Taprun ships as a single MCP server exposing a catalog of compiled taps. One-time setup on macOS / Linux:</p>
+  <pre><code>brew install LeonTing1010/tap/taprun
+tap mcp connect</code></pre>
+  <p>Or drop this into your <code>claude_desktop_config.json</code> (works identically in Claude Code, Cursor, Cline, Windsurf — any MCP host):</p>
+  <pre><code>{
+  &quot;mcpServers&quot;: {
+    &quot;tap&quot;: {
+      &quot;command&quot;: &quot;tap&quot;,
+      &quot;args&quot;: [&quot;mcp&quot;, &quot;start&quot;]
+    }
+  }
+}</code></pre>
+</section>
+
+<section>
+  <h2>Call <code>espn/scores</code></h2>
+  <p>Terminal, once installed:</p>
   <pre><code>tap run espn/scores</code></pre>
-  <p>Or from an MCP-aware client (Claude Code, Cursor, Cline) — the exact same plan runs deterministically without re-inferring the site structure:</p>
+  <p>From the MCP host — exact same compiled plan, deterministic replay, zero LLM tokens:</p>
   <pre><code>tap.run({ site: &quot;espn&quot;, name: &quot;scores&quot; })</code></pre>
 </section>
 
 <section>
   <h2>Why compile it once</h2>
-  <p>This plan was forged once — the AI read <code>espn</code>, picked stable structural addresses, and saved them to a <code>.tap.json</code>. Every replay since then has used zero LLM tokens. When <code>espn</code> ships a site change that breaks the extraction, <code>tap doctor</code> surfaces it before your data goes stale.</p>
+  <p>This plan was forged once — the AI read <code>espn</code>, picked stable structural addresses (JSON-LD, ARIA, RSS, or declared API endpoints, in that priority order), and saved them to a <code>.tap.json</code>. Every replay since then has used zero LLM tokens. When <code>espn</code> ships a site change that breaks the extraction, <code>tap doctor</code> surfaces it before your data goes stale — not after your pipeline silently writes garbage for a week.</p>
 </section>
+
 

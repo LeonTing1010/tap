@@ -23,15 +23,42 @@ license: MIT
 </section>
 
 <section>
-  <h2>How to call it</h2>
-  <p>From your terminal once Tap is installed:</p>
+  <h2>Install Taprun once</h2>
+  <p>Taprun ships as a single MCP server exposing a catalog of compiled taps. One-time setup on macOS / Linux:</p>
+  <pre><code>brew install LeonTing1010/tap/taprun
+tap mcp connect</code></pre>
+  <p>Or drop this into your <code>claude_desktop_config.json</code> (works identically in Claude Code, Cursor, Cline, Windsurf — any MCP host):</p>
+  <pre><code>{
+  &quot;mcpServers&quot;: {
+    &quot;tap&quot;: {
+      &quot;command&quot;: &quot;tap&quot;,
+      &quot;args&quot;: [&quot;mcp&quot;, &quot;start&quot;]
+    }
+  }
+}</code></pre>
+</section>
+
+<section>
+  <h2>Call <code>scys/nav</code></h2>
+  <p>Terminal, once installed:</p>
   <pre><code>tap run scys/nav</code></pre>
-  <p>Or from an MCP-aware client (Claude Code, Cursor, Cline) — the exact same plan runs deterministically without re-inferring the site structure:</p>
+  <p>From the MCP host — exact same compiled plan, deterministic replay, zero LLM tokens:</p>
   <pre><code>tap.run({ site: &quot;scys&quot;, name: &quot;nav&quot; })</code></pre>
 </section>
 
 <section>
   <h2>Why compile it once</h2>
-  <p>This plan was forged once — the AI read <code>scys</code>, picked stable structural addresses, and saved them to a <code>.tap.json</code>. Every replay since then has used zero LLM tokens. When <code>scys</code> ships a site change that breaks the extraction, <code>tap doctor</code> surfaces it before your data goes stale.</p>
+  <p>This plan was forged once — the AI read <code>scys</code>, picked stable structural addresses (JSON-LD, ARIA, RSS, or declared API endpoints, in that priority order), and saved them to a <code>.tap.json</code>. Every replay since then has used zero LLM tokens. When <code>scys</code> ships a site change that breaks the extraction, <code>tap doctor</code> surfaces it before your data goes stale — not after your pipeline silently writes garbage for a week.</p>
+</section>
+
+<section>
+  <h2>Related scys taps</h2>
+  <table><thead><tr><th>tap</th><th>description</th></tr></thead><tbody>
+    <tr><td><a href="/taps/scys/article"><code>scys/article</code></a></td><td>Read SCYS article with title, author, stats, full text</td></tr>
+    <tr><td><a href="/taps/scys/search"><code>scys/search</code></a></td><td>Search SCYS by keyword (requires login)</td></tr>
+    <tr><td><a href="/taps/scys/extract-results"><code>scys/extract-results</code></a></td><td>Extract search results from SCYS Pinia store (requires login)</td></tr>
+    <tr><td><a href="/taps/scys/trigger-search"><code>scys/trigger-search</code></a></td><td>Trigger search on SCYS (Vue component method or form submit, requires login)</td></tr>
+    <tr><td><a href="/taps/scys/research"><code>scys/research</code></a></td><td>Search SCYS and extract Feishu doc links (search + article)</td></tr>
+  </tbody></table>
 </section>
 

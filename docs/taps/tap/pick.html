@@ -24,15 +24,42 @@ license: MIT
 </section>
 
 <section>
-  <h2>How to call it</h2>
-  <p>From your terminal once Tap is installed:</p>
+  <h2>Install Taprun once</h2>
+  <p>Taprun ships as a single MCP server exposing a catalog of compiled taps. One-time setup on macOS / Linux:</p>
+  <pre><code>brew install LeonTing1010/tap/taprun
+tap mcp connect</code></pre>
+  <p>Or drop this into your <code>claude_desktop_config.json</code> (works identically in Claude Code, Cursor, Cline, Windsurf — any MCP host):</p>
+  <pre><code>{
+  &quot;mcpServers&quot;: {
+    &quot;tap&quot;: {
+      &quot;command&quot;: &quot;tap&quot;,
+      &quot;args&quot;: [&quot;mcp&quot;, &quot;start&quot;]
+    }
+  }
+}</code></pre>
+</section>
+
+<section>
+  <h2>Call <code>tap/pick</code></h2>
+  <p>Terminal, once installed:</p>
   <pre><code>tap run tap/pick</code></pre>
-  <p>Or from an MCP-aware client (Claude Code, Cursor, Cline) — the exact same plan runs deterministically without re-inferring the site structure:</p>
+  <p>From the MCP host — exact same compiled plan, deterministic replay, zero LLM tokens:</p>
   <pre><code>tap.run({ site: &quot;tap&quot;, name: &quot;pick&quot; })</code></pre>
 </section>
 
 <section>
   <h2>Why compile it once</h2>
-  <p>This plan was forged once — the AI read <code>tap</code>, picked stable structural addresses, and saved them to a <code>.tap.json</code>. Every replay since then has used zero LLM tokens. When <code>tap</code> ships a site change that breaks the extraction, <code>tap doctor</code> surfaces it before your data goes stale.</p>
+  <p>This plan was forged once — the AI read <code>tap</code>, picked stable structural addresses (JSON-LD, ARIA, RSS, or declared API endpoints, in that priority order), and saved them to a <code>.tap.json</code>. Every replay since then has used zero LLM tokens. When <code>tap</code> ships a site change that breaks the extraction, <code>tap doctor</code> surfaces it before your data goes stale — not after your pipeline silently writes garbage for a week.</p>
+</section>
+
+<section>
+  <h2>Related tap taps</h2>
+  <table><thead><tr><th>tap</th><th>description</th></tr></thead><tbody>
+    <tr><td><a href="/taps/tap/dedupe"><code>tap/dedupe</code></a></td><td>Remove duplicate rows by field value</td></tr>
+    <tr><td><a href="/taps/tap/limit"><code>tap/limit</code></a></td><td>Take first N rows (head) or skip M then take N (offset+limit)</td></tr>
+    <tr><td><a href="/taps/tap/filter"><code>tap/filter</code></a></td><td>Filter rows where field matches condition (gt, lt, eq, contains)</td></tr>
+    <tr><td><a href="/taps/tap/sort"><code>tap/sort</code></a></td><td>Sort rows by field (numeric or alphabetic, asc or desc)</td></tr>
+    <tr><td><a href="/taps/tap/table"><code>tap/table</code></a></td><td>Format rows as a human-readable table (outputs one row per line)</td></tr>
+  </tbody></table>
 </section>
 
