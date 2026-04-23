@@ -116,9 +116,16 @@ for (const { plan, planRel } of allPlans) {
   }
   const siblings = (siteIndex.get(plan.body.site) ?? []).filter((s) => s.name !== plan.body.name).slice(0, 5);
   const html = renderPage(plan, planRel, siblings);
+  const jsonldPath = `${args.out}/${plan.body.site}/${plan.body.name}.jsonld`;
+  const jsonld = renderJsonLd(plan, planRel);
   if (!args.dryRun) {
     await Deno.mkdir(`${args.out}/${plan.body.site}`, { recursive: true });
     await Deno.writeTextFile(outPath, html);
+    // Machine-readable sibling for the tap.html layout's `seeAlso` + footer link.
+    // Skip for hand-crafted pages — they bring their own authored .jsonld.
+    if (!PRESERVE_HAND_CRAFTED.has(key)) {
+      await Deno.writeTextFile(jsonldPath, jsonld);
+    }
   }
   outcomes.push({ path: outPath, rel: planRel, status: exists ? "written-forced" : "written" });
 }
@@ -248,6 +255,37 @@ ${relatedSection}
 `;
 
   return frontmatter + "\n" + body + "\n";
+}
+
+// ─── JSON-LD sibling renderer ───────────────────────────────────
+// Every /taps/<site>/<name>.html has a /taps/<site>/<name>.jsonld sibling
+// that the Jekyll layout references via `seeAlso` + the Provenance footer.
+// Without this file those links 404, so the page emits structurally broken
+// references for crawlers and AI clients.
+function renderJsonLd(plan: TapPlan, planRel: string): string {
+  const b = plan.body;
+  const sourceUrl = `https://github.com/${REPO}/blob/main/${planRel}`;
+  const htmlUrl = `https://taprun.dev/taps/${b.site}/${b.name}.html`;
+  const id = `https://taprun.dev/taps/${b.site}/${b.name}`;
+  const doc = {
+    "@context": ["http://www.w3.org/ns/anno.jsonld", "https://taprun.dev/ns/tap-v1"],
+    "@type": "Annotation",
+    id,
+    motivation: "tap:executing",
+    target: id,
+    body: {
+      type: "tap:ExecutionPlan",
+      site: b.site,
+      name: b.name,
+      intent: b.intent ?? "read",
+      description: b.description ?? "",
+      columns: b.columns ?? [],
+      args: b.args ?? {},
+      health: b.health ?? { min_rows: 1, non_empty: [] },
+    },
+    seeAlso: [sourceUrl, htmlUrl],
+  };
+  return JSON.stringify(doc, null, 2) + "\n";
 }
 
 function renderArgYaml(a: { name: string; type: string; default: unknown; description: string }): string {
