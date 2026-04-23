@@ -17,24 +17,24 @@
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Changelog — Tap</title>
+<title>Changelog — Taprun</title>
 <meta name="description" content="Tap release notes. Every version bumps, fixes, and new features. v0.11.3 shipped Chrome MV3 service worker persistence, lazy MCP main session, and four related fixes for orphan tab leaks.">
 <meta name="keywords" content="tap changelog, tap release notes, tap version history, tap v0.11.3, chrome extension tap updates, tap MCP fixes">
 <link rel="canonical" href="https://taprun.dev/changelog.html">
-<meta property="og:title" content="Changelog — Tap">
+<meta property="og:title" content="Changelog — Taprun">
 <meta property="og:description" content="Release notes for every Tap version. The story of every fix, written in one sentence each.">
 <meta property="og:url" content="https://taprun.dev/changelog.html">
 <meta property="og:type" content="website">
 <meta property="og:image" content="https://taprun.dev/social-preview.png">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Changelog — Tap">
+<meta name="twitter:title" content="Changelog — Taprun">
 <meta name="twitter:description" content="Release notes for every Tap version.">
 <meta name="twitter:image" content="https://taprun.dev/social-preview.png">
 <meta name="robots" content="index, follow">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='105' cy='115' r='55' fill='%23FFFFFF'/%3E%3Ccircle cx='85' cy='70' r='45' fill='%23FFFFFF'/%3E%3Cellipse cx='75' cy='32' rx='15' ry='22' fill='%23EF4444'/%3E%3Cellipse cx='90' cy='30' rx='12' ry='20' fill='%23DC2626'/%3E%3Cellipse cx='103' cy='35' rx='10' ry='16' fill='%23B91C1C'/%3E%3Cpath d='M 55 68 L 8 75 L 55 85 Z' fill='%23FBBF24'/%3E%3Cpath d='M 55 85 L 8 75 L 12 82 Z' fill='%23D97706'/%3E%3Ccircle cx='70' cy='65' r='14' fill='%231F2937'/%3E%3Ccircle cx='66' cy='61' r='5' fill='%23FFFFFF'/%3E%3Ccircle cx='74' cy='68' r='2.5' fill='%23FFFFFF'/%3E%3Cellipse cx='50' cy='78' rx='8' ry='5' fill='%23FECACA' opacity='0.8'/%3E%3Cellipse cx='125' cy='115' rx='35' ry='30' fill='%23818CF8'/%3E%3Cellipse cx='125' cy='115' rx='25' ry='20' fill='%236366F1'/%3E%3Ccircle cx='95' cy='130' r='25' fill='%23F9FAFB'/%3E%3Cpath d='M 145 140 L 175 185 L 155 180 L 140 145 Z' fill='%23818CF8'/%3E%3Cpath d='M 150 145 L 180 190 L 162 185 L 148 150 Z' fill='%236366F1'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,300..900,0..100;1,9..144,300..900,0..100&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -42,55 +42,96 @@
   "name": "Tap Changelog",
   "description": "Release notes for every Tap version.",
   "url": "https://taprun.dev/changelog.html",
-  "isPartOf": {
-    "@type": "WebSite",
-    "name": "Tap",
-    "url": "https://taprun.dev/"
-  },
-  "about": {
-    "@type": "SoftwareApplication",
-    "name": "Tap",
-    "url": "https://taprun.dev/",
-    "softwareVersion": "0.11.3",
-    "applicationCategory": "DeveloperApplication",
-    "operatingSystem": "macOS, Linux, Windows"
-  }
+  "isPartOf": { "@type": "WebSite", "name": "Tap", "url": "https://taprun.dev/" },
+  "about": { "@type": "SoftwareApplication", "name": "Tap", "url": "https://taprun.dev/", "softwareVersion": "0.11.3", "applicationCategory": "DeveloperApplication", "operatingSystem": "macOS, Linux, Windows" }
 }
 </script>
 <style>
+:root {
+  --bg-deep: #F4EDDE; --indigo: #1C2D5A; --gold: #A67A2E; --gold-dim: #7A5A22;
+  --red: #7E2B1C; --text: #14110C; --text-dim: #3B332A; --text-muted: #7A6F60; --paper: #FAF5EB;
+  --font-heading: 'Fraunces','Hoefler Text',Georgia,serif;
+  --font-body: 'Fraunces','Hoefler Text',Georgia,serif;
+  --font-mono: 'JetBrains Mono','SF Mono',monospace;
+}
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0a0918; color: #e0e0e0; line-height: 1.8; }
-.container { max-width: 760px; margin: 0 auto; padding: 60px 24px; }
-h1 { font-size: 2.2rem; font-weight: 700; color: #fff; margin-bottom: 8px; line-height: 1.2; font-family: 'Bricolage Grotesque', sans-serif; }
-h2 { font-size: 1.5rem; font-weight: 600; color: #fff; margin-top: 56px; margin-bottom: 4px; display: flex; align-items: baseline; gap: 16px; font-family: 'Bricolage Grotesque', sans-serif; }
-h2 .date { font-size: 0.85rem; font-weight: 400; color: #666; font-family: 'Plus Jakarta Sans', sans-serif; }
-h2 a { color: #fff; }
-h2 a:hover { color: #818cf8; text-decoration: none; }
-h3 { font-size: 0.95rem; font-weight: 600; color: #a0a0b0; margin-top: 20px; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
-p, li { font-size: 0.95rem; color: #b0b0b0; margin-bottom: 10px; }
-ul { padding-left: 24px; list-style: none; }
-ul li { position: relative; padding-left: 4px; }
-ul li::before { content: "→"; position: absolute; left: -20px; color: #6366F1; }
-ul li strong { color: #d0d0d8; font-weight: 500; }
-a { color: #818cf8; text-decoration: none; }
-a:hover { text-decoration: underline; }
-.meta-intro { font-size: 0.9rem; color: #888; margin-bottom: 40px; padding-bottom: 24px; border-bottom: 1px solid #222; }
-.back { display: inline-block; margin-bottom: 24px; font-size: 0.9rem; }
-code { background: #1a1a2e; padding: 2px 6px; border-radius: 4px; font-size: 0.88em; font-family: 'JetBrains Mono', monospace; color: #c8c8d0; }
-.version-block { margin-top: 32px; padding-top: 4px; }
-.version-highlight { padding: 14px 18px; background: rgba(129,140,248,0.06); border: 1px solid rgba(129,140,248,0.2); border-radius: 8px; margin: 16px 0 20px; font-size: 0.9rem; color: #c0c0c8; }
-.version-highlight strong { color: #818cf8; }
-hr { border: none; border-top: 1px solid #222; margin: 56px 0 40px; }
-.older { font-size: 0.9rem; color: #888; padding: 16px; background: rgba(255,255,255,0.02); border-radius: 8px; }
+body { font-family: var(--font-body); background: var(--bg-deep); color: var(--text); line-height: 1.7; font-variation-settings: "SOFT" 50; -webkit-font-smoothing: antialiased; }
+body::before { content: ''; position: fixed; inset: 0; z-index: 9999; pointer-events: none; opacity: 0.025; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+
+.masthead-strip { border-bottom: 1px solid rgba(20,17,12,0.18); padding: 14px 0; }
+.masthead-strip .row { max-width: 820px; margin: 0 auto; padding: 0 32px; display: grid; grid-template-columns: max-content 1fr max-content; gap: 20px; align-items: baseline; font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--text-muted); }
+.masthead-strip a { color: var(--text-dim); text-decoration: none; transition: color 0.2s; }
+.masthead-strip a:hover { color: var(--red); }
+.masthead-strip .brand { font-family: var(--font-heading); font-style: italic; font-weight: 700; font-size: 16px; color: var(--text); text-transform: none; letter-spacing: -0.01em; }
+.masthead-strip .crumb { justify-self: center; font-size: 10.5px; }
+
+.container { max-width: 820px; margin: 0 auto; padding: 72px 32px 120px; }
+.kicker { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 20px; }
+.kicker::before { content: '—'; color: var(--gold); margin-right: 12px; }
+h1 { font-family: var(--font-heading); font-weight: 300; font-style: italic; font-size: clamp(56px, 9vw, 104px); line-height: 0.95; letter-spacing: -0.045em; margin-bottom: 18px; font-variation-settings: "SOFT" 100, "opsz" 144; }
+h1 em { font-style: italic; color: var(--red); font-weight: 400; }
+.meta-intro { font-family: var(--font-heading); font-style: italic; font-weight: 300; font-size: 19px; color: var(--text-dim); max-width: 640px; margin-bottom: 48px; padding-bottom: 28px; border-bottom: 1px solid var(--text); font-variation-settings: "SOFT" 100; }
+.meta-intro a { color: var(--indigo); text-decoration: underline; text-underline-offset: 3px; }
+.meta-intro a:hover { color: var(--red); }
+
+.version-block { margin-top: 56px; padding-top: 4px; }
+h2 { font-family: var(--font-heading); font-style: italic; font-weight: 600; font-size: 34px; color: var(--text); margin: 0 0 6px; letter-spacing: -0.02em; font-variation-settings: "SOFT" 100; line-height: 1.1; display: flex; align-items: baseline; flex-wrap: wrap; gap: 16px; }
+h2::before { content: '§'; color: var(--gold); font-weight: 400; font-size: 0.8em; margin-right: 2px; }
+h2 a { color: var(--text); text-decoration: none; }
+h2 a:hover { color: var(--red); }
+h2 .date { font-family: var(--font-mono); font-size: 11px; font-style: normal; font-weight: 400; color: var(--text-muted); letter-spacing: 0.18em; text-transform: uppercase; }
+h3 { font-family: var(--font-mono); font-size: 11px; font-weight: 500; color: var(--text-muted); margin: 32px 0 14px; text-transform: uppercase; letter-spacing: 0.22em; }
+h3::before { content: '— '; color: var(--gold); }
+
+p, li { font-size: 17px; color: var(--text-dim); font-weight: 300; font-variation-settings: "SOFT" 50; }
+p { margin-bottom: 14px; }
+ul { padding-left: 0; list-style: none; }
+ul li { position: relative; padding-left: 26px; margin-bottom: 14px; line-height: 1.6; }
+ul li::before { content: '→'; position: absolute; left: 0; top: 0; color: var(--gold); font-family: var(--font-heading); font-style: italic; font-weight: 500; }
+ul li strong { color: var(--text); font-weight: 600; }
+
+a { color: var(--indigo); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; transition: color 0.2s; }
+a:hover { color: var(--red); }
+code { font-family: var(--font-mono); font-size: 13.5px; color: var(--indigo); background: rgba(28,45,90,0.08); padding: 1px 6px; font-style: normal; font-weight: 500; }
+
+.version-highlight { font-family: var(--font-heading); font-style: italic; font-weight: 300; font-size: 18px; color: var(--text); line-height: 1.5; margin: 20px 0 28px; padding: 20px 24px 22px; border-left: 3px solid var(--red); background: rgba(126, 43, 28, 0.05); font-variation-settings: "SOFT" 100; }
+.version-highlight strong { color: var(--red); font-weight: 600; }
+.version-highlight code { background: rgba(126, 43, 28, 0.1); color: var(--red-dark, #5A1C10); font-style: normal; }
+
+hr { border: none; border-top: 1px solid var(--text); margin: 72px 0 48px; position: relative; }
+hr::before { content: '◆ ◆ ◆'; position: absolute; left: 50%; top: -0.7em; transform: translateX(-50%); background: var(--bg-deep); padding: 0 16px; color: var(--gold); font-family: var(--font-heading); font-size: 14px; letter-spacing: 0.6em; }
+
+.older { font-family: var(--font-heading); font-style: italic; font-weight: 300; font-size: 16px; color: var(--text-muted); padding: 16px 0; border-top: 1px solid rgba(20,17,12,0.15); border-bottom: 1px solid rgba(20,17,12,0.15); text-align: center; font-variation-settings: "SOFT" 100; }
+
+.colophon { margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--text); font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-muted); display: flex; gap: 28px; flex-wrap: wrap; }
+.colophon a { color: var(--text-dim); text-decoration: none; transition: color 0.2s; }
+.colophon a:hover { color: var(--red); }
+
+@media (max-width: 640px) {
+  .container { padding: 48px 20px 80px; }
+  h1 { font-size: clamp(40px, 11vw, 64px); }
+  h2 { font-size: 26px; }
+  .masthead-strip .row { grid-template-columns: 1fr max-content; padding: 0 20px; }
+  .masthead-strip .crumb { display: none; }
+  .version-highlight { font-size: 16px; padding: 16px 20px; }
+}
 </style>
 <script src="https://analytics.ahrefs.com/analytics.js" data-key="G1wKuningnrw+t5LQJ+MPw" async></script>
 </head>
 <body>
-<div class="container">
-<a href="./" class="back">&larr; Tap</a>
 
-<h1>Changelog</h1>
-<p class="meta-intro">Every Tap release, one sentence per fix. For full technical notes on each version, see the <a href="https://github.com/LeonTing1010/tap/releases">GitHub releases page</a>.</p>
+<header class="masthead-strip">
+  <div class="row">
+    <a href="/" class="brand">Taprun</a>
+    <span class="crumb">Changelog &middot; v0.11.3</span>
+    <a href="https://github.com/LeonTing1010/tap/releases">Releases &nearr;</a>
+  </div>
+</header>
+
+<main class="container">
+<div class="kicker">Edition Log · One Sentence Per Fix</div>
+<h1>Change<em>log</em></h1>
+<p class="meta-intro">Every Tap release, written as if for a typesetter. For full technical notes on each version, see the <a href="https://github.com/LeonTing1010/tap/releases">GitHub releases page</a>.</p>
 
 <div class="version-block">
 <h2><a href="https://github.com/LeonTing1010/tap/releases/tag/v0.11.3">v0.11.3</a> <span class="date">April 11, 2026</span></h2>
@@ -147,8 +188,14 @@ hr { border: none; border-top: 1px solid #222; margin: 56px 0 40px; }
 
 <p class="older">For releases older than v0.11.0, see the <a href="https://github.com/LeonTing1010/tap/releases">full GitHub releases archive</a>.</p>
 
-<p style="margin-top: 40px; padding-top: 24px; border-top: 1px solid #222; font-size: 0.85rem; color: #666;"><a href="./">&larr; Back to Tap</a> &middot; <a href="blog/">Blog</a> &middot; <a href="https://github.com/LeonTing1010/tap">GitHub</a></p>
-
+<div class="colophon">
+  <a href="/">&larr; Taprun</a>
+  <a href="blog/">Blog</a>
+  <a href="https://github.com/LeonTing1010/tap">GitHub</a>
+  <a href="/taps/">Tap Library</a>
 </div>
+</main>
+
+<script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "91c486def20e49999fa55db9040ec94d"}'></script>
 </body>
 </html>

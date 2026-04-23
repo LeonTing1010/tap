@@ -34,199 +34,323 @@
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='105' cy='115' r='55' fill='%23FFFFFF'/%3E%3Ccircle cx='85' cy='70' r='45' fill='%23FFFFFF'/%3E%3Cellipse cx='75' cy='32' rx='15' ry='22' fill='%23EF4444'/%3E%3Cellipse cx='90' cy='30' rx='12' ry='20' fill='%23DC2626'/%3E%3Cellipse cx='103' cy='35' rx='10' ry='16' fill='%23B91C1C'/%3E%3Cpath d='M 55 68 L 8 75 L 55 85 Z' fill='%23FBBF24'/%3E%3Cpath d='M 55 85 L 8 75 L 12 82 Z' fill='%23D97706'/%3E%3Ccircle cx='70' cy='65' r='14' fill='%231F2937'/%3E%3Ccircle cx='66' cy='61' r='5' fill='%23FFFFFF'/%3E%3Ccircle cx='74' cy='68' r='2.5' fill='%23FFFFFF'/%3E%3Cellipse cx='50' cy='78' rx='8' ry='5' fill='%23FECACA' opacity='0.8'/%3E%3Cellipse cx='125' cy='115' rx='35' ry='30' fill='%23818CF8'/%3E%3Cellipse cx='125' cy='115' rx='25' ry='20' fill='%236366F1'/%3E%3Ccircle cx='95' cy='130' r='25' fill='%23F9FAFB'/%3E%3Cpath d='M 145 140 L 175 185 L 155 180 L 140 145 Z' fill='%23818CF8'/%3E%3Cpath d='M 150 145 L 180 190 L 162 185 L 148 150 Z' fill='%236366F1'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,300..900,0..100;1,9..144,300..900,0..100&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
+:root {
+  --bg-deep: #F4EDDE; --bg-surface: #EDE4CE;
+  --indigo: #1C2D5A; --gold: #A67A2E; --gold-dim: #7A5A22;
+  --red: #7E2B1C; --text: #14110C; --text-dim: #3B332A; --text-muted: #7A6F60; --paper: #FAF5EB;
+  --font-heading: 'Fraunces','Hoefler Text',Georgia,serif;
+  --font-body: 'Fraunces','Hoefler Text',Georgia,serif;
+  --font-mono: 'JetBrains Mono','SF Mono',monospace;
+}
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0a0918; color: #e0e0e0; line-height: 1.7; }
-.container { max-width: 720px; margin: 0 auto; padding: 60px 24px; }
-h1 { font-size: 2rem; font-weight: 600; color: #fff; margin-bottom: 32px; }
-a { color: #818cf8; text-decoration: none; }
-a:hover { text-decoration: underline; }
-.back { display: inline-block; margin-bottom: 24px; font-size: 0.9rem; }
-.post { padding: 24px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; margin-bottom: 16px; transition: border-color 0.2s; }
-.post:hover { border-color: rgba(99,102,241,0.3); }
-.post h2 { font-size: 1.2rem; font-weight: 500; color: #fff; margin-bottom: 8px; }
-.post h2 a { color: #fff; }
-.post h2 a:hover { color: #818cf8; text-decoration: none; }
-.post p { font-size: 0.9rem; color: #888; margin-bottom: 0; }
-.post .meta { font-size: 0.8rem; color: #555; margin-top: 8px; }
+body { font-family: var(--font-body); background: var(--bg-deep); color: var(--text); line-height: 1.7; font-variation-settings: "SOFT" 50; -webkit-font-smoothing: antialiased; }
+body::before { content: ''; position: fixed; inset: 0; z-index: 9999; pointer-events: none; opacity: 0.025; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+
+.masthead-strip { border-bottom: 1px solid rgba(20,17,12,0.18); padding: 14px 0; }
+.masthead-strip .row { max-width: 880px; margin: 0 auto; padding: 0 32px; display: grid; grid-template-columns: max-content 1fr max-content; gap: 20px; align-items: baseline; font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--text-muted); }
+.masthead-strip a { color: var(--text-dim); text-decoration: none; transition: color 0.2s; }
+.masthead-strip a:hover { color: var(--red); }
+.masthead-strip .brand { font-family: var(--font-heading); font-style: italic; font-weight: 700; font-size: 16px; color: var(--text); text-transform: none; letter-spacing: -0.01em; }
+.masthead-strip .crumb { justify-self: center; font-size: 10.5px; }
+
+.masthead { max-width: 880px; margin: 0 auto; padding: 92px 32px 48px; text-align: center; border-bottom: 2px solid var(--text); }
+.kicker { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 28px; }
+.kicker::before, .kicker::after { content: '—'; color: var(--gold); margin: 0 14px; }
+h1 { font-family: var(--font-heading); font-weight: 300; font-style: italic; font-size: clamp(62px, 10vw, 136px); line-height: 0.9; letter-spacing: -0.045em; color: var(--text); margin-bottom: 24px; font-variation-settings: "SOFT" 100, "opsz" 144; }
+h1 em { font-style: italic; color: var(--red); font-weight: 400; }
+.dek { font-family: var(--font-heading); font-style: italic; font-weight: 300; font-size: 21px; color: var(--text-dim); max-width: 640px; margin: 0 auto; line-height: 1.45; font-variation-settings: "SOFT" 100; }
+
+.ornament { text-align: center; color: var(--gold); margin: 36px 0 48px; font-family: var(--font-heading); font-size: 18px; letter-spacing: 0.8em; }
+
+.archive { max-width: 880px; margin: 0 auto; padding: 0 32px 88px; }
+
+.post { display: grid; grid-template-columns: max-content 1fr; gap: 32px; padding: 28px 0 30px; border-bottom: 1px solid rgba(20,17,12,0.1); transition: background 0.2s; align-items: start; }
+.post:hover { background: rgba(28,45,90,0.035); }
+.post:last-child { border-bottom: none; }
+.post .date-col { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-muted); padding-top: 10px; white-space: nowrap; }
+.post .date-col .read-time { display: block; margin-top: 6px; color: var(--gold-dim); font-size: 10px; letter-spacing: 0.15em; }
+.post .content { min-width: 0; }
+.post h2 { font-family: var(--font-heading); font-style: italic; font-weight: 500; font-size: 26px; color: var(--text); margin-bottom: 10px; letter-spacing: -0.02em; line-height: 1.2; font-variation-settings: "SOFT" 100; }
+.post h2::before { content: ''; }
+.post h2 a { color: var(--text); text-decoration: none; transition: color 0.2s; background-image: linear-gradient(transparent 94%, var(--text) 94%); background-size: 0 100%; background-repeat: no-repeat; padding-bottom: 2px; transition: background-size 0.35s cubic-bezier(0.65, 0, 0.35, 1), color 0.25s; }
+.post h2 a:hover { color: var(--red); background-image: linear-gradient(transparent 94%, var(--red) 94%); background-size: 100% 100%; }
+.post p { font-family: var(--font-heading); font-weight: 300; font-size: 16px; color: var(--text-dim); line-height: 1.55; font-variation-settings: "SOFT" 50; }
+.post p code { font-family: var(--font-mono); background: rgba(28,45,90,0.08); color: var(--indigo); padding: 1px 5px; font-size: 13.5px; font-weight: 500; }
+
+.end-ornament { text-align: center; margin: 72px 0 20px; }
+.end-ornament .rule { display: inline-block; width: 80px; height: 1px; background: var(--gold); vertical-align: middle; margin: 0 18px; }
+.end-ornament span.glyph { font-family: var(--font-heading); color: var(--gold); font-size: 18px; font-style: italic; vertical-align: middle; }
+.feed-note { text-align: center; font-family: var(--font-heading); font-style: italic; font-weight: 300; font-size: 15px; color: var(--text-muted); font-variation-settings: "SOFT" 100; }
+.feed-note a { color: var(--indigo); text-decoration: underline; text-underline-offset: 3px; }
+.feed-note a:hover { color: var(--red); }
+
+@media (max-width: 720px) {
+  .masthead { padding: 56px 22px 32px; }
+  .archive { padding: 0 22px 60px; }
+  h1 { font-size: clamp(42px, 12vw, 72px); }
+  .dek { font-size: 17px; }
+  .post { grid-template-columns: 1fr; gap: 6px; padding: 24px 0; }
+  .post .date-col { padding-top: 0; }
+  .post h2 { font-size: 22px; }
+  .masthead-strip .row { grid-template-columns: 1fr max-content; padding: 0 22px; }
+  .masthead-strip .crumb { display: none; }
+}
 </style>
 <script src="https://analytics.ahrefs.com/analytics.js" data-key="G1wKuningnrw+t5LQJ+MPw" async></script>
 </head>
 <body>
-<div class="container">
-<a href="../" class="back">&larr; Back to Taprun</a>
-<h1>Blog</h1>
 
-<div class="post">
-<h2><a href="facebook-anti-scraping-flexbox-order.html">Facebook Scrambles Author Names, Not Post Bodies</a></h2>
-<p>A 5-minute diagnostic found Facebook's anti-scraping defense only touches author display names &mdash; via Flexbox <code>order</code> reordering. Post bodies, engagement counts, and <code>aria-label</code>s are plain text. Seven anti-scraping mechanisms ranked by defeat cost, plus the ten-line unscramble.</p>
-<div class="meta">April 22, 2026 &middot; 7 min read</div>
+<header class="masthead-strip">
+  <div class="row">
+    <a href="/" class="brand">Taprun</a>
+    <span class="crumb">The Blog &middot; Archive</span>
+    <a href="feed.xml" rel="noopener">RSS &nearr;</a>
+  </div>
+</header>
+
+<div class="masthead">
+  <div class="kicker">Volume 1 · MMXXVI · Engineering Essays</div>
+  <h1>The <em>Blog</em></h1>
+  <p class="dek">Dispatches on browser automation, AI agents, and programs that beat prompts.</p>
 </div>
 
-<div class="post">
-<h2><a href="install-tap-in-any-mcp-host.html">Install Tap MCP in Claude Code, Cursor, Cline, Windsurf, or VS Code &mdash; 60 Seconds Each</a></h2>
-<p>Tap is an MCP server for authenticated browser automation &mdash; it runs in your own Chrome on your real logged-in sessions. Here&rsquo;s how to connect it to every major MCP host, with the exact config paths each one uses under the hood.</p>
-<div class="meta">April 22, 2026 &middot; 4 min read</div>
-</div>
+<div class="ornament">◆&nbsp;&nbsp;◆&nbsp;&nbsp;◆</div>
 
-<div class="post">
-<h2><a href="authenticated-browser-mcp.html">The Authenticated Browser MCP: Why Cloud Tools Can&rsquo;t See Your Logged-In State</a></h2>
-<p>Playwright MCP, BrowserBase MCP, and Firecrawl MCP all operate on fresh or anonymous browsers. None of them can touch your logged-in Shopify, HubSpot, or Gmail. Here&rsquo;s why that gap is architectural &mdash; and why it matters for anyone building real AI agents.</p>
-<div class="meta">April 22, 2026 &middot; 7 min read</div>
-</div>
+<main class="archive">
 
-<div class="post">
-<h2><a href="what-actually-breaks-15000-automations.html">We Ran 15,000 Browser Automations. The Failure That Matters Most Is Invisible to Your Monitoring.</a></h2>
-<p>15,455 real executions across GitHub, Reddit, YouTube, Bilibili, Xiaohongshu, and more. YouTube silently returns 0 rows on 50% of "successful" runs. The dominant failure mode isn't "element not found" &mdash; it's a property on a returned object that stopped existing. Here's the reliability table nobody publishes, and why your monitoring misses what matters.</p>
-<div class="meta">April 20, 2026 &middot; 9 min read</div>
-</div>
+<article class="post">
+  <div class="date-col">Apr 22, 2026<span class="read-time">7 min</span></div>
+  <div class="content">
+    <h2><a href="facebook-anti-scraping-flexbox-order.html">Facebook Scrambles Author Names, Not Post Bodies</a></h2>
+    <p>A 5-minute diagnostic found Facebook's anti-scraping defense only touches author display names &mdash; via Flexbox <code>order</code> reordering. Post bodies, engagement counts, and <code>aria-label</code>s are plain text. Seven anti-scraping mechanisms ranked by defeat cost, plus the ten-line unscramble.</p>
+  </div>
+</article>
 
-<div class="post">
-<h2><a href="rtrvr-vs-tap.html">rtrvr.ai vs Taprun: Cheaper LLM-at-Runtime Still Isn&rsquo;t Zero Tokens</a></h2>
-<p>rtrvr.ai made LLM-at-runtime 25&times; cheaper than vision-based agents — real engineering, 26K tokens per task instead of 114K. But Taprun moves the LLM to authoring time and runs at $0 per execution. Here&rsquo;s the architectural line every browser-agent tool has to pick a side of, where rtrvr is genuinely strong, and where the per-run-token ceiling eventually breaks the model.</p>
-<div class="meta">April 19, 2026 &middot; 7 min read</div>
-</div>
+<article class="post">
+  <div class="date-col">Apr 22, 2026<span class="read-time">4 min</span></div>
+  <div class="content">
+    <h2><a href="install-tap-in-any-mcp-host.html">Install Tap MCP in Claude Code, Cursor, Cline, Windsurf, or VS Code &mdash; 60 Seconds Each</a></h2>
+    <p>Tap is an MCP server for authenticated browser automation &mdash; it runs in your own Chrome on your real logged-in sessions. Here&rsquo;s how to connect it to every major MCP host, with the exact config paths each one uses under the hood.</p>
+  </div>
+</article>
 
-<div class="post">
-<h2><a href="playwright-mcp-token-cost-alternative.html">Playwright MCP Alternative: Zero Tokens at Runtime</a></h2>
-<p>Playwright MCP burns ~27k tokens per step re-ingesting the DOM. A 189-point Hacker News thread measured 114k tokens through MCP vs 27k through CLI for the same task. Here's why, and how <code>tap forge</code> + <code>tap.run</code> turn every repeated workflow into zero-token execution.</p>
-<div class="meta">April 18, 2026 &middot; 6 min read</div>
-</div>
+<article class="post">
+  <div class="date-col">Apr 22, 2026<span class="read-time">7 min</span></div>
+  <div class="content">
+    <h2><a href="authenticated-browser-mcp.html">The Authenticated Browser MCP: Why Cloud Tools Can&rsquo;t See Your Logged-In State</a></h2>
+    <p>Playwright MCP, BrowserBase MCP, and Firecrawl MCP all operate on fresh or anonymous browsers. None of them can touch your logged-in Shopify, HubSpot, or Gmail. Here&rsquo;s why that gap is architectural &mdash; and why it matters for anyone building real AI agents.</p>
+  </div>
+</article>
 
-<div class="post">
-<h2><a href="scrapers-break-every-week.html">Your Scrapers Break Every Week. Here's Why <code>tap doctor</code> Exists.</a></h2>
-<p>A 376-upvote r/webscraping thread: "10&ndash;15% of my scrapers break EVERY WEEK." Silent failures return empty arrays for days. Health contracts make that impossible, and <code>tap doctor --diff</code> emits the structural delta so fixes become a selector swap instead of a forensic expedition.</p>
-<div class="meta">April 18, 2026 &middot; 6 min read</div>
-</div>
+<article class="post">
+  <div class="date-col">Apr 20, 2026<span class="read-time">9 min</span></div>
+  <div class="content">
+    <h2><a href="what-actually-breaks-15000-automations.html">We Ran 15,000 Browser Automations. The Failure That Matters Most Is Invisible to Your Monitoring.</a></h2>
+    <p>15,455 real executions across GitHub, Reddit, YouTube, Bilibili, Xiaohongshu, and more. YouTube silently returns 0 rows on 50% of "successful" runs. The dominant failure mode isn't "element not found" &mdash; it's a property on a returned object that stopped existing. Here's the reliability table nobody publishes, and why your monitoring misses what matters.</p>
+  </div>
+</article>
 
-<div class="post">
-<h2><a href="browser-use-stuck-loops-why.html">Why Browser-Use Gets Stuck in Loops (And What to Do Instead)</a></h2>
-<p>95% reliability per step sounds great. Twenty steps later it's 36%. And when LLM-driven agents fail, they fail by trying again &mdash; stateless, non-deterministic, hallucinating form inputs. The fix a Reddit user independently invented: AI once, program forever. $200 &rarr; $2.</p>
-<div class="meta">April 18, 2026 &middot; 6 min read</div>
-</div>
+<article class="post">
+  <div class="date-col">Apr 19, 2026<span class="read-time">7 min</span></div>
+  <div class="content">
+    <h2><a href="rtrvr-vs-tap.html">rtrvr.ai vs Taprun: Cheaper LLM-at-Runtime Still Isn&rsquo;t Zero Tokens</a></h2>
+    <p>rtrvr.ai made LLM-at-runtime 25&times; cheaper than vision-based agents — real engineering, 26K tokens per task instead of 114K. But Taprun moves the LLM to authoring time and runs at $0 per execution. Here&rsquo;s the architectural line every browser-agent tool has to pick a side of, where rtrvr is genuinely strong, and where the per-run-token ceiling eventually breaks the model.</p>
+  </div>
+</article>
 
-<div class="post">
-<h2><a href="health-contracts-catch-silent-failures.html">Health Contracts Catch What Pydantic Can't: Silent Scraper Failures</a></h2>
-<p>A Reddit user asked the same question 6 times in one thread: what catches valid-typed data from the wrong element? Type checks pass, row count is fine, but the price came from the ad block. Health contracts with <code>range</code>, <code>pattern</code>, and <code>drift</code> catch what no monitoring dashboard can.</p>
-<div class="meta">April 13, 2026 &middot; 8 min read</div>
-</div>
+<article class="post">
+  <div class="date-col">Apr 18, 2026<span class="read-time">6 min</span></div>
+  <div class="content">
+    <h2><a href="playwright-mcp-token-cost-alternative.html">Playwright MCP Alternative: Zero Tokens at Runtime</a></h2>
+    <p>Playwright MCP burns ~27k tokens per step re-ingesting the DOM. A 189-point Hacker News thread measured 114k tokens through MCP vs 27k through CLI for the same task. Here's why, and how <code>tap forge</code> + <code>tap.run</code> turn every repeated workflow into zero-token execution.</p>
+  </div>
+</article>
 
-<div class="post">
-<h2><a href="mcp-authoring-zero-token-execution.html">MCP Is the Authoring Layer. Execution Should Cost Zero Tokens.</a></h2>
-<p>Two Reddit posts measured MCP overhead at 37% more tokens than CLI. Three independent users converged on the same fix: MCP for discovery, CLI for execution. Taprun has done this from day one &mdash; 40 MCP tools for authoring, <code>tap.run</code> for zero-token deterministic execution.</p>
-<div class="meta">April 13, 2026 &middot; 6 min read</div>
-</div>
+<article class="post">
+  <div class="date-col">Apr 18, 2026<span class="read-time">6 min</span></div>
+  <div class="content">
+    <h2><a href="scrapers-break-every-week.html">Your Scrapers Break Every Week. Here's Why <code>tap doctor</code> Exists.</a></h2>
+    <p>A 376-upvote r/webscraping thread: "10&ndash;15% of my scrapers break EVERY WEEK." Silent failures return empty arrays for days. Health contracts make that impossible, and <code>tap doctor --diff</code> emits the structural delta so fixes become a selector swap instead of a forensic expedition.</p>
+  </div>
+</article>
 
-<div class="post">
-<h2><a href="interface-protocol.html">The Interface Protocol: 8 Operations That Replace Every Browser Automation SDK</a></h2>
-<p>Playwright has 400+ methods. Puppeteer has 300+. Every framework invents its own API, and every program is locked to one vendor. Taprun defines 8 irreducible operations &mdash; eval, pointer, keyboard, nav, wait, screenshot, run, capabilities &mdash; that any runtime implements. Write a <code>.tap.js</code> once, run it on Chrome, Playwright, macOS, or anything that implements the protocol.</p>
-<div class="meta">April 13, 2026 &middot; 7 min read</div>
-</div>
+<article class="post">
+  <div class="date-col">Apr 18, 2026<span class="read-time">6 min</span></div>
+  <div class="content">
+    <h2><a href="browser-use-stuck-loops-why.html">Why Browser-Use Gets Stuck in Loops (And What to Do Instead)</a></h2>
+    <p>95% reliability per step sounds great. Twenty steps later it's 36%. And when LLM-driven agents fail, they fail by trying again &mdash; stateless, non-deterministic, hallucinating form inputs. The fix a Reddit user independently invented: AI once, program forever. $200 &rarr; $2.</p>
+  </div>
+</article>
 
-<div class="post">
-<h2><a href="taprun-executor-0-8-ms-library.html">How We Turned Taprun's Engine Into a 0.8 ms Library (and Measured a 294× Speedup)</a></h2>
-<p>Taprun spent three months as a compiled binary that every embedding product had to shell out to. We extracted the composition engine into <code>@taprun/executor</code> — a Deno-first, zero-dep, 65 KB package that runs pipes in-process. Measured on a pure-transform pipeline: 0.8 ms in-process vs 233.7 ms subprocess. 294× faster, zero semantic change, full backwards compatibility. Includes the re-export shim trick for zero-import-churn extractions and the boundary test that guarantees the package stays self-contained.</p>
-<div class="meta">April 11, 2026 &middot; 9 min read</div>
-</div>
+<article class="post">
+  <div class="date-col">Apr 13, 2026<span class="read-time">8 min</span></div>
+  <div class="content">
+    <h2><a href="health-contracts-catch-silent-failures.html">Health Contracts Catch What Pydantic Can't: Silent Scraper Failures</a></h2>
+    <p>A Reddit user asked the same question 6 times in one thread: what catches valid-typed data from the wrong element? Type checks pass, row count is fine, but the price came from the ad block. Health contracts with <code>range</code>, <code>pattern</code>, and <code>drift</code> catch what no monitoring dashboard can.</p>
+  </div>
+</article>
 
-<div class="post">
-<h2><a href="rdk-compiled-pipes-from-llm-prompts.html">How Reddit Demand Kit Turned a $0.15 LLM Call Into a $0 Compiled Pipe</a></h2>
-<p>RDK's <code>market_scan</code> burns ~26,000 LLM tokens every time a user runs it — $0.15 per call, $135/month for a heavy user. We compiled the prompt into a deterministic JavaScript pipeline using Taprun's new composition DSL. Break-even: 0.46 of a single invocation. 217× cheaper after 100 runs. Real before/after code, the 3 bugs we hit during the refactor, and why every LLM-wrapping product should steal this pattern.</p>
-<div class="meta">April 11, 2026 &middot; 13 min read</div>
-</div>
+<article class="post">
+  <div class="date-col">Apr 13, 2026<span class="read-time">6 min</span></div>
+  <div class="content">
+    <h2><a href="mcp-authoring-zero-token-execution.html">MCP Is the Authoring Layer. Execution Should Cost Zero Tokens.</a></h2>
+    <p>Two Reddit posts measured MCP overhead at 37% more tokens than CLI. Three independent users converged on the same fix: MCP for discovery, CLI for execution. Taprun has done this from day one &mdash; 40 MCP tools for authoring, <code>tap.run</code> for zero-token deterministic execution.</p>
+  </div>
+</article>
 
-<div class="post">
-<h2><a href="composable-taps-are-just-javascript.html">Composable Taps Are Just JavaScript: Why Taprun's Pipeline DSL Doesn't Need YAML</a></h2>
-<p>GitHub Actions, Kubernetes, CircleCI, Airflow, n8n — every pipeline system in 2026 is YAML. When we designed Taprun's composition DSL, the industry convention was obvious. We picked JavaScript instead, and it's strictly better: diff-friendly, AI-generatable, type-checked, debuggable. A full breakdown with real before/after code from migrating <code>bounty/match</code> to the new <code>tap.pipe()</code> executor.</p>
-<div class="meta">April 11, 2026 &middot; 11 min read</div>
-</div>
+<article class="post">
+  <div class="date-col">Apr 13, 2026<span class="read-time">7 min</span></div>
+  <div class="content">
+    <h2><a href="interface-protocol.html">The Interface Protocol: 8 Operations That Replace Every Browser Automation SDK</a></h2>
+    <p>Playwright has 400+ methods. Puppeteer has 300+. Every framework invents its own API, and every program is locked to one vendor. Taprun defines 8 irreducible operations &mdash; eval, pointer, keyboard, nav, wait, screenshot, run, capabilities &mdash; that any runtime implements. Write a <code>.tap.js</code> once, run it on Chrome, Playwright, macOS, or anything that implements the protocol.</p>
+  </div>
+</article>
 
-<div class="post">
-<h2><a href="building-mv3-extension-git-log-retrospective.html">40 Commits to Ship a Chrome MV3 Extension: A Git Log Retrospective</a></h2>
-<p>Building Taprun's Chrome extension took three months and forty-ish commits fighting Chrome MV3. A category-by-category tour of the real commits: service worker termination, <code>chrome.alarms</code>' silent 1-minute floor, the 25-second timeout cap, <code>chrome.storage.session</code> as the only durable state, the CDP debugger-attached tax, the <code>unsafe-eval</code> ban, and tab stealing across concurrent sessions.</p>
-<div class="meta">April 11, 2026 &middot; 10 min read</div>
-</div>
+<article class="post">
+  <div class="date-col">Apr 11, 2026<span class="read-time">9 min</span></div>
+  <div class="content">
+    <h2><a href="taprun-executor-0-8-ms-library.html">How We Turned Taprun's Engine Into a 0.8 ms Library (and Measured a 294&times; Speedup)</a></h2>
+    <p>Taprun spent three months as a compiled binary that every embedding product had to shell out to. We extracted the composition engine into <code>@taprun/executor</code> — a Deno-first, zero-dep, 65 KB package that runs pipes in-process. Measured on a pure-transform pipeline: 0.8 ms in-process vs 233.7 ms subprocess. 294&times; faster, zero semantic change, full backwards compatibility.</p>
+  </div>
+</article>
 
-<div class="post">
-<h2><a href="free-seo-stack-gsc-bing-ahrefs.html">The Free SEO Stack for a New Dev Tool Site: GSC + Bing WMT + Ahrefs Webmaster Tools</a></h2>
-<p>Ahrefs and SEMrush cost $99+/month, but a 10-day-old site won't meaningfully benefit from them for 3-6 months. Here's the free stack that covers the same data you actually need at this stage: Google Search Console, Bing Webmaster Tools, Ahrefs Webmaster Tools (Free), and IndexNow — plus the Cloudflare cache gotcha that bit us and how we fixed it.</p>
-<div class="meta">April 11, 2026 &middot; 8 min read</div>
-</div>
+<article class="post">
+  <div class="date-col">Apr 11, 2026<span class="read-time">13 min</span></div>
+  <div class="content">
+    <h2><a href="rdk-compiled-pipes-from-llm-prompts.html">How Reddit Demand Kit Turned a $0.15 LLM Call Into a $0 Compiled Pipe</a></h2>
+    <p>RDK's <code>market_scan</code> burns ~26,000 LLM tokens every time a user runs it — $0.15 per call, $135/month for a heavy user. We compiled the prompt into a deterministic JavaScript pipeline using Taprun's new composition DSL. Break-even: 0.46 of a single invocation. 217&times; cheaper after 100 runs.</p>
+  </div>
+</article>
 
-<div class="post">
-<h2><a href="mv3-orphan-tabs-fix.html">Debugging Chrome MV3's "Many Empty Tabs" Bug: A chrome.storage.session Post-Mortem</a></h2>
-<p>A user reported 9 empty <code>chrome://newtab/</code> tabs accumulating overnight from Taprun's extension. Three wrong fixes later (<code>about:blank</code>, self-scripting own extension pages, <code>unsafe-eval</code> offscreen eval), I finally read the Chromium docs properly. MV3 has four hard rules that none of my first three attempts respected.</p>
-<div class="meta">April 11, 2026 &middot; 9 min read</div>
-</div>
+<article class="post">
+  <div class="date-col">Apr 11, 2026<span class="read-time">11 min</span></div>
+  <div class="content">
+    <h2><a href="composable-taps-are-just-javascript.html">Composable Taps Are Just JavaScript: Why Taprun's Pipeline DSL Doesn't Need YAML</a></h2>
+    <p>GitHub Actions, Kubernetes, CircleCI, Airflow, n8n — every pipeline system in 2026 is YAML. When we designed Taprun's composition DSL, the industry convention was obvious. We picked JavaScript instead, and it's strictly better: diff-friendly, AI-generatable, type-checked, debuggable.</p>
+  </div>
+</article>
 
-<div class="post">
-<h2><a href="stagehand-vs-tap.html">Stagehand vs Taprun: AI Browser Automation Compared</a></h2>
-<p>Stagehand calls the LLM on every step — same cost per run, same reliability floor as Browser Use. Taprun compiles AI understanding into deterministic programs that run forever at $0.</p>
-<div class="meta">April 9, 2026 &middot; 5 min read</div>
-</div>
+<article class="post">
+  <div class="date-col">Apr 11, 2026<span class="read-time">10 min</span></div>
+  <div class="content">
+    <h2><a href="building-mv3-extension-git-log-retrospective.html">40 Commits to Ship a Chrome MV3 Extension: A Git Log Retrospective</a></h2>
+    <p>Building Taprun's Chrome extension took three months and forty-ish commits fighting Chrome MV3. A category-by-category tour of the real commits: service worker termination, <code>chrome.alarms</code>' silent 1-minute floor, the 25-second timeout cap, <code>chrome.storage.session</code> as the only durable state, the CDP debugger-attached tax, the <code>unsafe-eval</code> ban, and tab stealing across concurrent sessions.</p>
+  </div>
+</article>
 
-<div class="post">
-<h2><a href="deterministic-vs-ai-browser-automation.html">Deterministic vs AI Browser Automation: Why Programs Beat Prompts</a></h2>
-<p>AI browser automation is non-deterministic — same task, different results every run. Deterministic programs compile AI understanding once, then run forever with 100% consistency.</p>
-<div class="meta">April 9, 2026 &middot; 5 min read</div>
-</div>
+<article class="post">
+  <div class="date-col">Apr 11, 2026<span class="read-time">8 min</span></div>
+  <div class="content">
+    <h2><a href="free-seo-stack-gsc-bing-ahrefs.html">The Free SEO Stack for a New Dev Tool Site: GSC + Bing WMT + Ahrefs Webmaster Tools</a></h2>
+    <p>Ahrefs and SEMrush cost $99+/month, but a 10-day-old site won't meaningfully benefit from them for 3-6 months. Here's the free stack that covers the same data you actually need at this stage: Google Search Console, Bing Webmaster Tools, Ahrefs Webmaster Tools (Free), and IndexNow — plus the Cloudflare cache gotcha that bit us and how we fixed it.</p>
+  </div>
+</article>
 
-<div class="post">
-<h2><a href="browser-use-alternative-free.html">Browser Use Alternative: Free, Deterministic, No Tokens Per Run</a></h2>
-<p>Browser Use costs $0.50–$2.00 per run. Taprun compiles AI understanding into a deterministic program that runs forever at $0. Same browser, zero tokens at runtime.</p>
-<div class="meta">April 9, 2026 &middot; 6 min read</div>
-</div>
+<article class="post">
+  <div class="date-col">Apr 11, 2026<span class="read-time">9 min</span></div>
+  <div class="content">
+    <h2><a href="mv3-orphan-tabs-fix.html">Debugging Chrome MV3's "Many Empty Tabs" Bug: A chrome.storage.session Post-Mortem</a></h2>
+    <p>A user reported 9 empty <code>chrome://newtab/</code> tabs accumulating overnight from Taprun's extension. Three wrong fixes later (<code>about:blank</code>, self-scripting own extension pages, <code>unsafe-eval</code> offscreen eval), I finally read the Chromium docs properly. MV3 has four hard rules that none of my first three attempts respected.</p>
+  </div>
+</article>
 
-<div class="post">
-<h2><a href="how-companies-keep-scrapers-reliable.html">How Do Companies Keep Scrapers Reliable? I Asked the Internet.</a></h2>
-<p>A r/webscraping thread asked the question. I read 12 threads across HN and Reddit &mdash; about 350 comments. Six independent builders converged on the same five principles. Here's the pattern.</p>
-<div class="meta">April 7, 2026 &middot; 7 min read</div>
-</div>
+<article class="post">
+  <div class="date-col">Apr 9, 2026<span class="read-time">5 min</span></div>
+  <div class="content">
+    <h2><a href="stagehand-vs-tap.html">Stagehand vs Taprun: AI Browser Automation Compared</a></h2>
+    <p>Stagehand calls the LLM on every step — same cost per run, same reliability floor as Browser Use. Taprun compiles AI understanding into deterministic programs that run forever at $0.</p>
+  </div>
+</article>
 
-<div class="post">
-<h2><a href="search-arxiv-one-command.html">Search arXiv in One Command — No API Key, No Tokens</a></h2>
-<p>npx -y @taprun/cli arxiv search --keyword "LLM" | sort | table — that's it. No install, no API key, no AI tokens per search. Unix pipeline for research paper discovery.</p>
-<div class="meta">April 7, 2026 &middot; 4 min read</div>
-</div>
+<article class="post">
+  <div class="date-col">Apr 9, 2026<span class="read-time">5 min</span></div>
+  <div class="content">
+    <h2><a href="deterministic-vs-ai-browser-automation.html">Deterministic vs AI Browser Automation: Why Programs Beat Prompts</a></h2>
+    <p>AI browser automation is non-deterministic — same task, different results every run. Deterministic programs compile AI understanding once, then run forever with 100% consistency.</p>
+  </div>
+</article>
 
-<div class="post">
-<h2><a href="comments-as-ab-tests.html">16 Comments, 6 Insights: Using HN and Reddit as a Positioning Lab</a></h2>
-<p>Community comments are the cheapest A/B test for product positioning. 16 comments across HN and Reddit validated 6 content principles in one afternoon &mdash; each with a concrete pain point and solution.</p>
-<div class="meta">April 6, 2026 &middot; 7 min read</div>
-</div>
+<article class="post">
+  <div class="date-col">Apr 9, 2026<span class="read-time">6 min</span></div>
+  <div class="content">
+    <h2><a href="browser-use-alternative-free.html">Browser Use Alternative: Free, Deterministic, No Tokens Per Run</a></h2>
+    <p>Browser Use costs $0.50–$2.00 per run. Taprun compiles AI understanding into a deterministic program that runs forever at $0. Same browser, zero tokens at runtime.</p>
+  </div>
+</article>
 
-<div class="post">
-<h2><a href="programs-beat-prompts.html">Programs Beat Prompts: Why AI Should Write Code, Not Run It</a></h2>
-<p>AI browser agents burn tokens every run. The better model: AI writes a deterministic program once, then it runs forever at zero cost. 300x cheaper, 20x faster, 100% deterministic.</p>
-<div class="meta">April 6, 2026 &middot; 6 min read</div>
-</div>
+<article class="post">
+  <div class="date-col">Apr 7, 2026<span class="read-time">7 min</span></div>
+  <div class="content">
+    <h2><a href="how-companies-keep-scrapers-reliable.html">How Do Companies Keep Scrapers Reliable? I Asked the Internet.</a></h2>
+    <p>A r/webscraping thread asked the question. I read 12 threads across HN and Reddit &mdash; about 350 comments. Six independent builders converged on the same five principles. Here's the pattern.</p>
+  </div>
+</article>
 
-<div class="post">
-<h2><a href="ai-browser-agent-costs-3600.html">Your AI Browser Agent Costs $3,600/month. Here's How to Make It $0.</a></h2>
-<p>Browser-use users burn tokens on every run. The compiler model: AI writes a program once, runs forever at zero cost. Real data from the 78K-star community.</p>
-<div class="meta">April 5, 2026 &middot; 5 min read</div>
-</div>
+<article class="post">
+  <div class="date-col">Apr 7, 2026<span class="read-time">4 min</span></div>
+  <div class="content">
+    <h2><a href="search-arxiv-one-command.html">Search arXiv in One Command — No API Key, No Tokens</a></h2>
+    <p>npx -y @taprun/cli arxiv search --keyword "LLM" | sort | table — that's it. No install, no API key, no AI tokens per search. Unix pipeline for research paper discovery.</p>
+  </div>
+</article>
 
-<div class="post">
-<h2><a href="websites-change-automation-shouldnt-stop.html">Websites Change. Your Automation Shouldn't Stop.</a></h2>
-<p>The self-healing loop: watch for data changes, detect breakage via health contracts, auto-heal with one AI call, continue at $0.</p>
-<div class="meta">April 4, 2026 &middot; 5 min read</div>
-</div>
+<article class="post">
+  <div class="date-col">Apr 6, 2026<span class="read-time">7 min</span></div>
+  <div class="content">
+    <h2><a href="comments-as-ab-tests.html">16 Comments, 6 Insights: Using HN and Reddit as a Positioning Lab</a></h2>
+    <p>Community comments are the cheapest A/B test for product positioning. 16 comments across HN and Reddit validated 6 content principles in one afternoon &mdash; each with a concrete pain point and solution.</p>
+  </div>
+</article>
 
-<div class="post">
-<h2><a href="automation-costs-one-dollar.html">Your Automation Costs $1 Per Run. Mine Costs $0.</a></h2>
-<p>AI browser agents burn tokens every run. Deterministic programs run forever at zero cost. Here's the math.</p>
-<div class="meta">April 4, 2026 &middot; 4 min read</div>
-</div>
+<article class="post">
+  <div class="date-col">Apr 6, 2026<span class="read-time">6 min</span></div>
+  <div class="content">
+    <h2><a href="programs-beat-prompts.html">Programs Beat Prompts: Why AI Should Write Code, Not Run It</a></h2>
+    <p>AI browser agents burn tokens every run. The better model: AI writes a deterministic program once, then it runs forever at zero cost. 300x cheaper, 20x faster, 100% deterministic.</p>
+  </div>
+</article>
 
-<div class="post">
-<h2><a href="your-scraper-is-broken.html">Your Scraper Is Broken Right Now. You Just Don't Know It Yet.</a></h2>
-<p>Most scrapers fail silently &mdash; returning empty arrays for days before anyone notices. Health contracts + deterministic programs fix this.</p>
-<div class="meta">April 4, 2026 &middot; 5 min read</div>
-</div>
+<article class="post">
+  <div class="date-col">Apr 5, 2026<span class="read-time">5 min</span></div>
+  <div class="content">
+    <h2><a href="ai-browser-agent-costs-3600.html">Your AI Browser Agent Costs $3,600/month. Here's How to Make It $0.</a></h2>
+    <p>Browser-use users burn tokens on every run. The compiler model: AI writes a program once, runs forever at zero cost. Real data from the 78K-star community.</p>
+  </div>
+</article>
 
+<article class="post">
+  <div class="date-col">Apr 4, 2026<span class="read-time">5 min</span></div>
+  <div class="content">
+    <h2><a href="websites-change-automation-shouldnt-stop.html">Websites Change. Your Automation Shouldn't Stop.</a></h2>
+    <p>The self-healing loop: watch for data changes, detect breakage via health contracts, auto-heal with one AI call, continue at $0.</p>
+  </div>
+</article>
+
+<article class="post">
+  <div class="date-col">Apr 4, 2026<span class="read-time">4 min</span></div>
+  <div class="content">
+    <h2><a href="automation-costs-one-dollar.html">Your Automation Costs $1 Per Run. Mine Costs $0.</a></h2>
+    <p>AI browser agents burn tokens every run. Deterministic programs run forever at zero cost. Here's the math.</p>
+  </div>
+</article>
+
+<article class="post">
+  <div class="date-col">Apr 4, 2026<span class="read-time">5 min</span></div>
+  <div class="content">
+    <h2><a href="your-scraper-is-broken.html">Your Scraper Is Broken Right Now. You Just Don't Know It Yet.</a></h2>
+    <p>Most scrapers fail silently &mdash; returning empty arrays for days before anyone notices. Health contracts + deterministic programs fix this.</p>
+  </div>
+</article>
+
+<div class="end-ornament">
+  <span class="rule"></span><span class="glyph">◈</span><span class="rule"></span>
 </div>
+<p class="feed-note">Subscribe via <a href="feed.xml">RSS</a> &middot; or follow commits on <a href="https://github.com/LeonTing1010/tap">GitHub</a></p>
+
+</main>
+
 <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "91c486def20e49999fa55db9040ec94d"}'></script>
 </body>
 </html>
