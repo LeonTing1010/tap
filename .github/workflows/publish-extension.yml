@@ -6,41 +6,49 @@ on:
       - 'v*'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Read version from manifest
+        id: version
+        run: |
+          VERSION=$(jq -r '.version' extension/manifest.json)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Verify tag matches manifest version
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          MANIFEST_VERSION="${{ steps.version.outputs.version }}"
+          if [ "$TAG_VERSION" != "$MANIFEST_VERSION" ]; then
+            echo "::error::Tag $TAG_VERSION does not match manifest version $MANIFEST_VERSION"
+            exit 1
+          fi
+
+      - name: Package extension
+        run: |
+          cd extension
+          zip -r ../tap-extension-${{ steps.version.outputs.version }}.zip . -x '.*'
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
-          node-version: 22
+          files: tap-extension-${{ steps.version.outputs.version }}.zip
+          generate_release_notes: true
 
-      - name: Zip extension
+      - name: Upload and publish to Chrome Web Store
         run: |
-          mkdir -p tap-extension
-          cp extension/background.js tap-extension/
-          cp extension/manifest.json tap-extension/
-          cp -r extension/icons tap-extension/
-          cp -r extension/protocol tap-extension/ 2>/dev/null || true
-          zip -qr tap-extension.zip tap-extension/
-          echo "Extension packaged:"
-          unzip -l tap-extension.zip
-
-      - name: Upload to Chrome Web Store
-        run: |
-          npm install -g chrome-webstore-upload
-          npx chrome-webstore-upload upload \
-            --source tap-extension.zip \
+          npm install -g chrome-webstore-upload-cli
+          chrome-webstore-upload upload \
+            --source tap-extension-${{ steps.version.outputs.version }}.zip \
             --extension-id ${{ secrets.CHROME_EXTENSION_ID }} \
-            --client-id ${{ secrets.CHROME_CLIENT_ID }} \
-            --client-secret ${{ secrets.CHROME_CLIENT_SECRET }} \
-            --refresh-token ${{ secrets.CHROME_REFRESH_TOKEN }}
-
-      - name: Publish to Chrome Web Store
-        run: |
-          npx chrome-webstore-upload publish \
-            --extension-id ${{ secrets.CHROME_EXTENSION_ID }} \
-            --client-id ${{ secrets.CHROME_CLIENT_ID }} \
-            --client-secret ${{ secrets.CHROME_CLIENT_SECRET }} \
-            --refresh-token ${{ secrets.CHROME_REFRESH_TOKEN }}
+            --auto-publish
+        env:
+          CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+          REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
