@@ -46,13 +46,8 @@ jobs:
           npm install -g chrome-webstore-upload-cli
           chrome-webstore-upload upload \
             --source tap-extension-${{ steps.version.outputs.version }}.zip \
-            --extension-id "$EXTENSION_ID" \
-            --client-id "$CLIENT_ID" \
-            --client-secret "$CLIENT_SECRET" \
-            --refresh-token "$REFRESH_TOKEN" \
+            --extension-id '${{ secrets.CHROME_EXTENSION_ID }}' \
+            --client-id '${{ secrets.CHROME_CLIENT_ID }}' \
+            --client-secret '${{ secrets.CHROME_CLIENT_SECRET }}' \
+            --refresh-token '${{ secrets.CHROME_REFRESH_TOKEN }}' \
             --auto-publish
-        env:
-          EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
-          CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
-          CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
-          REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
