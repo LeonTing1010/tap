@@ -91,7 +91,7 @@
   "@type": "FAQPage",
   "mainEntity": [
     {"@type": "Question", "name": "What does 'compile once' mean?", "acceptedAnswer": {"@type": "Answer", "text": "AI runs once at authoring time to capture a site's stable structural addresses (JSON-LD, OpenAPI, ARIA, RSS) — not to generate fragile CSS selectors. The compiled program is then replayed deterministically, no LLM at runtime."}},
-    {"@type": "Question", "name": "What happens when the site changes?", "acceptedAnswer": {"@type": "Answer", "text": "Run `tap doctor`. It compares captured fingerprints against the live page and flags drift — before your data goes stale. On Pro, `tap heal` proposes an AI-written fix; `tap refresh` rebaselines after human approval."}},
+    {"@type": "Question", "name": "What happens when the site changes?", "acceptedAnswer": {"@type": "Answer", "text": "Run `tap doctor`. It compares captured fingerprints against the live page and flags drift — before your data goes stale. On Pro, `tap fix` proposes an AI-written patch; `tap refresh` rebaselines after human approval."}},
     {"@type": "Question", "name": "Is my data safe?", "acceptedAnswer": {"@type": "Answer", "text": "Everything runs on your machine. Programs are structured data plans (closed 25-op vocabulary), not arbitrary JavaScript. No runtime eval, no new Worker, no cloud exfiltration. See the SECURITY.md in the public repo."}}
   ]
 }
@@ -2617,7 +2617,7 @@ h2 .hl {
       <article class="evidence-card reveal" data-num="03">
         <div class="evidence-card-body">
           <h3>Diff the <span class="hl">drift.</span></h3>
-          <p class="evidence-claim"><code>tap doctor</code> compares the captured fingerprint against the live page and flags structural drift <em>before</em> your data goes stale. <code>tap heal</code> proposes an AI-written patch on Pro. <code>tap refresh</code> re-baselines only after a human approves. Lifecycle as a first-class primitive — not an afterthought retry loop.</p>
+          <p class="evidence-claim"><code>tap doctor</code> compares the captured fingerprint against the live page and flags structural drift <em>before</em> your data goes stale. <code>tap fix</code> proposes an AI-written patch on Pro. <code>tap refresh</code> re-baselines only after a human approves. Lifecycle as a first-class primitive — not an afterthought retry loop.</p>
           <blockquote class="evidence-quote">
             "I'd be curious whether you measure success as 'initial generation works' or 'the same flow still passes after small DOM/layout changes a week later' — that's the boundary between a neat demo and something a team can rely on."
             <cite>— potter098, <a href="https://news.ycombinator.com/item?id=47780971" rel="noopener">HN, 2026-04-15 (question left unanswered by the compile-only competitor)</a></cite>
@@ -2647,6 +2647,9 @@ h2 .hl {
   .usecase-card > p { font-size: 14.5px; line-height: 1.6; color: var(--text-dim); margin-bottom: 16px; }
   .usecase-examples { display: flex; flex-direction: column; gap: 6px; }
   .usecase-examples code { display: block; font-family: var(--font-mono); font-size: 12.5px; color: var(--text); background: var(--bg-deep); padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.04); white-space: nowrap; overflow-x: auto; }
+  .usecase-story { display: block; margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.06); font-family: var(--font-mono); font-size: 12px; color: var(--text-dim); text-decoration: none; transition: color 0.2s; }
+  .usecase-story:hover { color: var(--indigo-bright); }
+  .usecase-story em { font-style: italic; color: inherit; }
 </style>
 <section class="usecases" id="usecases">
   <div class="container">
@@ -2666,6 +2669,7 @@ h2 .hl {
           <code>tap hackernews/hot</code>
           <code>tap arxiv/search --keyword "LLM"</code>
         </div>
+        <a class="usecase-story" href="/blog/search-arxiv-one-command.html">→ Read: <em>Search arXiv in one command — no API key, no tokens</em></a>
       </article>
 
       <article class="usecase-card reveal">
@@ -2676,6 +2680,7 @@ h2 .hl {
           <code>tap xiaohongshu/publish --title "..."</code>
           <code>tap zhihu/publish --content "..."</code>
         </div>
+        <a class="usecase-story" href="/blog/authenticated-browser-mcp.html">→ Read: <em>Why cloud tools can't see your logged-in state</em></a>
       </article>
 
       <article class="usecase-card reveal">
@@ -2686,6 +2691,7 @@ h2 .hl {
           <code>tap watch github/trending --every 5m</code>
           <code>tap history github/trending --trend stars</code>
         </div>
+        <a class="usecase-story" href="/blog/websites-change-automation-shouldnt-stop.html">→ Read: <em>Websites change. Your automation shouldn't stop.</em></a>
       </article>
 
       <article class="usecase-card reveal">
@@ -2696,6 +2702,7 @@ h2 .hl {
           <code>tap github/trending | tap filter --field stars --gt 500</code>
           <code>tap reddit/hot | tap dedupe | tap table</code>
         </div>
+        <a class="usecase-story" href="/blog/composable-taps-are-just-javascript.html">→ Read: <em>Composable taps are just JavaScript</em></a>
       </article>
 
       <article class="usecase-card reveal">
@@ -2706,6 +2713,7 @@ h2 .hl {
           <code>tap forge https://news.ycombinator.com</code>
           <code>tap forge "get Douban top 250 movies"</code>
         </div>
+        <a class="usecase-story" href="/blog/facebook-anti-scraping-flexbox-order.html">→ Read: <em>Facebook scrambles author names, not post bodies</em></a>
       </article>
     </div>
   </div>
@@ -2849,7 +2857,7 @@ h2 .hl {
       </details>
       <details class="faq-item">
         <summary>What happens when the site changes?</summary>
-        <div class="faq-answer">Run <code>tap doctor</code>. It compares captured fingerprints against the live page and flags drift &mdash; before your data goes stale. On Pro, <code>tap heal</code> proposes an AI-written fix; <code>tap refresh</code> rebaselines after human approval.</div>
+        <div class="faq-answer">Run <code>tap doctor</code>. It compares captured fingerprints against the live page and flags drift &mdash; before your data goes stale. On Pro, <code>tap fix</code> proposes an AI-written patch; <code>tap refresh</code> rebaselines after human approval.</div>
       </details>
       <details class="faq-item">
         <summary>Is my data safe?</summary>
