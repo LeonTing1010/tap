@@ -1,0 +1,27 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/coingecko/top",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/coingecko/top",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "coingecko",
+    "name": "top",
+    "intent": "read",
+    "description": "Top cryptocurrencies by market cap from CoinGecko API - Get the top 50 cryptocurrencies with price, 24h change, market cap, and trading volume. Uses CoinGecko's public API for reliable crypto market data.",
+    "columns": ["rank", "name", "symbol", "price", "change_24h", "market_cap", "volume_24h"],
+    "args": {},
+    "health": {
+      "min_rows": 5,
+      "non_empty": ["name", "symbol"]
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/showcase/coingecko/top.tap.js",
+    "https://taprun.dev/taps/coingecko/top.html"
+  ]
+}

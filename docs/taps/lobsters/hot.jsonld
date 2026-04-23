@@ -12,14 +12,12 @@
     "site": "lobsters",
     "name": "hot",
     "intent": "read",
-    "description": "Lobsters hot posts",
-    "columns": [],
+    "description": "Lobsters hot stories - Frontpage stories from Lobsters tech community, a computing-focused discussion site. Extracted via the canonical RSS feed for stable, long-term access.",
+    "columns": ["rank", "title", "link", "comments_url", "author", "date", "categories"],
     "args": {},
     "health": {
       "min_rows": 5,
-      "non_empty": [
-        "title"
-      ]
+      "non_empty": ["title", "link"]
     }
   },
   "seeAlso": [

@@ -1,0 +1,27 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/pypi/top",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/pypi/top",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "pypi",
+    "name": "top",
+    "intent": "read",
+    "description": "PyPI top Python packages by downloads (last 30 days) - Get the most downloaded Python packages from PyPI, ranked by download count. Data sourced from hugovk's top-pypi-packages dataset.",
+    "columns": ["rank", "project", "download_count"],
+    "args": {},
+    "health": {
+      "min_rows": 10,
+      "non_empty": ["project", "download_count"]
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/showcase/pypi/top.tap.js",
+    "https://taprun.dev/taps/pypi/top.html"
+  ]
+}
