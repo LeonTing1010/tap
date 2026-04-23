@@ -2,19 +2,30 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-RH14PQ10QK"></script>
+<!-- Analytics (GA4 + Ahrefs + Clarity) — production host only. localhost/preview deploys are silent to avoid polluting metrics. -->
 <script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-RH14PQ10QK');
+  (function() {
+    if (location.hostname !== 'taprun.dev') return;
+    // GA4
+    var ga = document.createElement('script');
+    ga.async = true;
+    ga.src = 'https://www.googletagmanager.com/gtag/js?id=G-RH14PQ10QK';
+    document.head.appendChild(ga);
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function(){ dataLayer.push(arguments); };
+    gtag('js', new Date());
+    gtag('config', 'G-RH14PQ10QK');
+    // Ahrefs Web Analytics
+    var ah = document.createElement('script');
+    ah.async = true;
+    ah.src = 'https://analytics.ahrefs.com/analytics.js';
+    ah.setAttribute('data-key', 'G1wKuningnrw+t5LQJ+MPw');
+    document.head.appendChild(ah);
+    // Microsoft Clarity
+    (function(c,l,a,r,i,t,y){
+      c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+      t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+      y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wcmkaafekz");
+  })();
 </script>
-<script src="https://analytics.ahrefs.com/analytics.js" data-key="G1wKuningnrw+t5LQJ+MPw" async></script>
-<script type="text/javascript">
-     (function(c,l,a,r,i,t,y){
-         c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-         t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-         y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-     })(window, document, "clarity", "script", "wcmkaafekz");
- </script>
