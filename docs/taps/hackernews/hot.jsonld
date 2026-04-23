@@ -1,0 +1,30 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/hackernews/hot",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/hackernews/hot",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "hackernews",
+    "name": "hot",
+    "intent": "read",
+    "description": "Hacker News top stories",
+    "columns": [],
+    "args": {},
+    "health": {
+      "min_rows": 10,
+      "non_empty": [
+        "title",
+        "score"
+      ]
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/showcase/hackernews/hot.tap.js",
+    "https://taprun.dev/taps/hackernews/hot.html"
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/pixiv/ranking",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/pixiv/ranking",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "pixiv",
+    "name": "ranking",
+    "intent": "read",
+    "description": "Pixiv daily illustration ranking",
+    "columns": [],
+    "args": {},
+    "health": {
+      "min_rows": 5,
+      "non_empty": [
+        "title"
+      ]
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/pixiv/ranking.tap.js",
+    "https://taprun.dev/taps/pixiv/ranking.html"
+  ]
+}

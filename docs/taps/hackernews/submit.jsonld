@@ -1,0 +1,42 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/hackernews/submit",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/hackernews/submit",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "hackernews",
+    "name": "submit",
+    "intent": "write",
+    "description": "Submit a story to Hacker News",
+    "columns": [
+      "status",
+      "url"
+    ],
+    "args": {
+      "title": {
+        "type": "string"
+      },
+      "link": {
+        "type": "string",
+        "description": "URL to submit (optional if text provided)"
+      },
+      "text": {
+        "type": "string",
+        "description": "Text body for Ask HN / Show HN (optional if link provided)"
+      }
+    },
+    "health": {
+      "min_rows": 1,
+      "non_empty": []
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/showcase/hackernews/submit.tap.js",
+    "https://taprun.dev/taps/hackernews/submit.html"
+  ]
+}

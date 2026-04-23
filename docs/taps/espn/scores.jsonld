@@ -1,0 +1,29 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/espn/scores",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/espn/scores",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "espn",
+    "name": "scores",
+    "intent": "read",
+    "description": "ESPN top headlines and scores",
+    "columns": [],
+    "args": {},
+    "health": {
+      "min_rows": 5,
+      "non_empty": [
+        "headline"
+      ]
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/espn/scores.tap.js",
+    "https://taprun.dev/taps/espn/scores.html"
+  ]
+}

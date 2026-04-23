@@ -1,0 +1,37 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/techcrunch/latest",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/techcrunch/latest",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "techcrunch",
+    "name": "latest",
+    "intent": "read",
+    "description": "TechCrunch latest articles via RSS feed — zero DOM dependency",
+    "columns": [
+      "title",
+      "author",
+      "date",
+      "category",
+      "link",
+      "summary"
+    ],
+    "args": {},
+    "health": {
+      "min_rows": 5,
+      "non_empty": [
+        "title",
+        "link"
+      ]
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/showcase/techcrunch/latest.tap.js",
+    "https://taprun.dev/taps/techcrunch/latest.html"
+  ]
+}

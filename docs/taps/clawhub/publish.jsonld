@@ -1,0 +1,51 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/clawhub/publish",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/clawhub/publish",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "clawhub",
+    "name": "publish",
+    "intent": "write",
+    "description": "Publish a skill to OpenClaw ClawHub",
+    "columns": [
+      "status",
+      "url"
+    ],
+    "args": {
+      "slug": {
+        "type": "string",
+        "description": "Skill slug (e.g. 'tap')"
+      },
+      "displayName": {
+        "type": "string",
+        "description": "Display name (e.g. 'Tap')"
+      },
+      "version": {
+        "type": "string",
+        "description": "Semver version (e.g. '0.1.0')"
+      },
+      "skillFile": {
+        "type": "string",
+        "description": "Absolute path to SKILL.md file"
+      },
+      "changelog": {
+        "type": "string",
+        "description": "Changelog text"
+      }
+    },
+    "health": {
+      "min_rows": 1,
+      "non_empty": []
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/clawhub/publish.tap.js",
+    "https://taprun.dev/taps/clawhub/publish.html"
+  ]
+}

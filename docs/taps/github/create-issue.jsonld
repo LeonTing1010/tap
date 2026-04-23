@@ -1,0 +1,45 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/github/create-issue",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/github/create-issue",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "github",
+    "name": "create-issue",
+    "intent": "write",
+    "description": "Create a GitHub issue via API",
+    "columns": [
+      "status",
+      "url"
+    ],
+    "args": {
+      "repo": {
+        "type": "string"
+      },
+      "title": {
+        "type": "string"
+      },
+      "body": {
+        "type": "string",
+        "default": ""
+      },
+      "labels": {
+        "type": "string",
+        "default": ""
+      }
+    },
+    "health": {
+      "min_rows": 1,
+      "non_empty": []
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/github/create-issue.tap.js",
+    "https://taprun.dev/taps/github/create-issue.html"
+  ]
+}

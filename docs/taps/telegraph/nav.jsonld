@@ -1,0 +1,30 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/telegraph/nav",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/telegraph/nav",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "telegraph",
+    "name": "nav",
+    "intent": "read",
+    "description": "Navigate to Telegraph editor and activate",
+    "columns": [
+      "status",
+      "url"
+    ],
+    "args": {},
+    "health": {
+      "min_rows": 1,
+      "non_empty": []
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/telegraph/nav.tap.js",
+    "https://taprun.dev/taps/telegraph/nav.html"
+  ]
+}

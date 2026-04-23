@@ -1,0 +1,29 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/weibo/hot",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/weibo/hot",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "weibo",
+    "name": "hot",
+    "intent": "read",
+    "description": "Weibo hot search trending topics",
+    "columns": [],
+    "args": {},
+    "health": {
+      "min_rows": 10,
+      "non_empty": [
+        "title"
+      ]
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/showcase/weibo/hot.tap.js",
+    "https://taprun.dev/taps/weibo/hot.html"
+  ]
+}

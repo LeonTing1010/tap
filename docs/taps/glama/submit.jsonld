@@ -1,0 +1,39 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/glama/submit",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/glama/submit",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "glama",
+    "name": "submit",
+    "intent": "write",
+    "description": "Submit an MCP server to Glama directory",
+    "columns": [
+      "status",
+      "url"
+    ],
+    "args": {
+      "name": {
+        "type": "string",
+        "description": "Server name (e.g. 'Tap')"
+      },
+      "repoUrl": {
+        "type": "string",
+        "description": "GitHub repository URL"
+      }
+    },
+    "health": {
+      "min_rows": 1,
+      "non_empty": []
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/glama/submit.tap.js",
+    "https://taprun.dev/taps/glama/submit.html"
+  ]
+}

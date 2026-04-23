@@ -1,0 +1,41 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/scys/search",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/scys/search",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "scys",
+    "name": "search",
+    "intent": "write",
+    "description": "Search SCYS by keyword (requires login)",
+    "columns": [
+      "title",
+      "author",
+      "url",
+      "badge",
+      "date",
+      "preview"
+    ],
+    "args": {
+      "keyword": {
+        "type": "string",
+        "description": "搜索关键词"
+      }
+    },
+    "health": {
+      "min_rows": 1,
+      "non_empty": [
+        "title"
+      ]
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/scys/search.tap.js",
+    "https://taprun.dev/taps/scys/search.html"
+  ]
+}

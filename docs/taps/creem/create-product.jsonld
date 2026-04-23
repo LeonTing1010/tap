@@ -1,0 +1,59 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/creem/create-product",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/creem/create-product",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "creem",
+    "name": "create-product",
+    "intent": "write",
+    "description": "Create a Creem product with subscription pricing",
+    "columns": [
+      "name",
+      "id",
+      "price",
+      "product_url",
+      "mode"
+    ],
+    "args": {
+      "key": {
+        "type": "string",
+        "required": true,
+        "description": "Creem API key"
+      },
+      "name": {
+        "type": "string",
+        "required": true,
+        "description": "Product name"
+      },
+      "price": {
+        "type": "number",
+        "required": true,
+        "description": "Price in cents (900 = $9.00)"
+      },
+      "description": {
+        "type": "string",
+        "default": "",
+        "description": "Product description"
+      },
+      "billing": {
+        "type": "string",
+        "default": "every-month",
+        "description": "Billing period: every-month, every-year"
+      }
+    },
+    "health": {
+      "min_rows": 1,
+      "non_empty": []
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/creem/create-product.tap.js",
+    "https://taprun.dev/taps/creem/create-product.html"
+  ]
+}

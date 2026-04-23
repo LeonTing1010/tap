@@ -1,0 +1,42 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/devto/publish",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/devto/publish",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "devto",
+    "name": "publish",
+    "intent": "write",
+    "description": "Publish an article on Dev.to",
+    "columns": [
+      "status",
+      "url"
+    ],
+    "args": {
+      "title": {
+        "type": "string"
+      },
+      "content": {
+        "type": "string",
+        "description": "Markdown content"
+      },
+      "tags": {
+        "type": "string",
+        "description": "Comma-separated tags, up to 4 (optional)"
+      }
+    },
+    "health": {
+      "min_rows": 1,
+      "non_empty": []
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/showcase/devto/publish.tap.js",
+    "https://taprun.dev/taps/devto/publish.html"
+  ]
+}

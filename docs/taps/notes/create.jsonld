@@ -1,0 +1,47 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/notes/create",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/notes/create",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "notes",
+    "name": "create",
+    "intent": "write",
+    "description": "Create a note in Apple Notes",
+    "columns": [
+      "id",
+      "name",
+      "folder"
+    ],
+    "args": {
+      "title": {
+        "type": "string",
+        "required": true,
+        "description": "Note title"
+      },
+      "body": {
+        "type": "string",
+        "required": true,
+        "description": "Note body"
+      },
+      "folder": {
+        "type": "string",
+        "default": "Notes",
+        "description": "Target folder"
+      }
+    },
+    "health": {
+      "min_rows": 1,
+      "non_empty": []
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/notes/create.tap.js",
+    "https://taprun.dev/taps/notes/create.html"
+  ]
+}

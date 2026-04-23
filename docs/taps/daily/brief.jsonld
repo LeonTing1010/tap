@@ -1,0 +1,38 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/daily/brief",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/daily/brief",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "daily",
+    "name": "brief",
+    "intent": "read",
+    "description": "Daily briefing from Calendar + Reminders",
+    "columns": [
+      "type",
+      "title",
+      "detail",
+      "source"
+    ],
+    "args": {
+      "save": {
+        "type": "string",
+        "default": "false",
+        "description": "Save to Apple Notes"
+      }
+    },
+    "health": {
+      "min_rows": 1,
+      "non_empty": []
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/daily/brief.tap.js",
+    "https://taprun.dev/taps/daily/brief.html"
+  ]
+}

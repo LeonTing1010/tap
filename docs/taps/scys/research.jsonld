@@ -1,0 +1,46 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/scys/research",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/scys/research",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "scys",
+    "name": "research",
+    "intent": "read",
+    "description": "Search SCYS and extract Feishu doc links (search + article)",
+    "columns": [
+      "title",
+      "feishu",
+      "url",
+      "badge",
+      "date",
+      "preview"
+    ],
+    "args": {
+      "keyword": {
+        "type": "string",
+        "description": "Search keyword"
+      },
+      "limit": {
+        "type": "int",
+        "description": "Number of articles to extract Feishu links from, default 5",
+        "required": false
+      }
+    },
+    "health": {
+      "min_rows": 1,
+      "non_empty": [
+        "title"
+      ]
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/scys/research.tap.js",
+    "https://taprun.dev/taps/scys/research.html"
+  ]
+}

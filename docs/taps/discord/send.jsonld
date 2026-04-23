@@ -1,0 +1,34 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/discord/send",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/discord/send",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "discord",
+    "name": "send",
+    "intent": "write",
+    "description": "Send a message in the current Discord channel",
+    "columns": [
+      "status",
+      "message"
+    ],
+    "args": {
+      "message": {
+        "type": "string"
+      }
+    },
+    "health": {
+      "min_rows": 1,
+      "non_empty": []
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/discord/send.tap.js",
+    "https://taprun.dev/taps/discord/send.html"
+  ]
+}

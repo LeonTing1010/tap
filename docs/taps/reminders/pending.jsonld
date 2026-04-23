@@ -1,0 +1,33 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/reminders/pending",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/reminders/pending",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "reminders",
+    "name": "pending",
+    "intent": "read",
+    "description": "Incomplete reminders",
+    "columns": [
+      "title",
+      "list",
+      "dueDate",
+      "priority",
+      "notes"
+    ],
+    "args": {},
+    "health": {
+      "min_rows": 1,
+      "non_empty": []
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/reminders/pending.tap.js",
+    "https://taprun.dev/taps/reminders/pending.html"
+  ]
+}

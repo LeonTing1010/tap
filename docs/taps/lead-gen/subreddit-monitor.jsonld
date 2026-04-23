@@ -1,0 +1,51 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/lead-gen/subreddit-monitor",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/lead-gen/subreddit-monitor",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "lead-gen",
+    "name": "subreddit-monitor",
+    "intent": "read",
+    "description": "监控subreddit上的高意图帖子并实时提醒",
+    "columns": [
+      "source",
+      "title",
+      "score",
+      "comments",
+      "intent",
+      "matched_phrases"
+    ],
+    "args": {
+      "subreddits": {
+        "type": "string",
+        "description": "要监控的subreddits列表"
+      },
+      "keywords": {
+        "type": "string",
+        "description": "关键词"
+      },
+      "minScore": {
+        "type": "string",
+        "description": "最低分数"
+      },
+      "minComments": {
+        "type": "string",
+        "description": "最低评论数"
+      }
+    },
+    "health": {
+      "min_rows": 1,
+      "non_empty": []
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/lead-gen/subreddit-monitor.tap.js",
+    "https://taprun.dev/taps/lead-gen/subreddit-monitor.html"
+  ]
+}

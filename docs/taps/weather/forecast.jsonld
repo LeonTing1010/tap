@@ -1,0 +1,45 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/weather/forecast",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/weather/forecast",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "weather",
+    "name": "forecast",
+    "intent": "read",
+    "description": "Weather forecast from wttr.in (defaults to auto-detected location)",
+    "columns": [
+      "day",
+      "location",
+      "temp_c",
+      "temp_f",
+      "feels_like_c",
+      "condition",
+      "humidity",
+      "wind_kph",
+      "wind_dir",
+      "precip_mm",
+      "uv_index"
+    ],
+    "args": {
+      "location": {
+        "type": "string",
+        "default": "",
+        "description": "City name or location (e.g. 'London', 'New+York')"
+      }
+    },
+    "health": {
+      "min_rows": 1,
+      "non_empty": []
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/weather/forecast.tap.js",
+    "https://taprun.dev/taps/weather/forecast.html"
+  ]
+}

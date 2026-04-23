@@ -1,0 +1,29 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/rottentomatoes/opening",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/rottentomatoes/opening",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "rottentomatoes",
+    "name": "opening",
+    "intent": "read",
+    "description": "Rotten Tomatoes popular movies at home",
+    "columns": [],
+    "args": {},
+    "health": {
+      "min_rows": 5,
+      "non_empty": [
+        "title"
+      ]
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/rottentomatoes/opening.tap.js",
+    "https://taprun.dev/taps/rottentomatoes/opening.html"
+  ]
+}

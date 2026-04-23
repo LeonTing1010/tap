@@ -1,0 +1,27 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/toutiao/hot",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/toutiao/hot",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "toutiao",
+    "name": "hot",
+    "intent": "read",
+    "description": "Toutiao hot topics",
+    "columns": [],
+    "args": {},
+    "health": {
+      "min_rows": 1,
+      "non_empty": []
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/toutiao/hot.tap.js",
+    "https://taprun.dev/taps/toutiao/hot.html"
+  ]
+}

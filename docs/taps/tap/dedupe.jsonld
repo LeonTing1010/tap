@@ -1,0 +1,32 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/tap/dedupe",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/tap/dedupe",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "tap",
+    "name": "dedupe",
+    "intent": "read",
+    "description": "Remove duplicate rows by field value",
+    "columns": [],
+    "args": {
+      "field": {
+        "type": "string",
+        "description": "Column name to deduplicate on"
+      }
+    },
+    "health": {
+      "min_rows": 1,
+      "non_empty": []
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/showcase/tap/dedupe.tap.js",
+    "https://taprun.dev/taps/tap/dedupe.html"
+  ]
+}

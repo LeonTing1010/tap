@@ -1,0 +1,47 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/juejin/post",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/juejin/post",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "juejin",
+    "name": "post",
+    "intent": "write",
+    "description": "Publish article on Juejin",
+    "columns": [
+      "status",
+      "url"
+    ],
+    "args": {
+      "title": {
+        "type": "string",
+        "description": "Article title"
+      },
+      "body": {
+        "type": "string",
+        "description": "Article body (Markdown)"
+      },
+      "category": {
+        "type": "string",
+        "description": "Category: Frontend/Backend/Android/iOS/AI/Tools"
+      },
+      "tags": {
+        "type": "string",
+        "description": "Comma-separated tags (max 3)"
+      }
+    },
+    "health": {
+      "min_rows": 1,
+      "non_empty": []
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/juejin/post.tap.js",
+    "https://taprun.dev/taps/juejin/post.html"
+  ]
+}

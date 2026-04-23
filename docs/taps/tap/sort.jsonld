@@ -1,0 +1,37 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/tap/sort",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/tap/sort",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "tap",
+    "name": "sort",
+    "intent": "read",
+    "description": "Sort rows by field (numeric or alphabetic, asc or desc)",
+    "columns": [],
+    "args": {
+      "field": {
+        "type": "string",
+        "description": "Column name to sort by"
+      },
+      "order": {
+        "type": "string",
+        "default": "desc",
+        "description": "asc or desc"
+      }
+    },
+    "health": {
+      "min_rows": 1,
+      "non_empty": []
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/showcase/tap/sort.tap.js",
+    "https://taprun.dev/taps/tap/sort.html"
+  ]
+}

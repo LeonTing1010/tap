@@ -1,0 +1,30 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/sspai/hot",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/sspai/hot",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "sspai",
+    "name": "hot",
+    "intent": "read",
+    "description": "Sspai trending articles",
+    "columns": [],
+    "args": {},
+    "health": {
+      "min_rows": 5,
+      "non_empty": [
+        "title",
+        "author"
+      ]
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/sspai/hot.tap.js",
+    "https://taprun.dev/taps/sspai/hot.html"
+  ]
+}

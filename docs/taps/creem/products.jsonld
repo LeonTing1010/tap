@@ -1,0 +1,45 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/creem/products",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/creem/products",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "creem",
+    "name": "products",
+    "intent": "read",
+    "description": "List all Creem products with status, price, and subscriptions",
+    "columns": [
+      "name",
+      "id",
+      "price",
+      "billing",
+      "status",
+      "subscriptions",
+      "mode"
+    ],
+    "args": {
+      "key": {
+        "type": "string",
+        "required": true,
+        "description": "Creem API key (creem_xxx or creem_test_xxx)"
+      }
+    },
+    "health": {
+      "min_rows": 1,
+      "non_empty": [
+        "name",
+        "id"
+      ],
+      "requires_auth": true
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/creem/products.tap.js",
+    "https://taprun.dev/taps/creem/products.html"
+  ]
+}

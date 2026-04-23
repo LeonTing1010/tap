@@ -1,0 +1,27 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/xueqiu/hot-stock",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/xueqiu/hot-stock",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "xueqiu",
+    "name": "hot-stock",
+    "intent": "read",
+    "description": "Xueqiu hot stocks",
+    "columns": [],
+    "args": {},
+    "health": {
+      "min_rows": 1,
+      "non_empty": []
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/xueqiu/hot-stock.tap.js",
+    "https://taprun.dev/taps/xueqiu/hot-stock.html"
+  ]
+}

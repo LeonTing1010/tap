@@ -1,0 +1,34 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/lead-gen/intent-analyzer",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/lead-gen/intent-analyzer",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "lead-gen",
+    "name": "intent-analyzer",
+    "intent": "read",
+    "description": "Analyze text for purchase intent - 5 phrase detection",
+    "columns": [],
+    "args": {
+      "text": {
+        "type": "string",
+        "desc": "Text to analyze"
+      }
+    },
+    "health": {
+      "min_rows": 1,
+      "non_empty": [
+        "intent"
+      ]
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/lead-gen/intent-analyzer.tap.js",
+    "https://taprun.dev/taps/lead-gen/intent-analyzer.html"
+  ]
+}

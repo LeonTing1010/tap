@@ -1,0 +1,29 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/crates/popular",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/crates/popular",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "crates",
+    "name": "popular",
+    "intent": "read",
+    "description": "crates.io popular Rust packages",
+    "columns": [],
+    "args": {},
+    "health": {
+      "min_rows": 5,
+      "non_empty": [
+        "name"
+      ]
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/crates/popular.tap.js",
+    "https://taprun.dev/taps/crates/popular.html"
+  ]
+}

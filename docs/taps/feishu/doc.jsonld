@@ -1,0 +1,33 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/feishu/doc",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/feishu/doc",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "feishu",
+    "name": "doc",
+    "intent": "read",
+    "description": "Read current Feishu doc full text (block_map + TOC fallback)",
+    "columns": [
+      "type",
+      "content",
+      "level"
+    ],
+    "args": {},
+    "health": {
+      "min_rows": 5,
+      "non_empty": [
+        "content"
+      ]
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/feishu/doc.tap.js",
+    "https://taprun.dev/taps/feishu/doc.html"
+  ]
+}

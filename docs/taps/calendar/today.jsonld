@@ -1,0 +1,33 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/calendar/today",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/calendar/today",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "calendar",
+    "name": "today",
+    "intent": "read",
+    "description": "Today's calendar events",
+    "columns": [
+      "title",
+      "time",
+      "location",
+      "calendar",
+      "notes"
+    ],
+    "args": {},
+    "health": {
+      "min_rows": 1,
+      "non_empty": []
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/calendar/today.tap.js",
+    "https://taprun.dev/taps/calendar/today.html"
+  ]
+}

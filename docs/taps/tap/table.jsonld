@@ -1,0 +1,38 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/tap/table",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/tap/table",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "tap",
+    "name": "table",
+    "intent": "read",
+    "description": "Format rows as a human-readable table (outputs one row per line)",
+    "columns": [],
+    "args": {
+      "cols": {
+        "type": "string",
+        "default": "",
+        "description": "Columns to show (comma-separated, default: all)"
+      },
+      "max": {
+        "type": "string",
+        "default": "40",
+        "description": "Max column width"
+      }
+    },
+    "health": {
+      "min_rows": 1,
+      "non_empty": []
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/showcase/tap/table.tap.js",
+    "https://taprun.dev/taps/tap/table.html"
+  ]
+}

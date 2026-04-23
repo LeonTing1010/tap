@@ -1,0 +1,29 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/npmjs/popular",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/npmjs/popular",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "npmjs",
+    "name": "popular",
+    "intent": "read",
+    "description": "npm most popular packages by weekly downloads",
+    "columns": [],
+    "args": {},
+    "health": {
+      "min_rows": 5,
+      "non_empty": [
+        "name"
+      ]
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/npmjs/popular.tap.js",
+    "https://taprun.dev/taps/npmjs/popular.html"
+  ]
+}

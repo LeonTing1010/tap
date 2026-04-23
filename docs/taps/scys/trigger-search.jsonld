@@ -1,0 +1,30 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/scys/trigger-search",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/scys/trigger-search",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "scys",
+    "name": "trigger-search",
+    "intent": "write",
+    "description": "Trigger search on SCYS (Vue component method or form submit, requires login)",
+    "columns": [
+      "status",
+      "method"
+    ],
+    "args": {},
+    "health": {
+      "min_rows": 1,
+      "non_empty": []
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/scys/trigger-search.tap.js",
+    "https://taprun.dev/taps/scys/trigger-search.html"
+  ]
+}

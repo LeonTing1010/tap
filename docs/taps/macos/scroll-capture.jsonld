@@ -1,0 +1,46 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/macos/scroll-capture",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/macos/scroll-capture",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "macos",
+    "name": "scroll-capture",
+    "intent": "read",
+    "description": "Scrolling screenshots of frontmost macOS app (pixel-precise, max 3 screens)",
+    "columns": [
+      "screen",
+      "file"
+    ],
+    "args": {
+      "screens": {
+        "type": "int",
+        "default": 1,
+        "description": "Number of screens to capture (1-3)"
+      },
+      "header": {
+        "type": "int",
+        "default": 0,
+        "description": "Fixed header px to skip when scrolling"
+      },
+      "app": {
+        "type": "string",
+        "default": "",
+        "description": "App to activate (empty = frontmost)"
+      }
+    },
+    "health": {
+      "min_rows": 1,
+      "non_empty": []
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/macos/scroll-capture.tap.js",
+    "https://taprun.dev/taps/macos/scroll-capture.html"
+  ]
+}

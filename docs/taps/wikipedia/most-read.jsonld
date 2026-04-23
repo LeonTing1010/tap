@@ -1,0 +1,27 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/wikipedia/most-read",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/wikipedia/most-read",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "wikipedia",
+    "name": "most-read",
+    "intent": "read",
+    "description": "Wikipedia most read articles today",
+    "columns": [],
+    "args": {},
+    "health": {
+      "min_rows": 1,
+      "non_empty": []
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/showcase/wikipedia/most-read.tap.js",
+    "https://taprun.dev/taps/wikipedia/most-read.html"
+  ]
+}

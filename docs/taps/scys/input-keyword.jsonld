@@ -1,0 +1,36 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/scys/input-keyword",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/scys/input-keyword",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "scys",
+    "name": "input-keyword",
+    "intent": "write",
+    "description": "Input search keyword into SCYS search box (requires login)",
+    "columns": [
+      "status",
+      "selector"
+    ],
+    "args": {
+      "keyword": {
+        "type": "string",
+        "description": "Search keyword",
+        "required": true
+      }
+    },
+    "health": {
+      "min_rows": 1,
+      "non_empty": []
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/scys/input-keyword.tap.js",
+    "https://taprun.dev/taps/scys/input-keyword.html"
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/shortcuts/run",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/shortcuts/run",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "shortcuts",
+    "name": "run",
+    "intent": "read",
+    "description": "Run an Apple Shortcut",
+    "columns": [
+      "output"
+    ],
+    "args": {
+      "name": {
+        "type": "string",
+        "required": true,
+        "description": "Shortcut name"
+      },
+      "input": {
+        "type": "string",
+        "default": "",
+        "description": "Input text (optional)"
+      }
+    },
+    "health": {
+      "min_rows": 1,
+      "non_empty": []
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/shortcuts/run.tap.js",
+    "https://taprun.dev/taps/shortcuts/run.html"
+  ]
+}

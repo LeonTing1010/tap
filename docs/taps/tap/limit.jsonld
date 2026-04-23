@@ -1,0 +1,38 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/tap/limit",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/tap/limit",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "tap",
+    "name": "limit",
+    "intent": "read",
+    "description": "Take first N rows (head) or skip M then take N (offset+limit)",
+    "columns": [],
+    "args": {
+      "n": {
+        "type": "number",
+        "default": 10,
+        "description": "Number of rows to take"
+      },
+      "offset": {
+        "type": "number",
+        "default": 0,
+        "description": "Rows to skip before taking"
+      }
+    },
+    "health": {
+      "min_rows": 1,
+      "non_empty": []
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/showcase/tap/limit.tap.js",
+    "https://taprun.dev/taps/tap/limit.html"
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/shortcuts/list",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/shortcuts/list",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "shortcuts",
+    "name": "list",
+    "intent": "read",
+    "description": "List available Apple Shortcuts",
+    "columns": [
+      "name"
+    ],
+    "args": {},
+    "health": {
+      "min_rows": 1,
+      "non_empty": []
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/shortcuts/list.tap.js",
+    "https://taprun.dev/taps/shortcuts/list.html"
+  ]
+}

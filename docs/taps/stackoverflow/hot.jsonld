@@ -1,0 +1,29 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/stackoverflow/hot",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/stackoverflow/hot",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "stackoverflow",
+    "name": "hot",
+    "intent": "read",
+    "description": "StackOverflow hot questions",
+    "columns": [],
+    "args": {},
+    "health": {
+      "min_rows": 5,
+      "non_empty": [
+        "title"
+      ]
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/stackoverflow/hot.tap.js",
+    "https://taprun.dev/taps/stackoverflow/hot.html"
+  ]
+}

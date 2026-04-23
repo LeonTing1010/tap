@@ -1,0 +1,29 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/reuters/news",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/reuters/news",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "reuters",
+    "name": "news",
+    "intent": "read",
+    "description": "Reuters top news stories",
+    "columns": [],
+    "args": {},
+    "health": {
+      "min_rows": 5,
+      "non_empty": [
+        "headline"
+      ]
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/reuters/news.tap.js",
+    "https://taprun.dev/taps/reuters/news.html"
+  ]
+}

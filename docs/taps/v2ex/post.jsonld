@@ -1,0 +1,40 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/v2ex/post",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/v2ex/post",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "v2ex",
+    "name": "post",
+    "intent": "write",
+    "description": "Post a topic on V2EX",
+    "columns": [
+      "status",
+      "url"
+    ],
+    "args": {
+      "title": {
+        "type": "string"
+      },
+      "content": {
+        "type": "string"
+      },
+      "node": {
+        "type": "string"
+      }
+    },
+    "health": {
+      "min_rows": 1,
+      "non_empty": []
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/v2ex/post.tap.js",
+    "https://taprun.dev/taps/v2ex/post.html"
+  ]
+}

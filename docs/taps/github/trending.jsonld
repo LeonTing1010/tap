@@ -1,0 +1,27 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/github/trending",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/github/trending",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "github",
+    "name": "trending",
+    "intent": "read",
+    "description": "GitHub Trending repositories",
+    "columns": [],
+    "args": {},
+    "health": {
+      "min_rows": 1,
+      "non_empty": []
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/showcase/github/trending.tap.js",
+    "https://taprun.dev/taps/github/trending.html"
+  ]
+}

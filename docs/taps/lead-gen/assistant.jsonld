@@ -1,0 +1,50 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/lead-gen/assistant",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/lead-gen/assistant",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "lead-gen",
+    "name": "assistant",
+    "intent": "read",
+    "description": "AI智能获客助手 - 找第一客户",
+    "columns": [
+      "source",
+      "post",
+      "intent",
+      "reason",
+      "score"
+    ],
+    "args": {
+      "product": {
+        "type": "string",
+        "description": "产品描述"
+      },
+      "subreddits": {
+        "type": "string",
+        "description": "目标subreddits"
+      },
+      "keywords": {
+        "type": "string",
+        "description": "关键词列表"
+      }
+    },
+    "health": {
+      "min_rows": 5,
+      "non_empty": [
+        "source",
+        "post",
+        "intent"
+      ]
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/lead-gen/assistant.tap.js",
+    "https://taprun.dev/taps/lead-gen/assistant.html"
+  ]
+}
