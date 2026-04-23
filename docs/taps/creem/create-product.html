@@ -1,0 +1,56 @@
+---
+layout: tap
+site_name: creem
+tap_name: create-product
+description: "Create a Creem product with subscription pricing"
+intent: write
+columns:
+  - name
+  - id
+  - price
+  - product_url
+  - mode
+args:
+  - name: key
+    type: string
+    description: "Creem API key"
+  - name: name
+    type: string
+    description: "Product name"
+  - name: price
+    type: number
+    description: "Price in cents (900 = $9.00)"
+  - name: description
+    type: string
+    description: "Product description"
+  - name: billing
+    type: string
+    default: every-month
+    description: "Billing period: every-month, every-year"
+args_json: |
+  {"key":{"type":"string","required":true,"description":"Creem API key"},"name":{"type":"string","required":true,"description":"Product name"},"price":{"type":"number","required":true,"description":"Price in cents (900 = $9.00)"},"description":{"type":"string","default":"","description":"Product description"},"billing":{"type":"string","default":"every-month","description":"Billing period: every-month, every-year"}}
+health_json: |
+  {"min_rows":1,"non_empty":[]}
+example_args: "--key creem_test_xxx --name 'My Product' --price 900"
+source_url: https://github.com/LeonTing1010/tap-skills/blob/main/community/creem/create-product.tap.js
+license: MIT
+---
+
+<section>
+  <h2>What it does</h2>
+  <p>Create a Creem product with subscription pricing</p>
+</section>
+
+<section>
+  <h2>How to call it</h2>
+  <p>From your terminal once Tap is installed:</p>
+  <pre><code>tap run creem/create-product --key creem_test_xxx --name 'My Product' --price 900</code></pre>
+  <p>Or from an MCP-aware client (Claude Code, Cursor, Cline) — the exact same plan runs deterministically without re-inferring the site structure:</p>
+  <pre><code>tap.run({ site: &quot;creem&quot;, name: &quot;create-product&quot;, args: {&quot;key&quot;:&quot;creem_test_xxx&quot;,&quot;name&quot;:&quot;My Product&quot;,&quot;price&quot;:900} })</code></pre>
+</section>
+
+<section>
+  <h2>Why compile it once</h2>
+  <p>This plan was forged once — the AI read <code>creem</code>, picked stable structural addresses, and saved them to a <code>.tap.json</code>. Every replay since then has used zero LLM tokens. When <code>creem</code> ships a site change that breaks the extraction, <code>tap doctor</code> surfaces it before your data goes stale.</p>
+</section>
+

@@ -1,0 +1,35 @@
+---
+layout: tap
+site_name: rottentomatoes
+tap_name: opening
+description: "Rotten Tomatoes popular movies at home"
+intent: read
+columns: []
+args: []
+args_json: |
+  {}
+health_json: |
+  {"min_rows":5,"non_empty":["title"]}
+example_args: ""
+source_url: https://github.com/LeonTing1010/tap-skills/blob/main/community/rottentomatoes/opening.tap.js
+license: MIT
+---
+
+<section>
+  <h2>What it does</h2>
+  <p>Rotten Tomatoes popular movies at home</p>
+</section>
+
+<section>
+  <h2>How to call it</h2>
+  <p>From your terminal once Tap is installed:</p>
+  <pre><code>tap run rottentomatoes/opening</code></pre>
+  <p>Or from an MCP-aware client (Claude Code, Cursor, Cline) — the exact same plan runs deterministically without re-inferring the site structure:</p>
+  <pre><code>tap.run({ site: &quot;rottentomatoes&quot;, name: &quot;opening&quot; })</code></pre>
+</section>
+
+<section>
+  <h2>Why compile it once</h2>
+  <p>This plan was forged once — the AI read <code>rottentomatoes</code>, picked stable structural addresses, and saved them to a <code>.tap.json</code>. Every replay since then has used zero LLM tokens. When <code>rottentomatoes</code> ships a site change that breaks the extraction, <code>tap doctor</code> surfaces it before your data goes stale.</p>
+</section>
+

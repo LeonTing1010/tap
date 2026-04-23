@@ -1,0 +1,49 @@
+---
+layout: tap
+site_name: lead-gen
+tap_name: old-thread-finder
+description: "发现3-4月旧帖但仍在Google活跃的Reddit帖子"
+intent: read
+columns:
+  - title
+  - age_days
+  - comments
+  - score
+  - url
+args:
+  - name: keywords
+    type: string
+    description: "关键词"
+  - name: subreddit
+    type: string
+    description: "subreddit名称"
+  - name: maxResults
+    type: string
+    description: "最大结果数"
+args_json: |
+  {"keywords":{"type":"string","description":"关键词"},"subreddit":{"type":"string","description":"subreddit名称"},"maxResults":{"type":"string","description":"最大结果数"}}
+health_json: |
+  {"min_rows":1,"non_empty":[]}
+example_args: ""
+source_url: https://github.com/LeonTing1010/tap-skills/blob/main/community/lead-gen/old-thread-finder.tap.js
+license: MIT
+---
+
+<section>
+  <h2>What it does</h2>
+  <p>发现3-4月旧帖但仍在Google活跃的Reddit帖子</p>
+</section>
+
+<section>
+  <h2>How to call it</h2>
+  <p>From your terminal once Tap is installed:</p>
+  <pre><code>tap run lead-gen/old-thread-finder</code></pre>
+  <p>Or from an MCP-aware client (Claude Code, Cursor, Cline) — the exact same plan runs deterministically without re-inferring the site structure:</p>
+  <pre><code>tap.run({ site: &quot;lead-gen&quot;, name: &quot;old-thread-finder&quot; })</code></pre>
+</section>
+
+<section>
+  <h2>Why compile it once</h2>
+  <p>This plan was forged once — the AI read <code>lead-gen</code>, picked stable structural addresses, and saved them to a <code>.tap.json</code>. Every replay since then has used zero LLM tokens. When <code>lead-gen</code> ships a site change that breaks the extraction, <code>tap doctor</code> surfaces it before your data goes stale.</p>
+</section>
+

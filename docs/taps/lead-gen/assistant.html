@@ -1,0 +1,49 @@
+---
+layout: tap
+site_name: lead-gen
+tap_name: assistant
+description: "AI智能获客助手 - 找第一客户"
+intent: read
+columns:
+  - source
+  - post
+  - intent
+  - reason
+  - score
+args:
+  - name: product
+    type: string
+    description: "产品描述"
+  - name: subreddits
+    type: string
+    description: "目标subreddits"
+  - name: keywords
+    type: string
+    description: "关键词列表"
+args_json: |
+  {"product":{"type":"string","description":"产品描述"},"subreddits":{"type":"string","description":"目标subreddits"},"keywords":{"type":"string","description":"关键词列表"}}
+health_json: |
+  {"min_rows":5,"non_empty":["source","post","intent"]}
+example_args: ""
+source_url: https://github.com/LeonTing1010/tap-skills/blob/main/community/lead-gen/assistant.tap.js
+license: MIT
+---
+
+<section>
+  <h2>What it does</h2>
+  <p>AI智能获客助手 - 找第一客户</p>
+</section>
+
+<section>
+  <h2>How to call it</h2>
+  <p>From your terminal once Tap is installed:</p>
+  <pre><code>tap run lead-gen/assistant</code></pre>
+  <p>Or from an MCP-aware client (Claude Code, Cursor, Cline) — the exact same plan runs deterministically without re-inferring the site structure:</p>
+  <pre><code>tap.run({ site: &quot;lead-gen&quot;, name: &quot;assistant&quot; })</code></pre>
+</section>
+
+<section>
+  <h2>Why compile it once</h2>
+  <p>This plan was forged once — the AI read <code>lead-gen</code>, picked stable structural addresses, and saved them to a <code>.tap.json</code>. Every replay since then has used zero LLM tokens. When <code>lead-gen</code> ships a site change that breaks the extraction, <code>tap doctor</code> surfaces it before your data goes stale.</p>
+</section>
+

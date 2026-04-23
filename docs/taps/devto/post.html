@@ -1,0 +1,49 @@
+---
+layout: tap
+site_name: devto
+tap_name: post
+description: "Publish an article on Dev.to"
+intent: write
+columns:
+  - status
+  - url
+args:
+  - name: title
+    type: string
+    description: "Article title"
+  - name: body
+    type: string
+    description: "Article body in Markdown"
+  - name: tags
+    type: string
+    description: "Comma-separated tags (up to 4)"
+  - name: published
+    type: boolean
+    description: "Publish immediately (default: true)"
+args_json: |
+  {"title":{"type":"string","description":"Article title"},"body":{"type":"string","description":"Article body in Markdown"},"tags":{"type":"string","description":"Comma-separated tags (up to 4)"},"published":{"type":"boolean","description":"Publish immediately (default: true)"}}
+health_json: |
+  {"min_rows":1,"non_empty":[]}
+example_args: ""
+source_url: https://github.com/LeonTing1010/tap-skills/blob/main/community/devto/post.tap.js
+license: MIT
+---
+
+<section>
+  <h2>What it does</h2>
+  <p>Publish an article on Dev.to</p>
+</section>
+
+<section>
+  <h2>How to call it</h2>
+  <p>From your terminal once Tap is installed:</p>
+  <pre><code>tap run devto/post</code></pre>
+  <p>Or from an MCP-aware client (Claude Code, Cursor, Cline) — the exact same plan runs deterministically without re-inferring the site structure:</p>
+  <pre><code>tap.run({ site: &quot;devto&quot;, name: &quot;post&quot; })</code></pre>
+</section>
+
+<section>
+  <h2>Why compile it once</h2>
+  <p>This plan was forged once — the AI read <code>devto</code>, picked stable structural addresses, and saved them to a <code>.tap.json</code>. Every replay since then has used zero LLM tokens. When <code>devto</code> ships a site change that breaks the extraction, <code>tap doctor</code> surfaces it before your data goes stale.</p>
+</section>
+

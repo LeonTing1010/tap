@@ -1,0 +1,43 @@
+---
+layout: tap
+site_name: tap
+tap_name: limit
+description: "Take first N rows (head) or skip M then take N (offset+limit)"
+intent: read
+columns: []
+args:
+  - name: n
+    type: number
+    default: 10
+    description: "Number of rows to take"
+  - name: offset
+    type: number
+    default: 0
+    description: "Rows to skip before taking"
+args_json: |
+  {"n":{"type":"number","default":10,"description":"Number of rows to take"},"offset":{"type":"number","default":0,"description":"Rows to skip before taking"}}
+health_json: |
+  {"min_rows":1,"non_empty":[]}
+example_args: ""
+source_url: https://github.com/LeonTing1010/tap-skills/blob/main/showcase/tap/limit.tap.js
+license: MIT
+---
+
+<section>
+  <h2>What it does</h2>
+  <p>Take first N rows (head) or skip M then take N (offset+limit)</p>
+</section>
+
+<section>
+  <h2>How to call it</h2>
+  <p>From your terminal once Tap is installed:</p>
+  <pre><code>tap run tap/limit</code></pre>
+  <p>Or from an MCP-aware client (Claude Code, Cursor, Cline) — the exact same plan runs deterministically without re-inferring the site structure:</p>
+  <pre><code>tap.run({ site: &quot;tap&quot;, name: &quot;limit&quot; })</code></pre>
+</section>
+
+<section>
+  <h2>Why compile it once</h2>
+  <p>This plan was forged once — the AI read <code>tap</code>, picked stable structural addresses, and saved them to a <code>.tap.json</code>. Every replay since then has used zero LLM tokens. When <code>tap</code> ships a site change that breaks the extraction, <code>tap doctor</code> surfaces it before your data goes stale.</p>
+</section>
+

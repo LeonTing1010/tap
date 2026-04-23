@@ -1,0 +1,42 @@
+---
+layout: tap
+site_name: shortcuts
+tap_name: run
+description: "Run an Apple Shortcut"
+intent: read
+columns:
+  - output
+args:
+  - name: name
+    type: string
+    description: "Shortcut name"
+  - name: input
+    type: string
+    description: "Input text (optional)"
+args_json: |
+  {"name":{"type":"string","required":true,"description":"Shortcut name"},"input":{"type":"string","default":"","description":"Input text (optional)"}}
+health_json: |
+  {"min_rows":1,"non_empty":[]}
+example_args: ""
+source_url: https://github.com/LeonTing1010/tap-skills/blob/main/community/shortcuts/run.tap.js
+license: MIT
+---
+
+<section>
+  <h2>What it does</h2>
+  <p>Run an Apple Shortcut</p>
+</section>
+
+<section>
+  <h2>How to call it</h2>
+  <p>From your terminal once Tap is installed:</p>
+  <pre><code>tap run shortcuts/run</code></pre>
+  <p>Or from an MCP-aware client (Claude Code, Cursor, Cline) — the exact same plan runs deterministically without re-inferring the site structure:</p>
+  <pre><code>tap.run({ site: &quot;shortcuts&quot;, name: &quot;run&quot; })</code></pre>
+</section>
+
+<section>
+  <h2>Why compile it once</h2>
+  <p>This plan was forged once — the AI read <code>shortcuts</code>, picked stable structural addresses, and saved them to a <code>.tap.json</code>. Every replay since then has used zero LLM tokens. When <code>shortcuts</code> ships a site change that breaks the extraction, <code>tap doctor</code> surfaces it before your data goes stale.</p>
+</section>
+

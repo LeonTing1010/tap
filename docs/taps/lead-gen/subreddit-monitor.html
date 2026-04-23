@@ -1,0 +1,53 @@
+---
+layout: tap
+site_name: lead-gen
+tap_name: subreddit-monitor
+description: "监控subreddit上的高意图帖子并实时提醒"
+intent: read
+columns:
+  - source
+  - title
+  - score
+  - comments
+  - intent
+  - matched_phrases
+args:
+  - name: subreddits
+    type: string
+    description: "要监控的subreddits列表"
+  - name: keywords
+    type: string
+    description: "关键词"
+  - name: minScore
+    type: string
+    description: "最低分数"
+  - name: minComments
+    type: string
+    description: "最低评论数"
+args_json: |
+  {"subreddits":{"type":"string","description":"要监控的subreddits列表"},"keywords":{"type":"string","description":"关键词"},"minScore":{"type":"string","description":"最低分数"},"minComments":{"type":"string","description":"最低评论数"}}
+health_json: |
+  {"min_rows":1,"non_empty":[]}
+example_args: ""
+source_url: https://github.com/LeonTing1010/tap-skills/blob/main/community/lead-gen/subreddit-monitor.tap.js
+license: MIT
+---
+
+<section>
+  <h2>What it does</h2>
+  <p>监控subreddit上的高意图帖子并实时提醒</p>
+</section>
+
+<section>
+  <h2>How to call it</h2>
+  <p>From your terminal once Tap is installed:</p>
+  <pre><code>tap run lead-gen/subreddit-monitor</code></pre>
+  <p>Or from an MCP-aware client (Claude Code, Cursor, Cline) — the exact same plan runs deterministically without re-inferring the site structure:</p>
+  <pre><code>tap.run({ site: &quot;lead-gen&quot;, name: &quot;subreddit-monitor&quot; })</code></pre>
+</section>
+
+<section>
+  <h2>Why compile it once</h2>
+  <p>This plan was forged once — the AI read <code>lead-gen</code>, picked stable structural addresses, and saved them to a <code>.tap.json</code>. Every replay since then has used zero LLM tokens. When <code>lead-gen</code> ships a site change that breaks the extraction, <code>tap doctor</code> surfaces it before your data goes stale.</p>
+</section>
+

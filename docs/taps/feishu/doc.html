@@ -1,0 +1,38 @@
+---
+layout: tap
+site_name: feishu
+tap_name: doc
+description: "Read current Feishu doc full text (block_map + TOC fallback)"
+intent: read
+columns:
+  - type
+  - content
+  - level
+args: []
+args_json: |
+  {}
+health_json: |
+  {"min_rows":5,"non_empty":["content"]}
+example_args: ""
+source_url: https://github.com/LeonTing1010/tap-skills/blob/main/community/feishu/doc.tap.js
+license: MIT
+---
+
+<section>
+  <h2>What it does</h2>
+  <p>Read current Feishu doc full text (block_map + TOC fallback)</p>
+</section>
+
+<section>
+  <h2>How to call it</h2>
+  <p>From your terminal once Tap is installed:</p>
+  <pre><code>tap run feishu/doc</code></pre>
+  <p>Or from an MCP-aware client (Claude Code, Cursor, Cline) — the exact same plan runs deterministically without re-inferring the site structure:</p>
+  <pre><code>tap.run({ site: &quot;feishu&quot;, name: &quot;doc&quot; })</code></pre>
+</section>
+
+<section>
+  <h2>Why compile it once</h2>
+  <p>This plan was forged once — the AI read <code>feishu</code>, picked stable structural addresses, and saved them to a <code>.tap.json</code>. Every replay since then has used zero LLM tokens. When <code>feishu</code> ships a site change that breaks the extraction, <code>tap doctor</code> surfaces it before your data goes stale.</p>
+</section>
+

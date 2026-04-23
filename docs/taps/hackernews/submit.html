@@ -1,0 +1,45 @@
+---
+layout: tap
+site_name: hackernews
+tap_name: submit
+description: "Submit a story to Hacker News"
+intent: write
+columns:
+  - status
+  - url
+args:
+  - name: title
+    type: string
+  - name: link
+    type: string
+    description: "URL to submit (optional if text provided)"
+  - name: text
+    type: string
+    description: "Text body for Ask HN / Show HN (optional if link provided)"
+args_json: |
+  {"title":{"type":"string"},"link":{"type":"string","description":"URL to submit (optional if text provided)"},"text":{"type":"string","description":"Text body for Ask HN / Show HN (optional if link provided)"}}
+health_json: |
+  {"min_rows":1,"non_empty":[]}
+example_args: ""
+source_url: https://github.com/LeonTing1010/tap-skills/blob/main/showcase/hackernews/submit.tap.js
+license: MIT
+---
+
+<section>
+  <h2>What it does</h2>
+  <p>Submit a story to Hacker News</p>
+</section>
+
+<section>
+  <h2>How to call it</h2>
+  <p>From your terminal once Tap is installed:</p>
+  <pre><code>tap run hackernews/submit</code></pre>
+  <p>Or from an MCP-aware client (Claude Code, Cursor, Cline) — the exact same plan runs deterministically without re-inferring the site structure:</p>
+  <pre><code>tap.run({ site: &quot;hackernews&quot;, name: &quot;submit&quot; })</code></pre>
+</section>
+
+<section>
+  <h2>Why compile it once</h2>
+  <p>This plan was forged once — the AI read <code>hackernews</code>, picked stable structural addresses, and saved them to a <code>.tap.json</code>. Every replay since then has used zero LLM tokens. When <code>hackernews</code> ships a site change that breaks the extraction, <code>tap doctor</code> surfaces it before your data goes stale.</p>
+</section>
+
