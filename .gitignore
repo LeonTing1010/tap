@@ -20,3 +20,4 @@ docs/Gemfile.lock
 
 # Local operational scripts (contain machine-specific paths)
 scripts/link-ga-gsc.ts
+scripts/gsc-insights.ts
