@@ -1,2 +1,7 @@
+url: https://taprun.dev
+
+plugins:
+  - jekyll-sitemap
+
 include:
   - .well-known

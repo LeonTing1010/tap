@@ -1,3 +1,9 @@
+---
+layout: default
+title: "agents.json — Schema.org WebAPI Profile"
+description: "Draft spec for agents.json — a Schema.org JSON-LD document that websites publish to declare how AI agents should interact with them."
+---
+
 # agents.json — Schema.org WebAPI Profile
 
 **Status:** Draft
