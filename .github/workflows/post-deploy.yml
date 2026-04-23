@@ -30,6 +30,17 @@ jobs:
           GOOGLE_REFRESH_TOKEN: ${{ secrets.GOOGLE_REFRESH_TOKEN }}
         run: deno run --allow-net --allow-env scripts/gsc-ping.ts
 
+  indexnow-ping:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Ping IndexNow (Bing, Yandex, Seznam, Naver)
+        run: deno run --allow-net scripts/indexnow-ping.ts
+
   cf-purge:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.purge_cf }}
     runs-on: ubuntu-latest
