@@ -1,0 +1,46 @@
+name: Publish Extension to Chrome Web Store
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Zip extension
+        run: |
+          mkdir -p tap-extension
+          cp extension/background.js tap-extension/
+          cp extension/manifest.json tap-extension/
+          cp -r extension/icons tap-extension/
+          cp -r extension/protocol tap-extension/ 2>/dev/null || true
+          zip -qr tap-extension.zip tap-extension/
+          echo "Extension packaged:"
+          unzip -l tap-extension.zip
+
+      - name: Upload to Chrome Web Store
+        run: |
+          npm install -g chrome-webstore-upload
+          npx chrome-webstore-upload upload \
+            --source tap-extension.zip \
+            --extension-id ${{ secrets.CHROME_EXTENSION_ID }} \
+            --client-id ${{ secrets.CHROME_CLIENT_ID }} \
+            --client-secret ${{ secrets.CHROME_CLIENT_SECRET }} \
+            --refresh-token ${{ secrets.CHROME_REFRESH_TOKEN }}
+
+      - name: Publish to Chrome Web Store
+        run: |
+          npx chrome-webstore-upload publish \
+            --extension-id ${{ secrets.CHROME_EXTENSION_ID }} \
+            --client-id ${{ secrets.CHROME_CLIENT_ID }} \
+            --client-secret ${{ secrets.CHROME_CLIENT_SECRET }} \
+            --refresh-token ${{ secrets.CHROME_REFRESH_TOKEN }}
