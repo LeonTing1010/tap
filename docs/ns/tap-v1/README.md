@@ -11,21 +11,32 @@
 
 `tap-v1` is the namespace for Tap-specific extensions to the
 [W3C Web Annotation Data Model](https://www.w3.org/TR/annotation-model/).
-A Tap program (`.tap.js`) is represented as a W3C `Annotation`. Everything
-Tap adds on top of the standard shape — the JSONPath selector, the
-semantic-hash state, the `extracting` motivation, the health/args metadata
-— lives under this namespace.
+
+Two on-disk surfaces carry `tap:*` terms:
+
+1. **A compiled Tap program** — stored as a `.tap.json` W3C Annotation with
+   motivation `tap:executing` and a `tap:ExecutionPlan` body. Authors write
+   programs in JavaScript (`.tap.js` is a plain ES module, not an
+   Annotation); Tap's migrator compiles that source into the `.tap.json`
+   plan that runtimes actually execute.
+2. **A doctor assessment** — a W3C Annotation with motivation
+   `oa:assessing` whose body carries `tap:verdict` and related diagnostic
+   properties.
+
+A third set of terms (`tap:SemanticHashState`, `tap:JsonPathSelector`,
+and their sub-properties) is defined for Tap's forge-time intermediate
+fingerprint artifacts. These are used inside the toolchain but are not
+persisted in a stored `.tap.json`.
 
 ## Why it exists
 
 The W3C Web Annotation context (`http://www.w3.org/ns/anno.jsonld`) does
-not define tokens for JSONPath navigation, structural-hash fingerprints,
-or program-level extraction. Without a published tap-v1 context, every
-`tap:*` CURIE in a Tap annotation would fail strict JSON-LD validation.
-This document is the hard prerequisite for Phase 1 of the Tap Web
-Annotation migration — publishing it is what allows external tooling
-(Hypothes.is importers, EPUB readers, annotation stores) to consume Tap
-annotations without a custom profile.
+not define tokens for program execution plans, structural-hash
+fingerprints, or doctor diagnostics. Without a published `tap-v1`
+context, every `tap:*` CURIE in a Tap annotation would fail strict
+JSON-LD validation. This document is what lets external tooling
+(annotation stores, EPUB readers, validators) consume Tap annotations
+without a custom profile.
 
 Tap itself parses `tap:*` fields by literal key and does not require
 runtime context resolution, so the runtime cost of this document is zero
@@ -34,24 +45,43 @@ external consumers.
 
 ## What it defines
 
-| Term | Kind | Purpose |
+### Live in stored `.tap.json`
+
+| Term | Kind | Role |
 |---|---|---|
-| `tap:JsonPathSelector` | `rdfs:Class`, subclass of `oa:Selector` | JSONPath expression per RFC 9535 — Layer 1/2 structural navigation |
-| `tap:SemanticHashState` | `rdfs:Class`, subclass of `oa:State` | Structural fingerprint for drift detection |
-| `tap:extracting` | `oa:Motivation` instance | Program-level extraction (distinct from `oa:identifying`) |
-| `tap:rootHash` | property | FNV-1a Merkle root over sub-hashes |
-| `tap:selectors` | property | Captured selector population summary |
-| `tap:endpoints` | property | Observed network endpoints + shape hashes |
-| `tap:jsonLdValues` | property | Layer-1 `@type` list observed at authoring time (drift signal) |
-| `tap:health` | property | Tap health contract (JSON) |
-| `tap:args` | property | Tap argument schema (JSON) |
-| `tap:site`, `tap:name`, `tap:intent` | properties | Tap identity/direction |
-| `tap:verdict`, `tap:compiledFromLayer`, `tap:recommendedLayer`, `tap:crossValidation`, `tap:suggestions` | properties | Doctor `assessing` annotation body |
+| `tap:executing` | `oa:Motivation` | Motivation of a compiled Tap program |
+| `tap:ExecutionPlan` | `rdfs:Class` | Body type of a compiled Tap program |
+| `tap:site`, `tap:name`, `tap:intent` | properties | Tap identity/direction (appear as bare keys inside `tap:ExecutionPlan`) |
+| `tap:health`, `tap:args` | properties | Tap contract + argument schema (bare keys inside `tap:ExecutionPlan`) |
+
+### Live in a doctor `assessing` annotation
+
+| Term | Kind | Role |
+|---|---|---|
+| `tap:verdict` | property | `healthy` · `broken` · `stale` · `layer-mismatch` · `unreachable` |
+| `tap:compiledFromLayer` | property | Trust layer 1–4 the tap was compiled from |
+| `tap:recommendedLayer` | property | Layer doctor recommends re-forging from |
+| `tap:crossValidation` | property | Layer-1 vs. observed-value disagreement record |
+| `tap:suggestions` | property | Ordered diagnostic suggestions |
+
+### Forge-time intermediate (not persisted)
+
+| Term | Kind | Role |
+|---|---|---|
+| `tap:JsonPathSelector` | `rdfs:Class`, subclass of `oa:Selector` | JSONPath candidate selector per RFC 9535 |
+| `tap:SemanticHashState` | `rdfs:Class`, subclass of `oa:State` | Forge fingerprint blob |
+| `tap:rootHash`, `tap:selectors`, `tap:endpoints`, `tap:jsonLdValues` | properties | Fingerprint sub-hashes inside `tap:SemanticHashState` |
+
+### Deprecated
+
+| Term | Kind | Note |
+|---|---|---|
+| `tap:extracting` | `oa:Motivation` | Superseded by `tap:executing` (2026-04-23). Never reached a stored `.tap.json`; retained for namespace stability. |
 
 See [`index.jsonld`](./index.jsonld) for the full context document and
 normative definitions.
 
-## Example: a Tap annotation using `tap:*`
+## Example: a compiled Tap program
 
 ```json
 {
@@ -59,46 +89,70 @@ normative definitions.
     "http://www.w3.org/ns/anno.jsonld",
     "https://taprun.dev/ns/tap-v1"
   ],
-  "@type": "Annotation",
-  "id": "tap:github/trending",
-  "motivation": "identifying",
-  "tap:site": "github",
-  "tap:name": "trending",
-  "tap:intent": "read",
-  "target": {
-    "source": "https://github.com/trending",
-    "selector": [
-      {
-        "type": ["FragmentSelector", "tap:JsonPathSelector"],
-        "value": "jsonld",
-        "refinedBy": {
-          "type": "tap:JsonPathSelector",
-          "value": "$.itemListElement[*]",
-          "conformsTo": "https://www.rfc-editor.org/rfc/rfc9535"
-        }
-      },
-      { "type": "CssSelector", "value": "article.Box-row" }
-    ],
-    "state": {
-      "type": ["TimeState", "tap:SemanticHashState"],
-      "sourceDate": "2026-04-15T00:00:00Z",
-      "tap:rootHash": "fnv1a:abc123",
-      "tap:jsonLdValues": ["ItemList"]
-    }
-  },
+  "id": "https://taprun.dev/taps/github/trending",
+  "type": "Annotation",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/github/trending",
   "body": {
-    "purpose": "tap:extracting",
-    "format": "application/tap+javascript",
-    "tap:health": { "min_rows": 5, "non_empty": ["repo"] },
-    "tap:args": { "limit": { "type": "int", "default": 20 } }
-  }
+    "type": "tap:ExecutionPlan",
+    "site": "github",
+    "name": "trending",
+    "intent": "read",
+    "description": "Trending GitHub repositories",
+    "health": { "min_rows": 5, "non_empty": ["repo"] },
+    "args": { "limit": { "type": "int", "default": 20 } },
+    "ops": [
+      { "op": "nav", "url": "https://github.com/trending" },
+      { "op": "wait", "selector": "article.Box-row" },
+      {
+        "op": "exec",
+        "fn": "async (handle) => handle.eval(() => Array.from(document.querySelectorAll('article.Box-row')).map(el => ({ repo: el.querySelector('h2 a')?.textContent?.trim() })))"
+      }
+    ]
+  },
+  "generator": {
+    "id": "https://taprun.dev/migrate",
+    "type": "SoftwareAgent",
+    "version": "1"
+  },
+  "created": "2026-04-23T00:00:00Z"
 }
 ```
 
 A consumer that only understands W3C Web Annotation sees a valid
-`Annotation` with a selector chain, a state, and a target. A Tap-aware
-consumer additionally reads the `tap:*` fields and can replay the
-program against the declared structural address.
+`Annotation` with a motivation, a target IRI, and a body. A Tap-aware
+consumer additionally reads the `tap:ExecutionPlan` body and can replay
+the program against the declared target.
+
+## Example: a doctor assessment
+
+```json
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "type": "Annotation",
+  "motivation": "assessing",
+  "target": "tap:github/trending",
+  "body": {
+    "tap:verdict": "layer-mismatch",
+    "tap:compiledFromLayer": 4,
+    "tap:recommendedLayer": 1,
+    "tap:crossValidation": {
+      "layer1Value": 25,
+      "observedValue": 18,
+      "disagreement": "ItemList.numberOfItems differs from extracted row count"
+    },
+    "tap:suggestions": [
+      "Re-forge from Layer 1 (JSON-LD ItemList present on this page)",
+      "Current selector targets Layer 4 (CSS classes); higher-trust source available"
+    ]
+  },
+  "generator": { "id": "https://taprun.dev/doctor", "type": "SoftwareAgent" },
+  "created": "2026-04-23T00:00:00Z"
+}
+```
 
 ## Stability
 
@@ -107,7 +161,11 @@ program against the declared structural address.
   document, it means that permanently.
 - Backward-incompatible changes ship under a new namespace (`tap-v2/`).
 - Additive, non-breaking refinements may update this document in place
-  (e.g. adding a new property). The version identifier stays `tap-v1`.
+  (e.g. adding a new property, or marking a term deprecated). The
+  version identifier stays `tap-v1`.
+- Deprecated terms are kept in the document (marked
+  `owl:deprecated: true`) rather than removed, so external data that
+  referenced them remains valid.
 
 ## License
 
