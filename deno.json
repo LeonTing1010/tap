@@ -10,8 +10,7 @@
     "bun": true
   },
   "exports": {
-    ".": "./mod.ts",
-    "./sandbox": "./src/sandbox.ts"
+    ".": "./mod.ts"
   },
   "tasks": {
     "test": "deno test --no-check --allow-all test/"
