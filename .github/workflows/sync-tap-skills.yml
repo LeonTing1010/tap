@@ -17,10 +17,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout public
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Checkout tap-skills
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: LeonTing1010/tap-skills
           path: .tap-skills
