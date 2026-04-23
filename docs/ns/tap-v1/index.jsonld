@@ -20,10 +20,11 @@
   "dcterms:title": "Tap v1 Web Annotation Extension Vocabulary",
   "dcterms:description": "Tap-namespaced extensions to the W3C Web Annotation Data Model. Defines JSONPath selectors (RFC 9535), semantic hash states, the `extracting` motivation, and the metadata fields that tap programs attach to Annotations. Published as the hard prerequisite for Phase 1 of the Tap Web Annotation migration; the Tap runtime parses `tap:*` fields by literal key and does not require a remote-context fetch, so this document exists primarily as a stable identifier and as documentation for external tooling.",
   "dcterms:issued": "2026-04-15",
+  "dcterms:modified": "2026-04-23",
   "dcterms:creator": {
-    "@type": "schema:Person",
-    "schema:name": "Leo",
-    "schema:url": "https://github.com/LeonTing1010"
+    "@type": "schema:Organization",
+    "schema:name": "TapRun",
+    "schema:url": "https://taprun.dev/"
   },
   "dcterms:license": "https://creativecommons.org/publicdomain/zero/1.0/",
   "dcterms:isVersionOf": "https://taprun.dev/ns/tap-v1",
@@ -60,7 +61,7 @@
       "@id": "tap:extracting",
       "@type": "oa:Motivation",
       "rdfs:label": "extracting",
-      "rdfs:comment": "Program-level data extraction. Distinct from the human-oriented `oa:identifying` motivation — this declares that the annotation compiles an executable program (a .tap.js) to retrieve data from the target resource. A consumer that cannot execute the program still sees a valid Annotation with selector + state for the identified data location.",
+      "rdfs:comment": "Program-level data extraction. Distinct from the human-oriented `oa:identifying` motivation — this declares that the annotation compiles an executable program (a .tap.js) to retrieve data from the target resource. A consumer that cannot execute the program still sees a valid Annotation with selector + state for the identified data location. Serialization note: Tap write taps emit this value in both the top-level `motivation` field and the body's `purpose` field; strict consumers may treat either as authoritative.",
       "rdfs:isDefinedBy": { "@id": "https://taprun.dev/ns/tap-v1" }
     },
 
@@ -96,7 +97,7 @@
       "@id": "tap:jsonLdValues",
       "@type": "rdf:Property",
       "rdfs:label": "jsonLdValues",
-      "rdfs:comment": "Snapshot of Layer-1 structured values (JSON-LD / Schema.org field → value) captured at authoring time. Doctor uses these for cross-layer validation — if DOM extraction disagrees with the declared JSON-LD value, the tap navigated to the wrong structural location (layer-mismatch verdict).",
+      "rdfs:comment": "Deduplicated list of Schema.org `@type` names observed in Layer-1 (JSON-LD) blocks at authoring time. Used by doctor as a cheap drift signal — if the set of declared @type tokens changes between forge and run, the page's structural contract has shifted. Cross-layer value validation (DOM-vs-JSON-LD disagreement → `layer-mismatch` verdict) uses the live fingerprint diff at doctor time rather than a stored field→value snapshot. Represented as `string[]` in the stored state.",
       "rdfs:domain": { "@id": "tap:SemanticHashState" },
       "rdfs:isDefinedBy": { "@id": "https://taprun.dev/ns/tap-v1" }
     },
@@ -153,7 +154,7 @@
       "@id": "tap:verdict",
       "@type": "rdf:Property",
       "rdfs:label": "verdict",
-      "rdfs:comment": "Doctor verdict on an assessing annotation — one of `healthy`, `broken`, `stale`, `layer-mismatch`.",
+      "rdfs:comment": "Doctor verdict on an assessing annotation — one of `healthy`, `broken`, `stale`, `layer-mismatch`, `unreachable`. `unreachable` signals that the target resource could not be fetched (DNS failure, timeout, network error) and is distinct from `broken`, which signals that the tap ran against a fetched page but produced output that violates its health contract.",
       "rdfs:range": { "@id": "xsd:string" },
       "rdfs:isDefinedBy": { "@id": "https://taprun.dev/ns/tap-v1" }
     },

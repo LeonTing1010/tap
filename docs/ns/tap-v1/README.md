@@ -4,6 +4,7 @@
 **JSON-LD context:** [`index.jsonld`](./index.jsonld)
 **Version:** `tap-v1`
 **Issued:** 2026-04-15
+**Modified:** 2026-04-23
 **License:** [CC0 1.0 Universal](https://creativecommons.org/publicdomain/zero/1.0/)
 
 ## What this is
@@ -41,7 +42,7 @@ external consumers.
 | `tap:rootHash` | property | FNV-1a Merkle root over sub-hashes |
 | `tap:selectors` | property | Captured selector population summary |
 | `tap:endpoints` | property | Observed network endpoints + shape hashes |
-| `tap:jsonLdValues` | property | Layer-1 cross-validation snapshot |
+| `tap:jsonLdValues` | property | Layer-1 `@type` list observed at authoring time (drift signal) |
 | `tap:health` | property | Tap health contract (JSON) |
 | `tap:args` | property | Tap argument schema (JSON) |
 | `tap:site`, `tap:name`, `tap:intent` | properties | Tap identity/direction |
@@ -82,7 +83,7 @@ normative definitions.
       "type": ["TimeState", "tap:SemanticHashState"],
       "sourceDate": "2026-04-15T00:00:00Z",
       "tap:rootHash": "fnv1a:abc123",
-      "tap:jsonLdValues": { "ItemList.numberOfItems": 25 }
+      "tap:jsonLdValues": ["ItemList"]
     }
   },
   "body": {
