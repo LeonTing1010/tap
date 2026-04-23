@@ -28,6 +28,9 @@ const REPO = "LeonTing1010/tap-skills";
 const PRESERVE_HAND_CRAFTED = new Set([
   "producthunt/relevant",
   "facebook/keyword-search",
+  "zhihu/hot",
+  "weibo/hot",
+  "36kr/hot",
 ]);
 
 interface TapPlan {
