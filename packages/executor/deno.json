@@ -1,0 +1,18 @@
+{
+  "name": "@taprun/executor",
+  "version": "0.2.0",
+  "description": "Zero-dep, in-process composition engine for Tap — runs compiled .tap.json plans (pipelines of sub-taps with expression interpolation) without spawning a subprocess. 0.8ms per plan vs 233.7ms via subprocess — 294× faster on the same payload. Cross-runtime: Deno, Node, Bun. MIT.",
+  "license": "MIT",
+  "githubRepository": "LeonTing1010/tap",
+  "runtimeCompat": {
+    "deno": true,
+    "node": true,
+    "bun": true
+  },
+  "exports": {
+    ".": "./mod.ts"
+  },
+  "tasks": {
+    "test": "deno test --no-check --allow-all test/"
+  }
+}
