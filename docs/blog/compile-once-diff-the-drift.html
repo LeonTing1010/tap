@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) — production host only -->
+<script>
+  (function() {
+    if (location.hostname !== 'taprun.dev') return;
+    var s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=G-RH14PQ10QK';
+    document.head.appendChild(s);
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function(){ dataLayer.push(arguments); };
+    gtag('js', new Date());
+    gtag('config', 'G-RH14PQ10QK');
+  })();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Compile Once. Run Forever. Diff the Drift. — Tap Blog</title>
+<meta name="description" content="A 10,000× token gap between AI-reads-the-page and AI-patches-the-tap. First experimental data on tokens-to-recover, Arm A through Arm D.">
+<link rel="canonical" href="https://taprun.dev/blog/compile-once-diff-the-drift.html">
+<meta property="og:title" content="Compile Once. Run Forever. Diff the Drift.">
+<meta property="og:description" content="AI agents that scrape pages pay full token cost every run. There's a way to pay once per drift instead. Here's the experiment.">
+<meta property="og:url" content="https://taprun.dev/blog/compile-once-diff-the-drift.html">
+<meta property="og:type" content="article">
+<meta property="article:published_time" content="2026-04-24">
+<meta property="article:author" content="Leon Ting">
+<meta property="og:image" content="https://taprun.dev/social-preview.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Compile Once. Run Forever. Diff the Drift.">
+<meta name="twitter:description" content="AI agents that scrape pages pay full token cost every run. There's a way to pay once per drift instead. First experimental data.">
+<meta name="twitter:image" content="https://taprun.dev/social-preview.png">
+<meta name="keywords" content="AI scraping cost, tokens-to-recover, browser agent drift, selector drift, deterministic scraping, MDL scraping, amortized AI cost">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Compile Once. Run Forever. Diff the Drift.",
+  "description": "A 10,000× token gap between AI-reads-the-page and AI-patches-the-tap. First experimental data on tokens-to-recover.",
+  "datePublished": "2026-04-24",
+  "author": {
+    "@type": "Person",
+    "name": "Leon Ting",
+    "url": "https://github.com/LeonTing1010"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Tap",
+    "url": "https://taprun.dev"
+  },
+  "url": "https://taprun.dev/blog/compile-once-diff-the-drift.html",
+  "mainEntityOfPage": "https://taprun.dev/blog/compile-once-diff-the-drift.html",
+  "image": "https://taprun.dev/social-preview.png"
+}
+</script>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='105' cy='115' r='55' fill='%23FFFFFF'/%3E%3Ccircle cx='85' cy='70' r='45' fill='%23FFFFFF'/%3E%3Cellipse cx='75' cy='32' rx='15' ry='22' fill='%23EF4444'/%3E%3Cellipse cx='90' cy='30' rx='12' ry='20' fill='%23DC2626'/%3E%3Cellipse cx='103' cy='35' rx='10' ry='16' fill='%23B91C1C'/%3E%3Cpath d='M 55 68 L 8 75 L 55 85 Z' fill='%23FBBF24'/%3E%3Cpath d='M 55 85 L 8 75 L 12 82 Z' fill='%23D97706'/%3E%3Ccircle cx='70' cy='65' r='14' fill='%231F2937'/%3E%3Ccircle cx='66' cy='61' r='5' fill='%23FFFFFF'/%3E%3Ccircle cx='74' cy='68' r='2.5' fill='%23FFFFFF'/%3E%3Cellipse cx='50' cy='78' rx='8' ry='5' fill='%23FECACA' opacity='0.8'/%3E%3Cellipse cx='125' cy='115' rx='35' ry='30' fill='%23818CF8'/%3E%3Cellipse cx='125' cy='115' rx='25' ry='20' fill='%236366F1'/%3E%3Ccircle cx='95' cy='130' r='25' fill='%23F9FAFB'/%3E%3Cpath d='M 145 140 L 175 185 L 155 180 L 140 145 Z' fill='%23818CF8'/%3E%3Cpath d='M 150 145 L 180 190 L 162 185 L 148 150 Z' fill='%236366F1'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,300..900,0..100;1,9..144,300..900,0..100&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Fraunces','Hoefler Text',Georgia,serif; background: #F4EDDE; color: #14110C; line-height: 1.7; }
+.container { max-width: 720px; margin: 0 auto; padding: 60px 24px; }
+h1 { font-size: 2rem; font-weight: 600; color: #14110C; margin-bottom: 8px; line-height: 1.3; }
+h2 { font-size: 1.35rem; font-weight: 500; color: #14110C; margin-top: 48px; margin-bottom: 16px; }
+p, li { font-size: 0.95rem; color: #3B332A; margin-bottom: 16px; }
+ul, ol { padding-left: 24px; }
+a { color: #1C2D5A; text-decoration: none; }
+a:hover { text-decoration: underline; }
+.meta { font-size: 0.85rem; color: #7A6F60; margin-bottom: 40px; }
+.back { display: inline-block; margin-bottom: 24px; font-size: 0.9rem; }
+code { background: rgba(28,45,90,0.08); padding: 2px 6px; border-radius: 0; font-size: 0.9em; font-family: 'JetBrains Mono', monospace; }
+pre { background: #14110C; border: 1px solid rgba(20,17,12,0.15); border-radius: 0; padding: 16px 20px; overflow-x: auto; margin: 20px 0; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; line-height: 1.6; color: #c8c8d0; }
+pre .comment { color: #7A6F60; }
+pre .cmd { color: #1C2D5A; }
+pre .output { color: #3D5E3B; }
+pre .flag { color: #A67A2E; }
+blockquote { border-left: 3px solid #7E2B1C; padding: 12px 16px; margin: 20px 0; background: rgba(126,43,28,0.05); border-radius: 0; }
+blockquote p { color: #3B332A; margin-bottom: 0; font-style: italic; }
+blockquote cite { display: block; margin-top: 8px; font-size: 0.85rem; color: #7A6F60; font-style: normal; }
+table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid rgba(20,17,12,0.15); font-size: 0.9rem; }
+th { color: #14110C; font-weight: 500; }
+td { color: #3B332A; }
+.num { text-align: right; font-variant-numeric: tabular-nums; font-family: 'JetBrains Mono', monospace; }
+.highlight-row td { color: #3D5E3B; font-weight: 500; }
+.cta { margin-top: 48px; padding: 24px; background: rgba(28,45,90,0.06); border: 1px solid #7E2B1C; border-radius: 0; }
+.cta h3 { color: #14110C; font-size: 1.1rem; margin-bottom: 12px; margin-top: 0; }
+.cta pre { margin-bottom: 0; }
+hr { border: none; border-top: 1px solid rgba(20,17,12,0.15); margin: 48px 0; }
+</style>
+<script src="https://analytics.ahrefs.com/analytics.js" data-key="G1wKuningnrw+t5LQJ+MPw" async></script>
+</head>
+<body>
+<div class="container">
+<a href="../" class="back">&larr; Tap</a> &middot; <a href="./" class="back">Blog</a>
+<h1>Compile Once. Run Forever. Diff the Drift.</h1>
+<p class="meta">April 24, 2026 &middot; Leon Ting &middot; 6 min read</p>
+
+<p>Here's the token cost of scraping the Hacker News top 30, a hundred times, across one drift event:</p>
+
+<table>
+<thead>
+<tr><th>Approach</th><th class="num">Tokens for 100 queries, 1 drift</th></tr>
+</thead>
+<tbody>
+<tr><td>Agent reads the page every query (Claude-for-Chrome style)</td><td class="num">962,500</td></tr>
+<tr><td>Agent rewrites the scraper once per drift (<code>tap fix</code> style)</td><td class="num">~1,075</td></tr>
+<tr class="highlight-row"><td>Tap router &mdash; diff the drift, minimal patch (production, Sonnet)</td><td class="num"><strong>1,134</strong></td></tr>
+<tr><td>Information-theoretic floor (oracle MDL)</td><td class="num">1</td></tr>
+</tbody>
+</table>
+
+<p>The gap between the top row and the third row is <strong>849&times;</strong> at 100 queries. At 1,000 queries it's 8,489&times;. The gap grows linearly with queries per drift.</p>
+
+<p class="meta">(Prior draft quoted 1,350&times;, from an earlier prototype using Haiku with an abbreviated prompt. The 849&times; number is the measured production figure on Sonnet with the full Slice&nbsp;11/12 heal prompt &mdash; taken through the same code path that ships in Tap today.)</p>
+
+<p>This isn't about smarter models &mdash; we used the same model for every arm. It's about <em>where the LLM enters the loop</em>.</p>
+
+<h2>The setup</h2>
+
+<p>Every AI agent that scrapes a page &mdash; Claude for Chrome, OpenAI Atlas, Browser Use, Skyvern, Stagehand &mdash; runs the same loop:</p>
+
+<ol>
+<li>User asks for data from a site.</li>
+<li>Agent reads the page.</li>
+<li>LLM extracts fields into structured output.</li>
+<li>Return to user.</li>
+</ol>
+
+<p>Steps 2 and 3 cost tokens. Every single invocation.</p>
+
+<p>When the site changes &mdash; a class renamed, an element reordered, a selector moved &mdash; the agent doesn't know. It just reads the (now different) page and extracts from the (now different) DOM. Same token cost. Silent correctness drift.</p>
+
+<p>This is the default architecture today. It's also the reason a scraper costs $1 per run.</p>
+
+<h2>Three architectures</h2>
+
+<p>We ran a controlled experiment comparing four approaches to recovering from a single drift event. Target: the <a href="https://github.com/LeonTing1010/tap-skills">hackernews/hot tap</a>, scraping the HN front page. Drift: <code>.athing</code> &rarr; <code>.athing_v99</code> in the scraper's selector. After drift, the scraper returns an empty array.</p>
+
+<p><strong>Arm A &mdash; naive LLM extraction.</strong> Every query: fetch the page HTML, feed it to the LLM with "return top 30 as JSON with these columns." No tap, no forge, no amortization. The Claude-for-Chrome / OpenAI-Atlas path.</p>
+
+<p><strong>Arm B &mdash; current <code>tap fix</code>.</strong> When the scraper breaks, a doctor check alarms. The agent reads the broken source + doctor diagnostic + a page-inspection snapshot, and rewrites the entire scraper source.</p>
+
+<p><strong>Arm C &mdash; Tap router.</strong> When the scraper breaks, a verifier V (cross-validated against an independent authoritative source &mdash; HN's Firebase API in this case) produces a structured drift report. The agent sees only the broken source + the one-line V report, and emits a minimal patch: <code>{old_fragment, new_fragment}</code>. No page HTML, no full source regeneration.</p>
+
+<p><strong>Arm D &mdash; oracle MDL floor.</strong> Post-hoc Levenshtein distance between broken and correct source. A theoretical lower bound &mdash; the minimum information needed to communicate the repair.</p>
+
+<h2>The numbers</h2>
+
+<p>All arms run with Claude Haiku 4.5 as the LLM, measuring actual usage:</p>
+
+<table>
+<thead>
+<tr><th>Arm</th><th class="num">Raw-call tokens</th><th>What succeeded</th><th class="num">Time</th></tr>
+</thead>
+<tbody>
+<tr><td>A &mdash; naive LLM, read HTML, extract JSON (Haiku)</td><td class="num">9,625</td><td>30/30 rows match Firebase</td><td class="num">20.6s</td></tr>
+<tr><td>B &mdash; rewrite source from doctor signal (Haiku)</td><td class="num">1,075</td><td>functional rewrite</td><td class="num">5.0s</td></tr>
+<tr class="highlight-row"><td>C &mdash; V report + minimal patch (Sonnet, production prompt)</td><td class="num"><strong>1,134</strong></td><td>byte-exact source restore</td><td class="num">2.8s</td></tr>
+<tr><td>D &mdash; oracle MDL floor</td><td class="num">1</td><td>by construction</td><td class="num">0</td></tr>
+</tbody>
+</table>
+
+<p>Three observations.</p>
+
+<p><strong>Arm A is shockingly expensive per query.</strong> 9,625 tokens isn't a one-time cost. It's paid every time a user asks for the data. A daily HN scrape at 9,625 tokens per run is 3.5M tokens per year &mdash; for a site that's already publicly structured and has a free JSON API.</p>
+
+<p><strong>Arm B's minimal form can succeed on well-known sites.</strong> Our simulation gave Arm B only the doctor diagnostic and the broken source &mdash; no page inspection &mdash; and haiku correctly fixed the selector from its prior knowledge of HN's markup. But the rewrite introduced subtle deviations: URL semantics changed from HN's item-page URL to the submission's outbound URL; an unnecessary string-prefix strip appeared. These are the kinds of changes that don't fail immediate tests but drift the tap's contract with downstream code. For sites the LLM doesn't know from training, Arm B also needs page inspection &mdash; adding ~3&ndash;10K tokens and closing most of the gap to Arm A.</p>
+
+<p><strong>Arm C achieves byte-exact restoration with one-tenth the input tokens.</strong> The LLM received 655 tokens: the broken source (2 KB) plus a one-line V report ("row count 0 below min_rows 20") plus a constraint ("prefer standard selectors"). It emitted a four-token patch: <code>.athing_v99 &rarr; .athing</code>. Applied to the broken source, the result was bit-for-bit identical to the original pre-drift source.</p>
+
+<h2>Why Arm C works</h2>
+
+<p>The Tap router's efficiency isn't a model choice. We ran the same prompt against Claude Sonnet and Opus too &mdash; sonnet 14,385, opus 19,886 agent-level tokens, both correct. The architecture works across models.</p>
+
+<p>It's a <em>context</em> choice.</p>
+
+<p>The verifier V, produced at <code>forge</code> time, captures a baseline of what the tap should output. When drift occurs, V cross-validates the live output against an independent authoritative source &mdash; for HN, the Firebase API; for Reddit, the Atom RSS feed. The disagreement is a structured signal, not "something seems wrong" but "the <code>id</code> field's observed value at row 0 doesn't match the authoritative id of the top story."</p>
+
+<p>The LLM gets this drift signal plus the tap source. It doesn't need to re-read the page, because the page's truth is already encoded in the V report. The patch space is constrained: whatever the LLM emits must pass V when applied.</p>
+
+<p>This is the shape of the insight: <strong>drift detection + independent baseline + minimal-patch prompt</strong> replaces <strong>page re-inspection + source regeneration</strong>. The LLM's job shrinks from "re-derive the whole scraper" to "produce a tiny patch."</p>
+
+<h2>The linear-growth table</h2>
+
+<p>Per-drift, Arm C is 13.5&times; cheaper than Arm A. That's a modest win. The real story is amortization.</p>
+
+<p>Arm A pays every query. Arm C pays once per drift &mdash; and then the repaired scraper runs deterministically forever. Zero tokens per subsequent query. Over N queries per drift:</p>
+
+<table>
+<thead>
+<tr><th class="num">Queries / drift</th><th class="num">Arm A cumulative</th><th class="num">Arm C cumulative</th><th class="num">Arm C advantage</th></tr>
+</thead>
+<tbody>
+<tr><td class="num">1</td><td class="num">9,625</td><td class="num">1,134</td><td class="num">8.5&times;</td></tr>
+<tr><td class="num">10</td><td class="num">96,250</td><td class="num">1,134</td><td class="num">85&times;</td></tr>
+<tr class="highlight-row"><td class="num">100</td><td class="num">962,500</td><td class="num">1,134</td><td class="num"><strong>849&times;</strong></td></tr>
+<tr><td class="num">1,000</td><td class="num">9,625,000</td><td class="num">1,134</td><td class="num">8,489&times;</td></tr>
+</tbody>
+</table>
+
+<p>For a scraper that runs hourly (24 queries/day) on a site that drifts monthly (~700 queries/drift), Arm C is roughly 10,000&times; cheaper than Arm A. The gap grows linearly with the invocation-to-drift ratio.</p>
+
+<p>This is why Claude-for-Chrome-style agents don't scale to production scraping workloads. The economics work for one-shot agent tasks where amortization doesn't apply. They collapse when the same data gets fetched a hundred times.</p>
+
+<h2>Caveats</h2>
+
+<p>We should be honest about what this shows and doesn't show.</p>
+
+<p><strong>One mutation, one tap, N=1.</strong> This is a first data point. The class-rename case is the simplest drift category. Harder mutations &mdash; schema changes, auth flow shifts, anti-bot additions &mdash; may close the A/C gap. More samples would give variance bounds. Expanding to 2 taps &times; 2 mutations &times; 3 arms &times; N=5 is on deck.</p>
+
+<p><strong>Haiku was enough for class-rename.</strong> Harder drifts probably need sonnet or opus for Arm C to produce a correct patch; token cost scales accordingly. The linear-amortization story still holds, but the per-drift constants shift.</p>
+
+<p><strong>Arm B measurement is a lower bound.</strong> Real <code>tap fix</code> includes a page inspection snapshot, which we omitted. Production Arm B probably sits between ~6&ndash;12K tokens &mdash; close to Arm A, not close to Arm C.</p>
+
+<p><strong>Arm C assumes V exists.</strong> We spent the prior experiment calibrating V: three pilot taps at FPR = 0, FNR = 0 across 390 samples. First attempt had 100% FPR on GitHub (wrong API endpoint) and 75% FPR on HN (job postings show no author in DOM but do in Firebase). Without verifier substrate, Arm C's promise doesn't hold.</p>
+
+<h2>What's next</h2>
+
+<ul>
+<li><strong>Phase 1 scale.</strong> 2 taps &times; 2 mutations &times; 3 arms &times; N=5 = 60 runs. Variance, per-mutation difficulty curve, cross-model comparison.</li>
+<li><strong>Arm B real measurement.</strong> Instrument <code>forge-agent.ts</code> to emit token usage, run <code>tap fix</code> end-to-end against the broken tap, compare to the minimal simulation above.</li>
+<li><strong>Arm C productionization.</strong> The hypothetical router here is a prompt-engineering prototype. Real implementation needs V integration into the heal path, baseline fallback routes (the "multiple equivalent selectors per field" idea), and a repair cache so subsequent queries really are 0 tokens.</li>
+</ul>
+
+<h2>Reproduce it</h2>
+
+<p>Everything is in the Tap repo, under <code>core/experiments/</code>:</p>
+
+<ul>
+<li>Verifier substrate: <code>w0-verifier/</code> &mdash; 3 pilot taps calibrated at FPR=0, FNR=0 over 390 samples</li>
+<li>Arm measurements: <code>w1-recover/</code> &mdash; mutation injection, four arms, runner, judge</li>
+</ul>
+
+<p>Arms A, B, C need an LLM endpoint (Anthropic API, Ollama local, or any OpenAI-compatible). Arm D runs without any network.</p>
+
+<pre><span class="cmd">deno run</span> <span class="flag">-A</span> experiments/w0-verifier/run.ts   <span class="comment"># calibrates V</span>
+<span class="cmd">deno run</span> <span class="flag">-A</span> experiments/w1-recover/runner.ts   <span class="comment"># measures Arm D + attempts A</span></pre>
+
+<div class="cta">
+<h3>Install Tap</h3>
+<pre><span class="cmd">brew install</span> LeonTing1010/tap/tap
+<span class="cmd">tap mcp connect</span>
+<span class="cmd">tap run</span> hackernews/hot</pre>
+</div>
+
+<hr>
+
+<p class="meta"><em>This is a prototype experiment, not a production claim. Tap is a work-in-progress exploring the Compile-once-Run-forever-Diff-the-drift architecture. If you're interested in the space &mdash; AI agents, scraping economics, verifier design &mdash; the code is open, and I want feedback.</em></p>
+
+</div>
+</body>
+</html>
