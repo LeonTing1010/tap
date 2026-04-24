@@ -2795,6 +2795,14 @@ h2 .hl {
   .arithmetic-copy-line em { color: var(--gold); font-style: normal; font-weight: 600; }
   .arithmetic-copy-line code { background: rgba(20, 17, 12, 0.1); padding: 2px 7px; border-radius: 5px; color: var(--indigo-bright); font-size: 0.88em; font-family: var(--font-mono); }
   .arithmetic-cite { font-size: 12.5px; color: var(--text-muted); line-height: 1.55; margin: 8px 0 0; padding-left: 20px; font-family: var(--font-mono); }
+  .arithmetic-proof { margin-top: 4px; padding: 18px 20px; background: var(--bg-deep); border: 1px solid rgba(255,255,255,0.06); border-radius: var(--radius-lg); border-left: 3px solid var(--gold); }
+  .arithmetic-proof-head { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); letter-spacing: 0.12em; text-transform: uppercase; margin: 0 0 10px; }
+  .arithmetic-proof-body { font-size: 14.5px; line-height: 1.6; color: var(--text); margin: 0 0 10px; }
+  .arithmetic-proof-body strong { color: var(--gold); font-size: 1.08em; }
+  .arithmetic-proof-body code { background: rgba(20, 17, 12, 0.12); padding: 2px 7px; border-radius: 5px; color: var(--indigo-bright); font-size: 0.88em; font-family: var(--font-mono); }
+  .arithmetic-proof-cite { font-size: 13px; font-family: var(--font-mono); margin: 0; }
+  .arithmetic-proof-cite a { color: var(--indigo-bright); text-decoration: none; border-bottom: 1px dotted rgba(165, 180, 252, 0.4); }
+  .arithmetic-proof-cite a:hover { border-bottom-color: var(--indigo-bright); }
 </style>
 
 <section class="arithmetic" id="cost">
@@ -2850,7 +2858,12 @@ h2 .hl {
         <p class="arithmetic-copy-line"><strong>Claude for Chrome, Atlas, Browser Use, Stagehand</strong> &mdash; each invokes an LLM on every task. Tokens are a per-run cost that scales linearly with activity. When prices rise or supply tightens, the bill rises with them.</p>
         <p class="arithmetic-copy-line"><strong>Taprun calls AI once, at forge-time.</strong> The compiled <code>.tap.json</code> is a 25-op data structure that any MCP host replays deterministically. Replay is pure dispatch &mdash; <em>structurally</em> zero tokens, not cached zero.</p>
         <p class="arithmetic-copy-line"><strong>The architecture is the hedge.</strong> Competitors can&rsquo;t patch this without becoming a different product. When GPUs get rationed, the only agents that still scale are the ones that never needed one at runtime.</p>
-        <p class="arithmetic-cite">Default inputs: 50 pages &times; 12 checks/day &times; 4K tokens at $4/M. Adjust to your workload. The token bill is yours; Taprun&rsquo;s $0 is structural.</p>
+        <div class="arithmetic-proof">
+          <p class="arithmetic-proof-head">Controlled measurement &middot; 2026-04-24</p>
+          <p class="arithmetic-proof-body"><strong>13.5&times;</strong> fewer raw-call tokens per drift (Arm A: LLM reads page vs Arm C: Taprun patches tap). Amortized over <strong>100 runs per drift</strong>: <strong>1,350&times;</strong>. Target: <code>hackernews/hot</code> · mutation: <code>.athing &rarr; .athing_v99</code> · verified cross-model (Haiku / Sonnet / Opus) and cross-mutation.</p>
+          <p class="arithmetic-proof-cite"><a href="/blog/compile-once-diff-the-drift.html">Read the full experiment &rarr;</a></p>
+        </div>
+        <p class="arithmetic-cite">Calculator defaults: 50 pages &times; 12 checks/day &times; 4K tokens at $4/M. Adjust to your workload. Benchmark above measures token cost to recover from one drift event; calculator measures steady-state inference. Both converge on the same architectural point.</p>
       </div>
 
     </div>
