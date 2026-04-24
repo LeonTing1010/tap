@@ -2761,7 +2761,143 @@ h2 .hl {
   </div>
 </section>
 
-<!-- ===== Pricing ===== -->
+<!-- ===== The GPU arithmetic — resource-scarcity hedge positioning ===== -->
+<style>
+  .arithmetic { padding: 96px 0 80px; background: var(--bg-surface); border-top: 1px solid rgba(20, 17, 12, 0.05); }
+  .arithmetic-header { text-align: center; max-width: 780px; margin: 0 auto 56px; }
+  .arithmetic-header .section-tag { justify-content: center; }
+  .arithmetic-header h2 { font-family: var(--font-heading); font-weight: 800; font-size: clamp(28px, 4vw, 44px); letter-spacing: -0.03em; line-height: 1.15; color: var(--white); margin: 12px 0 18px; }
+  .arithmetic-header h2 .hl { color: var(--gold); }
+  .arithmetic-header p { font-size: 17px; line-height: 1.7; color: var(--text-dim); }
+  .arithmetic-grid { display: grid; grid-template-columns: 1fr; gap: 32px; max-width: 1100px; margin: 0 auto; }
+  @media (min-width: 920px) { .arithmetic-grid { grid-template-columns: 1.15fr 1fr; gap: 40px; align-items: start; } }
+
+  .calc { background: var(--bg-card); border: 1px solid rgba(255,255,255,0.06); border-radius: var(--radius-lg); padding: 36px 36px 30px; }
+  .calc-title { font-family: var(--font-heading); font-weight: 700; font-size: 19px; color: var(--white); margin-bottom: 6px; letter-spacing: -0.01em; }
+  .calc-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 26px; font-family: var(--font-mono); letter-spacing: 0.03em; }
+  .calc-row { display: grid; grid-template-columns: 1fr 130px; gap: 16px; align-items: center; margin-bottom: 16px; }
+  .calc-row label { font-size: 14px; color: var(--text-dim); line-height: 1.4; }
+  .calc-row label small { display: block; color: var(--text-muted); font-size: 12px; margin-top: 2px; font-family: var(--font-mono); }
+  .calc-row input { background: var(--bg-deep); border: 1px solid rgba(255,255,255,0.08); color: var(--text); padding: 10px 12px; border-radius: 6px; font-family: var(--font-mono); font-size: 14px; text-align: right; width: 100%; box-sizing: border-box; }
+  .calc-row input:focus { outline: none; border-color: var(--indigo-bright); }
+  .calc-divider { height: 1px; background: rgba(255,255,255,0.08); margin: 24px 0 20px; }
+  .calc-result { display: flex; flex-direction: column; font-family: var(--font-mono); }
+  .calc-line { display: flex; justify-content: space-between; align-items: baseline; padding: 10px 0; gap: 14px; }
+  .calc-line-label { font-size: 13px; color: var(--text-dim); line-height: 1.4; }
+  .calc-line-value { font-size: 22px; color: var(--text); font-weight: 600; white-space: nowrap; }
+  .calc-line--hero { border-top: 1px solid rgba(255,255,255,0.1); padding-top: 16px; margin-top: 6px; }
+  .calc-line--hero .calc-line-label { color: var(--gold); font-weight: 600; font-size: 14px; }
+  .calc-line--hero .calc-line-value { font-size: 28px; color: var(--gold); }
+
+  .arithmetic-copy { display: flex; flex-direction: column; justify-content: center; gap: 22px; padding-top: 8px; }
+  .arithmetic-copy-line { padding-left: 20px; border-left: 2px solid var(--indigo); font-size: 15px; line-height: 1.65; color: var(--text); margin: 0; }
+  .arithmetic-copy-line strong { color: var(--white); }
+  .arithmetic-copy-line em { color: var(--gold); font-style: normal; font-weight: 600; }
+  .arithmetic-copy-line code { background: rgba(20, 17, 12, 0.1); padding: 2px 7px; border-radius: 5px; color: var(--indigo-bright); font-size: 0.88em; font-family: var(--font-mono); }
+  .arithmetic-cite { font-size: 12.5px; color: var(--text-muted); line-height: 1.55; margin: 8px 0 0; padding-left: 20px; font-family: var(--font-mono); }
+</style>
+
+<section class="arithmetic" id="cost">
+  <div class="container">
+    <div class="arithmetic-header reveal">
+      <div class="section-tag">The GPU arithmetic</div>
+      <h2>Every other agent bills you per run. <span class="hl">Taprun bills you once.</span></h2>
+      <p>AI compute demand is vertical. US electricity, memory, and GPU supply are already rationed. Every browser agent on the market today calls an LLM on every task &mdash; so their per-run bill scales with activity. Taprun calls AI <em>once</em>, at forge-time, and never again.</p>
+    </div>
+
+    <div class="arithmetic-grid">
+
+      <div class="calc reveal">
+        <p class="calc-title">Your monthly inference bill</p>
+        <p class="calc-sub">at today&rsquo;s Claude Sonnet 4.6 blended price</p>
+
+        <div class="calc-row">
+          <label>Tasks per day<small>e.g. 20 product pages to watch</small></label>
+          <input type="number" id="calc-tasks" value="50" min="1" />
+        </div>
+        <div class="calc-row">
+          <label>Runs per task per day<small>refresh cadence</small></label>
+          <input type="number" id="calc-runs" value="12" min="1" />
+        </div>
+        <div class="calc-row">
+          <label>Tokens per run<small>page context + agent reasoning</small></label>
+          <input type="number" id="calc-tokens" value="4000" min="100" step="100" />
+        </div>
+        <div class="calc-row">
+          <label>Price per 1M tokens ($)<small>Claude Sonnet 4.6 blended I/O</small></label>
+          <input type="number" id="calc-price" value="4" min="0.1" step="0.1" />
+        </div>
+
+        <div class="calc-divider"></div>
+
+        <div class="calc-result">
+          <div class="calc-line">
+            <span class="calc-line-label">LLM-at-runtime agent &middot; monthly inference</span>
+            <span class="calc-line-value" id="calc-competitor">&mdash;</span>
+          </div>
+          <div class="calc-line">
+            <span class="calc-line-label">Taprun &middot; monthly inference</span>
+            <span class="calc-line-value">$0</span>
+          </div>
+          <div class="calc-line calc-line--hero">
+            <span class="calc-line-label">Versus Taprun Pro ($29/mo flat)</span>
+            <span class="calc-line-value" id="calc-delta">&mdash;</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="arithmetic-copy">
+        <p class="arithmetic-copy-line"><strong>Claude for Chrome, Atlas, Browser Use, Stagehand</strong> &mdash; each invokes an LLM on every task. Tokens are a per-run cost that scales linearly with activity. When prices rise or supply tightens, the bill rises with them.</p>
+        <p class="arithmetic-copy-line"><strong>Taprun calls AI once, at forge-time.</strong> The compiled <code>.tap.json</code> is a 25-op data structure that any MCP host replays deterministically. Replay is pure dispatch &mdash; <em>structurally</em> zero tokens, not cached zero.</p>
+        <p class="arithmetic-copy-line"><strong>The architecture is the hedge.</strong> Competitors can&rsquo;t patch this without becoming a different product. When GPUs get rationed, the only agents that still scale are the ones that never needed one at runtime.</p>
+        <p class="arithmetic-cite">Default inputs: 50 pages &times; 12 checks/day &times; 4K tokens at $4/M. Adjust to your workload. The token bill is yours; Taprun&rsquo;s $0 is structural.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<script>
+(function() {
+  var tasks = document.getElementById('calc-tasks');
+  var runs = document.getElementById('calc-runs');
+  var tokens = document.getElementById('calc-tokens');
+  var price = document.getElementById('calc-price');
+  var competitor = document.getElementById('calc-competitor');
+  var delta = document.getElementById('calc-delta');
+  if (!tasks || !runs || !tokens || !price || !competitor || !delta) return;
+
+  function fmt(n) {
+    if (n >= 10000) return '$' + Math.round(n).toLocaleString();
+    if (n >= 100) return '$' + n.toFixed(0);
+    if (n >= 10) return '$' + n.toFixed(1);
+    return '$' + n.toFixed(2);
+  }
+
+  function recalc() {
+    var t = parseFloat(tasks.value) || 0;
+    var r = parseFloat(runs.value) || 0;
+    var tk = parseFloat(tokens.value) || 0;
+    var p = parseFloat(price.value) || 0;
+    var monthly = (t * r * tk * p * 30) / 1000000;
+    competitor.textContent = fmt(monthly);
+    var d = monthly - 29;
+    if (d > 0) {
+      delta.textContent = 'save ' + fmt(d) + '/mo';
+    } else {
+      delta.textContent = fmt(-d) + ' gap to close';
+    }
+  }
+
+  ['input', 'change'].forEach(function(evt) {
+    [tasks, runs, tokens, price].forEach(function(el) {
+      el.addEventListener(evt, recalc);
+    });
+  });
+  recalc();
+})();
+</script>
+
 <section class="pricing" id="pricing">
   <div class="container">
     <div class="pricing-header">
