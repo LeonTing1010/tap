@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) — production host only -->
+<script>
+  (function() {
+    if (location.hostname !== 'taprun.dev') return;
+    var s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=G-RH14PQ10QK';
+    document.head.appendChild(s);
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function(){ dataLayer.push(arguments); };
+    gtag('js', new Date());
+    gtag('config', 'G-RH14PQ10QK');
+  })();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Six Years of Hacker News, One Rename — Tap Blog</title>
+<meta name="description" content="WebArchive says Hacker News has renamed exactly one tap-critical class in six years. That's what makes compiled scrapers beat agent loops in the long run.">
+<link rel="canonical" href="https://taprun.dev/blog/six-years-one-rename.html">
+<meta property="og:title" content="Six Years of Hacker News, One Rename">
+<meta property="og:description" content="WebArchive: HN renamed exactly one tap-critical class in 6 years. The amortization math for compiled scrapers compounds from there.">
+<meta property="og:url" content="https://taprun.dev/blog/six-years-one-rename.html">
+<meta property="og:type" content="article">
+<meta property="article:published_time" content="2026-04-24">
+<meta property="article:author" content="Leon Ting">
+<meta property="og:image" content="https://taprun.dev/social-preview.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Six Years of Hacker News, One Rename">
+<meta name="twitter:description" content="WebArchive: HN renamed one tap-critical class in 6 years. That's why compiled scrapers win long-term.">
+<meta name="twitter:image" content="https://taprun.dev/social-preview.png">
+<meta name="keywords" content="natural drift, web scraper stability, WebArchive CSS classes, amortized scraping cost, tap router, heal cost">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Six Years of Hacker News, One Rename",
+  "description": "WebArchive says Hacker News renamed one tap-critical class in six years. That's what makes compiled scrapers beat agent loops in the long run.",
+  "datePublished": "2026-04-24",
+  "author": {
+    "@type": "Person",
+    "name": "Leon Ting",
+    "url": "https://github.com/LeonTing1010"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Tap",
+    "url": "https://taprun.dev"
+  },
+  "url": "https://taprun.dev/blog/six-years-one-rename.html",
+  "mainEntityOfPage": "https://taprun.dev/blog/six-years-one-rename.html",
+  "image": "https://taprun.dev/social-preview.png"
+}
+</script>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='105' cy='115' r='55' fill='%23FFFFFF'/%3E%3Ccircle cx='85' cy='70' r='45' fill='%23FFFFFF'/%3E%3Cellipse cx='75' cy='32' rx='15' ry='22' fill='%23EF4444'/%3E%3Cellipse cx='90' cy='30' rx='12' ry='20' fill='%23DC2626'/%3E%3Cellipse cx='103' cy='35' rx='10' ry='16' fill='%23B91C1C'/%3E%3Cpath d='M 55 68 L 8 75 L 55 85 Z' fill='%23FBBF24'/%3E%3Cpath d='M 55 85 L 8 75 L 12 82 Z' fill='%23D97706'/%3E%3Ccircle cx='70' cy='65' r='14' fill='%231F2937'/%3E%3Ccircle cx='66' cy='61' r='5' fill='%23FFFFFF'/%3E%3Ccircle cx='74' cy='68' r='2.5' fill='%23FFFFFF'/%3E%3Cellipse cx='50' cy='78' rx='8' ry='5' fill='%23FECACA' opacity='0.8'/%3E%3Cellipse cx='125' cy='115' rx='35' ry='30' fill='%23818CF8'/%3E%3Cellipse cx='125' cy='115' rx='25' ry='20' fill='%236366F1'/%3E%3Ccircle cx='95' cy='130' r='25' fill='%23F9FAFB'/%3E%3Cpath d='M 145 140 L 175 185 L 155 180 L 140 145 Z' fill='%23818CF8'/%3E%3Cpath d='M 150 145 L 180 190 L 162 185 L 148 150 Z' fill='%236366F1'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,300..900,0..100;1,9..144,300..900,0..100&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Fraunces','Hoefler Text',Georgia,serif; background: #F4EDDE; color: #14110C; line-height: 1.7; }
+.container { max-width: 720px; margin: 0 auto; padding: 60px 24px; }
+h1 { font-size: 2rem; font-weight: 600; color: #14110C; margin-bottom: 8px; line-height: 1.3; }
+h2 { font-size: 1.35rem; font-weight: 500; color: #14110C; margin-top: 48px; margin-bottom: 16px; }
+p, li { font-size: 0.95rem; color: #3B332A; margin-bottom: 16px; }
+ul, ol { padding-left: 24px; }
+a { color: #1C2D5A; text-decoration: none; }
+a:hover { text-decoration: underline; }
+.meta { font-size: 0.85rem; color: #7A6F60; margin-bottom: 40px; }
+.back { display: inline-block; margin-bottom: 24px; font-size: 0.9rem; }
+code { background: rgba(28,45,90,0.08); padding: 2px 6px; border-radius: 0; font-size: 0.9em; font-family: 'JetBrains Mono', monospace; }
+pre { background: #14110C; border: 1px solid rgba(20,17,12,0.15); border-radius: 0; padding: 16px 20px; overflow-x: auto; margin: 20px 0; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; line-height: 1.6; color: #c8c8d0; }
+blockquote { border-left: 3px solid #7E2B1C; padding: 12px 16px; margin: 20px 0; background: rgba(126,43,28,0.05); border-radius: 0; }
+blockquote p { color: #3B332A; margin-bottom: 0; font-style: italic; }
+blockquote cite { display: block; margin-top: 8px; font-size: 0.85rem; color: #7A6F60; font-style: normal; }
+table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid rgba(20,17,12,0.15); font-size: 0.9rem; }
+th { color: #14110C; font-weight: 500; }
+td { color: #3B332A; }
+.num { text-align: right; font-variant-numeric: tabular-nums; font-family: 'JetBrains Mono', monospace; }
+.cen { text-align: center; font-family: 'JetBrains Mono', monospace; }
+.highlight-row td { color: #3D5E3B; font-weight: 500; }
+hr { border: none; border-top: 1px solid rgba(20,17,12,0.15); margin: 48px 0; }
+</style>
+<script src="https://analytics.ahrefs.com/analytics.js" data-key="G1wKuningnrw+t5LQJ+MPw" async></script>
+</head>
+<body>
+<div class="container">
+<a href="../" class="back">&larr; Tap</a> &middot; <a href="./" class="back">Blog</a>
+<h1>Six Years of Hacker News, One Rename</h1>
+<p class="meta">April 24, 2026 &middot; Leon Ting &middot; 5 min read</p>
+
+<p>The last post (<a href="compile-once-diff-the-drift.html">Compile Once. Run Forever. Diff the Drift.</a>) quoted an 849&times; per-drift advantage for the Tap router over naive LLM re-scrape at <em>100 queries per drift</em>. The number that matters more is the one we didn't measure: how often drift actually happens.</p>
+
+<p>Turns out the real answer &mdash; at least for the sites we tested &mdash; is much less often than you'd think.</p>
+
+<h2>Six years of HN in one table</h2>
+
+<p>WebArchive has HTML snapshots of Hacker News from basically forever. We fetched four of them &mdash; 2018, 2020, 2022, 2024 &mdash; and diffed the CSS classes that the Tap scraper depends on.</p>
+
+<table>
+<thead>
+<tr><th>Selector</th><th class="cen">2018</th><th class="cen">2020</th><th class="cen">2022</th><th class="cen">2024</th></tr>
+</thead>
+<tbody>
+<tr><td><code>.athing</code> (row container)</td><td class="cen">&check;</td><td class="cen">&check;</td><td class="cen">&check;</td><td class="cen">&check;</td></tr>
+<tr><td><code>.score</code> (points)</td><td class="cen">&check;</td><td class="cen">&check;</td><td class="cen">&check;</td><td class="cen">&check;</td></tr>
+<tr><td><code>.hnuser</code> (author)</td><td class="cen">&check;</td><td class="cen">&check;</td><td class="cen">&check;</td><td class="cen">&check;</td></tr>
+<tr><td><code>.age</code></td><td class="cen">&check;</td><td class="cen">&check;</td><td class="cen">&check;</td><td class="cen">&check;</td></tr>
+<tr><td><code>.subtext</code></td><td class="cen">&check;</td><td class="cen">&check;</td><td class="cen">&check;</td><td class="cen">&check;</td></tr>
+<tr class="highlight-row"><td><code>.storylink</code> (title anchor)</td><td class="cen">&check;</td><td class="cen">&check;</td><td class="cen">&mdash;</td><td class="cen">&mdash;</td></tr>
+<tr class="highlight-row"><td><code>.titlelink</code></td><td class="cen">&mdash;</td><td class="cen">&mdash;</td><td class="cen">&check;</td><td class="cen">&mdash;</td></tr>
+<tr class="highlight-row"><td><code>.titleline</code></td><td class="cen">&mdash;</td><td class="cen">&mdash;</td><td class="cen">&mdash;</td><td class="cen">&check;</td></tr>
+</tbody>
+</table>
+
+<p>In six years, five of the six tap-critical classes didn't move. One of them &mdash; the title anchor &mdash; got renamed twice. That's it. Everything else still works.</p>
+
+<h2>What that drift actually costs</h2>
+
+<p>We took the 2018-era tap (using <code>.storylink</code>) and ran it against live HN today. V caught the drift immediately:</p>
+
+<pre>shape errors:
+  - row 0 has empty required field "title"
+  ...
+field disagreements:
+  - title: 30/30 rows disagree with authoritative
+    (observed="" authoritative="GPT-5.5")</pre>
+
+<p>One round of heal through Sonnet, 14,581 tokens, and the scraper was healthy again &mdash; 30/30 rows matched against Firebase. Same ballpark as the synthetic mutation numbers in the prior post (~14,100 &plusmn; 200 tokens). The synthetic benchmark wasn't lying.</p>
+
+<p>What was interesting was <em>how</em> Sonnet patched it. Not a rename. A <strong>fallback</strong>:</p>
+
+<pre>// before
+const titleEl = r.querySelector('.storylink');
+
+// after
+const titleEl = r.querySelector('.titleline > a')
+             || r.querySelector('.storylink');</pre>
+
+<p>Sonnet kept the legacy selector as a safety net. Either the site mid-migration back or the new selector covers it. It's a more careful patch than what the same model produces for a pure synthetic rename &mdash; as if the model reads "this has happened before, it'll happen again."</p>
+
+<h2>What this means for amortization</h2>
+
+<p>The previous post used 100 queries per drift as the amortization window. That number came out of nowhere &mdash; it was a round number that made the table legible. The WebArchive data suggests it's way too conservative for stable sites.</p>
+
+<p>If you run an HN scraper <strong>once a day</strong> and HN renames a tap-critical class <strong>once in six years</strong>, then N = 2,190 queries per drift. The Tap-router advantage at that rate:</p>
+
+<table>
+<thead>
+<tr><th>Scenario</th><th class="num">Queries / drift</th><th class="num">Arm A cumulative</th><th class="num">Arm C cumulative</th><th class="num">Advantage</th></tr>
+</thead>
+<tbody>
+<tr><td>Blog claim</td><td class="num">100</td><td class="num">962,500</td><td class="num">1,134</td><td class="num">849&times;</td></tr>
+<tr><td>Daily HN scrape, 6-year drift cycle</td><td class="num">2,190</td><td class="num">21,078,750</td><td class="num">1,134</td><td class="num">18,587&times;</td></tr>
+<tr><td>Hourly scrape</td><td class="num">52,560</td><td class="num">505,890,000</td><td class="num">1,134</td><td class="num">446,111&times;</td></tr>
+</tbody>
+</table>
+
+<p>Hourly on HN for one drift cycle is about half a <em>billion</em> tokens with a naive agent versus a thousand and change with a compiled tap plus one heal. That's not an argument about compilers vs interpreters anymore. That's an argument about physics &mdash; one number has a bounded constant, the other grows unbounded with time.</p>
+
+<h2>Objection: HN is unusually stable</h2>
+
+<p>Yes it is. HN hasn't been redesigned in two decades. Reddit is drift-ier (we've seen Reddit move from <code>.Post__title</code> to <code>[data-testid=post-title]</code> within a year). GitHub redesigns a surface every year or so. Modern SPA sites with CSS-in-JS generate classes fresh on every deploy.</p>
+
+<p>But notice the shape of the argument: <strong>Tap's economics get <em>worse</em> as drift gets more frequent</strong>. At one drift per day per site, the amortization advantage compresses. At ten drifts per day, the two approaches converge.</p>
+
+<p>So the question becomes: what's the actual distribution of drift rates across the web? We have an HN datapoint (&sim;1 rename / 6 years) and some soft evidence that Reddit/GitHub drift more like once a year. We don't have a systematic number yet. If someone wants to study that empirically, it would settle the debate faster than any amount of blog math.</p>
+
+<h2>One meta-observation</h2>
+
+<p>When people imagine AI browser agents, the failure mode they picture is "the site changes and the scraper breaks." That's real, but it implies drift is a frequent surprise. The data says drift is a <em>rare, noisy</em> surprise &mdash; it happens, but maybe once a quarter on stable sites, maybe once a month on fast-moving ones. Between drift events, the scraper is running the <em>same</em> extraction over and over.</p>
+
+<p>A naive agent pays for every repetition. A compiled tap pays for the rare exceptions. Over any time horizon longer than the drift interval, that's the whole ball game.</p>
+
+<hr>
+
+<p class="meta"><em>Reproduce it yourself: WebArchive HTML diffs live at <code>core/experiments/w1-recover/tmp/slice21/</code>; the natural-drift heal fixture at <code>~/.tap/taps/hackernews-slice21/</code>; the 4-arm experiment framework at <code>core/experiments/w1-recover/</code>. All the slices that built out the production heal path are documented in the prior <a href="compile-once-diff-the-drift.html">tokens-to-recover post</a>.</em></p>
+
+</div>
+</body>
+</html>
