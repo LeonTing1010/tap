@@ -9,8 +9,8 @@
 </h4>
 
 <p align="center">
-  <a href="https://taprun.dev/"><b>Homepage</b></a> &nbsp;|&nbsp;
-  <a href="https://taprun.dev/blog/"><b>Blog</b></a> &nbsp;|&nbsp;
+  <a href="https://taprun.dev/?utm_source=readme&utm_medium=docs&utm_campaign=homepage"><b>Homepage</b></a> &nbsp;|&nbsp;
+  <a href="https://taprun.dev/blog/?utm_source=readme&utm_medium=docs&utm_campaign=blog"><b>Blog</b></a> &nbsp;|&nbsp;
   <a href="https://github.com/LeonTing1010/tap-skills"><b>140+ Skills</b></a> &nbsp;|&nbsp;
   <a href="README.zh-CN.md"><b>中文</b></a>
 </p>
