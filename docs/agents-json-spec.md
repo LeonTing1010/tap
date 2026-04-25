@@ -307,3 +307,11 @@ A: robots.txt and agents.json are complementary. robots.txt restricts crawling. 
 
 **Q: Can I validate my agents.json?**
 A: Yes — use [Google's Rich Results Test](https://search.google.com/test/rich-results) or [Schema.org Validator](https://validator.schema.org/). Any valid agents.json passes both.
+
+
+## See also
+
+- [Compile Once. Run Forever. Diff the Drift.](/blog/compile-once-diff-the-drift) — why declarative agent contracts beat agent-at-runtime.
+- [Browse 200+ taps](/taps/) — every tap is a machine-readable Web Annotation, the same model agents.json uses.
+- [tap-v1 namespace](/ns/tap-v1/) — the JSON-LD vocabulary that Taprun uses for executable agent contracts.
+

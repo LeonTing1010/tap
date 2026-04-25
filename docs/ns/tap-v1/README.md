@@ -1,3 +1,9 @@
+---
+title: "tap-v1 — Web Annotation extension vocabulary"
+description: "Stable JSON-LD vocabulary that extends W3C Web Annotation with tap-specific terms (tap:ExecutionPlan, tap:executing, tap:layer). Versioned at tap-v1 since 2026-04-15."
+permalink: /ns/tap-v1/
+---
+
 # tap-v1 — Web Annotation extension vocabulary
 
 **Stable IRI:** `https://taprun.dev/ns/tap-v1`
