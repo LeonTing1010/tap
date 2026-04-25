@@ -1,3 +1,10 @@
+---
+title: Showcase (internal draft)
+description: Internal showcase draft — see the live taps library at /taps/.
+sitemap: false
+robots: noindex
+---
+
 # Tappy Showcase
 
 10 real-world taps that demonstrate Tappy's power. Each was forged once with AI, and now runs forever at $0.

@@ -5,3 +5,23 @@ plugins:
 
 include:
   - .well-known
+
+# Verification & utility files: keep them served, but keep them out of the
+# sitemap so SEO tooling (Ahrefs, GSC) doesn't flag them as orphan/missing-meta.
+defaults:
+  - scope:
+      path: "google*.html"
+    values:
+      sitemap: false
+  - scope:
+      path: "BingSiteAuth.xml"
+    values:
+      sitemap: false
+  - scope:
+      path: "tap*.txt"
+    values:
+      sitemap: false
+  - scope:
+      path: "e9ea3504983ec21b5c929ae5018ac153.txt"
+    values:
+      sitemap: false

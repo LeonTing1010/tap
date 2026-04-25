@@ -1,6 +1,8 @@
 ---
 title: Glama MCP Profile Copy
+description: Internal copy pack for the Glama MCP server profile.
 sitemap: false
+robots: noindex
 ---
 
 # Glama MCP Server Profile — Copy Pack

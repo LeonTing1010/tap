@@ -1,3 +1,10 @@
+---
+title: "Serving tap-v1 (operator notes)"
+description: "Operational notes for the maintainer of taprun.dev — content negotiation, MIME types, and caching for the tap-v1 namespace."
+sitemap: false
+robots: noindex
+---
+
 # Serving tap-v1
 
 Operational notes for the maintainer of `taprun.dev`.
