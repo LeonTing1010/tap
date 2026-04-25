@@ -98,7 +98,7 @@ Most scrapers work headless. For sites that require an authenticated session (Xi
 - **Hacker** ($9/mo): Full forge pipeline (`forge.inspect`/`draft`/`save`) for authoring new scrapers via MCP. BYOK AI key.
 - **Pro** ($29/mo): `tap.fix` repair + `tap.refresh` rebaseline + scheduled health checks. 100% local — nothing leaves the user's machine except license validation.
 
-`tap config set license <key>` after purchase from https://taprun.dev. Licenses validate offline after first check.
+`tap config set license <key>` after purchase from https://taprun.dev/?utm_source=llms-install&utm_medium=docs&utm_campaign=cline-purchase. Licenses validate offline after first check.
 
 ## Troubleshooting
 
@@ -109,7 +109,7 @@ Most scrapers work headless. For sites that require an authenticated session (Xi
 
 ## References
 
-- Homepage: https://taprun.dev
+- Homepage: https://taprun.dev/?utm_source=llms-install&utm_medium=docs&utm_campaign=cline-homepage
 - README: https://github.com/LeonTing1010/tap
 - npm package: https://www.npmjs.com/package/@taprun/cli
 - GitHub Issues: https://github.com/LeonTing1010/tap/issues

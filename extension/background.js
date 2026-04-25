@@ -1091,7 +1091,7 @@ function setBadge(ok) {
 chrome.action.onClicked.addListener(async () => {
   if (connected) return
   // Disconnected — open install guide so user knows what to do
-  chrome.tabs.create({ url: 'https://taprun.dev/install' })
+  chrome.tabs.create({ url: 'https://taprun.dev/install?utm_source=chrome-ext&utm_medium=extension&utm_campaign=icon-click' })
   // Use startPoll (not pollLoop directly) so rehydrate always runs first.
   startPoll()
 })
