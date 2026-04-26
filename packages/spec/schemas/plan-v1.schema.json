@@ -1,0 +1,238 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://taprun.dev/spec/plan-v1.schema.json",
+  "title": "Tap plan-v1",
+  "description": "On-disk format for compiled .tap.json plans. W3C Web Annotation envelope wrapping a tap:ExecutionPlan body. Reference: https://taprun.dev/spec/plan-v1/",
+  "$comment": "Drift-guarded: $defs.OpName.enum must match OP_NAMES in @taprun/spec/src/plan.ts. Enforced by core/src/test/jsonschema_test.ts.",
+  "type": "object",
+  "required": ["@context", "type", "target", "body"],
+  "properties": {
+    "@context": {
+      "description": "MUST include the W3C anno.jsonld context AND the tap-v1 vocabulary IRI.",
+      "oneOf": [
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+      ]
+    },
+    "id": { "type": "string" },
+    "type": {
+      "oneOf": [
+        { "const": "Annotation" },
+        {
+          "type": "array",
+          "items": { "type": "string" },
+          "contains": { "const": "Annotation" }
+        }
+      ]
+    },
+    "motivation": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string" } }
+      ]
+    },
+    "target": {
+      "description": "IRI string, SpecificResource object, or array of those.",
+      "oneOf": [
+        { "type": "string" },
+        { "type": "object" },
+        { "type": "array" }
+      ]
+    },
+    "body": { "$ref": "#/$defs/ExecutionPlan" },
+    "generator": {
+      "oneOf": [
+        { "type": "string" },
+        {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "type": { "type": "string" },
+            "version": { "type": "string" }
+          }
+        }
+      ]
+    },
+    "created": { "type": "string" },
+    "prov:wasDerivedFrom": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string" } }
+      ]
+    }
+  },
+  "$defs": {
+    "OpName": {
+      "type": "string",
+      "description": "Closed union of plan ops. Adding a new op requires editing core/compose/plan.ts AND this enum (drift-guarded).",
+      "enum": [
+        "fetch",
+        "nav",
+        "wait",
+        "input",
+        "extract",
+        "eval",
+        "exec",
+        "parseXML",
+        "cookies",
+        "screenshot",
+        "scroll",
+        "compute",
+        "filter",
+        "project",
+        "sort",
+        "dedupe",
+        "pick",
+        "limit",
+        "concat",
+        "pipe",
+        "if",
+        "foreach",
+        "parallel",
+        "tap"
+      ]
+    },
+    "Op": {
+      "type": "object",
+      "required": ["op"],
+      "properties": {
+        "op": { "$ref": "#/$defs/OpName" },
+        "save": { "type": "string" }
+      }
+    },
+    "ExecutionPlan": {
+      "type": "object",
+      "required": ["type", "site", "name", "intent", "ops"],
+      "properties": {
+        "type": { "const": "tap:ExecutionPlan" },
+        "site": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "intent": { "enum": ["read", "write"] },
+        "description": { "type": "string" },
+        "columns": { "type": "array", "items": { "type": "string" } },
+        "args": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/ArgSpec" }
+        },
+        "examples": { "type": "array" },
+        "health": { "$ref": "#/$defs/HealthContract" },
+        "authoritative": { "$ref": "#/$defs/AuthoritativeSpec" },
+        "locals": { "type": "object" },
+        "ops": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/Op" }
+        },
+        "return": { "type": "string" },
+        "allowUnverifiable": { "type": "boolean" }
+      }
+    },
+    "ArgSpec": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "enum": ["string", "int", "number", "boolean", "object", "array"]
+        },
+        "default": {},
+        "required": { "const": true },
+        "description": { "type": "string" }
+      }
+    },
+    "HealthContract": {
+      "type": "object",
+      "properties": {
+        "min_rows": { "type": "integer", "minimum": 0 },
+        "non_empty": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "AuthoritativeSpec": {
+      "oneOf": [
+        { "$ref": "#/$defs/AuthoritativeFetchJson" },
+        { "$ref": "#/$defs/AuthoritativeFetchJsonTwoStep" },
+        { "$ref": "#/$defs/AuthoritativeFetchAtom" }
+      ]
+    },
+    "AuthoritativeFetchJson": {
+      "type": "object",
+      "required": [
+        "source",
+        "url",
+        "row_mapping",
+        "match_key",
+        "comparators"
+      ],
+      "properties": {
+        "source": { "const": "fetch-json" },
+        "url": { "type": "string" },
+        "rows_path": { "type": "string" },
+        "headers": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "row_mapping": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "match_key": { "type": "string" },
+        "comparators": { "type": "object" },
+        "critical_fields": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "AuthoritativeFetchJsonTwoStep": {
+      "type": "object",
+      "required": [
+        "source",
+        "list_url",
+        "detail_url_template",
+        "row_mapping",
+        "match_key",
+        "comparators"
+      ],
+      "properties": {
+        "source": { "const": "fetch-json-2step" },
+        "list_url": { "type": "string" },
+        "list_is_ids": { "type": "boolean" },
+        "list_id_path": { "type": "string" },
+        "detail_url_template": { "type": "string" },
+        "limit": { "type": "integer", "minimum": 1 },
+        "headers": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "row_mapping": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "match_key": { "type": "string" },
+        "comparators": { "type": "object" },
+        "critical_fields": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "AuthoritativeFetchAtom": {
+      "type": "object",
+      "required": [
+        "source",
+        "url",
+        "row_mapping",
+        "match_key",
+        "comparators"
+      ],
+      "properties": {
+        "source": { "const": "fetch-atom" },
+        "url": { "type": "string" },
+        "headers": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "row_mapping": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "match_key": { "type": "string" },
+        "comparators": { "type": "object" },
+        "critical_fields": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}

@@ -1,7 +1,7 @@
 {
   "name": "@taprun/spec",
-  "version": "0.1.0",
-  "description": "Tap plan-v1 format spec — TypeScript types + W3C Annotation validator for .tap.json. Use this to typecheck or validate compiled Tap plans without running the full Tap CLI.",
+  "version": "0.2.0",
+  "description": "Tap plan-v1 format spec — TypeScript types + W3C Annotation validator + JSON Schema for .tap.json. Use this to typecheck or validate compiled Tap plans without running the full Tap CLI.",
   "publishConfig": {
     "access": "public"
   },
@@ -12,10 +12,13 @@
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
-    }
+    },
+    "./schema": "./schemas/plan-v1.schema.json",
+    "./schemas/plan-v1.schema.json": "./schemas/plan-v1.schema.json"
   },
   "files": [
     "dist",
+    "schemas",
     "README.md"
   ],
   "scripts": {

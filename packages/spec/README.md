@@ -12,9 +12,43 @@ Use this package to typecheck or validate compiled Tap plans (`.tap.json`) witho
 
 - **`ExecutionPlan`** — the body of a `.tap.json` envelope (site, name, intent, ops, health, authoritative source).
 - **`TapAnnotation`** — the W3C Web Annotation envelope wrapping an `ExecutionPlan` body.
-- **`OP_NAMES` / `OpName`** — closed union of the 25 plan ops.
+- **`OP_NAMES` / `OpName`** — closed union of the plan ops.
 - **`validateAnnotation(value)`** — zero-runtime-dep MUST-level W3C validator. Returns `{ valid, errors[], warnings[] }`.
 - All op interfaces (`FetchOp`, `NavOp`, `WaitOp`, `ExtractOp`, …), `HealthContract`, `AuthoritativeSpec`, `ArgSpec`.
+- **JSON Schema 2020-12** at `@taprun/spec/schema` for non-TypeScript validators (Python / Go / Rust / Ruby).
+
+## Usage — TypeScript
+
+```ts
+import { validateAnnotation, OP_NAMES, type ExecutionPlan } from "@taprun/spec";
+
+const plan: ExecutionPlan = JSON.parse(await fs.readFile("plan.tap.json", "utf8"));
+const result = validateAnnotation(plan);
+if (!result.valid) console.error(result.errors);
+```
+
+## Usage — JSON Schema (any language)
+
+The package ships a JSON Schema 2020-12 file alongside the TS types. Any
+JSON-Schema-compatible validator works:
+
+```js
+import schema from "@taprun/spec/schema" assert { type: "json" };
+import Ajv from "ajv/dist/2020";
+const ajv = new Ajv();
+const validate = ajv.compile(schema);
+const valid = validate(planJson);
+```
+
+Or fetch from the published spec URL:
+
+```bash
+curl https://taprun.dev/spec/plan-v1.schema.json
+```
+
+The schema's `$defs.OpName.enum` is drift-guarded against the TS source —
+adding a plan op requires editing both, enforced by the `tap-core`
+test suite.
 
 ## What's NOT in scope
 
