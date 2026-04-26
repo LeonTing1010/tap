@@ -1,5 +1,10 @@
 # @taprun/spec — Changelog
 
+## 0.3.2 — 2026-04-26
+
+- Add `TAP_V1_NS_TERMS` (and `TAP_V1_PLAN_TERMS` / `TAP_V1_ASSESSMENT_TERMS` / `TAP_V1_NS_IRI`) — the exact cross-consumer protocol contract term set defined at https://taprun.dev/ns/tap-v1/. Source-of-truth for the namespace; downstream consumers (incl. the proprietary Tap CLI) can import these to keep emit sites aligned with the namespace doc.
+- Internal: rename one property `tap:suggest_authoritative` → `tap:suggestAuthoritative` (camelCase per JSON-LD/RDF convention).
+
 ## 0.3.1 — 2026-04-26
 
 - README: add "Part of the Tap ecosystem" footer with UTM-tagged links to taprun.dev (homepage, Chrome extension, comparison page) plus cross-links to sibling JSR packages.

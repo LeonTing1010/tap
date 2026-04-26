@@ -39,67 +39,60 @@ jobs:
 
   ns-cross-consumer-only:
     # Asserts the tap-v1 namespace defines exactly the cross-consumer
-    # protocol contract — no more, no less. Two-way enforcement:
-    #   1) Every term defined in index.jsonld must be listed in README.md
-    #      (so the human-readable doc and the machine-readable context
-    #      cannot drift).
-    #   2) Both must match the canonical 13-term set encoded below. New
-    #      terms require an explicit edit here, which forces a code
-    #      review on the protocol surface — internal-only types
-    #      (forge-time fingerprints, intermediate selector candidates)
-    #      cannot sneak in by being added to source code without
-    #      protocol intent.
-    # The 13 terms below = exactly what core actually emits in a stored
-    # .tap.json envelope or a doctor `assessing` annotation body.
+    # protocol contract — no more, no less. Three-way enforcement:
+    #   1) The canonical term set lives in @taprun/spec
+    #      (packages/spec/src/ns-vocabulary.ts). It is type-checked at
+    #      compile time, so typos / case errors fail there first.
+    #   2) docs/ns/tap-v1/index.jsonld @ids must equal the canonical set.
+    #   3) docs/ns/tap-v1/README.md contract tables must equal the
+    #      canonical set.
+    # Adding/removing a term: edit ns-vocabulary.ts AND index.jsonld AND
+    # README.md together. Internal-only types (forge-time fingerprints,
+    # intermediate selector candidates) cannot sneak in by being added
+    # to source code without protocol intent.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Diff ns terms (jsonld vs README vs canonical set)
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm install
+      - run: npm run build --workspace @taprun/spec --if-present
+      - name: Diff ns terms (canonical vs jsonld vs README)
         run: |
           set -e
-          # Canonical: terms that ship across a consumer boundary.
-          # When adding a term: edit this list AND index.jsonld AND README.md.
-          # When removing: edit this list AND mark deprecated in index.jsonld + README.md.
-          expected=$(cat <<'TERMS' | sort
-          tap:executing
-          tap:ExecutionPlan
-          tap:site
-          tap:name
-          tap:intent
-          tap:health
-          tap:args
-          tap:verdict
-          tap:compiledFromLayer
-          tap:recommendedLayer
-          tap:crossValidation
-          tap:suggestions
-          tap:suggestAuthoritative
-          TERMS
-          )
-          # Extract @id values starting with tap: from the JSON-LD context.
-          jsonld_ids=$(grep -oE '"@id":\s*"tap:[a-zA-Z_]+"' docs/ns/tap-v1/index.jsonld | grep -oE 'tap:[a-zA-Z_]+' | sort -u)
-          # Extract terms in the README's two contract tables (lines that wrap a tap:* in backticks under '## What it defines').
+          # Source of truth: TAP_V1_NS_TERMS exported by @taprun/spec.
+          # Use byte-wise sort (LC_ALL=C) everywhere so uppercase
+          # ExecutionPlan and lowercase property names diff consistently.
+          expected=$(node -e "
+            const m = require('./packages/spec/dist/index.js');
+            console.log([...m.TAP_V1_NS_TERMS].sort().join('\n'));
+          " | LC_ALL=C sort)
+          # @id values starting with tap: from the JSON-LD context.
+          jsonld_ids=$(grep -oE '"@id":\s*"tap:[a-zA-Z_]+"' docs/ns/tap-v1/index.jsonld | grep -oE 'tap:[a-zA-Z_]+' | LC_ALL=C sort -u)
+          # Terms in the README's contract tables under '## What it defines'.
           readme_terms=$(awk '/^## What it defines/{flag=1; next} /^## /{flag=0} flag' docs/ns/tap-v1/README.md \
-                         | grep -oE '`tap:[a-zA-Z_]+`' | grep -oE 'tap:[a-zA-Z_]+' | sort -u)
+                         | grep -oE '`tap:[a-zA-Z_]+`' | grep -oE 'tap:[a-zA-Z_]+' | LC_ALL=C sort -u)
 
           fail=0
           if ! diff -u <(echo "$expected") <(echo "$jsonld_ids") >/tmp/diff_jsonld 2>&1; then
-            echo "::error::index.jsonld term set differs from canonical:"
+            echo "::error::index.jsonld term set differs from @taprun/spec TAP_V1_NS_TERMS:"
             cat /tmp/diff_jsonld
             fail=1
           fi
           if ! diff -u <(echo "$expected") <(echo "$readme_terms") >/tmp/diff_readme 2>&1; then
-            echo "::error::README.md term set differs from canonical:"
+            echo "::error::README.md term set differs from @taprun/spec TAP_V1_NS_TERMS:"
             cat /tmp/diff_readme
             fail=1
           fi
           if [ $fail -eq 1 ]; then
             echo
-            echo "Adding a term: update this guard, index.jsonld, and README.md together."
-            echo "Removing a term: mark owl:deprecated in jsonld + README, keep it in this list with a # deprecated comment."
+            echo "Adding a term: edit packages/spec/src/ns-vocabulary.ts AND docs/ns/tap-v1/{index.jsonld,README.md} together."
+            echo "Removing a term: mark owl:deprecated in jsonld + README, keep it in ns-vocabulary.ts with a // deprecated comment."
             exit 1
           fi
-          echo "OK: ns canonical (13 terms) == index.jsonld == README.md"
+          echo "OK: @taprun/spec TAP_V1_NS_TERMS == index.jsonld == README.md"
+          echo "    ($(echo "$expected" | wc -l | tr -d ' ') terms)"
 
   test:
     runs-on: ubuntu-latest

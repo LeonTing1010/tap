@@ -137,3 +137,20 @@ export type {
   ConformanceResult,
   ConformanceFixture,
 } from "./conformance.ts";
+
+// tap-v1 namespace — exact cross-consumer protocol contract term set.
+// CI guards consume these constants; downstream consumers (incl. the
+// proprietary Tap CLI) can `import { TAP_V1_NS_TERMS } from "@taprun/spec"`
+// to keep emit sites aligned with the namespace doc.
+export {
+  TAP_V1_PLAN_TERMS,
+  TAP_V1_ASSESSMENT_TERMS,
+  TAP_V1_NS_TERMS,
+  TAP_V1_NS_IRI,
+} from "./ns-vocabulary.ts";
+
+export type {
+  TapV1PlanTerm,
+  TapV1AssessmentTerm,
+  TapV1NsTerm,
+} from "./ns-vocabulary.ts";
