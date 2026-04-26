@@ -1,10 +1,14 @@
 {
   "name": "@taprun/create-tap-script",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "license": "MIT",
   "exports": {
     ".": "./src/cli.ts",
     "./create": "./src/create.ts"
+  },
+  "nodeModulesDir": "auto",
+  "imports": {
+    "@types/node": "npm:@types/node@^22"
   },
   "compilerOptions": {
     "lib": ["dom", "deno.ns", "esnext"]

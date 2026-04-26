@@ -1,6 +1,6 @@
 {
   "name": "@taprun/from-puppeteer",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Convert Puppeteer scripts (.ts / .js source) into Tap plan-v1 .tap.json files. Reference adapter for the @taprun/spec format.",
   "publishConfig": {
     "access": "public"

@@ -62,6 +62,17 @@ Out of scope (escaped via `{ op: "exec", fn: <original code>, allowUnverifiable:
 - Multi-context / multi-page setups
 - Playwright trace files (separate adapter)
 
+## Part of the Tap ecosystem
+
+[Tap](https://taprun.dev?utm_source=jsr&utm_medium=readme&utm_campaign=from-playwright) is local-first browser automation — compile your scraper once, run it in your own browser forever, and diff the drift when sites change.
+
+- Format spec: [`@taprun/spec`](https://jsr.io/@taprun/spec) — W3C-compliant validator for `.tap.json`
+- Sibling adapters: [`@taprun/from-puppeteer`](https://jsr.io/@taprun/from-puppeteer) · [`@taprun/from-stagehand`](https://jsr.io/@taprun/from-stagehand)
+- Scaffold a fresh plan: `npx create-tap-script <site>/<name> <url>`
+- Run locally: [Tap Chrome extension](https://taprun.dev?utm_source=jsr&utm_medium=readme&utm_campaign=from-playwright) — credentials never leave your machine
+- Compare to Stagehand / Browserbase: <https://taprun.dev/compare/stagehand/?utm_source=jsr&utm_medium=readme&utm_campaign=from-playwright>
+- Source: <https://github.com/LeonTing1010/tap> · npm: <https://www.npmjs.com/~taprun>
+
 ## License
 
 MIT.

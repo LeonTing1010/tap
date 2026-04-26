@@ -1,7 +1,9 @@
 # create-tap-script — Changelog
 
-## 0.1.1 — unreleased
+## 0.1.1 — 2026-04-26
 
+- README: add "Part of the Tap ecosystem" footer with UTM-tagged links to taprun.dev (homepage, Chrome extension, comparison page) plus cross-links to sibling JSR packages.
+- deno.json: declare `@types/node` and enable `nodeModulesDir: "auto"` so `deno publish` resolves the `node:fs/promises` / `node:path` / `node:url` / `node:process` type references the CLI relies on.
 - Cleanup: test imports `@taprun/spec` via package name (was relative path traversal). Added `@taprun/spec ^0.3.0` as devDep so npm workspaces resolve it.
 
 ## 0.1.0 — 2026-04-26

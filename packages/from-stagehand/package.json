@@ -1,6 +1,6 @@
 {
   "name": "@taprun/from-stagehand",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Convert Stagehand scripts (.ts / .js source) into Tap plan-v1 .tap.json files. Deterministic Playwright calls map to plan ops; stagehand.act/extract/observe map to allowUnverifiable exec ops with the original NL prompt preserved.",
   "publishConfig": {
     "access": "public"

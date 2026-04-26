@@ -1,5 +1,9 @@
 # @taprun/spec — Changelog
 
+## 0.3.1 — 2026-04-26
+
+- README: add "Part of the Tap ecosystem" footer with UTM-tagged links to taprun.dev (homepage, Chrome extension, comparison page) plus cross-links to sibling JSR packages.
+
 ## 0.3.0 — 2026-04-26
 
 Initial release as a publishable surface. Three independent layers shipped together:

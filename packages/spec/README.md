@@ -6,7 +6,7 @@
 npm install @taprun/spec
 ```
 
-Use this package to typecheck or validate compiled Tap plans (`.tap.json`) without running the full [Tap CLI](https://taprun.dev). It's the public contract third-party tools build against.
+Use this package to typecheck or validate compiled Tap plans (`.tap.json`) without running the full [Tap CLI](https://taprun.dev?utm_source=jsr&utm_medium=readme&utm_campaign=spec). It's the public contract third-party tools build against.
 
 ## What's in scope
 
@@ -88,7 +88,7 @@ test suite.
 - `heal` (AI-driven plan repair)
 - Authentication, license, and runtime execution
 
-Those live in the proprietary [Tap CLI](https://taprun.dev). This package is the format substrate so anyone can write a plan emitter (e.g. `tap-from-playwright`) without coupling to the closed engine.
+Those live in the proprietary [Tap CLI](https://taprun.dev?utm_source=jsr&utm_medium=readme&utm_campaign=spec). This package is the format substrate so anyone can write a plan emitter (e.g. `tap-from-playwright`) without coupling to the closed engine.
 
 ## Format reference
 
@@ -108,6 +108,16 @@ Those live in the proprietary [Tap CLI](https://taprun.dev). This package is the
 **0.0.0 — Iteration 1 stub.** The exports land in Iteration 2; this README is published with the package skeleton so downstream tooling can pin the wire identifier early.
 
 See `core/docs/reconstruction-plan-2026-04-27-addendum-B.md` (private) for the slice plan.
+
+## Part of the Tap ecosystem
+
+[Tap](https://taprun.dev?utm_source=jsr&utm_medium=readme&utm_campaign=spec) is local-first browser automation — compile your scraper once, run it in your own browser forever, and diff the drift when sites change. This package is the open contract every other Tap surface builds against.
+
+- Adapters: [`@taprun/from-playwright`](https://jsr.io/@taprun/from-playwright) · [`@taprun/from-puppeteer`](https://jsr.io/@taprun/from-puppeteer) · [`@taprun/from-stagehand`](https://jsr.io/@taprun/from-stagehand)
+- Scaffold a fresh plan: `npx create-tap-script <site>/<name> <url>`
+- Run locally: [Tap Chrome extension](https://taprun.dev?utm_source=jsr&utm_medium=readme&utm_campaign=spec) — credentials never leave your machine
+- Compare to Stagehand / Browserbase: <https://taprun.dev/compare/stagehand/?utm_source=jsr&utm_medium=readme&utm_campaign=spec>
+- Source: <https://github.com/LeonTing1010/tap> · npm: <https://www.npmjs.com/~taprun>
 
 ## License
 

@@ -1,6 +1,6 @@
 {
   "name": "create-tap-script",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Scaffold a starter .tap.json plan in seconds. Run via `npx create-tap-script <site>/<name> <url>`.",
   "publishConfig": {
     "access": "public"

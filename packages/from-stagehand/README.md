@@ -61,6 +61,17 @@ await writeFile("github/browserbase-search.tap.json", JSON.stringify(plan, null,
 - Plain Playwright deterministic calls follow exactly the same regex as `@taprun/from-playwright` (no behavioral divergence).
 - The MVP regex scanner has the same limitations as the Playwright/Puppeteer adapters: variable-bound selectors, template-string interpolation, and trailing line comments are best-effort.
 
+## Part of the Tap ecosystem
+
+[Tap](https://taprun.dev?utm_source=jsr&utm_medium=readme&utm_campaign=from-stagehand) is local-first browser automation — compile your scraper once, run it in your own browser forever, and diff the drift when sites change. The local-first runtime means your `act()` and `extract()` calls hit your already-logged-in session — no Browserbase egress, no shared cloud browser.
+
+- Format spec: [`@taprun/spec`](https://jsr.io/@taprun/spec) — W3C-compliant validator for `.tap.json`
+- Sibling adapters: [`@taprun/from-playwright`](https://jsr.io/@taprun/from-playwright) · [`@taprun/from-puppeteer`](https://jsr.io/@taprun/from-puppeteer)
+- Scaffold a fresh plan: `npx create-tap-script <site>/<name> <url>`
+- Run locally: [Tap Chrome extension](https://taprun.dev?utm_source=jsr&utm_medium=readme&utm_campaign=from-stagehand) — credentials never leave your machine
+- Why Tap vs Stagehand / Browserbase: <https://taprun.dev/compare/stagehand/?utm_source=jsr&utm_medium=readme&utm_campaign=from-stagehand>
+- Source: <https://github.com/LeonTing1010/tap> · npm: <https://www.npmjs.com/~taprun>
+
 ## License
 
 MIT.

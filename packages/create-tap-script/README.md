@@ -59,9 +59,18 @@ The output passes `runConformance` from `@taprun/spec` out of the box. Add more 
 ## Have an existing script?
 
 Use one of the dedicated adapters instead:
-- `@taprun/from-playwright` — convert Playwright `.ts/.js`
-- `@taprun/from-puppeteer` — convert Puppeteer `.ts/.js`
-- `@taprun/from-stagehand` — convert Stagehand `.ts/.js`
+- [`@taprun/from-playwright`](https://jsr.io/@taprun/from-playwright) — convert Playwright `.ts/.js`
+- [`@taprun/from-puppeteer`](https://jsr.io/@taprun/from-puppeteer) — convert Puppeteer `.ts/.js`
+- [`@taprun/from-stagehand`](https://jsr.io/@taprun/from-stagehand) — convert Stagehand `.ts/.js`
+
+## Part of the Tap ecosystem
+
+[Tap](https://taprun.dev?utm_source=jsr&utm_medium=readme&utm_campaign=create-tap-script) is local-first browser automation — compile your scraper once, run it in your own browser forever, and diff the drift when sites change.
+
+- Format spec: [`@taprun/spec`](https://jsr.io/@taprun/spec) — W3C-compliant validator for `.tap.json`
+- Run locally: [Tap Chrome extension](https://taprun.dev?utm_source=jsr&utm_medium=readme&utm_campaign=create-tap-script) — credentials never leave your machine
+- Compare to Stagehand / Browserbase: <https://taprun.dev/compare/stagehand/?utm_source=jsr&utm_medium=readme&utm_campaign=create-tap-script>
+- Source: <https://github.com/LeonTing1010/tap> · npm: <https://www.npmjs.com/~taprun>
 
 ## License
 
