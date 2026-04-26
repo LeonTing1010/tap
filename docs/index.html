@@ -2842,9 +2842,12 @@ $ <span class="k">tap doctor</span> example/login                               
   .onramp-card .badges { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
   .onramp-card .badges img { display: block; height: 18px; image-rendering: -webkit-optimize-contrast; }
   .onramp-card p.tag { font-size: 13px; line-height: 1.55; color: var(--text-dim); margin: 0; min-height: 38px; }
-  .onramp-card pre { background: var(--bg-deep); border: 1px solid rgba(255,255,255,0.04); border-radius: 6px; padding: 9px 11px; margin: 0; overflow-x: auto; }
-  .onramp-card pre code { font-family: var(--font-mono); font-size: 11.5px; color: var(--text); white-space: pre; }
-  .onramp-card pre code .c { color: var(--text-muted); }
+  .onramp-card pre { background: var(--code-bg); border: 1px solid var(--code-border); border-radius: 4px; padding: 10px 12px; margin: 0; overflow-x: auto; }
+  .onramp-card pre code { font-family: var(--font-mono); font-size: 11.5px; line-height: 1.65; color: var(--code-ink); white-space: pre; background: none; padding: 0; }
+  .onramp-card pre code .c { color: var(--code-c); font-style: italic; }
+  .onramp-card pre code .k { color: var(--code-k); font-weight: 600; }
+  .onramp-card pre code .s { color: var(--code-s); }
+  .onramp-card pre code .n { color: var(--code-n); font-weight: 600; }
   .onramp-card .npm-link { font-family: var(--font-mono); font-size: 11px; color: var(--indigo-bright); text-decoration: none; margin-top: auto; }
   .onramp-card .npm-link:hover { text-decoration: underline; }
 
@@ -2873,11 +2876,12 @@ $ <span class="k">tap doctor</span> example/login                               
   .demo-label .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); }
   .demo-panel.before .dot { background: #f87171; }
   .demo-panel.after .dot { background: #4ade80; }
-  .demo-panel pre { margin: 0; padding: 18px 22px; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.7; color: var(--text); white-space: pre; overflow-x: auto; flex: 1; }
-  .demo-panel pre .c { color: var(--text-muted); }
-  .demo-panel pre .s { color: #a5b4fc; }
-  .demo-panel pre .k { color: #c4b5fd; }
-  .demo-panel pre .n { color: #fbbf24; }
+  .demo-panel pre { margin: 0; padding: 18px 22px; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.7; color: var(--code-ink); background: var(--code-bg); white-space: pre; overflow-x: auto; flex: 1; }
+  .demo-panel pre .c { color: var(--code-c); font-style: italic; }
+  .demo-panel pre .s { color: var(--code-s); }
+  .demo-panel pre .k { color: var(--code-k); font-weight: 600; }
+  .demo-panel pre .n { color: var(--code-n); font-weight: 600; }
+  .demo-panel pre .o { color: var(--code-n); }
   .demo-arrow { display: none; align-self: center; font-family: var(--font-mono); font-size: 14px; color: var(--indigo-bright); padding: 0 4px; white-space: nowrap; }
   @media (min-width: 900px) { .demo-arrow { display: block; } }
   .demo-foot { text-align: center; margin-top: 22px; font-size: 13px; color: var(--text-muted); }
@@ -3176,7 +3180,7 @@ test(<span class="s">"login"</span>, <span class="k">async</span> ({ page }) =&g
   .usecase-card h3 { font-family: var(--font-heading); font-weight: 700; font-size: 19px; letter-spacing: -0.01em; color: var(--white); margin-bottom: 10px; }
   .usecase-card > p { font-size: 14.5px; line-height: 1.6; color: var(--text-dim); margin-bottom: 16px; }
   .usecase-examples { display: flex; flex-direction: column; gap: 6px; }
-  .usecase-examples code { display: block; font-family: var(--font-mono); font-size: 12.5px; color: var(--text); background: var(--bg-deep); padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.04); white-space: nowrap; overflow-x: auto; }
+  .usecase-examples code { display: block; font-family: var(--font-mono); font-size: 12.5px; color: var(--code-ink); background: var(--code-bg); padding: 8px 12px; border-radius: 4px; border: 1px solid var(--code-border); white-space: nowrap; overflow-x: auto; }
   .usecase-story { display: block; margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.06); font-family: var(--font-mono); font-size: 12px; color: var(--text-dim); text-decoration: none; transition: color 0.2s; }
   .usecase-story:hover { color: var(--indigo-bright); }
   .usecase-story em { font-style: italic; color: inherit; }
