@@ -25,7 +25,7 @@
 
 ---
 
-**Taprun is a browser automation and web scraping MCP server for AI agents.** Point it at any site; your agent inspects the page once, compiles a deterministic program, and replays it forever — zero AI tokens at runtime, same result every call. Works with Claude Code, Cursor, Cline, Windsurf, and any MCP host. Runs in real Chrome (login sessions) or headless Playwright. Health contracts catch silent failures. Structural state diffs tell you exactly what changed. `tap doctor` detects breakage before your data goes stale — not three days later.
+**Taprun is local-first browser automation that runs in your browser, not someone else's cloud.** Point it at any site; your agent inspects the page once, compiles a deterministic program, and replays it forever — zero AI tokens at runtime, same result every call. Your cookies and login sessions never leave your machine — by architecture, not policy. Works with Claude Code, Cursor, Cline, Windsurf, and any MCP host. Runs in real Chrome (login sessions) or headless Playwright. Health contracts catch silent failures. Structural state diffs tell you exactly what changed. `tap doctor` detects breakage before your data goes stale — not three days later.
 
 ```
 Forge:    AI inspects the site → compiles a .tap.js program       (one-time cost)
@@ -123,6 +123,28 @@ forge(trajectory=agent.history, site="example", name="dashboard")
 
 Packages: [`@taprun/sdk`](https://www.npmjs.com/package/@taprun/sdk) (npm) · [`taprun`](https://pypi.org/project/taprun/) (PyPI).
 
+### Have an existing Playwright / Puppeteer / Stagehand script?
+
+Don't rewrite. Convert with one of the open-source adapters — drop your existing source in, get a Tap-compatible `.tap.json` plan out:
+
+```bash
+# Existing Playwright script (47M weekly npm downloads — most likely the one you have)
+npm install @taprun/from-playwright @taprun/spec
+node -e "import('@taprun/from-playwright').then(m => console.log(m.playwrightToTap(require('fs').readFileSync('tests/login.spec.ts','utf8'), {site:'example', name:'login'})))"
+
+# Or scaffold a new starter from scratch
+npx create-tap-script github/trending https://github.com/trending
+```
+
+| Adapter | Source format | Coverage |
+|---|---|---|
+| [`@taprun/from-playwright`](https://www.npmjs.com/package/@taprun/from-playwright) | `.ts/.js` Playwright tests | 8 page.* APIs (goto/click/fill/type/press/waitForSelector/waitForTimeout/screenshot) |
+| [`@taprun/from-puppeteer`](https://www.npmjs.com/package/@taprun/from-puppeteer) | `.ts/.js` Puppeteer scripts | 7 page.* APIs + page.keyboard.press |
+| [`@taprun/from-stagehand`](https://www.npmjs.com/package/@taprun/from-stagehand) | `.ts/.js` Stagehand scripts | Hybrid: deterministic page.* mapped to plan ops; NL `act/extract/observe` flagged `allowUnverifiable` for honest doctor verdicts |
+| [`create-tap-script`](https://www.npmjs.com/package/create-tap-script) | (none — scaffolder) | Generates a starter `.tap.json` envelope from `<site>/<name> <url>` |
+
+The format itself is documented at [`@taprun/spec`](https://www.npmjs.com/package/@taprun/spec) (TypeScript types + W3C Annotation MUST-validator + JSON Schema 2020-12 + 10-fixture conformance suite). Plan-v1 reference: [taprun.dev/spec/plan-v1](https://taprun.dev/spec/plan-v1/). Source for all five packages: [`packages/`](packages/).
+
 ## What Can You Do?
 
 **Read** — Extract data from any website
@@ -215,15 +237,25 @@ tap list      # See everything available
 | **Code inspectable** | .tap.js — git diff, debug, version | Black box / ephemeral | Fragile scripts |
 | **MCP native** | Yes (authoring layer only — execution is zero tokens) | No | No |
 
-## Security
+## Local-first by architecture
+
+Taprun runs in **your** browser, not someone else's cloud. The Chrome extension reuses your live login sessions; cookies, auth tokens, and credentials never leave your machine. This is a structural choice, not a marketing claim:
+
+| Concern | Cloud-first browser SDKs | Taprun (local-first) |
+|---|---|---|
+| Where do logged-in cookies live? | On the cloud vendor's servers | Only in your local browser |
+| What does the AI see? | The full session + your data | Only the page DOM during forge time |
+| Compliance with `noindex` / robots.txt / TOS | Vendor signs ToS for you | Your account, your terms |
+| Internal / intranet sites | Need VPN tunneling | Just open the page |
+| Decommission risk | Vendor goes down → your scrapers stop | Local code keeps running |
 
 | Layer | Protection |
 |-------|-----------|
 | **Sandbox** | Programs run with zero permissions — no file, network, or system access |
 | **Static Analysis** | CI blocks dangerous patterns before they reach users |
-| **Local-only** | Your data, sessions, and API keys never leave your machine |
+| **Local-only** | Your data, sessions, and API keys never leave your machine — architecturally |
 
-See [SECURITY.md](SECURITY.md) for details.
+See [SECURITY.md](SECURITY.md) for the full threat model.
 
 ## Contributing
 
