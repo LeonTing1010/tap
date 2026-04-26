@@ -25,7 +25,7 @@
 
 ---
 
-**Taprun 把 AI 对网站的理解编译成确定性程序，然后持续监控它。** 健康合约捕获静默故障，指纹对比精确定位变更。`tap doctor` 在数据变质前就发现问题 — 不是三天以后。
+**Taprun 是本地优先（local-first）的浏览器自动化 — 跑在你自己的浏览器里，不是别人的云里。** 把 AI 对网站的理解编译成确定性程序，然后持续监控它。你的 cookie 和登录会话永不离开你的机器 — 这是架构决定，不是承诺。健康合约捕获静默故障，指纹对比精确定位变更。`tap doctor` 在数据变质前就发现问题 — 不是三天以后。
 
 ```
 锻造：  AI 分析网站 → 编译成 .tap.js 程序          （一次性成本）
@@ -97,6 +97,28 @@ Agent：今天最热门的仓库是... React compiler 已达 734 stars...
 你：   给我锻造一个豆瓣 Top250 的 tap
 Agent：好了。随时运行 `tap douban/top250`，每次 $0。
 ```
+
+### 已有 Playwright / Puppeteer / Stagehand 脚本？
+
+不要重写。用四个开源 adapter 之一直接转换 — 把已有脚本扔进去，拿一份 Tap 兼容的 `.tap.json` 出来：
+
+```bash
+# 已有 Playwright 脚本（npm 47M 周下载，你最可能用的 SDK）
+npm install @taprun/from-playwright @taprun/spec
+node -e "import('@taprun/from-playwright').then(m => console.log(m.playwrightToTap(require('fs').readFileSync('tests/login.spec.ts','utf8'), {site:'example', name:'login'})))"
+
+# 或一行命令初始化新的 starter
+npx create-tap-script github/trending https://github.com/trending
+```
+
+| Adapter | 输入格式 | 覆盖范围 |
+|---|---|---|
+| [`@taprun/from-playwright`](https://www.npmjs.com/package/@taprun/from-playwright) | `.ts/.js` Playwright 测试 | 8 个 page.* API（goto/click/fill/type/press/waitForSelector/waitForTimeout/screenshot） |
+| [`@taprun/from-puppeteer`](https://www.npmjs.com/package/@taprun/from-puppeteer) | `.ts/.js` Puppeteer 脚本 | 7 个 page.* API + page.keyboard.press |
+| [`@taprun/from-stagehand`](https://www.npmjs.com/package/@taprun/from-stagehand) | `.ts/.js` Stagehand 脚本 | 混合：确定性的 page.* 转 plan op；自然语言 `act/extract/observe` 标 `allowUnverifiable` 让 doctor 透明分流 |
+| [`create-tap-script`](https://www.npmjs.com/package/create-tap-script) | （无 — 脚手架） | `<site>/<name> <url>` 一键生成 `.tap.json` 信封 |
+
+格式本身有完整文档：[`@taprun/spec`](https://www.npmjs.com/package/@taprun/spec)（TypeScript 类型 + W3C Annotation 验证器 + JSON Schema 2020-12 + 10-fixture conformance 套件）。规范：[taprun.dev/spec/plan-v1](https://taprun.dev/spec/plan-v1/)。源码：[`packages/`](packages/)。
 
 ## 你能用 Taprun 做什么？
 
@@ -188,15 +210,25 @@ tap list      # 查看所有可用 skills
 | **代码可检查** | .tap.js — 可 git diff、调试、版本控制 | 黑盒 / 临时的 | 脆弱脚本 |
 | **MCP 原生** | 是（仅创作层 — 执行零 token） | 否 | 否 |
 
-## 安全
+## 架构层面的本地优先（Local-first）
+
+Taprun 跑在 **你的** 浏览器，不是别人的云。Chrome 扩展复用你已有的登录会话；cookie、auth token、凭证从不离开你的机器。这是结构性选择，不是营销承诺：
+
+| 关注点 | 云优先浏览器 SDK | Taprun（local-first） |
+|---|---|---|
+| 登录 cookie 在哪？ | 在云端供应商服务器 | 只在你本地浏览器 |
+| AI 看到什么？ | 完整会话 + 你的数据 | 仅 forge 时的页面 DOM |
+| 合规（noindex / robots.txt / TOS） | 供应商替你签 ToS | 你的账号，你的条款 |
+| 内网 / Intranet 站点 | 需要 VPN 隧道 | 直接打开页面 |
+| 供应商下线风险 | 你的爬虫立即停止 | 本地代码继续运行 |
 
 | 层级 | 保护 |
 |------|------|
 | **沙箱** | 程序以零权限运行 — 无文件、网络或系统访问 |
 | **静态分析** | CI 在到达用户前拦截危险模式 |
-| **本地优先** | 你的数据、会话和 API 密钥永不离开你的机器 |
+| **本地优先** | 你的数据、会话和 API 密钥永不离开你的机器 — 架构决定 |
 
-详见 [SECURITY.md](SECURITY.md)。
+完整威胁模型详见 [SECURITY.md](SECURITY.md)。
 
 ## 贡献
 
