@@ -1,0 +1,52 @@
+{
+  "name": "@taprun/spec",
+  "version": "0.0.0",
+  "description": "Tap plan-v1 format spec — TypeScript types + W3C Annotation validator for .tap.json. Use this to typecheck or validate compiled Tap plans without running the full Tap CLI.",
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "tap",
+    "taprun",
+    "browser-automation",
+    "scraping",
+    "spec",
+    "json-schema",
+    "w3c-annotation",
+    "drift-detection"
+  ],
+  "homepage": "https://taprun.dev/spec/plan-v1/?utm_source=npm&utm_medium=package&utm_campaign=spec",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LeonTing1010/tap.git",
+    "directory": "packages/spec"
+  },
+  "bugs": {
+    "url": "https://github.com/LeonTing1010/tap/issues"
+  },
+  "license": "MIT",
+  "author": "Leon Ting <noreply@taprun.dev>",
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  }
+}
