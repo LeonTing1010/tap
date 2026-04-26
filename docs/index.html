@@ -2853,7 +2853,25 @@ $ <span class="k">tap doctor</span> example/login                               
   .onramp-intro p code { background: rgba(20, 17, 12, 0.1); padding: 2px 7px; border-radius: 5px; color: var(--indigo-bright); font-size: 0.9em; }
   .onramp-grid { display: grid; grid-template-columns: 1fr; gap: 18px; max-width: 1180px; margin: 0 auto 64px; }
   @media (min-width: 640px) { .onramp-grid { grid-template-columns: repeat(2, 1fr); } }
-  @media (min-width: 1100px) { .onramp-grid { grid-template-columns: repeat(4, 1fr); gap: 14px; } }
+  /* Wider viewports: 4 cards in a horizontal-scroll row.
+     Fits all 4 visible at >=1180px container; on narrower
+     desktops (1024-1179) the row scrolls left/right. */
+  @media (min-width: 1024px) {
+    .onramp-grid {
+      display: flex;
+      gap: 14px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      padding: 4px 4px 12px;
+      mask-image: linear-gradient(to right, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
+      -webkit-mask-image: linear-gradient(to right, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
+    }
+    .onramp-grid::-webkit-scrollbar { height: 6px; }
+    .onramp-grid::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.35); border-radius: 3px; }
+    .onramp-grid::-webkit-scrollbar-track { background: transparent; }
+    .onramp-card { flex: 0 0 280px; scroll-snap-align: start; }
+  }
   .onramp-card { background: var(--bg-card); border: 1px solid rgba(255,255,255,0.05); border-radius: var(--radius-lg); padding: 24px 22px; display: flex; flex-direction: column; gap: 12px; transition: border-color 0.3s, transform 0.3s; }
   .onramp-card:hover { border-color: rgba(99, 102, 241, 0.4); transform: translateY(-2px); }
   .onramp-card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
