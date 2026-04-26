@@ -1724,18 +1724,38 @@ h2 .hl {
   border: 1px solid var(--code-border);
   border-radius: 4px;
   padding: 14px 18px;
+  margin: 0;
   font-family: var(--font-mono);
-  word-break: break-all;
   font-size: 13px;
   color: var(--code-ink);
   overflow-x: auto;
   line-height: 1.7;
   position: relative;
+  white-space: pre;
+}
+
+/* Multi-line listings (JSON, etc.) — preserves indentation, no word-break,
+   slightly tighter line-height for code density. */
+pre.code-block, .code-block--json {
+  white-space: pre;
+  line-height: 1.65;
+}
+pre.code-block code {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  background: none;
+  padding: 0;
+  border: 0;
 }
 
 .code-block .prompt { color: var(--code-prompt); user-select: none; font-weight: 600; }
 .code-block .cmd { color: var(--code-k); font-weight: 600; }
 .code-block .hl-dim { color: var(--code-c); }
+.code-block .s { color: var(--code-s); }
+.code-block .k { color: var(--code-k); font-weight: 600; }
+.code-block .c { color: var(--code-c); font-style: italic; }
+.code-block .n { color: var(--code-n); font-weight: 600; }
 
 /* ===== Pricing — aligned with site visual language ===== */
 .pricing {
@@ -3280,7 +3300,14 @@ test(<span class="s">"login"</span>, <span class="k">async</span> ({ page }) =&g
           <p>Auto-configure your MCP host (Claude Code, Cursor, Windsurf, Codex, any MCP host). 65+ skills, free &mdash; no extension, no setup, works immediately.</p>
           <div class="code-block"><span class="prompt">$ </span><span class="cmd">tap mcp connect</span></div>
           <p style="margin-top:10px;font-size:12px;color:var(--text-dim);">Or manually add to your MCP config:</p>
-          <div class="code-block"><span class="hl-dim">{</span> <span class="cmd">"mcpServers"</span><span class="hl-dim">:</span> <span class="hl-dim">{</span> <span class="cmd">"tap"</span><span class="hl-dim">:</span> <span class="hl-dim">{</span> <span class="cmd">"command"</span><span class="hl-dim">:</span> <span style="color:var(--gold)">"tap"</span><span class="hl-dim">,</span> <span class="cmd">"args"</span><span class="hl-dim">:</span> <span class="hl-dim">[</span><span style="color:var(--gold)">"mcp"</span><span class="hl-dim">,</span> <span style="color:var(--gold)">"start"</span><span class="hl-dim">]</span> <span class="hl-dim">} } }</span></div>
+<pre class="code-block code-block--json"><code>{
+  <span class="s">"mcpServers"</span>: {
+    <span class="s">"tap"</span>: {
+      <span class="s">"command"</span>: <span class="s">"tap"</span>,
+      <span class="s">"args"</span>: [<span class="s">"mcp"</span>, <span class="s">"start"</span>]
+    }
+  }
+}</code></pre>
         </div>
       </div>
       <div class="install-step reveal">
