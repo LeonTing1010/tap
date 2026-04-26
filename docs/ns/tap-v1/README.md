@@ -64,11 +64,12 @@ external consumers.
 
 | Term | Kind | Role |
 |---|---|---|
-| `tap:verdict` | property | `healthy` · `broken` · `stale` · `layer-mismatch` · `unreachable` |
+| `tap:verdict` | property | `healthy` · `broken` · `stale` · `layer-mismatch` · `unreachable` · `unverified` |
 | `tap:compiledFromLayer` | property | Trust layer 1–4 the tap was compiled from |
 | `tap:recommendedLayer` | property | Layer doctor recommends re-forging from |
-| `tap:crossValidation` | property | Layer-1 vs. observed-value disagreement record |
-| `tap:suggestions` | property | Ordered diagnostic suggestions |
+| `tap:crossValidation` | property | Layer-1 vs. observed-value disagreement record (`{layer1Value, observedValue, disagreement}`) |
+| `tap:suggestions` | property | Ordered diagnostic suggestions (free-text) |
+| `tap:suggest_authoritative` | property | Optional ready-to-embed `AuthoritativeSpec` shown only when verdict is `unverified` AND a known-shape source exists for the target. Lets agents close the verification gap without hand-writing the V config. |
 
 ### Forge-time intermediate (not persisted)
 

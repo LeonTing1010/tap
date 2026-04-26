@@ -50,7 +50,7 @@
       "@id": "tap:ExecutionPlan",
       "@type": "rdfs:Class",
       "rdfs:label": "Execution Plan",
-      "rdfs:comment": "Body type of a compiled Tap program. Carries `site`, `name`, `intent`, `description`, `health`, `args`, `columns`, and an ordered `ops` array of operations drawn from a closed 25-member union (the Tap op set). Serialized as bare JSON keys under the body object — JSON-LD consumers that follow the `tap:` vocabulary treat them as the `tap:*` properties defined below. Pure data: `ops[*].fn` is a source-level function string, never evaluated at parse time. See the Tap operation schema for the op union.",
+      "rdfs:comment": "Body type of a compiled Tap program. Carries `site`, `name`, `intent`, `description`, `health`, `args`, `columns`, and an ordered `ops` array of operations drawn from a closed 24-member union (the Tap op set). Serialized as bare JSON keys under the body object — JSON-LD consumers that follow the `tap:` vocabulary treat them as the `tap:*` properties defined below. Pure data: `ops[*].fn` is a source-level function string, never evaluated at parse time. See the Tap operation schema for the op union.",
       "rdfs:isDefinedBy": { "@id": "https://taprun.dev/ns/tap-v1" }
     },
 
@@ -106,7 +106,7 @@
       "@id": "tap:verdict",
       "@type": "rdf:Property",
       "rdfs:label": "verdict",
-      "rdfs:comment": "Doctor verdict on an assessing annotation — one of `healthy`, `broken`, `stale`, `layer-mismatch`, `unreachable`. `unreachable` signals that the target resource could not be fetched (DNS failure, timeout, network error) and is distinct from `broken`, which signals that the tap ran against a fetched page but produced output that violates its health contract.",
+      "rdfs:comment": "Doctor verdict on an assessing annotation — one of `healthy`, `broken`, `stale`, `layer-mismatch`, `unreachable`, `unverified`. `unreachable` signals that the target resource could not be fetched (DNS failure, timeout, network error) and is distinct from `broken`, which signals that the tap ran against a fetched page but produced output that violates its health contract. `unverified` signals that the tap's output passed its own health contract but no independent authoritative source was available to cross-check it; pair with `tap:suggest_authoritative` when a known-shape source for the target exists so consumers can close the verification gap.",
       "rdfs:range": { "@id": "xsd:string" },
       "rdfs:isDefinedBy": { "@id": "https://taprun.dev/ns/tap-v1" }
     },
@@ -198,6 +198,14 @@
       "rdfs:label": "jsonLdValues",
       "rdfs:comment": "Deduplicated list of Schema.org `@type` names observed in Layer-1 (JSON-LD) blocks at authoring time. Used by doctor as a cheap drift signal — if the set of declared `@type` tokens changes between forge and run, the page's structural contract has shifted. Cross-layer value validation (DOM-vs-JSON-LD disagreement → `layer-mismatch` verdict) uses the live fingerprint diff at doctor time rather than a stored field→value snapshot. Represented as `string[]`. Scope: forge-time fingerprint property, not persisted in a stored `.tap.json`.",
       "rdfs:domain": { "@id": "tap:SemanticHashState" },
+      "rdfs:isDefinedBy": { "@id": "https://taprun.dev/ns/tap-v1" }
+    },
+
+    {
+      "@id": "tap:suggest_authoritative",
+      "@type": "rdf:Property",
+      "rdfs:label": "suggest_authoritative",
+      "rdfs:comment": "Optional ready-to-embed `AuthoritativeSpec` payload appended to a doctor `assessing` annotation when verdict is `unverified` AND the tap's target resolves to a known-shape source (e.g. an HN/Reddit/GitHub endpoint, or a feed advertised by the page). Lets agents/scripts close the verification gap by copying the spec into the tap's `body.authoritative` field rather than hand-writing V config. Absent otherwise — doctor never emits an empty or fabricated suggestion. The shape is one of three variants: single-step JSON fetch, two-step JSON fetch, or Atom feed; each carries `row_mapping`, `match_key`, and per-field `comparators`.",
       "rdfs:isDefinedBy": { "@id": "https://taprun.dev/ns/tap-v1" }
     },
 

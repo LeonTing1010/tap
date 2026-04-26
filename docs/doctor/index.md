@@ -27,7 +27,7 @@ When higher-trust layers disagree with the layer the plan currently uses, doctor
 - Install Tap: <https://taprun.dev>
 - Source for the public format / spec: <https://github.com/LeonTing1010/tap>
 
-## Sample drift annotation
+## Sample doctor assessment
 
 ```json
 {
@@ -36,12 +36,14 @@ When higher-trust layers disagree with the layer the plan currently uses, doctor
     "https://taprun.dev/ns/tap-v1"
   ],
   "type": "Annotation",
-  "motivation": "tap:diagnosing",
-  "target": "https://github.com/trending",
+  "motivation": "assessing",
+  "target": "tap:github/trending",
   "body": {
-    "type": "tap:DriftReport",
-    "tap:layerDisagreement": {
-      "claim": "ItemList.numberOfItems = 15",
+    "tap:verdict": "layer-mismatch",
+    "tap:compiledFromLayer": 4,
+    "tap:recommendedLayer": 1,
+    "tap:crossValidation": {
+      "layer1Value": 25,
       "observedValue": 18,
       "disagreement": "ItemList.numberOfItems differs from extracted row count"
     },
@@ -50,9 +52,12 @@ When higher-trust layers disagree with the layer the plan currently uses, doctor
       "Current selector targets Layer 4 (CSS classes); higher-trust source available"
     ]
   },
-  "generator": { "id": "https://taprun.dev/doctor", "type": "SoftwareAgent" }
+  "generator": { "id": "https://taprun.dev/doctor", "type": "SoftwareAgent" },
+  "created": "2026-04-26T00:00:00Z"
 }
 ```
+
+The `motivation` is W3C-standard `"assessing"` — Tap does **not** mint a `tap:diagnosing` motivation; doctor reports ride the W3C envelope directly. See [`tap-v1` namespace](/ns/tap-v1/) for the full term list including verdict states (`healthy` / `broken` / `stale` / `layer-mismatch` / `unreachable` / `unverified`) and the optional `tap:suggest_authoritative` field.
 
 ## Related
 
