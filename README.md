@@ -100,6 +100,29 @@ Agent: Done. Run `tap douban/top250` anytime — $0 per run.
 
 Most taps work without login. For sites that need your session (Xiaohongshu, Zhihu, etc.), install the [Chrome Extension](https://chromewebstore.google.com/detail/tap/llcidejeoobdegbkolbjhfoeckphldce) from the Chrome Web Store.
 
+### Optional: Embed in your agent code (TypeScript / Python)
+
+Skip MCP — call Tap directly from your own loop:
+
+```ts
+import { run, doctor, forge } from "@taprun/sdk";
+const rows = await run("hackernews/top");
+```
+
+```python
+from taprun import run, doctor, forge
+rows = run("hackernews/top")
+```
+
+Compile from a [browser-use](https://github.com/browser-use/browser-use) trajectory at zero LLM tokens:
+
+```python
+from taprun import forge
+forge(trajectory=agent.history, site="example", name="dashboard")
+```
+
+Packages: [`@taprun/sdk`](https://www.npmjs.com/package/@taprun/sdk) (npm) · [`taprun`](https://pypi.org/project/taprun/) (PyPI).
+
 ## What Can You Do?
 
 **Read** — Extract data from any website
