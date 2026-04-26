@@ -1,0 +1,20 @@
+{
+  "name": "@taprun/spec",
+  "version": "0.3.0",
+  "license": "MIT",
+  "exports": "./src/index.ts",
+  "publish": {
+    "include": [
+      "src/**/*.ts",
+      "schemas/**/*.json",
+      "README.md",
+      "CHANGELOG.md",
+      "LICENSE"
+    ],
+    "exclude": [
+      "src/**/*.test.ts",
+      "node_modules",
+      "dist"
+    ]
+  }
+}

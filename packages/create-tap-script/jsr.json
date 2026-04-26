@@ -1,0 +1,23 @@
+{
+  "name": "@taprun/create-tap-script",
+  "version": "0.1.0",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/cli.ts",
+    "./create": "./src/create.ts"
+  },
+  "publish": {
+    "include": [
+      "src/**/*.ts",
+      "README.md",
+      "CHANGELOG.md",
+      "LICENSE"
+    ],
+    "exclude": [
+      "src/**/*.test.ts",
+      "test",
+      "node_modules",
+      "dist"
+    ]
+  }
+}
