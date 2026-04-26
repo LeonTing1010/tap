@@ -2499,20 +2499,26 @@ h2 .hl {
   </header>
 
   <p class="press-dateline">
-    <span>ISSUE Nº 13</span> &mdash; <em>The lifecycle compiler</em> &mdash; Authored once, replayed forever
+    <span>FOR</span> &mdash; <em>browser-use, Stagehand, computer-use, Playwright teams</em> &mdash; Compile once, replay forever
   </p>
 
   <h1 class="press-headline">
-    <span class="press-beat press-beat-1">Compile once.</span>
-    <span class="press-beat press-beat-2"><em>Keep</em> it forever.</span>
-    <span class="press-beat press-beat-3">Outrun the drift.</span>
+    <span class="press-beat press-beat-1">Your browser agent</span>
+    <span class="press-beat press-beat-2"><em>re-pays</em> the LLM</span>
+    <span class="press-beat press-beat-3">on every run.</span>
   </h1>
 
   <div class="press-dek-wrap">
-    <p class="press-byline">By the compiler &nbsp;&middot;&nbsp; Authored at <em>forge-time</em>, not runtime</p>
-    <p class="press-dek">
-      <span class="press-dropcap">T</span>he web rewrites itself while you sleep. Scrapers silently drift. Tap compiles a site&rsquo;s stable structural address once &mdash; JSON-LD, ARIA, OpenAPI &mdash; then replays it deterministically, forever. No AI at runtime. No prompt-injection surface. No token bill per execution. <em>The AI reads the page once, then never sees it again.</em>
-    </p>
+    <p class="press-byline">Tap compiles your <code>AgentHistory</code> into a deterministic plan &mdash; replays at <em>zero LLM tokens</em> for navigation.</p>
+    <pre class="press-code" style="background: rgba(20,17,12,0.04); border: 1px solid rgba(20,17,12,0.12); border-radius: 8px; padding: 18px 22px; margin: 20px 0 0; font-family: var(--font-mono); font-size: 14px; line-height: 1.65; color: var(--text); overflow-x: auto;"><code><span style="color: var(--text-muted);"># Run your browser-use agent once — pays full LLM cost.</span>
+result = await agent.run()
+
+<span style="color: var(--text-muted);"># Compile the trajectory. One-time ~1.1k tokens.</span>
+forge(trajectory=result.model_dump(), site=<span style="color: var(--indigo-bright);">"yc"</span>, name=<span style="color: var(--indigo-bright);">"apply"</span>)
+
+<span style="color: var(--text-muted);"># Replay forever — 0 LLM tokens, ~200ms.</span>
+rows = run(<span style="color: var(--indigo-bright);">"yc/apply"</span>)
+verdict = doctor(<span style="color: var(--indigo-bright);">"yc/apply"</span>)  <span style="color: var(--text-muted);"># 'ok' | 'broken' | 'stale'</span></code></pre>
   </div>
 
   <div class="press-ornament">✦ &nbsp; ✦ &nbsp; ✦</div>
@@ -2520,18 +2526,18 @@ h2 .hl {
   <div class="press-chapters">
     <article class="press-chapter">
       <span class="press-chapter-num">§ I.</span>
-      <h3 class="press-chapter-title">Compile</h3>
-      <p>AI reads the page once at authoring time and chooses a structural address &mdash; not a CSS selector. A plan is set in type.</p>
+      <h3 class="press-chapter-title">The math</h3>
+      <p>100 reruns of a typical multi-step flow: <em>browser-use $4.20</em>, <em>Tap $0.003</em>. Crossover at run 2. Token figures use Claude Sonnet rates as of 2026-04.</p>
     </article>
     <article class="press-chapter">
       <span class="press-chapter-num">§ II.</span>
-      <h3 class="press-chapter-title">Replay</h3>
-      <p>Any agent runs the plan. Deterministic, repeatable, free of inference. Your scraper from three months ago still returns today&rsquo;s rows today.</p>
+      <h3 class="press-chapter-title">Scope, plainly</h3>
+      <p>v1 compiles browser-use <code>AgentHistory</code> &mdash; <em>navigation always replays at 0 tokens</em>. Extraction is also free at Tier 0 destinations (RSS, JSON-LD, agents.json, OpenAPI). Stagehand &amp; Anthropic computer-use on the roadmap.</p>
     </article>
     <article class="press-chapter">
       <span class="press-chapter-num">§ III.</span>
-      <h3 class="press-chapter-title">Diff</h3>
-      <p>When the site changes, <code>tap doctor</code> triangulates across four layers and tells you &mdash; before production does.</p>
+      <h3 class="press-chapter-title">Drift</h3>
+      <p><code>tap doctor</code> independently fetches the authoritative source and diffs &mdash; catches drift a self-replay can&rsquo;t see. Pro tier replays cached patches at 0 tokens; misses fall back to a minimal-patch LLM call.</p>
     </article>
   </div>
 
