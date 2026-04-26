@@ -6,6 +6,9 @@
     ".": "./src/cli.ts",
     "./create": "./src/create.ts"
   },
+  "compilerOptions": {
+    "lib": ["dom", "deno.ns", "esnext"]
+  },
   "publish": {
     "include": [
       "src/**/*.ts",

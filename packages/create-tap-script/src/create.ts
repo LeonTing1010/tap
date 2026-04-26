@@ -1,6 +1,7 @@
 /**
  * Pure helpers — no I/O, no process exits. Tested via node --test.
  */
+import process from "node:process";
 
 export interface ParsedArgs {
   site: string;

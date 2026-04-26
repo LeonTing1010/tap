@@ -22,6 +22,7 @@ import { writeFile, mkdir } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import process from "node:process";
 
 import { buildStarterPlan, parseArgs, type ParsedArgs } from "./create.ts";
 
