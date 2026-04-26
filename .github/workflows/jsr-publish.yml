@@ -83,6 +83,14 @@ jobs:
           for pkg in ${{ steps.target.outputs.list }}; do
             echo "::group::publishing @taprun/$pkg"
             cd "packages/$pkg"
+            # If the package declares a node_modules-style dir (e.g.
+            # create-tap-script needs @types/node to resolve `node:*`
+            # imports), pre-install so `deno publish` can typecheck.
+            if grep -q '"nodeModulesDir"' deno.json 2>/dev/null \
+               || grep -q '"nodeModulesDir"' jsr.json 2>/dev/null; then
+              echo "deno install (nodeModulesDir present)"
+              deno install --entrypoint src/*.ts || deno install || true
+            fi
             # --allow-slow-types: the .ts source has some inferred
             # return types that don't pass JSR's "explicit types"
             # bar; doesn't affect runtime, only auto-doc richness.
