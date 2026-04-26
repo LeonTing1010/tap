@@ -6,13 +6,35 @@ on:
     paths:
       - "packages/**"
       - "package.json"
+      - "docs/spec/plan-v1.schema.json"
       - ".github/workflows/packages.yml"
   pull_request:
     paths:
       - "packages/**"
       - "package.json"
+      - "docs/spec/plan-v1.schema.json"
 
 jobs:
+  schema-deploy-drift:
+    # Asserts the JSON Schema served at https://taprun.dev/spec/plan-v1.schema.json
+    # is byte-equivalent to the source-of-truth in @taprun/spec. The two files
+    # must stay equal because the schema's own $id points at the deployed URL —
+    # if the deploy lags, downstream validators that fetch by $id resolve to
+    # the wrong revision.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Diff source schema vs deployed copy
+        run: |
+          set -e
+          src=packages/spec/schemas/plan-v1.schema.json
+          dst=docs/spec/plan-v1.schema.json
+          if ! diff -u "$src" "$dst"; then
+            echo "::error::$dst drifted from $src — run 'cp $src $dst' and commit."
+            exit 1
+          fi
+          echo "OK: $src == $dst"
+
   test:
     runs-on: ubuntu-latest
     steps:
