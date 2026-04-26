@@ -1,0 +1,104 @@
+name: jsr-publish
+
+# JSR publishing for the 5 @taprun/* packages.
+#
+# How it works:
+#   - JSR uses GitHub OIDC (no secrets in this workflow)
+#   - For OIDC to authenticate, the LeonTing1010/tap repo must be
+#     linked to the @taprun scope on jsr.io:
+#       1. Visit https://jsr.io/@taprun/~/settings
+#       2. Under "Connected GitHub repositories" add LeonTing1010/tap
+#     One-time setup; then every workflow run authenticates automatically
+#     and the publish carries a verified GitHub provenance attestation.
+#
+# When it runs:
+#   - Manual: Actions tab → "jsr-publish" → "Run workflow" → pick package
+#   - Tag-based: push a tag like `jsr-spec-v0.4.0` to publish that one
+#
+# Versioning expectation:
+#   The version in each package's jsr.json (or deno.json for
+#   create-tap-script) is the source of truth. Bump it BEFORE running
+#   this workflow — JSR rejects re-publishes of the same version.
+
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: "Which package to publish"
+        type: choice
+        required: true
+        default: all
+        options:
+          - all
+          - spec
+          - from-playwright
+          - from-puppeteer
+          - from-stagehand
+          - create-tap-script
+  push:
+    tags:
+      - "jsr-spec-v*"
+      - "jsr-from-playwright-v*"
+      - "jsr-from-puppeteer-v*"
+      - "jsr-from-stagehand-v*"
+      - "jsr-create-tap-script-v*"
+
+permissions:
+  contents: read
+  id-token: write   # required for JSR OIDC
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Resolve which package(s) to publish
+        id: target
+        run: |
+          set -e
+          # Tag pattern: jsr-<pkg>-v<x.y.z>
+          if [[ "${GITHUB_REF}" == refs/tags/jsr-* ]]; then
+            tag="${GITHUB_REF#refs/tags/jsr-}"
+            pkg="${tag%-v*}"
+            echo "list=$pkg" >> "$GITHUB_OUTPUT"
+            echo "Tag-driven publish for: $pkg"
+          else
+            input="${{ github.event.inputs.package }}"
+            if [[ "$input" == "all" ]]; then
+              echo "list=spec from-playwright from-puppeteer from-stagehand create-tap-script" >> "$GITHUB_OUTPUT"
+            else
+              echo "list=$input" >> "$GITHUB_OUTPUT"
+            fi
+            echo "Manual dispatch — packages: $input"
+          fi
+
+      - name: Publish to JSR
+        run: |
+          set -e
+          for pkg in ${{ steps.target.outputs.list }}; do
+            echo "::group::publishing @taprun/$pkg"
+            cd "packages/$pkg"
+            # --allow-slow-types: the .ts source has some inferred
+            # return types that don't pass JSR's "explicit types"
+            # bar; doesn't affect runtime, only auto-doc richness.
+            # Future polish: annotate return types and drop this flag.
+            deno publish --allow-slow-types
+            cd -
+            echo "::endgroup::"
+          done
+
+      - name: Verify packages live on JSR
+        run: |
+          for pkg in ${{ steps.target.outputs.list }}; do
+            url="https://jsr.io/@taprun/$pkg"
+            code=$(curl -sS -o /dev/null -w "%{http_code}" "$url")
+            echo "$url → HTTP $code"
+            if [[ "$code" != "200" ]]; then
+              echo "::warning::JSR registry hasn't propagated $pkg yet (CDN delay normal — recheck in 30s)"
+            fi
+          done
