@@ -1,47 +1,125 @@
 /**
  * @taprun/spec — Tap plan-v1 format spec.
  *
- * STATE: Iteration 1 RED stub. The actual exports land in Iteration 2 of
- * the distribution flywheel reconstruction (Addendum B, Slice 1).
+ * Public TypeScript types + W3C Web Annotation MUST-level validator for
+ * compiled `.tap.json` plans. Use this package to typecheck or validate
+ * Tap plans without depending on the closed Tap CLI.
  *
- * Once GREEN, this module exports:
+ * Spec doc:    https://taprun.dev/spec/plan-v1/
+ * Vocabulary:  https://taprun.dev/ns/tap-v1/
  *
- *   - ExecutionPlan        (the body of a .tap.json envelope)
- *   - TapAnnotation        (the W3C Annotation envelope wrapping ExecutionPlan)
- *   - OP_NAMES, OpName     (closed union of plan ops)
- *   - validateAnnotation() (zero-import W3C MUST-level validator)
- *   - All op interfaces (FetchOp, NavOp, WaitOp, ...)
+ * Source-of-truth: vendored byte-equivalent from core/compose/plan.ts,
+ * core/compose/annotation.ts, core/compose/annotation_validator.ts in
+ * the closed tap-core repo. Drift guarded by spec_extraction_test.ts.
+ *
+ * What's in scope (PUBLIC):
+ *   - ExecutionPlan        body of a .tap.json envelope
+ *   - TapAnnotation        W3C Annotation envelope wrapping ExecutionPlan
+ *   - OP_NAMES, OpName     closed union of plan ops
+ *   - All op interfaces (FetchOp, NavOp, WaitOp, ExtractOp, ...)
  *   - HealthContract, AuthoritativeSpec, ArgSpec
+ *   - validateAnnotation() zero-runtime-dep W3C MUST-level validator
+ *   - W3C Annotation types (Selector, State, Target, Annotation)
+ *   - Pure helpers (selectorLayer, isSelector, isAnnotation)
+ *   - Constants (W3C_ANNO, TAP_NS)
  *
- * Source of truth: core/core/compose/plan.ts +
- *                  core/core/compose/annotation_validator.ts
- * Public spec doc: https://taprun.dev/spec/plan-v1/
- * Vocabulary IRI:  https://taprun.dev/ns/tap-v1/
- *
- * Why this package exists: third-party tools (Playwright→Tap adapters,
- * Stagehand→Tap adapters, alternative runtimes, governance layers like
- * APS) need to consume the .tap.json format without depending on private
- * tap-core. This package is the public surface.
- *
- * Closed/open boundary (CLAUDE.md):
- *   PUBLIC — types, envelope shape, validator, op union
- *   PRIVATE — forge AI compile, doctor semantic verifier, heal pipeline
+ * What's NOT in scope (lives in the proprietary Tap CLI):
+ *   - forge: compiling URLs / natural language into plans
+ *   - doctor: semantic 4-layer cross-validation against authoritative sources
+ *   - heal: AI-driven plan repair
+ *   - identity, auth, runtime execution
  */
 
-// TODO(iter-2): re-export from the type source-of-truth in core/compose/plan.ts
-//
-// The Iteration 2 plan:
-//   1. Run a build script that copies core/compose/plan.ts → src/plan.ts
-//      with all `import type { Target } from "./annotation.ts"` rewires.
-//   2. Copy core/compose/annotation.ts (Target type only) → src/annotation.ts
-//   3. Copy core/compose/annotation_validator.ts → src/annotation_validator.ts
-//      (already zero-import — this is a clean copy)
-//   4. Re-export from this index.ts.
-//   5. The build script lives at scripts/sync-from-core.ts and runs in CI
-//      before publish. It also runs the source equality check that the
-//      RED test in core/src/test/spec_extraction_test.ts asserts.
-//
-// We do not vendor `core/compose/plan.ts` by hand-copy because that would
-// drift. The sync script is the single source of truth.
+// Plan types — ExecutionPlan body, op closed-union, AuthoritativeSpec.
+export type {
+  // Envelope / plan body
+  ExecutionPlan,
+  TapAnnotation,
+  // Op interfaces
+  BaseOp,
+  FetchOp,
+  NavOp,
+  WaitOp,
+  InputOp,
+  ExtractOp,
+  ExtractSpec,
+  EvalOp,
+  ExecOp,
+  ParseXmlOp,
+  CookiesOp,
+  ScreenshotOp,
+  ScrollOp,
+  ComputeOp,
+  FilterOp,
+  ProjectOp,
+  SortOp,
+  DedupeOp,
+  PickOp,
+  LimitOp,
+  ConcatOp,
+  PipeOp,
+  IfOp,
+  ForeachOp,
+  ParallelOp,
+  TapOp,
+  // Op union + name token type
+  Op,
+  OpName,
+  // Plan body sub-shapes
+  ArgSpec,
+  HealthContract,
+  FieldComparator,
+  AuthoritativeSpec,
+  AuthoritativeFetchJson,
+  AuthoritativeFetchJsonTwoStep,
+  AuthoritativeFetchAtom,
+  // Expression aliases
+  JsonataExpr,
+  Templated,
+} from "./plan.ts";
 
-export {};
+// Op name closed union — runtime value, used by validators and serializers.
+export { OP_NAMES } from "./plan.ts";
+
+// W3C Web Annotation Data Model — types + pure helpers.
+export type {
+  Motivation,
+  SelectorType,
+  FragmentSelector,
+  CssSelector,
+  XPathSelector,
+  TextQuoteSelector,
+  TextPositionSelector,
+  DataPositionSelector,
+  SvgSelector,
+  RangeSelector,
+  JsonPathSelector,
+  Selector,
+  TimeState,
+  HttpRequestState,
+  SemanticHashState,
+  State,
+  SpecificResource,
+  Target,
+  Annotation,
+  AnnotationCollection,
+} from "./annotation.ts";
+
+export {
+  // Context constants
+  W3C_ANNO,
+  TAP_NS,
+  // Pure helpers
+  selectorLayer,
+  isSelector,
+  isAnnotation,
+} from "./annotation.ts";
+
+// W3C MUST-level validator — zero runtime dependencies.
+export { validateAnnotation } from "./annotation_validator.ts";
+
+export type {
+  ValidationError,
+  ValidationWarning,
+  ValidationResult,
+} from "./annotation_validator.ts";
