@@ -1,0 +1,49 @@
+{
+  "name": "create-tap-script",
+  "version": "0.1.0",
+  "description": "Scaffold a starter .tap.json plan in seconds. Run via `npx create-tap-script <site>/<name> <url>`.",
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "bin": {
+    "create-tap-script": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc && chmod +x dist/cli.js",
+    "test": "node --test 'test/**/*.test.mjs'",
+    "prepublishOnly": "npm run build"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "tap",
+    "taprun",
+    "scaffold",
+    "create",
+    "starter",
+    "browser-automation",
+    "drift-detection",
+    "plan-v1"
+  ],
+  "homepage": "https://taprun.dev/?utm_source=npm&utm_medium=package&utm_campaign=create-tap-script",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LeonTing1010/tap.git",
+    "directory": "packages/create-tap-script"
+  },
+  "bugs": {
+    "url": "https://github.com/LeonTing1010/tap/issues"
+  },
+  "license": "MIT",
+  "author": "Leon Ting <noreply@taprun.dev>",
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "@types/node": "^22.0.0"
+  }
+}
