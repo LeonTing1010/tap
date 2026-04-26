@@ -2816,9 +2816,9 @@ $ <span class="k">tap doctor</span> example/login                               
   .onramp-intro h2 { font-family: var(--font-heading); font-weight: 800; font-size: clamp(28px, 4vw, 40px); letter-spacing: -0.03em; line-height: 1.18; color: var(--white); margin-bottom: 16px; }
   .onramp-intro p { font-size: 16.5px; line-height: 1.7; color: var(--text-dim); }
   .onramp-intro p code { background: rgba(20, 17, 12, 0.1); padding: 2px 7px; border-radius: 5px; color: var(--indigo-bright); font-size: 0.9em; }
-  .onramp-grid { display: grid; grid-template-columns: 1fr; gap: 18px; max-width: 1100px; margin: 0 auto 64px; }
-  @media (min-width: 720px) { .onramp-grid { grid-template-columns: repeat(2, 1fr); } }
-  @media (min-width: 1024px) { .onramp-grid { grid-template-columns: repeat(4, 1fr); } }
+  .onramp-grid { display: grid; grid-template-columns: 1fr; gap: 18px; max-width: 1180px; margin: 0 auto 64px; }
+  @media (min-width: 640px) { .onramp-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 1100px) { .onramp-grid { grid-template-columns: repeat(4, 1fr); gap: 14px; } }
   .onramp-card { background: var(--bg-card); border: 1px solid rgba(255,255,255,0.05); border-radius: var(--radius-lg); padding: 24px 22px; display: flex; flex-direction: column; gap: 12px; transition: border-color 0.3s, transform 0.3s; }
   .onramp-card:hover { border-color: rgba(99, 102, 241, 0.4); transform: translateY(-2px); }
   .onramp-card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
@@ -2884,7 +2884,6 @@ $ <span class="k">tap doctor</span> example/login                               
           <h3>@taprun/from-playwright</h3>
           <div class="badges">
             <a href="https://www.npmjs.com/package/@taprun/from-playwright" target="_blank" rel="noopener"><img src="https://img.shields.io/npm/v/@taprun/from-playwright?style=flat-square&label=npm&color=6366f1" alt="npm version"></a>
-            <a href="https://www.npmjs.com/package/@taprun/from-playwright" target="_blank" rel="noopener"><img src="https://img.shields.io/npm/dw/@taprun/from-playwright?style=flat-square&label=weekly&color=818cf8" alt="weekly downloads"></a>
           </div>
         </div>
         <p class="tag">Convert Playwright .ts/.js scripts to .tap.json. 8 page.* APIs mapped 1:1.</p>
@@ -2898,7 +2897,6 @@ npm i @taprun/from-playwright</code></pre>
           <h3>@taprun/from-puppeteer</h3>
           <div class="badges">
             <a href="https://www.npmjs.com/package/@taprun/from-puppeteer" target="_blank" rel="noopener"><img src="https://img.shields.io/npm/v/@taprun/from-puppeteer?style=flat-square&label=npm&color=6366f1" alt="npm version"></a>
-            <a href="https://www.npmjs.com/package/@taprun/from-puppeteer" target="_blank" rel="noopener"><img src="https://img.shields.io/npm/dw/@taprun/from-puppeteer?style=flat-square&label=weekly&color=818cf8" alt="weekly downloads"></a>
           </div>
         </div>
         <p class="tag">Convert Puppeteer scripts. 7 page.* APIs + keyboard.press, page.type → fill semantics.</p>
@@ -2912,7 +2910,6 @@ npm i @taprun/from-puppeteer</code></pre>
           <h3>@taprun/from-stagehand</h3>
           <div class="badges">
             <a href="https://www.npmjs.com/package/@taprun/from-stagehand" target="_blank" rel="noopener"><img src="https://img.shields.io/npm/v/@taprun/from-stagehand?style=flat-square&label=npm&color=6366f1" alt="npm version"></a>
-            <a href="https://www.npmjs.com/package/@taprun/from-stagehand" target="_blank" rel="noopener"><img src="https://img.shields.io/npm/dw/@taprun/from-stagehand?style=flat-square&label=weekly&color=818cf8" alt="weekly downloads"></a>
           </div>
         </div>
         <p class="tag">Hybrid: deterministic page.* → plan ops. NL stagehand.act/extract → exec ops, allowUnverifiable.</p>
@@ -2926,7 +2923,6 @@ npm i @taprun/from-stagehand</code></pre>
           <h3>create-tap-script</h3>
           <div class="badges">
             <a href="https://www.npmjs.com/package/create-tap-script" target="_blank" rel="noopener"><img src="https://img.shields.io/npm/v/create-tap-script?style=flat-square&label=npm&color=6366f1" alt="npm version"></a>
-            <a href="https://www.npmjs.com/package/create-tap-script" target="_blank" rel="noopener"><img src="https://img.shields.io/npm/dw/create-tap-script?style=flat-square&label=weekly&color=818cf8" alt="weekly downloads"></a>
           </div>
         </div>
         <p class="tag">Scaffold a starter .tap.json envelope from &lt;site&gt;/&lt;name&gt; &lt;url&gt;. Output passes runConformance.</p>
