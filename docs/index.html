@@ -17,17 +17,17 @@
     gtag('config', 'G-RH14PQ10QK');
   })();
 </script>
-<title>Taprun — Compile once. Keep it forever. Outrun the drift.</title>
-<meta name="description" content="Browser automation that doesn't burn tokens every run. Taprun compiles the AI's understanding of a site once, replays it deterministically forever, and catches structural drift before your data goes stale. For teams tired of AI-at-runtime fragility.">
-<meta property="og:title" content="Taprun — Compile once. Keep it forever. Outrun the drift.">
-<meta property="og:description" content="AI at authoring time, not runtime. Zero prompt-injection surface, zero context loss, zero tokens per execution. When the site changes, Taprun tells you before production breaks.">
+<title>Taprun — Local-first browser automation that runs in your browser, not someone else's cloud</title>
+<meta name="description" content="Convert your Playwright, Puppeteer, or Stagehand script to a deterministic .tap.json plan in 30 seconds. Run it in your already-logged-in Chrome — cookies never leave your machine. Self-healing when sites change. Local by architecture, not policy.">
+<meta property="og:title" content="Taprun — Local-first browser automation">
+<meta property="og:description" content="Your Playwright script broke after LinkedIn redesigned again? Convert it to .tap.json in 30 seconds. Run it in your already-logged-in Chrome. Cookies never leave your machine.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://taprun.dev/">
 <meta property="og:image" content="https://taprun.dev/social-preview.svg">
 <meta property="og:image:width" content="1280">
 <meta property="og:image:height" content="640">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Taprun — Compile once. Keep it forever. Outrun the drift.">
+<meta name="twitter:title" content="Taprun — Local-first browser automation">
 <meta name="twitter:description" content="Browser automation that compiles once and runs forever. Zero tokens at runtime. Catches drift before it breaks.">
 <meta name="twitter:image" content="https://taprun.dev/social-preview.svg">
 <meta name="keywords" content="AI coding agent protocol, MCP, model context protocol, Chrome extension, Playwright, tap protocol, forge, deterministic automation, sandbox, automatic diagnostics, macOS automation, doctor, fingerprint, website automation, AI agent, web scraping, browser automation, API auto-detection, JSON-LD, RSS, OpenAPI">
@@ -1739,15 +1739,35 @@ h2 .hl {
 
 .pricing-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 1px;
   background: rgba(255,255,255,0.04);
   border-radius: var(--radius-lg);
   overflow: hidden;
   border: 1px solid rgba(255,255,255,0.06);
-  max-width: 980px;
+  max-width: 1240px;
   margin: 0 auto;
 }
+@media (max-width: 1080px) {
+  .pricing-grid { grid-template-columns: repeat(2, 1fr); max-width: 720px; }
+}
+.pricing-compliance {
+  max-width: 1240px;
+  margin: 24px auto 0;
+  padding: 22px 28px;
+  background: var(--bg-card);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+.pricing-compliance-text { flex: 1 1 320px; min-width: 280px; }
+.pricing-compliance-text strong { color: var(--white); font-family: var(--font-heading); font-weight: 700; font-size: 16px; letter-spacing: -0.01em; }
+.pricing-compliance-text span { display: block; margin-top: 4px; font-size: 13.5px; color: var(--text-dim); line-height: 1.5; }
+.pricing-compliance .price-btn { white-space: nowrap; }
 
 .price-card {
   background: var(--bg-card);
@@ -2493,32 +2513,34 @@ h2 .hl {
       <span class="masthead-sep">·</span>
       <span>THE INTERFACE COMPILER</span>
       <span class="masthead-sep">·</span>
-      <span>EDITION 0.13 / LOCAL-FIRST / ZERO TOKENS AT RUNTIME</span>
+      <span>EDITION 0.14 / LOCAL-FIRST BY ARCHITECTURE / 5 NPM PACKAGES LIVE</span>
     </div>
     <div class="masthead-double"></div>
   </header>
 
   <p class="press-dateline">
-    <span>FOR</span> &mdash; <em>browser-use, Stagehand, computer-use, Playwright teams</em> &mdash; Compile once, replay forever
+    <span>FOR</span> &mdash; <em>solo SaaS founders, Playwright/Puppeteer teams, privacy-bound automators</em> &mdash; Browser stays yours.
   </p>
 
   <h1 class="press-headline">
-    <span class="press-beat press-beat-1">Your browser agent</span>
-    <span class="press-beat press-beat-2"><em>re-pays</em> the LLM</span>
-    <span class="press-beat press-beat-3">on every run.</span>
+    <span class="press-beat press-beat-1">Your scraper broke</span>
+    <span class="press-beat press-beat-2">when LinkedIn <em>redesigned</em></span>
+    <span class="press-beat press-beat-3">— again.</span>
   </h1>
 
   <div class="press-dek-wrap">
-    <p class="press-byline">Tap compiles your <code>AgentHistory</code> into a deterministic plan &mdash; replays at <em>zero LLM tokens</em> for navigation.</p>
-    <pre class="press-code" style="background: rgba(20,17,12,0.04); border: 1px solid rgba(20,17,12,0.12); border-radius: 8px; padding: 18px 22px; margin: 20px 0 0; font-family: var(--font-mono); font-size: 14px; line-height: 1.65; color: var(--text); overflow-x: auto;"><code><span style="color: var(--text-muted);"># Run your browser-use agent once — pays full LLM cost.</span>
-result = await agent.run()
+    <p class="press-byline">Convert your existing Playwright / Puppeteer / Stagehand source to a deterministic <code>.tap.json</code> plan in 30 seconds. Run it in <em>your already-logged-in Chrome</em>. Cookies never leave your machine — by architecture, not policy.</p>
+    <pre class="press-code" style="background: rgba(20,17,12,0.04); border: 1px solid rgba(20,17,12,0.12); border-radius: 8px; padding: 18px 22px; margin: 20px 0 0; font-family: var(--font-mono); font-size: 14px; line-height: 1.65; color: var(--text); overflow-x: auto;"><code><span style="color: var(--text-muted);"># 1. Convert your existing Playwright test (no rewrite).</span>
+npm install @taprun/from-playwright @taprun/spec
+node -e <span style="color: var(--indigo-bright);">"import('@taprun/from-playwright').then(m =&gt; \
+  console.log(m.playwrightToTap(require('fs').readFileSync('tests/login.spec.ts','utf8'), \
+    {site:'example', name:'login'})))"</span> &gt; example/login.tap.json
 
-<span style="color: var(--text-muted);"># Compile the trajectory. One-time ~1.1k tokens.</span>
-forge(trajectory=result.model_dump(), site=<span style="color: var(--indigo-bright);">"yc"</span>, name=<span style="color: var(--indigo-bright);">"apply"</span>)
+<span style="color: var(--text-muted);"># 2. Run in your real Chrome — cookies stay local.</span>
+tap run example/login                       <span style="color: var(--text-muted);"># 0 LLM tokens, deterministic.</span>
 
-<span style="color: var(--text-muted);"># Replay forever — 0 LLM tokens, ~200ms.</span>
-rows = run(<span style="color: var(--indigo-bright);">"yc/apply"</span>)
-verdict = doctor(<span style="color: var(--indigo-bright);">"yc/apply"</span>)  <span style="color: var(--text-muted);"># 'ok' | 'broken' | 'stale'</span></code></pre>
+<span style="color: var(--text-muted);"># 3. Site changed? Doctor catches drift before your data does.</span>
+tap doctor example/login                    <span style="color: var(--text-muted);"># 'ok' | 'broken' | 'stale'</span></code></pre>
   </div>
 
   <div class="press-ornament">✦ &nbsp; ✦ &nbsp; ✦</div>
@@ -2631,6 +2653,149 @@ verdict = doctor(<span style="color: var(--indigo-bright);">"yc/apply"</span>)  
         </div>
       </article>
 
+    </div>
+  </div>
+</section>
+
+<!-- ===== Adapter onramp + Local-first vs Cloud-first (the distribution flywheel) ===== -->
+<style>
+  .onramp { padding: 88px 0 64px; position: relative; border-top: 1px solid rgba(20, 17, 12, 0.05); }
+  .onramp-intro { max-width: 760px; margin: 0 auto 48px; text-align: center; }
+  .onramp-intro .section-tag { justify-content: center; margin: 0 auto 14px; display: inline-flex; }
+  .onramp-intro h2 { font-family: var(--font-heading); font-weight: 800; font-size: clamp(28px, 4vw, 40px); letter-spacing: -0.03em; line-height: 1.18; color: var(--white); margin-bottom: 16px; }
+  .onramp-intro p { font-size: 16.5px; line-height: 1.7; color: var(--text-dim); }
+  .onramp-intro p code { background: rgba(20, 17, 12, 0.1); padding: 2px 7px; border-radius: 5px; color: var(--indigo-bright); font-size: 0.9em; }
+  .onramp-grid { display: grid; grid-template-columns: 1fr; gap: 18px; max-width: 1100px; margin: 0 auto 64px; }
+  @media (min-width: 720px) { .onramp-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 1024px) { .onramp-grid { grid-template-columns: repeat(4, 1fr); } }
+  .onramp-card { background: var(--bg-card); border: 1px solid rgba(255,255,255,0.05); border-radius: var(--radius-lg); padding: 24px 22px; display: flex; flex-direction: column; gap: 12px; transition: border-color 0.3s, transform 0.3s; }
+  .onramp-card:hover { border-color: rgba(99, 102, 241, 0.4); transform: translateY(-2px); }
+  .onramp-card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .onramp-card h3 { font-family: var(--font-mono); font-size: 13.5px; font-weight: 600; color: var(--white); margin: 0; letter-spacing: -0.01em; }
+  .onramp-card .ver { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 1px 6px; }
+  .onramp-card p.tag { font-size: 13px; line-height: 1.55; color: var(--text-dim); margin: 0; min-height: 38px; }
+  .onramp-card pre { background: var(--bg-deep); border: 1px solid rgba(255,255,255,0.04); border-radius: 6px; padding: 9px 11px; margin: 0; overflow-x: auto; }
+  .onramp-card pre code { font-family: var(--font-mono); font-size: 11.5px; color: var(--text); white-space: pre; }
+  .onramp-card pre code .c { color: var(--text-muted); }
+  .onramp-card .npm-link { font-family: var(--font-mono); font-size: 11px; color: var(--indigo-bright); text-decoration: none; margin-top: auto; }
+  .onramp-card .npm-link:hover { text-decoration: underline; }
+
+  .vs-table-wrap { max-width: 1000px; margin: 0 auto; }
+  .vs-table-head { text-align: center; margin-bottom: 32px; }
+  .vs-table-head h3 { font-family: var(--font-heading); font-weight: 800; font-size: clamp(22px, 3vw, 30px); letter-spacing: -0.02em; color: var(--white); margin-bottom: 10px; }
+  .vs-table-head p { font-size: 15px; color: var(--text-dim); }
+  .vs-table { width: 100%; border-collapse: collapse; background: var(--bg-card); border: 1px solid rgba(255,255,255,0.06); border-radius: var(--radius-lg); overflow: hidden; }
+  .vs-table th, .vs-table td { padding: 14px 16px; text-align: left; font-size: 14px; line-height: 1.5; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  .vs-table th { font-family: var(--font-heading); font-weight: 700; font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-muted); background: rgba(255,255,255,0.02); }
+  .vs-table th:nth-child(2), .vs-table td:nth-child(2) { color: var(--text-dim); }
+  .vs-table th:nth-child(3), .vs-table td:nth-child(3) { color: var(--white); border-left: 2px solid var(--indigo-bright); background: rgba(99,102,241,0.04); font-weight: 500; }
+  .vs-table tr:last-child th, .vs-table tr:last-child td { border-bottom: none; }
+  .vs-table td:first-child { color: var(--text-muted); font-family: var(--font-mono); font-size: 12.5px; }
+  .vs-foot { text-align: center; margin-top: 28px; font-size: 13.5px; color: var(--text-dim); }
+  .vs-foot a { color: var(--indigo-bright); text-decoration: none; border-bottom: 1px dotted rgba(165,180,252,0.4); }
+  .vs-foot a:hover { border-bottom-color: var(--indigo-bright); }
+</style>
+<section class="onramp" id="onramp">
+  <div class="container">
+    <div class="onramp-intro reveal">
+      <div class="section-tag">Bring your existing scripts</div>
+      <h2>You already have a Playwright / Puppeteer / Stagehand script.<br>Don't rewrite it. Convert it.</h2>
+      <p>Five npm packages — one format spec, three converters, one scaffolder. Drop your existing source in. Get a Tap-compatible <code>.tap.json</code> plan back. Run it in your real browser. <em>Your cookies and your code never cross a trust boundary.</em></p>
+    </div>
+
+    <div class="onramp-grid reveal">
+      <div class="onramp-card">
+        <div class="onramp-card-head">
+          <h3>@taprun/from-playwright</h3>
+          <span class="ver">0.1.0</span>
+        </div>
+        <p class="tag">Convert Playwright .ts/.js scripts to .tap.json. 8 page.* APIs mapped 1:1.</p>
+        <pre><code><span class="c"># 47M weekly downloads — most likely the SDK you have</span>
+npm i @taprun/from-playwright</code></pre>
+        <a class="npm-link" href="https://www.npmjs.com/package/@taprun/from-playwright" target="_blank" rel="noopener">npmjs.com →</a>
+      </div>
+
+      <div class="onramp-card">
+        <div class="onramp-card-head">
+          <h3>@taprun/from-puppeteer</h3>
+          <span class="ver">0.1.0</span>
+        </div>
+        <p class="tag">Convert Puppeteer scripts. 7 page.* APIs + keyboard.press, page.type → fill semantics.</p>
+        <pre><code><span class="c"># Legacy scrapers welcome</span>
+npm i @taprun/from-puppeteer</code></pre>
+        <a class="npm-link" href="https://www.npmjs.com/package/@taprun/from-puppeteer" target="_blank" rel="noopener">npmjs.com →</a>
+      </div>
+
+      <div class="onramp-card">
+        <div class="onramp-card-head">
+          <h3>@taprun/from-stagehand</h3>
+          <span class="ver">0.1.0</span>
+        </div>
+        <p class="tag">Hybrid: deterministic page.* → plan ops. NL stagehand.act/extract → exec ops, allowUnverifiable.</p>
+        <pre><code><span class="c"># Honest about which steps need an LLM</span>
+npm i @taprun/from-stagehand</code></pre>
+        <a class="npm-link" href="https://www.npmjs.com/package/@taprun/from-stagehand" target="_blank" rel="noopener">npmjs.com →</a>
+      </div>
+
+      <div class="onramp-card">
+        <div class="onramp-card-head">
+          <h3>create-tap-script</h3>
+          <span class="ver">0.1.0</span>
+        </div>
+        <p class="tag">Scaffold a starter .tap.json envelope from &lt;site&gt;/&lt;name&gt; &lt;url&gt;. Output passes runConformance.</p>
+        <pre><code><span class="c"># One command. One starter. Ready to customize.</span>
+npx create-tap-script gh/x https://github.com</code></pre>
+        <a class="npm-link" href="https://www.npmjs.com/package/create-tap-script" target="_blank" rel="noopener">npmjs.com →</a>
+      </div>
+    </div>
+
+    <div class="vs-table-wrap reveal">
+      <div class="vs-table-head">
+        <h3>Local-first <span style="color: var(--text-muted); font-weight: 600;">vs</span> Cloud-first browser SDKs</h3>
+        <p>The same task, two architectures. The trust boundary lives in different places.</p>
+      </div>
+      <table class="vs-table">
+        <thead>
+          <tr>
+            <th>Concern</th>
+            <th>Cloud-first SDK<br><span style="font-weight:400; text-transform:none; letter-spacing:0; font-size:11.5px;">(Stagehand+Browserbase, Apify, Browserless)</span></th>
+            <th>Taprun<br><span style="font-weight:400; text-transform:none; letter-spacing:0; font-size:11.5px;">(local-first by architecture)</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Where do logged-in cookies live?</td>
+            <td>On the cloud vendor's servers</td>
+            <td>Only in your local browser</td>
+          </tr>
+          <tr>
+            <td>What does the AI see?</td>
+            <td>Full session + your data on every run</td>
+            <td>Only the page DOM during forge time (one-time)</td>
+          </tr>
+          <tr>
+            <td>Compliance with TOS / robots.txt</td>
+            <td>Vendor signs ToS for you (or you for them)</td>
+            <td>Your account, your terms — by you</td>
+          </tr>
+          <tr>
+            <td>Internal / intranet sites</td>
+            <td>Need VPN tunneling into the cloud</td>
+            <td>Just open the page (already on your network)</td>
+          </tr>
+          <tr>
+            <td>What happens if the vendor goes down?</td>
+            <td>Your scrapers stop</td>
+            <td>Local code keeps running</td>
+          </tr>
+          <tr>
+            <td>Plan format portability</td>
+            <td>Locked to vendor SDK</td>
+            <td><code>.tap.json</code> data — version, grep, audit, port</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="vs-foot">Architectural tradeoff, not a marketing claim. <a href="/local-first/">Read the full local-first argument →</a></p>
     </div>
   </div>
 </section>
@@ -2920,8 +3085,8 @@ verdict = doctor(<span style="color: var(--indigo-bright);">"yc/apply"</span>)  
   <div class="container">
     <div class="pricing-header">
       <div class="section-tag reveal">Pricing</div>
-      <h2 class="reveal">You run it. AI creates it. <span class="hl">Taps run themselves.</span></h2>
-      <p class="section-desc reveal">Free in your AI agent. $9 when you want AI to create taps for you. $29 when you want taps to fix themselves. 3-day free trial on every feature &mdash; no credit card.</p>
+      <h2 class="reveal"><span class="hl">$0</span> to run. <span class="hl">$19</span> to capture. <span class="hl">$49</span> to self-heal.</h2>
+      <p class="section-desc reveal">The format spec, all five npm packages, the runtime, and the Chrome extension are free forever. AI compile and AI repair are paid. Team and Compliance for orgs. <em>Every tier runs on your machine.</em></p>
     </div>
 
     <div class="pricing-grid reveal">
@@ -2930,69 +3095,99 @@ verdict = doctor(<span style="color: var(--indigo-bright);">"yc/apply"</span>)  
         <div class="price-rung">
           <span class="rung-num">01</span>
           <span class="rung-line"></span>
-          <span class="rung-label">Free</span>
+          <span class="rung-label">Spec &amp; Run</span>
         </div>
         <div class="price-amount"><span class="currency">$</span>0</div>
-        <div class="price-label">You run it.</div>
-        <p class="price-poem">65+ taps, free inside Claude Code, Cursor, or your terminal. Install, run, done.</p>
+        <div class="price-label">Free forever.</div>
+        <p class="price-poem">Format spec. All adapters. Chrome extension. CLI runtime. Basic structural verify. The full distribution flywheel — $0.</p>
         <div class="price-divider"></div>
         <ul class="price-features">
-          <li><span class="bullet">+</span> <strong>65+ community skills</strong> in any MCP agent (Claude Code, Cursor, Windsurf)</li>
-          <li><span class="bullet">+</span> <code>tap forge &lt;url&gt;</code> &mdash; create taps from terminal (sites with API/JSON-LD/RSS compile without AI)</li>
-          <li><span class="bullet">+</span> <code>tap doctor</code> &mdash; health checks + fingerprint diff + diagnostics</li>
-          <li><span class="bullet">+</span> <code>tap watch</code> &mdash; monitor changes, pipe to anywhere</li>
-          <li><span class="bullet">+</span> BYOK forge (Claude, GPT, DeepSeek, Ollama) &mdash; your key, your model</li>
-          <li><span class="bullet">+</span> 3-day free trial on any paid feature &mdash; no credit card</li>
+          <li><span class="bullet">+</span> <code>@taprun/spec</code> — types, JSON Schema, conformance suite</li>
+          <li><span class="bullet">+</span> <code>@taprun/from-{playwright,puppeteer,stagehand}</code> — converters</li>
+          <li><span class="bullet">+</span> <code>create-tap-script</code> — npx scaffolder</li>
+          <li><span class="bullet">+</span> Chrome extension — login-session bridge</li>
+          <li><span class="bullet">+</span> <code>tap run</code> — deterministic <code>.tap.json</code> execution</li>
+          <li><span class="bullet">+</span> <code>tap doctor</code> structural fingerprint check</li>
+          <li><span class="bullet">+</span> 140+ community taps via <a href="https://github.com/LeonTing1010/tap-skills" style="color:var(--indigo-bright);text-decoration:underline;">tap-skills</a></li>
         </ul>
         <a href="#install" class="price-btn price-btn--outline">Install Free</a>
+      </div>
+
+      <div class="price-card">
+        <div class="price-rung">
+          <span class="rung-num">02</span>
+          <span class="rung-line"></span>
+          <span class="rung-label">Capture</span>
+        </div>
+        <div class="price-amount"><span class="currency">$</span>19<span class="period">/mo</span></div>
+        <div class="price-label">AI compiles for you.</div>
+        <p class="price-poem">Point it at a URL or describe the task — your agent inspects the page, picks the strongest selector layer, and emits a deterministic plan. BYOK.</p>
+        <div class="price-divider"></div>
+        <ul class="price-features">
+          <li><span class="bullet">+</span> Everything in Spec &amp; Run</li>
+          <li><span class="bullet">+</span> <strong>AI forge</strong> — natural-language → <code>.tap.json</code> via Claude/GPT/Ollama</li>
+          <li><span class="bullet">+</span> Up to <strong>5 plans</strong> in fleet</li>
+          <li><span class="bullet">+</span> <code>tap schedule</code> + Slack/webhook drift alerts</li>
+          <li><span class="bullet">+</span> Works in Claude Code, Cursor, Cline, Windsurf — any MCP host</li>
+        </ul>
+        <a href="https://api.taprun.dev/checkout?plan=hacker" class="price-btn price-btn--outline">Start Capturing</a>
       </div>
 
       <div class="price-card price-card--featured">
         <div class="price-sticker">Most Popular</div>
         <div class="price-rung price-rung--gold">
-          <span class="rung-num">02</span>
+          <span class="rung-num">03</span>
           <span class="rung-line"></span>
-          <span class="rung-label">Hacker</span>
+          <span class="rung-label">Repair</span>
         </div>
-        <div class="price-amount"><span class="currency">$</span>9<span class="period">/mo</span></div>
-        <div class="price-label">AI creates for you.</div>
-        <p class="price-poem">"Make me a tap for Hacker News." Your agent inspects the page, writes the code, verifies it works &mdash; all in one chat.</p>
+        <div class="price-amount"><span class="currency">$</span>49<span class="period">/mo</span></div>
+        <div class="price-label">Plans heal themselves.</div>
+        <p class="price-poem">Site changed? Doctor's 4-layer cross-validation flags it. Heal AI rewrites the broken op while you sleep. Cache replays patches at 0 tokens.</p>
         <div class="price-divider"></div>
         <ul class="price-features">
-          <li><span class="bullet">+</span> Everything in Free</li>
-          <li><span class="bullet">+</span> <strong>AI forge in your agent:</strong> <code>inspect → draft → verify → save</code> in one conversation</li>
-          <li><span class="bullet">+</span> Your agent reads the page, picks the best strategy, and writes a tap that runs forever at $0</li>
-          <li><span class="bullet">+</span> When a tap breaks, your agent reads diagnostics and patches it in place</li>
-          <li><span class="bullet">+</span> Works in Claude Code, Cursor, Windsurf, Codex &mdash; any MCP host</li>
+          <li><span class="bullet">+</span> Everything in Capture</li>
+          <li><span class="bullet">+</span> <strong>Auto-heal</strong> — drift detected → minimal-patch AI → cached replay</li>
+          <li><span class="bullet">+</span> Up to <strong>20 plans</strong> in fleet</li>
+          <li><span class="bullet">+</span> Semantic 4-layer verify (JSON-LD / OpenAPI / sitemap cross-check)</li>
+          <li><span class="bullet">+</span> Heal history + drift report archive</li>
+          <li><span class="bullet">+</span> 100% local — heal runs on your machine</li>
         </ul>
-        <a href="https://api.taprun.dev/checkout?plan=hacker" class="price-btn price-btn--gold">Start Hacking</a>
+        <a href="https://api.taprun.dev/checkout?plan=pro" class="price-btn price-btn--gold">Get Repair</a>
       </div>
 
       <div class="price-card">
         <div class="price-rung">
-          <span class="rung-num">03</span>
+          <span class="rung-num">04</span>
           <span class="rung-line"></span>
-          <span class="rung-label">Pro</span>
+          <span class="rung-label">Team</span>
         </div>
-        <div class="price-amount"><span class="currency">$</span>29<span class="period">/mo</span></div>
-        <div class="price-label">Taps run themselves.</div>
-        <p class="price-poem">Your taps break? They fix themselves overnight. Sites change? Baselines auto-update. You sleep, Taprun works &mdash; <strong>on your machine, not ours</strong>.</p>
+        <div class="price-amount"><span class="currency">$</span>199<span class="period">/mo</span></div>
+        <div class="price-label">Shared fleet.</div>
+        <p class="price-poem">Multiple seats. Shared <code>.tap.json</code> registry. Audit logs of every doctor verdict + heal action. SSO. Same local-first runtime.</p>
         <div class="price-divider"></div>
         <ul class="price-features">
-          <li><span class="bullet">+</span> Everything in Hacker</li>
-          <li><span class="bullet">+</span> <strong>Self-maintaining taps</strong> &mdash; auto-repair when broken, auto-refresh when stale, 24/7 on your schedule</li>
-          <li><span class="bullet">+</span> <code>tap schedule</code> &mdash; cron-driven headless runs on your VPS, NAS, Mac mini, or CI runner</li>
-          <li><span class="bullet">+</span> <strong>Team server</strong> &mdash; multiple AI agents (Claude Code + Cursor + n8n) share one Taprun daemon</li>
-          <li><span class="bullet">+</span> Slack + webhook alerts on failures and heals</li>
-          <li><span class="bullet">+</span> <strong>100% local-first</strong> &mdash; runs on your machine, never ours. <a href="https://github.com/LeonTing1010/tap/blob/main/SECURITY.md" style="color:var(--indigo-bright);text-decoration:underline;">security policy</a></li>
+          <li><span class="bullet">+</span> Everything in Repair</li>
+          <li><span class="bullet">+</span> Up to <strong>100 plans</strong>, multi-user</li>
+          <li><span class="bullet">+</span> SSO (Google / Okta / GitHub)</li>
+          <li><span class="bullet">+</span> Audit log — every forge / doctor / heal / refresh</li>
+          <li><span class="bullet">+</span> Shared plan registry across the team</li>
+          <li><span class="bullet">+</span> Priority support, SLA on response times</li>
         </ul>
-        <a href="https://api.taprun.dev/checkout?plan=pro" class="price-btn price-btn--outline">Get Pro &rarr;</a>
+        <a href="https://api.taprun.dev/checkout?plan=team" class="price-btn price-btn--outline">Get Team &rarr;</a>
       </div>
 
     </div>
 
+    <div class="pricing-compliance reveal">
+      <div class="pricing-compliance-text">
+        <strong>Compliance — custom pricing</strong>
+        <span>On-prem deployment, SOC2-ready audit trail, HIPAA-compatible local execution, custom SLA. For regulated cohorts (legal, healthcare, finance) where data must not cross a vendor boundary.</span>
+      </div>
+      <a href="mailto:hello@taprun.dev?subject=Taprun Compliance" class="price-btn price-btn--outline">Talk to us</a>
+    </div>
+
     <p class="pricing-proof reveal">
-      <code>tap v0.13.0</code><span class="proof-sep">·</span>deterministic execution<span class="proof-sep">·</span><code>$0</code>/run
+      <code>tap v0.14</code><span class="proof-sep">·</span>5 npm packages live<span class="proof-sep">·</span>local execution<span class="proof-sep">·</span><code>$0</code>/run on free tier
     </p>
   </div>
 </section>
@@ -3043,10 +3238,11 @@ verdict = doctor(<span style="color: var(--indigo-bright);">"yc/apply"</span>)  
       <path d="M 145 140 L 175 185 L 155 180 L 140 145 Z" fill="#818CF8"/>
       <path d="M 150 145 L 180 190 L 162 185 L 148 150 Z" fill="#6366F1"/>
     </svg>
-    <h2>Compile once. Keep it forever.<br><span class="hl">Outrun the drift.</span></h2>
-    <p class="section-desc">Your programs on your disk. Your browser with your sessions. Zero tokens per run. When the site changes, you hear about it first.</p>
+    <h2>Browser automation that runs in <span class="hl">your browser,</span><br>not someone else's cloud.</h2>
+    <p class="section-desc">Your programs on your disk. Your browser with your sessions. Zero tokens per run. <em>Cookies never leave your machine — by architecture.</em> When the site changes, you hear about it first.</p>
     <div class="hero-actions">
       <a href="#install" class="btn btn-primary">Install in 2 Minutes</a>
+      <a href="/local-first/" class="btn btn-ghost">Why local-first →</a>
       <a href="https://github.com/LeonTing1010/tap" class="btn btn-ghost">View on GitHub</a>
     </div>
   </div>
