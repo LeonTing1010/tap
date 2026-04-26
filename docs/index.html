@@ -2833,6 +2833,28 @@ $ <span class="k">tap doctor</span> example/login                               
   .onramp-card .npm-link { font-family: var(--font-mono); font-size: 11px; color: var(--indigo-bright); text-decoration: none; margin-top: auto; }
   .onramp-card .npm-link:hover { text-decoration: underline; }
 
+  /* Before/After demo panel for adapter onramp */
+  .demo-wrap { max-width: 1100px; margin: 0 auto 64px; }
+  .demo-head { text-align: center; margin-bottom: 28px; }
+  .demo-head h3 { font-family: var(--font-heading); font-weight: 800; font-size: clamp(20px, 2.6vw, 26px); letter-spacing: -0.02em; color: var(--white); margin-bottom: 8px; }
+  .demo-head p { font-size: 14px; color: var(--text-dim); }
+  .demo-grid { display: grid; grid-template-columns: 1fr; gap: 18px; }
+  @media (min-width: 900px) { .demo-grid { grid-template-columns: 1fr auto 1fr; align-items: stretch; } }
+  .demo-panel { background: var(--bg-card); border: 1px solid rgba(255,255,255,0.06); border-radius: var(--radius-lg); overflow: hidden; display: flex; flex-direction: column; }
+  .demo-label { display: flex; align-items: center; gap: 8px; padding: 12px 18px; border-bottom: 1px solid rgba(255,255,255,0.05); font-family: var(--font-mono); font-size: 12px; color: var(--text-muted); letter-spacing: 0.04em; text-transform: uppercase; }
+  .demo-label .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); }
+  .demo-panel.before .dot { background: #f87171; }
+  .demo-panel.after .dot { background: #4ade80; }
+  .demo-panel pre { margin: 0; padding: 18px 22px; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.7; color: var(--text); white-space: pre; overflow-x: auto; flex: 1; }
+  .demo-panel pre .c { color: var(--text-muted); }
+  .demo-panel pre .s { color: #a5b4fc; }
+  .demo-panel pre .k { color: #c4b5fd; }
+  .demo-panel pre .n { color: #fbbf24; }
+  .demo-arrow { display: none; align-self: center; font-family: var(--font-mono); font-size: 14px; color: var(--indigo-bright); padding: 0 4px; white-space: nowrap; }
+  @media (min-width: 900px) { .demo-arrow { display: block; } }
+  .demo-foot { text-align: center; margin-top: 22px; font-size: 13px; color: var(--text-muted); }
+  .demo-foot code { background: rgba(20, 17, 12, 0.1); padding: 2px 7px; border-radius: 5px; color: var(--indigo-bright); font-size: 0.9em; }
+
   .vs-table-wrap { max-width: 1000px; margin: 0 auto; }
   .vs-table-head { text-align: center; margin-bottom: 32px; }
   .vs-table-head h3 { font-family: var(--font-heading); font-weight: 800; font-size: clamp(22px, 3vw, 30px); letter-spacing: -0.02em; color: var(--white); margin-bottom: 10px; }
@@ -2912,6 +2934,52 @@ npm i @taprun/from-stagehand</code></pre>
 npx create-tap-script gh/x https://github.com</code></pre>
         <a class="npm-link" href="https://www.npmjs.com/package/create-tap-script" target="_blank" rel="noopener">npmjs.com →</a>
       </div>
+    </div>
+
+    <div class="demo-wrap reveal">
+      <div class="demo-head">
+        <h3>What the adapter actually does</h3>
+        <p>30 seconds of Playwright source in, a deterministic <code>.tap.json</code> plan out. <em>Site-specific selectors preserved 1:1.</em></p>
+      </div>
+      <div class="demo-grid">
+        <div class="demo-panel before">
+          <div class="demo-label"><span class="dot"></span>Before — your existing Playwright (.spec.ts)</div>
+<pre><code><span class="c">// tests/login.spec.ts — what you already have</span>
+<span class="k">import</span> { test } <span class="k">from</span> <span class="s">"@playwright/test"</span>;
+
+test(<span class="s">"login"</span>, <span class="k">async</span> ({ page }) =&gt; {
+  <span class="k">await</span> page.goto(<span class="s">"https://app.example.com/login"</span>);
+  <span class="k">await</span> page.fill(<span class="s">"#email"</span>, <span class="s">"alice@example.com"</span>);
+  <span class="k">await</span> page.fill(<span class="s">"#password"</span>, process.env.PW);
+  <span class="k">await</span> page.click(<span class="s">"button[type='submit']"</span>);
+  <span class="k">await</span> page.waitForSelector(<span class="s">".dashboard"</span>);
+});</code></pre>
+        </div>
+        <div class="demo-arrow">→ <span style="color: var(--text-muted); font-size: 11px;">npm i @taprun/from-playwright</span> →</div>
+        <div class="demo-panel after">
+          <div class="demo-label"><span class="dot"></span>After — example/login.tap.json (auto-generated)</div>
+<pre><code>{
+  <span class="s">"@context"</span>: [<span class="s">"http://www.w3.org/ns/anno.jsonld"</span>,
+               <span class="s">"https://taprun.dev/ns/tap-v1"</span>],
+  <span class="s">"type"</span>: <span class="s">"Annotation"</span>,
+  <span class="s">"motivation"</span>: <span class="s">"tap:executing"</span>,
+  <span class="s">"target"</span>: <span class="s">"https://app.example.com/login"</span>,
+  <span class="s">"body"</span>: {
+    <span class="s">"type"</span>: <span class="s">"tap:ExecutionPlan"</span>,
+    <span class="s">"site"</span>: <span class="s">"example"</span>, <span class="s">"name"</span>: <span class="s">"login"</span>,
+    <span class="s">"intent"</span>: <span class="s">"write"</span>,
+    <span class="s">"ops"</span>: [
+      { <span class="s">"op"</span>: <span class="s">"nav"</span>, <span class="s">"url"</span>: <span class="s">"https://app.example.com/login"</span> },
+      { <span class="s">"op"</span>: <span class="s">"input"</span>, <span class="s">"kind"</span>: <span class="s">"fill"</span>, <span class="s">"target"</span>: <span class="s">"#email"</span>, <span class="s">"value"</span>: <span class="s">"alice@example.com"</span> },
+      { <span class="s">"op"</span>: <span class="s">"input"</span>, <span class="s">"kind"</span>: <span class="s">"fill"</span>, <span class="s">"target"</span>: <span class="s">"#password"</span>, <span class="s">"value"</span>: <span class="s">"{{env.PW}}"</span> },
+      { <span class="s">"op"</span>: <span class="s">"input"</span>, <span class="s">"kind"</span>: <span class="s">"click"</span>, <span class="s">"target"</span>: <span class="s">"button[type='submit']"</span> },
+      { <span class="s">"op"</span>: <span class="s">"wait"</span>, <span class="s">"selector"</span>: <span class="s">".dashboard"</span> }
+    ]
+  }
+}</code></pre>
+        </div>
+      </div>
+      <p class="demo-foot">Run with <code>tap run example/login</code> in your real Chrome. Doctor catches drift before your data does. <a href="/spec/plan-v1/" style="color: var(--indigo-bright); text-decoration: none; border-bottom: 1px dotted rgba(165,180,252,0.4);">Format reference →</a></p>
     </div>
 
     <div class="vs-table-wrap reveal">
