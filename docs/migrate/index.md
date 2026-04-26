@@ -11,9 +11,11 @@ layout: default
 
 ## What this agent does
 
-`tap migrate` is the one-way translator that lifts pre-`v1` plan files into the canonical `plan-v1` envelope. Migrations preserve all observable behaviour and never invent ops; anything the legacy format expressed that has no clean `plan-v1` op becomes `{ op: "exec", allowUnverifiable: true }` so the consumer knows the step needs review.
+`migrate` is the internal one-way translator inside the Tap CLI that lifts legacy `.tap.js` plan files into the canonical `plan-v1` W3C Annotation envelope. It runs automatically — there is no user-facing `tap migrate` command. Plans are migrated on the path that needs them (e.g. `handleSavePlan`, fingerprint baselining, fleet refresh), and the resulting `.tap.json` carries `"generator": { "id": "https://taprun.dev/migrate" }` so consumers can distinguish a migrated plan from one that was freshly forged.
 
-A migrated plan that no longer matches site behaviour is a candidate for re-forge: `tap forge <site>/<name>` will produce a fresh plan from the current page, and `tap doctor` can pinpoint exactly which migrated step diverged.
+Migrations preserve all observable behaviour and never invent ops. Anything the legacy `.tap.js` source expressed that has no clean `plan-v1` op becomes `{ op: "exec", allowUnverifiable: true }` carrying the original function body, so the consumer knows the step needs review or a re-forge.
+
+A migrated plan that no longer matches site behaviour is a candidate for re-forge: `tap forge <site>/<name>` produces a fresh deterministic plan from the current page, and [`tap doctor`](/doctor/) can pinpoint exactly which migrated step diverged.
 
 ## Where it ships
 
@@ -55,4 +57,5 @@ A migrated plan that no longer matches site behaviour is a candidate for re-forg
 
 - [`plan-v1` reference](/spec/plan-v1/) — the target format
 - [`tap-v1` namespace](/ns/tap-v1/) — the JSON-LD vocabulary
+- [`tap forge`](/forge/) — the agent that produces fresh (non-migrated) plans
 - [`tap doctor`](/doctor/) — the drift detector for migrated plans
