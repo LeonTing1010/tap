@@ -9,6 +9,8 @@ layout: default
 
 > Stable identifier (`SoftwareAgent.id`) for the [`@taprun/from-playwright`](https://jsr.io/@taprun/from-playwright) adapter. Every `.tap.json` plan compiled from a Playwright source carries `"generator": { "id": "https://taprun.dev/from-playwright", "type": "SoftwareAgent" }` so any W3C Web Annotation consumer can dereference the producer.
 
+Part of the [**Capture**](/capture/) plane — one of Tap's three primitive planes (Capture / Replay / Verify).
+
 ## What this adapter does
 
 Convert Playwright tests into local-first `.tap.json` plans, no rewrite. Maps the deterministic page-level APIs (`page.goto`, `.click`, `.fill`, `.type`, `.press`, `.waitForSelector`, `.waitForTimeout`, `.screenshot`) to the plan-v1 op union. Anything outside that surface becomes `{ op: "exec", allowUnverifiable: true }` preserving the original line, or throws under `strict: true`.

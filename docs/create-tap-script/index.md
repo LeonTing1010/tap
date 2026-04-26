@@ -9,6 +9,8 @@ layout: default
 
 > Stable identifier (`SoftwareAgent.id`) for the [`create-tap-script`](https://jsr.io/@taprun/create-tap-script) scaffolder. Every starter `.tap.json` plan produced by the CLI carries `"generator": { "id": "https://taprun.dev/create-tap-script", "type": "SoftwareAgent" }` so any W3C Web Annotation consumer can dereference the producer.
 
+Part of the [**Capture**](/capture/) plane — one of Tap's three primitive planes (Capture / Replay / Verify).
+
 ## What this tool does
 
 Scaffold a starter `.tap.json` plan in one command:

@@ -9,6 +9,8 @@ layout: default
 
 > Stable identifier (`SoftwareAgent.id`) for the [`@taprun/from-stagehand`](https://jsr.io/@taprun/from-stagehand) adapter. Every `.tap.json` plan compiled from a Stagehand source carries `"generator": { "id": "https://taprun.dev/from-stagehand", "type": "SoftwareAgent" }` so any W3C Web Annotation consumer can dereference the producer.
 
+Part of the [**Capture**](/capture/) plane — one of Tap's three primitive planes (Capture / Replay / Verify).
+
 ## What this adapter does
 
 Convert Stagehand scripts to `.tap.json` and run them locally — keep your `act()` / `extract()` calls, drop the cloud dependency. Hybrid mode:

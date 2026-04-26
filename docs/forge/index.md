@@ -7,7 +7,7 @@ layout: default
 
 # tap forge
 
-> Stable identifier (`SoftwareAgent.id`) for the **forge** agent. Plans compiled by `tap forge <url|"description">` carry `"generator": { "id": "https://taprun.dev/forge", "type": "SoftwareAgent" }` so consumers can dereference the producer.
+> Stable identifier (`SoftwareAgent.id`) for the **forge** agent. Forge is the headline tool of the [**Capture**](/capture/) plane — one of Tap's three primitive planes (Capture / Replay / Verify). Plans compiled by `tap forge <url|"description">` carry `"generator": { "id": "https://taprun.dev/forge", "type": "SoftwareAgent" }` so consumers can dereference the producer.
 
 ## What this agent does
 

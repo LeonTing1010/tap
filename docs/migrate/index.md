@@ -7,7 +7,7 @@ layout: default
 
 # tap migrate
 
-> Stable identifier (`SoftwareAgent.id`) for the **migrate** agent. Plans that have been mechanically translated from a legacy plan format into the current `plan-v1` W3C Annotation envelope carry `"generator": { "id": "https://taprun.dev/migrate", "type": "SoftwareAgent" }` so consumers can distinguish migrated plans from freshly-forged ones.
+> Stable identifier (`SoftwareAgent.id`) for the **migrate** module. Migrate is a Capture-plane utility (one of Tap's three primitive planes: [Capture](/capture/) / [Replay](/replay/) / [Verify](/verify/)) that lifts legacy `.tap.js` plans into the current `plan-v1` envelope. Plans translated this way carry `"generator": { "id": "https://taprun.dev/migrate", "type": "SoftwareAgent" }` so consumers can distinguish migrated plans from freshly-forged ones.
 
 ## What this agent does
 

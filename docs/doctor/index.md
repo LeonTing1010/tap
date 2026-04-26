@@ -7,7 +7,7 @@ layout: default
 
 # tap doctor
 
-> Stable identifier (`SoftwareAgent.id`) for the **doctor** subsystem of the proprietary Tap CLI. Drift-detection annotations and 4-layer semantic cross-validation reports carry `"generator": { "id": "https://taprun.dev/doctor", "type": "SoftwareAgent" }` so consumers can dereference the producer.
+> Stable identifier (`SoftwareAgent.id`) for the **doctor** agent. Doctor is the headline tool of the [**Verify**](/verify/) plane — one of Tap's three primitive planes (Capture / Replay / Verify). Drift-detection annotations and 4-layer semantic cross-validation reports carry `"generator": { "id": "https://taprun.dev/doctor", "type": "SoftwareAgent" }` so consumers can dereference the producer.
 
 ## What this agent does
 

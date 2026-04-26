@@ -9,6 +9,8 @@ layout: default
 
 > Stable identifier (`SoftwareAgent.id`) for the [`@taprun/from-puppeteer`](https://jsr.io/@taprun/from-puppeteer) adapter. Every `.tap.json` plan compiled from a Puppeteer source carries `"generator": { "id": "https://taprun.dev/from-puppeteer", "type": "SoftwareAgent" }` so any W3C Web Annotation consumer can dereference the producer.
 
+Part of the [**Capture**](/capture/) plane — one of Tap's three primitive planes (Capture / Replay / Verify).
+
 ## What this adapter does
 
 Convert Puppeteer scripts into local-first `.tap.json` plans, no rewrite. Maps the seven most common page-level APIs (`page.goto`, `.click`, `.type`, `.keyboard.press`, `.waitForSelector`, `.waitForTimeout`, `.screenshot`) to the plan-v1 op union. Anything outside that surface becomes `{ op: "exec", allowUnverifiable: true }` preserving the original line, or throws under `strict: true`.
