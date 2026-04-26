@@ -10,9 +10,9 @@ Take any Playwright `.ts/.js` script, get back a `.tap.json` envelope that `tap 
 
 ## Status
 
-**0.0.0 — Iteration 1 stub.** API and types are pinned; conversion lands in Iteration 2. Throws `PlaywrightConversionError("not-implemented")` until then.
+**0.1.0** — MVP works. `page.goto / click / fill / type / press / waitForSelector / waitForTimeout / screenshot` are mapped to plan-v1 ops. Anything else permissively becomes `{ op: "exec" }` preserving the original line, or throws under `strict: true`.
 
-## Usage (planned)
+## Usage
 
 ```ts
 import { readFile, writeFile } from "fs/promises";
@@ -34,17 +34,27 @@ await writeFile("github/search.tap.json", JSON.stringify(plan, null, 2));
 
 ## Scope
 
-| Playwright API | → plan-v1 op | Iteration |
+| Playwright API | → plan-v1 op | Status |
 |---|---|---|
-| `page.goto(url)` | `{ op: "nav", url }` | 2 |
-| `page.click(selector)` | `{ op: "input", kind: "click", target }` | 2 |
-| `page.fill(s, v)` | `{ op: "input", kind: "fill", target, value }` | 2 |
-| `page.type(s, v)` | `{ op: "input", kind: "type", target, value }` | 2 |
-| `page.press(s, k)` | `{ op: "input", kind: "press", target, value: k }` | 2 |
-| `page.locator(s).textContent()` | `{ op: "extract", root, per_item: { text: "" } }` | 3 |
-| `page.waitForSelector(s)` | `{ op: "wait", selector }` | 2 |
-| `page.waitForTimeout(ms)` | `{ op: "wait", ms }` | 2 |
-| `page.screenshot()` | `{ op: "screenshot" }` | 3 |
+| `page.goto(url)` | `{ op: "nav", url }` | ✓ 0.1 |
+| `page.click(selector)` | `{ op: "input", kind: "click", target }` | ✓ 0.1 |
+| `page.fill(s, v)` | `{ op: "input", kind: "fill", target, value }` | ✓ 0.1 |
+| `page.type(s, v)` | `{ op: "input", kind: "type", target, value }` | ✓ 0.1 |
+| `page.press(s, k)` | `{ op: "input", kind: "press", target, value: k }` | ✓ 0.1 |
+| `page.waitForSelector(s)` | `{ op: "wait", selector }` | ✓ 0.1 |
+| `page.waitForTimeout(ms)` | `{ op: "wait", ms }` | ✓ 0.1 |
+| `page.screenshot()` | `{ op: "screenshot" }` | ✓ 0.1 |
+| `page.locator(s).textContent()` | `{ op: "extract", root, per_item: { text: "" } }` | planned 0.2 |
+| `page.evaluate(...)` | `{ op: "exec", allowUnverifiable: true }` (permissive) or throws (strict) | ✓ 0.1 |
+
+### MVP limitations
+
+The Iter-2 MVP uses a regex-then-string-literal scanner. Known gotchas:
+- Variable-bound selectors (`const sel = "..."; page.click(sel)`) — the scanner sees the variable name, not the value. Inline literals work; variables don't.
+- Template-string interpolation works only when the entire string is a literal. `\`${dynamic}\`` falls through to permissive `exec`.
+- Trailing line comments stay in the source visible to regex (they don't affect successful matches but may cause the unhandled-line warning to fire on commented-out calls).
+
+These will be addressed in 0.2 when the scanner upgrades to a real TypeScript AST walk.
 
 Out of scope (escaped via `{ op: "exec", fn: <original code>, allowUnverifiable: true }`):
 - Custom test fixtures
