@@ -91,15 +91,20 @@ jobs:
             # devDep (e.g. create-tap-script ships a Node CLI shim that
             # imports node:fs/promises etc.), npm-install it so
             # `deno publish` can resolve type references at typecheck.
+            extra_flags=""
             if [ -f package.json ] && grep -q '"@types/node"' package.json; then
               echo "npm install (@types/node devDep present)"
               npm install --no-audit --no-fund --silent
+              # npm install populates node_modules + may touch
+              # package-lock.json — deno publish sees that as dirty git
+              # state and aborts without --allow-dirty.
+              extra_flags="--allow-dirty"
             fi
             # --allow-slow-types: the .ts source has some inferred
             # return types that don't pass JSR's "explicit types"
             # bar; doesn't affect runtime, only auto-doc richness.
             # Future polish: annotate return types and drop this flag.
-            deno publish --allow-slow-types
+            deno publish --allow-slow-types $extra_flags
             cd -
             echo "::endgroup::"
           done
