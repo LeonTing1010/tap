@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 28.2.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 820 640" style="enable-background:new 0 0 820 640;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:#F4EDDE;}
+	.st1{fill:#14110C;}
+	.st2{font-family:'TimesNewRomanPS-BoldItalicMT';}
+	.st3{font-size:22px;}
+	.st4{fill:#7A6F60;}
+	.st5{font-family:'JetBrainsMonoNF-Regular';}
+	.st6{font-size:10.5px;}
+	.st7{letter-spacing:1;}
+	.st8{fill:none;stroke:#1C2D5A;stroke-width:1.5;stroke-dasharray:4,3;}
+	.st9{fill:#5DC7D0;}
+	.st10{font-size:14px;}
+	.st11{font-family:'TimesNewRomanPS-ItalicMT';}
+	.st12{font-size:17px;}
+	.st13{fill:#EDE4CE;stroke:#14110C;stroke-width:1.25;}
+	.st14{fill:#3B332A;}
+	.st15{font-size:11px;}
+	.st16{fill:#E7DCBE;stroke:#1C2D5A;stroke-width:2;}
+	.st17{font-family:'JetBrainsMonoNF-SemiBold';}
+	.st18{font-size:10px;}
+	.st19{opacity:0.6;fill:#EDE4CE;stroke:#14110C;stroke-width:1.25;stroke-dasharray:3,2;enable-background:new    ;}
+	.st20{fill:none;}
+	.st21{fill:#4EB74A;}
+	.st22{fill:#7E2B1C;}
+	.st23{font-family:'JetBrainsMonoNF-Medium';}
+	.st24{font-size:11.5px;}
+	.st25{fill:#A67A2E;}
+	.st26{fill:#3D5E3B;}
+	.st27{fill:#384E80;}
+	.st28{fill:none;stroke:#1C2D5A;stroke-width:1.75;stroke-dasharray:3,2;}
+	.st29{fill:#1C2D5A;}
+	.st30{font-family:'MyriadPro-Regular';}
+</style>
+<rect class="st0" width="820" height="640"/>
+<text transform="matrix(1 0 0 1 36 44)" class="st1 st2 st3">where tap lives</text>
+<text transform="matrix(1 0 0 1 36 62)" class="st4 st5 st6 st7">5 projects · 4 layers · 1 substrate</text>
+<path class="st8" d="M211.7,166h566.7c3.1,0,5.7,1.8,5.7,4v286c0,2.2-2.5,4-5.7,4H211.7c-3.1,0-5.7-1.8-5.7-4V170
+	C206,167.8,208.5,166,211.7,166z"/>
+<text transform="matrix(1 0 0 1 503.8015 182)" class="st9 st5 st10">tap</text>
+<text transform="matrix(1 0 0 1 36 106)" class="st4 st5 st6 st7">layer 1</text>
+<text transform="matrix(1 0 0 1 36 124)" class="st1 st11 st12">Agent</text>
+<path class="st13" d="M208,92h574c1.1,0,2,0.9,2,2v54c0,1.1-0.9,2-2,2H208c-1.1,0-2-0.9-2-2V94C206,92.9,206.9,92,208,92z"/>
+<text transform="matrix(1 0 0 1 220 118)" class="st14 st5 st15">Claude Code · Cursor · LangChain · browser-use</text>
+<text transform="matrix(1 0 0 1 220 135)" class="st14 st5 st15">decides what to do given the current page</text>
+<text transform="matrix(1 0 0 1 36 200)" class="st4 st5 st6 st7">layer 2</text>
+<text transform="matrix(1 0 0 1 36 218)" class="st1 st11 st12">Program</text>
+<path class="st16" d="M208,186h574c1.1,0,2,0.9,2,2v54c0,1.1-0.9,2-2,2H208c-1.1,0-2-0.9-2-2v-54C206,186.9,206.9,186,208,186z"/>
+<text transform="matrix(1 0 0 1 220 212)" class="st14 st17 st15">.tap.json — 24-op closed union (W3C Annotation envelope)</text>
+<text transform="matrix(1 0 0 1 220 229)" class="st14 st5 st15">the deterministic program · compile-once · doctor-verifiable</text>
+<text transform="matrix(1 0 0 1 36 296)" class="st4 st5 st6 st7">layer 3</text>
+<text transform="matrix(1 0 0 1 36 314)" class="st1 st11 st12">Adapters</text>
+<path class="st13" d="M208,282h114c1.1,0,2,0.9,2,2v54c0,1.1-0.9,2-2,2H208c-1.1,0-2-0.9-2-2v-54C206,282.9,206.9,282,208,282z"/>
+<text transform="matrix(1 0 0 1 251.8002 307)" class="st14 st17 st15">html</text>
+<text transform="matrix(1 0 0 1 235.0005 323)" class="st4 st5 st18">DOM · ARIA</text>
+<path class="st13" d="M336,282h114c1.1,0,2,0.9,2,2v54c0,1.1-0.9,2-2,2H336c-1.1,0-2-0.9-2-2v-54C334,282.9,334.9,282,336,282z"/>
+<text transform="matrix(1 0 0 1 383.1002 307)" class="st14 st17 st15">rss</text>
+<text transform="matrix(1 0 0 1 357.0005 323)" class="st4 st5 st18">Atom · feeds</text>
+<path class="st13" d="M464,282h114c1.1,0,2,0.9,2,2v54c0,1.1-0.9,2-2,2H464c-1.1,0-2-0.9-2-2v-54C462,282.9,462.9,282,464,282z"/>
+<text transform="matrix(1 0 0 1 501.2003 307)" class="st14 st17 st15">jsonld</text>
+<text transform="matrix(1 0 0 1 476.0007 323)" class="st4 st5 st18">structured data</text>
+<path class="st19" d="M591.9,282H698c1,0,1.9,0.9,1.9,2v54c0,1.1-0.8,2-1.9,2H591.9c-1,0-1.9-0.9-1.9-2v-54
+	C590,282.9,590.8,282,591.9,282z"/>
+<text transform="matrix(1 0 0 1 606.1006 307)" class="st14 st17 st15">mcp · openapi</text>
+<text transform="matrix(1 0 0 1 622.0005 323)" class="st4 st5 st18">phase A1+</text>
+<text transform="matrix(1 0 0 1 36 392)" class="st4 st5 st6 st7">layer 4</text>
+<text transform="matrix(1 0 0 1 36 410)" class="st1 st11 st12">Runtime</text>
+<path class="st13" d="M208,378h182c1.1,0,2,0.9,2,2v54c0,1.1-0.9,2-2,2H208c-1.1,0-2-0.9-2-2v-54C206,378.9,206.9,378,208,378z"/>
+<text transform="matrix(1 0 0 1 246.2008 403)" class="st14 st17 st15">chrome extension</text>
+<text transform="matrix(1 0 0 1 239.0009 419)" class="st4 st5 st18">runtime #1 · default</text>
+<path class="st13" d="M404,378h182c1.1,0,2,0.9,2,2v54c0,1.1-0.9,2-2,2H404c-1.1,0-2-0.9-2-2v-54C402,378.9,402.9,378,404,378z"/>
+<text transform="matrix(1 0 0 1 462.0005 403)" class="st14 st17 st15">playwright</text>
+<text transform="matrix(1 0 0 1 465.0005 419)" class="st4 st5 st18">runtime #2</text>
+<path class="st13" d="M600,378h182c1.1,0,2,0.9,2,2v54c0,1.1-0.9,2-2,2H600c-1.1,0-2-0.9-2-2v-54C598,378.9,598.9,378,600,378z"/>
+<text transform="matrix(1 0 0 1 664.6003 403)" class="st14 st17 st15">macos AX</text>
+<text transform="matrix(1 0 0 1 661.0005 419)" class="st4 st5 st18">runtime #3</text>
+<path class="st20" d="M370,464h250c11,0,20,9,20,20l0,0c0,11-9,20-20,20H370c-11,0-20-9-20-20l0,0C350,473,359,464,370,464z"/>
+<text transform="matrix(1 0 0 1 455.4006 489)" class="st21 st5 st10">the real web</text>
+<path class="st20" d=""/>
+<path class="st1" d="M499.4,176.1l-4.4,8.8l-4.4-8.8H499.4z"/>
+<path marker-end="url(#arrow)" class="st1" d="M495,184"/>
+<path class="st20" d=""/>
+<path class="st1" d="M499.4,272.1l-4.4,8.8l-4.4-8.8H499.4z"/>
+<path marker-end="url(#arrow)" class="st1" d="M495,280"/>
+<path class="st20" d=""/>
+<path class="st1" d="M499.4,368.1l-4.4,8.8l-4.4-8.8H499.4z"/>
+<path marker-end="url(#arrow)" class="st1" d="M495,376"/>
+<path class="st20" d=""/>
+<path class="st1" d="M499.4,454.1l-4.4,8.8l-4.4-8.8H499.4z"/>
+<path marker-end="url(#arrow)" class="st1" d="M495,462"/>
+<text transform="matrix(1 0 0 1 734.8606 106)" class="st4 st5 st6 st7">covers</text>
+<g transform="translate(36 540)">
+	<circle class="st22" cx="6" cy="-6" r="6"/>
+	<text transform="matrix(1 0 0 1 20 0)" class="st1 st23 st24">browser-use</text>
+	<text transform="matrix(1 0 0 1 20 14)" class="st4 st5 st18">layer 1 · LLM-at-runtime</text>
+</g>
+<g transform="translate(216 540)">
+	<circle class="st25" cx="6" cy="-6" r="6"/>
+	<text transform="matrix(1 0 0 1 20 0)" class="st1 st23 st24">Libretto</text>
+	<text transform="matrix(1 0 0 1 20 14)" class="st4 st5 st18">layer 2 · LLM emits Playwright JS</text>
+</g>
+<g transform="translate(396 540)">
+	<circle class="st26" cx="60" cy="-6" r="6"/>
+	<text transform="matrix(1 0 0 1 74 0)" class="st1 st23 st24">Browserbase · Steel</text>
+	<text transform="matrix(1 0 0 1 74 14)" class="st4 st5 st18">layer 4 · hosted browser + sessions</text>
+</g>
+<g transform="translate(36 588)">
+	<circle class="st27" cx="6" cy="-6" r="6"/>
+	<text transform="matrix(1 0 0 1 20 0)" class="st1 st23 st24">Playwright</text>
+	<text transform="matrix(1 0 0 1 20 14)" class="st4 st5 st18">layer 4 + BYO program (humans write selectors)</text>
+</g>
+<g transform="translate(396 588)">
+	<rect y="-12" class="st28" width="12" height="12"/>
+	<text transform="matrix(1 0 0 1 20 0)" class="st29 st23 st24">Tap</text>
+	<text transform="matrix(1 0 0 1 20 14)" class="st4 st5 st18">layers 2 + 3 + runtime selector · format is open · tool is closed</text>
+</g>
+<text transform="matrix(1 0 0 1 36 624)" class="st4 st5 st18">only Tap owns the program format · the format is documented at taprun.dev/spec/plan-v1/ · CC0 vocabulary at /ns/tap-v1/</text>
+<text transform="matrix(1 0 0 1 698.6475 336)" class="st30 st10">Lorem ipsum</text>
+</svg>

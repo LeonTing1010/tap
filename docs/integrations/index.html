@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tap Integrations — browser-use, Stagehand, MCP hosts, and more</title>
+<meta name="description" content="Tap integrations for AI agent frameworks. Compile your agent's browser-acting trajectory into a deterministic replay at zero LLM tokens.">
+<meta name="keywords" content="browser-use integration, Stagehand integration, Anthropic computer use, MCP integration, AI agent tools, browser agent replay">
+<link rel="canonical" href="https://taprun.dev/integrations/">
+<meta property="og:title" content="Tap Integrations — Compile AI agent trajectories into deterministic replays">
+<meta property="og:description" content="Integrations for browser-use, Stagehand, Anthropic computer-use, and MCP hosts.">
+<meta property="og:url" content="https://taprun.dev/integrations/">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://taprun.dev/social-preview.png">
+<meta name="twitter:card" content="summary_large_image">
+{% include head-common.html %}
+{% include blog-styles.html %}
+<style>
+  .int-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.25rem; margin: 2rem 0; }
+  .int-card { padding: 1.25rem 1.4rem; border: 1px solid #E5E7EB; border-radius: 8px; transition: border-color 0.15s; text-decoration: none; color: inherit; display: block; }
+  .int-card:hover { border-color: #6366F1; }
+  .int-card .badge { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; padding: 0.15rem 0.5rem; border-radius: 3px; display: inline-block; margin-bottom: 0.6rem; letter-spacing: 0.03em; }
+  .badge-live { background: #D1FAE5; color: #065F46; }
+  .badge-beta { background: #FEF3C7; color: #92400E; }
+  .badge-roadmap { background: #E5E7EB; color: #6B7280; }
+  .int-card h3 { margin: 0 0 0.5rem; font-size: 1.1rem; }
+  .int-card p { margin: 0; color: #4B5563; font-size: 0.93rem; line-height: 1.5; }
+  .int-card.disabled { cursor: default; opacity: 0.7; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header class="site-header">
+  <a href="/" class="brand"><span class="brand-mark">tap</span></a>
+  <nav class="site-nav">
+    <a href="/">Home</a>
+    <a href="/integrations/">Integrations</a>
+    <a href="/blog/">Blog</a>
+    <a href="https://github.com/LeonTing1010/tap">GitHub</a>
+  </nav>
+</header>
+
+<article>
+  <h1>Integrations</h1>
+
+  <p class="lede">
+    Tap is the layer between your AI agent and the websites it acts on.
+    Compile a trajectory once; replay it forever at zero LLM tokens.
+    These pages walk through the integration with each agent framework
+    and host.
+  </p>
+
+  <h2>Agent frameworks</h2>
+
+  <div class="int-grid">
+
+    <a class="int-card" href="/integrations/browser-use.html">
+      <span class="badge badge-live">LIVE</span>
+      <h3>browser-use</h3>
+      <p>
+        Compile an <code>AgentHistoryList</code> into a deterministic
+        plan. Navigation skeleton (go_to_url, click, input, scroll, wait,
+        done) replays at 0 LLM tokens. Tier 0 destinations also free for
+        extraction.
+      </p>
+    </a>
+
+    <div class="int-card disabled">
+      <span class="badge badge-roadmap">ROADMAP</span>
+      <h3>Stagehand</h3>
+      <p>
+        Trajectory schema mapping for <code>act</code>, <code>extract</code>,
+        and <code>observe</code> verbs. Same compile-once pattern;
+        primitives overlap with browser-use so the lift is mostly schema.
+        <a href="https://github.com/LeonTing1010/tap/issues">Vote on the issue.</a>
+      </p>
+    </div>
+
+    <div class="int-card disabled">
+      <span class="badge badge-roadmap">ROADMAP</span>
+      <h3>Anthropic computer-use</h3>
+      <p>
+        Compile raw <code>tool_use</code> + <code>tool_result</code>
+        trajectories. The screenshot-driven loop is heavier than
+        DOM-driven trajectories; navigation skeleton still reduces
+        deterministically once captured.
+      </p>
+    </div>
+
+    <div class="int-card disabled">
+      <span class="badge badge-roadmap">ROADMAP</span>
+      <h3>OpenAI computer-use</h3>
+      <p>
+        Same surface as Anthropic computer-use. Tracks the
+        <code>computer_call</code> action shape. Coming after Anthropic
+        lands.
+      </p>
+    </div>
+
+  </div>
+
+  <h2>MCP hosts</h2>
+
+  <p>
+    Tap ships its own MCP server. Run <code>tap mcp connect</code> to
+    auto-register with whichever host you use, or follow the host-specific
+    notes:
+  </p>
+
+  <div class="int-grid">
+
+    <a class="int-card" href="/blog/install-tap-in-any-mcp-host.html">
+      <span class="badge badge-live">LIVE</span>
+      <h3>Claude Code · Cursor · Cline · Windsurf</h3>
+      <p>
+        One <code>tap mcp connect</code> registers the server with all
+        common MCP hosts. The blog post covers manual config for hosts
+        that don't auto-discover.
+      </p>
+    </a>
+
+    <a class="int-card" href="/blog/mcp-authoring-zero-token-execution.html">
+      <span class="badge badge-live">LIVE</span>
+      <h3>MCP authoring patterns</h3>
+      <p>
+        Why MCP servers should expose compiled programs, not runtime
+        prompts. The Tap MCP server's design rationale.
+      </p>
+    </a>
+
+  </div>
+
+  <h2>What v1 compiles, plainly</h2>
+
+  <p>
+    Across every framework above, the v1 compile target is the same:
+  </p>
+
+  <ul>
+    <li><strong>Navigation skeleton</strong> (open URL, click, input,
+      scroll, wait, done) — always replays at 0 LLM tokens.</li>
+    <li><strong>Extraction</strong> — replays at 0 LLM tokens at Tier 0
+      destinations (RSS, Atom, JSON-LD, agents.json, OpenAPI). Layer 4
+      DOM extraction still costs tokens; only the navigation half saves.</li>
+    <li><strong>Drift detection</strong> via <code>doctor</code> — runs
+      independently of replay, against an authoritative source. Catches
+      what a self-replay can't.</li>
+  </ul>
+
+  <p>
+    For an honest scope walk-through with token math, start with the
+    <a href="/integrations/browser-use.html">browser-use page</a> — the
+    same shape applies to the other frameworks once the schema is
+    mapped.
+  </p>
+
+</article>
+</div>
+</body>
+</html>

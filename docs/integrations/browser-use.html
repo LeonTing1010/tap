@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tap + browser-use: Compile your AgentHistory into a Deterministic Replay</title>
+<meta name="description" content="Tap compiles a browser-use AgentHistory into a deterministic plan that replays the navigation steps at zero LLM tokens. Honest scope: navigation always free; extraction free at Tier 0 sites.">
+<meta name="keywords" content="browser-use replay, browser-use AgentHistory, browser-use deterministic, browser-use cache, browser-use cost, browser-use zero LLM tokens, browser agent token reduction, browser-use Tap integration">
+<link rel="canonical" href="https://taprun.dev/integrations/browser-use.html">
+<meta property="og:title" content="Tap + browser-use — Compile AgentHistory into a Deterministic Replay">
+<meta property="og:description" content="Replay your browser-use trajectory at zero LLM tokens for navigation. Tier 0 destination pages also free for extraction.">
+<meta property="og:url" content="https://taprun.dev/integrations/browser-use.html">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://taprun.dev/social-preview.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Tap + browser-use — Deterministic Replay at Zero LLM Tokens">
+<meta name="twitter:description" content="Compile your browser-use AgentHistory into a deterministic .tap.json plan. Navigation always replays at 0 tokens; extraction free at Tier 0 sites.">
+<meta name="twitter:image" content="https://taprun.dev/social-preview.png">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Tap + browser-use: Compile AgentHistory into a Deterministic Replay",
+  "description": "Tap compiles a browser-use AgentHistory into a deterministic plan that replays navigation steps at zero LLM tokens. Pair with Tier 0 extraction sources for end-to-end token-free runs.",
+  "author": { "@type": "Organization", "name": "Tap", "url": "https://taprun.dev" },
+  "publisher": { "@type": "Organization", "name": "Tap", "url": "https://taprun.dev" },
+  "url": "https://taprun.dev/integrations/browser-use.html",
+  "mainEntityOfPage": "https://taprun.dev/integrations/browser-use.html",
+  "image": "https://taprun.dev/social-preview.png",
+  "proficiencyLevel": "Beginner",
+  "dependencies": "browser-use, Python 3.10+ or Node 18+",
+  "softwareRequirements": "tap CLI, taprun SDK"
+}
+</script>
+{% include head-common.html %}
+{% include blog-styles.html %}
+<style>
+  .hero-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; letter-spacing: 0.04em; color: #6366F1; text-transform: uppercase; margin-bottom: 0.6rem; }
+  .scope-box { border: 1px solid #E5E7EB; border-radius: 8px; padding: 1rem 1.25rem; background: #F9FAFB; margin: 1.5rem 0; }
+  .scope-box h4 { margin-top: 0; font-size: 0.95rem; }
+  .scope-row { display: flex; gap: 0.6rem; align-items: baseline; margin-bottom: 0.4rem; }
+  .scope-row .tag { font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; padding: 0.1rem 0.45rem; border-radius: 3px; flex-shrink: 0; }
+  .scope-row .tag-yes { background: #D1FAE5; color: #065F46; }
+  .scope-row .tag-no { background: #FEE2E2; color: #991B1B; }
+  .scope-row .tag-tier0 { background: #DBEAFE; color: #1E40AF; }
+  table.token-math { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.92rem; }
+  table.token-math th, table.token-math td { padding: 0.6rem 0.8rem; border-bottom: 1px solid #E5E7EB; text-align: left; }
+  table.token-math th { background: #F9FAFB; font-weight: 600; }
+  table.token-math td.num { font-family: 'JetBrains Mono', monospace; text-align: right; }
+  .quote-card { border-left: 3px solid #6366F1; padding: 0.6rem 1rem; margin: 1rem 0; background: #F9FAFB; font-style: italic; }
+  .quote-card .attr { font-style: normal; font-size: 0.85rem; color: #6B7280; margin-top: 0.4rem; }
+  .next-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 2rem; }
+  .next-grid a { padding: 1rem; border: 1px solid #E5E7EB; border-radius: 6px; text-decoration: none; color: inherit; transition: border-color 0.15s; }
+  .next-grid a:hover { border-color: #6366F1; }
+  .next-grid .label { font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: #6366F1; text-transform: uppercase; letter-spacing: 0.04em; }
+  @media (max-width: 600px) { .next-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header class="site-header">
+  <a href="/" class="brand"><span class="brand-mark">tap</span></a>
+  <nav class="site-nav">
+    <a href="/">Home</a>
+    <a href="/integrations/">Integrations</a>
+    <a href="/blog/">Blog</a>
+    <a href="https://github.com/LeonTing1010/tap">GitHub</a>
+  </nav>
+</header>
+
+<article>
+  <div class="hero-eyebrow">Integration · browser-use</div>
+  <h1>Compile your <code>browser-use</code> AgentHistory into a deterministic replay</h1>
+  <p class="lede">
+    After your browser-use agent succeeds once, hand its
+    <code>AgentHistory</code> to <code>taprun.forge()</code>. Tap compiles the
+    navigation skeleton into a <code>.tap.json</code> plan that replays at
+    <strong>zero LLM tokens</strong> — forever, until the page actually
+    changes.
+  </p>
+
+  <h2>Why this exists</h2>
+
+  <p>
+    Every time your agent runs the same flow, it pays the LLM to re-derive
+    the same DOM. The model doesn't remember last week's click sequence; it
+    re-decides each step from scratch. For a multi-step authenticated flow
+    that's the same shape on every run, that's wasted tokens.
+  </p>
+
+  <div class="quote-card">
+    "I'm the scheduler, the context manager, and the output parser all at
+    once."
+    <div class="attr">— jrswab, on running production browser agents</div>
+  </div>
+
+  <div class="quote-card">
+    Public ops cost: $187/mo for one ongoing browser-agent workflow.
+    <div class="attr">— helen_mireille, tracking agent ops in public</div>
+  </div>
+
+  <p>
+    The compile-once / run-forever pattern is older than LLM agents. Tap
+    just makes it the default for browser flows.
+  </p>
+
+  <h2>What v1 compiles deterministically</h2>
+
+  <p>
+    Be precise about scope so you know exactly what you're paying for and
+    what you're not.
+  </p>
+
+  <div class="scope-box">
+    <h4>Navigation skeleton — always 0 LLM tokens on replay</h4>
+    <div class="scope-row"><span class="tag tag-yes">YES</span><span><code>go_to_url</code> — open a URL</span></div>
+    <div class="scope-row"><span class="tag tag-yes">YES</span><span><code>click_element</code> — click by selector</span></div>
+    <div class="scope-row"><span class="tag tag-yes">YES</span><span><code>input_text</code> — fill a field</span></div>
+    <div class="scope-row"><span class="tag tag-yes">YES</span><span><code>scroll</code> — scroll viewport</span></div>
+    <div class="scope-row"><span class="tag tag-yes">YES</span><span><code>wait</code> — pause for a condition</span></div>
+    <div class="scope-row"><span class="tag tag-yes">YES</span><span><code>done</code> — terminal step</span></div>
+
+    <h4 style="margin-top: 1.2rem;">Extraction — depends on the destination</h4>
+    <div class="scope-row"><span class="tag tag-tier0">TIER 0</span><span>Pages with RSS / Atom / JSON-LD / agents.json / OpenAPI: Tap's compiler emits a deterministic extraction. Replay is also 0 tokens.</span></div>
+    <div class="scope-row"><span class="tag tag-no">NOT YET</span><span><code>extract_content</code> from the AgentHistory itself: browser-use's transcript doesn't capture per-step DOM, so semantic extraction can't be replayed deterministically from the trajectory alone. Run <code>tap forge &lt;url&gt;</code> on the destination to compile the extraction half.</span></div>
+  </div>
+
+  <p>
+    Honest framing: navigation is the easy half; it's always free. Extraction
+    is free <em>only</em> at Tier 0 sites. For a page without a Tier 0
+    source, the extraction step still costs LLM tokens; only the navigation
+    skeleton saves. Most multi-step flows are dominated by navigation cost,
+    so the saving is real even without Tier 0 — but don't believe a
+    "$0/run" headline that doesn't name the split.
+  </p>
+
+  <h2>Token math, concretely</h2>
+
+  <p>
+    Numbers below are typical for a multi-step browser-use flow against a
+    Tier 0 destination (e.g. a dashboard with a JSON API behind it). Your
+    mileage varies; the directional shape doesn't.
+  </p>
+
+  <table class="token-math">
+    <thead>
+      <tr><th>Run</th><th>Approach</th><th>LLM tokens</th><th>Approx cost</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1st</td><td>browser-use full LLM loop</td><td class="num">~14,000</td><td class="num">$0.042</td></tr>
+      <tr><td>1st (compile)</td><td><code>forge(trajectory=...)</code></td><td class="num">~1,100</td><td class="num">$0.003</td></tr>
+      <tr><td>2nd → ∞</td><td>browser-use re-runs</td><td class="num">~14,000 each</td><td class="num">$0.042 each</td></tr>
+      <tr><td>2nd → ∞</td><td><code>tap run site/name</code></td><td class="num">0</td><td class="num">$0.000</td></tr>
+    </tbody>
+  </table>
+
+  <p>
+    100 reruns: <code>browser-use</code> path ≈ <strong>$4.20</strong>;
+    Tap path ≈ <strong>$0.003</strong>. The crossover happens at run 2.
+    Token figures assume Claude Sonnet pricing as of 2026-04; substitute
+    your provider's rate if different.
+  </p>
+
+  <h2>Quickstart — Python</h2>
+
+  <pre><code>pip install taprun</code></pre>
+
+  <p>
+    Run your browser-use agent end-to-end at least once to get a working
+    trajectory. Then:
+  </p>
+
+  <pre><code>from browser_use import Agent
+from taprun import forge, run, doctor
+
+# 1. Standard browser-use run — pays full LLM cost once.
+agent = Agent(task="apply to Y Combinator", llm=...)
+result = await agent.run()
+
+# 2. Compile the navigation skeleton.
+forge(
+    trajectory=result.model_dump(),   # AgentHistoryList dict, JSON string, or path
+    site="ycombinator",
+    name="apply",
+)
+# writes ~/.tap/taps/ycombinator/apply.tap.json
+
+# 3. Replay forever at 0 LLM tokens for navigation.
+rows = run("ycombinator/apply")
+
+# 4. Optional — drift detection without re-running the agent.
+verdict = doctor("ycombinator/apply")  # 'ok' | 'broken' | 'stale'
+</code></pre>
+
+  <h2>Quickstart — TypeScript</h2>
+
+  <pre><code>npm install taprun</code></pre>
+
+  <pre><code>import { forge, run, doctor } from "taprun";
+
+// after your browser-use TS agent finishes:
+await forge({
+  trajectory: agent.history,   // AgentHistoryList object, JSON string, or path
+  site: "ycombinator",
+  name: "apply",
+});
+
+const rows = await run("ycombinator/apply");
+const verdict = await doctor("ycombinator/apply");
+</code></pre>
+
+  <p>
+    The SDK is a thin subprocess wrapper around the <code>tap</code> CLI
+    binary. Each call spawns a process (~30–100 ms warm). For tight loops,
+    run <code>tap mcp start</code> and call via MCP — the runtime stays
+    resident and there's no per-call spawn cost.
+  </p>
+
+  <h2>Compiling the extraction half (Tier 0)</h2>
+
+  <p>
+    If your trajectory ends on a page with a stable data shape exposed via
+    a Layer 1 source — Atom feed, JSON API, JSON-LD product page,
+    agents.json manifest, OpenAPI doc — you can compile that half too:
+  </p>
+
+  <pre><code># In a separate step, after the trajectory is forged:
+tap forge https://example.com/dashboard
+# inspects the destination, finds a Layer 1 source, emits a deterministic
+# extraction at 0 LLM tokens. Saves to ~/.tap/taps/example/dashboard-data.tap.json
+</code></pre>
+
+  <p>
+    Compose the two with <code>tap pipe</code> or chain them in your code.
+    For pages without a Layer 1 source, extraction falls back to the AI
+    loop and stays priced; only navigation saves.
+  </p>
+
+  <h2>Drift detection — the part runtime LLMs can't do</h2>
+
+  <p>
+    A self-replaying agent doesn't know if the page silently changed
+    underneath it. <code>doctor</code> independently fetches an
+    authoritative source for the page (the same Tier 0 source the
+    extraction uses, or a fingerprint baseline) and diffs against the
+    plan's expected output. Three verdicts:
+  </p>
+
+  <ul>
+    <li><code>ok</code> — page shape matches the baseline; replay is
+      trustworthy.</li>
+    <li><code>stale</code> — output is still parseable but shape drifted
+      (new column, renamed field, etc.). Run <code>tap refresh</code> to
+      rebaseline.</li>
+    <li><code>broken</code> — replay would produce wrong data. Heal the
+      tap (Pro tier replays a cached patch at 0 tokens; misses fall back
+      to a minimal-patch LLM call).</li>
+  </ul>
+
+  <p>
+    This is the layer that distinguishes Tap from a one-shot replay
+    cache: the diff is computed against an authoritative source, not
+    against the plan's own past output.
+  </p>
+
+  <h2>FAQ</h2>
+
+  <h3>Does this work for write actions (publishing, comments, transfers)?</h3>
+  <p>
+    Yes — <code>forge</code> respects browser-use's intent declarations.
+    Write taps run under <code>tap.run</code> like reads, but they're
+    skipped under <code>tap.doctor</code> (verifying a write would have
+    side effects). Drift in write taps is caught by health-check failures
+    on the read side instead.
+  </p>
+
+  <h3>What about Stagehand and Anthropic computer-use trajectories?</h3>
+  <p>
+    The trajectory schema in v1 is the browser-use
+    <code>AgentHistoryList</code> shape. Stagehand and raw Anthropic
+    tool-use trajectories are on the roadmap; the navigation primitives
+    overlap, so adding them is mostly a schema mapping. Track
+    <a href="https://github.com/LeonTing1010/tap/issues">issues</a> for
+    progress, or open one to vote.
+  </p>
+
+  <h3>Is the SDK open-source?</h3>
+  <p>
+    The <code>taprun</code> SDK packages on npm and PyPI are MIT-licensed
+    thin clients. The <code>tap</code> CLI binary they invoke is
+    proprietary. The Chrome extension runtime
+    (<a href="https://github.com/LeonTing1010/tap">github.com/LeonTing1010/tap</a>)
+    and the 65+ community taps in
+    <a href="https://github.com/LeonTing1010/tap-skills">tap-skills</a>
+    are MIT.
+  </p>
+
+  <h3>What does it cost?</h3>
+  <p>
+    <strong>Free</strong> tier covers the deterministic compile path
+    (Layer 1 sources), <code>run</code>, <code>doctor</code>, and 65+
+    community taps. <strong>Hacker $9/mo</strong> unlocks the full forge
+    pipeline including the AI fallback for Layer 4 (DOM-only) pages, BYOK.
+    <strong>Pro $29/mo</strong> adds <code>heal</code> (cached patches
+    replay at 0 tokens), <code>refresh</code>, scheduling, and team
+    server. 100% local mode is the default at every tier.
+    <a href="/#pricing">Full pricing</a>.
+  </p>
+
+  <h3>What if my page has no Tier 0 source?</h3>
+  <p>
+    Run <code>tap forge &lt;url&gt;</code> anyway. The forge pipeline
+    falls back through Layer 2 (SSR) → Layer 3 (XHR/fetch) → Layer 4
+    (DOM). The deeper the layer, the more LLM tokens the compile costs
+    one time, but replay is still deterministic. Layer 4 compile costs
+    real tokens; Layers 1–3 are mostly free.
+  </p>
+
+  <h3>How do I know my replay didn't silently break?</h3>
+  <p>
+    Schedule <code>tap doctor</code> on a daily cron, or call it inline
+    before consuming <code>run()</code> output in production. Doctor
+    cross-validates against an authoritative source — it catches drift
+    without you noticing or your downstream consumer noticing.
+  </p>
+
+  <h2>Next</h2>
+
+  <div class="next-grid">
+    <a href="https://pypi.org/project/taprun/">
+      <div class="label">Python SDK</div>
+      <div><strong>pip install taprun</strong></div>
+      <div style="color:#6B7280; font-size:0.9rem;">PyPI · MIT</div>
+    </a>
+    <a href="https://www.npmjs.com/package/taprun">
+      <div class="label">TypeScript SDK</div>
+      <div><strong>npm install taprun</strong></div>
+      <div style="color:#6B7280; font-size:0.9rem;">npm · MIT</div>
+    </a>
+    <a href="/install.html">
+      <div class="label">CLI</div>
+      <div><strong>brew / curl / npm</strong></div>
+      <div style="color:#6B7280; font-size:0.9rem;">2-minute install</div>
+    </a>
+    <a href="https://github.com/LeonTing1010/tap/issues">
+      <div class="label">Feedback</div>
+      <div><strong>Issues + roadmap</strong></div>
+      <div style="color:#6B7280; font-size:0.9rem;">Stagehand, Anthropic, more</div>
+    </a>
+  </div>
+
+  <hr style="margin: 3rem 0 1.5rem;">
+
+  <p style="color:#6B7280; font-size: 0.9rem;">
+    Last updated 2026-04-26 against
+    <code>taprun</code> v0.14 (Python) / v0.1.x (TypeScript). Trajectory
+    compile (<code>forge(trajectory=...)</code>) shipped in commit
+    <code>e46c9df</code>; the API is alpha and stabilizes at 0.2 once
+    integration feedback lands.
+  </p>
+
+</article>
+</div>
+</body>
+</html>

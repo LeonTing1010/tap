@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 28.2.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 720 380" style="enable-background:new 0 0 720 380;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:#F4EDDE;}
+	.st1{fill:#14110C;}
+	.st2{font-family:'TimesNewRomanPS-BoldItalicMT';}
+	.st3{font-size:22px;}
+	.st4{fill:#7A6F60;}
+	.st5{font-family:'JetBrainsMonoNF-Regular';}
+	.st6{font-size:10.5px;}
+	.st7{letter-spacing:1;}
+	.st8{fill:#EDE4CE;stroke:#14110C;}
+	.st9{font-size:10px;}
+	.st10{font-size:11px;}
+	.st11{fill:#7E2B1C;}
+	.st12{font-family:'JetBrainsMonoNF-SemiBold';}
+	.st13{fill:#1C2D5A;}
+	.st14{font-size:32px;}
+</style>
+<rect class="st0" width="720" height="380"/>
+<text transform="matrix(1 0 0 1 36 36)" class="st1 st2 st3">When a scraper breaks, recovery costs</text>
+<text transform="matrix(1 0 0 1 36 54)" class="st4 st5 st6 st7">100 queries · 1 drift · two baselines</text>
+<path class="st8" d="M38,84h644c1.1,0,2,0.9,2,2.1v121.8c0,1.2-0.9,2.1-2,2.1H38c-1.1,0-2-0.9-2-2.1V86.1C36,84.9,36.9,84,38,84z"/>
+<text transform="matrix(1 0 0 1 50 108)" class="st4 st5 st6 st7">Architectural</text>
+<text transform="matrix(1 0 0 1 50 124)" class="st4 st5 st9">haiku · bare Anthropic API · prototype prompts · same model both arms</text>
+<text transform="matrix(1 0 0 1 50 158)" class="st1 st5 st10">Freeform LLM</text>
+<text transform="matrix(1 0 0 1 50 172)" class="st4 st5 st9">read page each query</text>
+<rect x="180" y="148" class="st11" width="380" height="12"/>
+<text transform="matrix(1 0 0 1 568 158)" class="st1 st12 st10">962,500 tok</text>
+<text transform="matrix(1 0 0 1 50 190)" class="st1 st5 st10">Tap router</text>
+<text transform="matrix(1 0 0 1 50 204)" class="st4 st5 st9">heal once · run forever</text>
+<rect x="180" y="180" class="st13" width="4" height="12"/>
+<text transform="matrix(1 0 0 1 192 190)" class="st1 st12 st10">713 tok</text>
+<text transform="matrix(1 0 0 1 592.5625 199.1523)" class="st1 st2 st14">1,350×</text>
+<text transform="matrix(1 0 0 1 503.8011 178)" class="st4 st5 st9 st7">tap advantage</text>
+<path class="st8" d="M38,216h644c1.1,0,2,0.9,2,2.1v121.8c0,1.2-0.9,2.1-2,2.1H38c-1.1,0-2-0.9-2-2.1V218.1
+	C36,216.9,36.9,216,38,216z"/>
+<text transform="matrix(1 0 0 1 50 240)" class="st4 st5 st6 st7">Production-honest</text>
+<text transform="matrix(1 0 0 1 50 256)" class="st4 st5 st9">bare Anthropic API · Tap uses sonnet for 4/4 mutation correctness</text>
+<text transform="matrix(1 0 0 1 50 290)" class="st1 st5 st10">Freeform LLM</text>
+<text transform="matrix(1 0 0 1 50 304)" class="st4 st5 st9">haiku · per-query</text>
+<rect x="180" y="280" class="st11" width="380" height="12"/>
+<text transform="matrix(1 0 0 1 568 290)" class="st1 st12 st10">962,500 tok</text>
+<text transform="matrix(1 0 0 1 50 322)" class="st1 st5 st10">Tap heal</text>
+<text transform="matrix(1 0 0 1 50 336)" class="st4 st5 st9">sonnet · per-drift</text>
+<rect x="180" y="312" class="st13" width="6" height="12"/>
+<text transform="matrix(1 0 0 1 194 322)" class="st1 st12 st10">1,134 tok</text>
+<text transform="matrix(1 0 0 1 610.5469 328.6777)" class="st1 st2 st14">849×</text>
+<text transform="matrix(1 0 0 1 503.8011 310)" class="st4 st5 st9 st7">tap advantage</text>
+<text transform="matrix(1 0 0 1 36 362)" class="st4 st5 st9">third baseline (Claude Code sub-agent vs Tap CLI as products) gives 3,973× — see methodology §2.4 · cache replay = 0 tok</text>
+</svg>
