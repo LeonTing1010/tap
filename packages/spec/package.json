@@ -1,7 +1,7 @@
 {
   "name": "@taprun/spec",
-  "version": "0.2.0",
-  "description": "Tap plan-v1 format spec — TypeScript types + W3C Annotation validator + JSON Schema for .tap.json. Use this to typecheck or validate compiled Tap plans without running the full Tap CLI.",
+  "version": "0.3.0",
+  "description": "Tap plan-v1 format spec — TypeScript types + W3C Annotation validator + JSON Schema + conformance suite for .tap.json. Use this to typecheck or validate compiled Tap plans without running the full Tap CLI.",
   "publishConfig": {
     "access": "public"
   },

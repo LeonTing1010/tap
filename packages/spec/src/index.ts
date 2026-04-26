@@ -123,3 +123,17 @@ export type {
   ValidationWarning,
   ValidationResult,
 } from "./annotation_validator.ts";
+
+// Plan-v1 conformance — combines W3C envelope + plan-level checks +
+// fixture corpus for adapter authors.
+export {
+  runConformance,
+  CONFORMANCE_FIXTURES,
+} from "./conformance.ts";
+
+export type {
+  ConformanceCategory,
+  ConformanceFailure,
+  ConformanceResult,
+  ConformanceFixture,
+} from "./conformance.ts";

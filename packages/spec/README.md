@@ -16,6 +16,7 @@ Use this package to typecheck or validate compiled Tap plans (`.tap.json`) witho
 - **`validateAnnotation(value)`** — zero-runtime-dep MUST-level W3C validator. Returns `{ valid, errors[], warnings[] }`.
 - All op interfaces (`FetchOp`, `NavOp`, `WaitOp`, `ExtractOp`, …), `HealthContract`, `AuthoritativeSpec`, `ArgSpec`.
 - **JSON Schema 2020-12** at `@taprun/spec/schema` for non-TypeScript validators (Python / Go / Rust / Ruby).
+- **Conformance suite** — `runConformance(value)` + `CONFORMANCE_FIXTURES` for adapter authors. Combines W3C envelope + plan-level checks into a single human-friendly verdict, with categorized failure codes (envelope / body / intent / ops / op-name / authoritative).
 
 ## Usage — TypeScript
 
@@ -26,6 +27,36 @@ const plan: ExecutionPlan = JSON.parse(await fs.readFile("plan.tap.json", "utf8"
 const result = validateAnnotation(plan);
 if (!result.valid) console.error(result.errors);
 ```
+
+## Usage — Adapter conformance (TypeScript)
+
+If you're writing an adapter that emits `.tap.json` (e.g. converting
+Playwright/Puppeteer scripts into Tap plans), use the conformance suite
+to verify your output:
+
+```ts
+import { runConformance, CONFORMANCE_FIXTURES } from "@taprun/spec";
+
+// Verify your adapter output
+const result = runConformance(yourAdapterOutput);
+if (!result.pass) {
+  for (const f of result.failures) {
+    console.error(`[${f.category}] ${f.code} @ ${f.path}: ${f.message}`);
+  }
+}
+
+// Verify against the official fixture corpus
+for (const fixture of CONFORMANCE_FIXTURES) {
+  const r = runConformance(fixture.input);
+  // r.pass === !fixture.expectFail
+  // r.failures[].code === fixture.expectFail?.code
+}
+```
+
+The fixtures cover six failure classes (envelope / body / intent / ops /
+op-name / authoritative) plus two known-good cases. Adapter test suites
+typically iterate `CONFORMANCE_FIXTURES` to confirm their output behaves
+identically to a reference implementation.
 
 ## Usage — JSON Schema (any language)
 
