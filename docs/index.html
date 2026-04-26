@@ -1704,23 +1704,38 @@ h2 .hl {
 }
 .install-step p a:hover { text-decoration: underline; }
 
+/* ===== Unified code listing — single source of truth for every <pre>/<code>
+   surface on the page. All listings share: cream paper-deep background,
+   ink-soft border, monospace, italic faded comments, red command verbs,
+   indigo strings, gold numbers/operators. Only the size varies per context. */
+:root {
+  --code-bg: #ECE3D0;          /* press-paper-deep — cream surface */
+  --code-border: #D8CAB0;      /* press-rule-soft — hairline */
+  --code-ink: #14110C;         /* deep ink */
+  --code-c: #7A6F60;           /* faded ink — comments */
+  --code-k: #7E2B1C;           /* press-red — keywords / commands */
+  --code-s: #1C2D5A;           /* indigo — strings */
+  --code-n: #A67A2E;           /* press-gold — numbers / operators / flags */
+  --code-prompt: #A67A2E;      /* gold prompt sigil */
+}
+
 .code-block {
-  background: var(--bg-deep);
-  border: 1px solid rgba(255,255,255,0.05);
-  border-radius: 10px;
+  background: var(--code-bg);
+  border: 1px solid var(--code-border);
+  border-radius: 4px;
   padding: 14px 18px;
   font-family: var(--font-mono);
   word-break: break-all;
   font-size: 13px;
-  color: var(--text);
+  color: var(--code-ink);
   overflow-x: auto;
   line-height: 1.7;
   position: relative;
 }
 
-.code-block .prompt { color: var(--text-muted); user-select: none; }
-.code-block .cmd { color: var(--indigo-light); font-weight: 500; }
-.code-block .hl-dim { color: var(--text-muted); }
+.code-block .prompt { color: var(--code-prompt); user-select: none; font-weight: 600; }
+.code-block .cmd { color: var(--code-k); font-weight: 600; }
+.code-block .hl-dim { color: var(--code-c); }
 
 /* ===== Pricing — aligned with site visual language ===== */
 .pricing {
@@ -2833,11 +2848,24 @@ $ <span class="k">tap doctor</span> example/login                               
   .onramp-card .npm-link { font-family: var(--font-mono); font-size: 11px; color: var(--indigo-bright); text-decoration: none; margin-top: auto; }
   .onramp-card .npm-link:hover { text-decoration: underline; }
 
-  /* Before/After demo panel for adapter onramp */
+  /* Before/After demo panel for adapter onramp — 3-tab CSS-only switcher */
   .demo-wrap { max-width: 1100px; margin: 0 auto 64px; }
-  .demo-head { text-align: center; margin-bottom: 28px; }
+  .demo-head { text-align: center; margin-bottom: 22px; }
   .demo-head h3 { font-family: var(--font-heading); font-weight: 800; font-size: clamp(20px, 2.6vw, 26px); letter-spacing: -0.02em; color: var(--white); margin-bottom: 8px; }
   .demo-head p { font-size: 14px; color: var(--text-dim); }
+  .demo-tab-input { position: absolute; opacity: 0; pointer-events: none; }
+  .demo-tabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-bottom: 22px; padding: 4px; background: rgba(20,17,12,0.04); border: 1px solid rgba(255,255,255,0.06); border-radius: 999px; max-width: fit-content; margin-left: auto; margin-right: auto; }
+  .demo-tabs label { display: inline-flex; align-items: center; padding: 8px 18px; font-family: var(--font-mono); font-size: 12.5px; color: var(--text-dim); border-radius: 999px; cursor: pointer; transition: background 0.2s, color 0.2s; user-select: none; }
+  .demo-tabs label:hover { color: var(--white); }
+  #demo-tab-pw:checked ~ .demo-tabs label[for="demo-tab-pw"],
+  #demo-tab-pu:checked ~ .demo-tabs label[for="demo-tab-pu"],
+  #demo-tab-st:checked ~ .demo-tabs label[for="demo-tab-st"] {
+    background: var(--indigo-bright); color: var(--bg-deep); font-weight: 600;
+  }
+  .demo-pane { display: none; }
+  #demo-tab-pw:checked ~ .demo-pane[data-pane="pw"],
+  #demo-tab-pu:checked ~ .demo-pane[data-pane="pu"],
+  #demo-tab-st:checked ~ .demo-pane[data-pane="st"] { display: block; }
   .demo-grid { display: grid; grid-template-columns: 1fr; gap: 18px; }
   @media (min-width: 900px) { .demo-grid { grid-template-columns: 1fr auto 1fr; align-items: stretch; } }
   .demo-panel { background: var(--bg-card); border: 1px solid rgba(255,255,255,0.06); border-radius: var(--radius-lg); overflow: hidden; display: flex; flex-direction: column; }
@@ -2935,11 +2963,23 @@ npx create-tap-script gh/x https://github.com</code></pre>
     <div class="demo-wrap reveal">
       <div class="demo-head">
         <h3>What the adapter actually does</h3>
-        <p>30 seconds of Playwright source in, a deterministic <code>.tap.json</code> plan out. <em>Site-specific selectors preserved 1:1.</em></p>
+        <p>Pick your existing SDK. Watch the conversion. <em>Site-specific selectors preserved 1:1; LLM steps marked honestly.</em></p>
       </div>
-      <div class="demo-grid">
-        <div class="demo-panel before">
-          <div class="demo-label"><span class="dot"></span>Before — your existing Playwright (.spec.ts)</div>
+      <input type="radio" name="demo-tab" id="demo-tab-pw" class="demo-tab-input" checked>
+      <input type="radio" name="demo-tab" id="demo-tab-pu" class="demo-tab-input">
+      <input type="radio" name="demo-tab" id="demo-tab-st" class="demo-tab-input">
+
+      <div class="demo-tabs">
+        <label for="demo-tab-pw">Playwright</label>
+        <label for="demo-tab-pu">Puppeteer</label>
+        <label for="demo-tab-st">Stagehand</label>
+      </div>
+
+      <!-- Pane: Playwright -->
+      <div class="demo-pane" data-pane="pw">
+        <div class="demo-grid">
+          <div class="demo-panel before">
+            <div class="demo-label"><span class="dot"></span>Before — your existing Playwright (.spec.ts)</div>
 <pre><code><span class="c">// tests/login.spec.ts — what you already have</span>
 <span class="k">import</span> { test } <span class="k">from</span> <span class="s">"@playwright/test"</span>;
 
@@ -2950,10 +2990,10 @@ test(<span class="s">"login"</span>, <span class="k">async</span> ({ page }) =&g
   <span class="k">await</span> page.click(<span class="s">"button[type='submit']"</span>);
   <span class="k">await</span> page.waitForSelector(<span class="s">".dashboard"</span>);
 });</code></pre>
-        </div>
-        <div class="demo-arrow">→ <span style="color: var(--text-muted); font-size: 11px;">npm i @taprun/from-playwright</span> →</div>
-        <div class="demo-panel after">
-          <div class="demo-label"><span class="dot"></span>After — example/login.tap.json (auto-generated)</div>
+          </div>
+          <div class="demo-arrow">→ <span style="color: var(--text-muted); font-size: 11px;">@taprun/from-playwright</span> →</div>
+          <div class="demo-panel after">
+            <div class="demo-label"><span class="dot"></span>After — example/login.tap.json (deterministic)</div>
 <pre><code>{
   <span class="s">"@context"</span>: [<span class="s">"http://www.w3.org/ns/anno.jsonld"</span>,
                <span class="s">"https://taprun.dev/ns/tap-v1"</span>],
@@ -2973,9 +3013,99 @@ test(<span class="s">"login"</span>, <span class="k">async</span> ({ page }) =&g
     ]
   }
 }</code></pre>
+          </div>
         </div>
       </div>
-      <p class="demo-foot">Run with <code>tap run example/login</code> in your real Chrome. Doctor catches drift before your data does. <a href="/spec/plan-v1/" style="color: var(--indigo-bright); text-decoration: none; border-bottom: 1px dotted rgba(165,180,252,0.4);">Format reference →</a></p>
+
+      <!-- Pane: Puppeteer -->
+      <div class="demo-pane" data-pane="pu">
+        <div class="demo-grid">
+          <div class="demo-panel before">
+            <div class="demo-label"><span class="dot"></span>Before — your existing Puppeteer (.js)</div>
+<pre><code><span class="c">// scripts/login.js — Puppeteer flavor</span>
+<span class="k">const</span> puppeteer = <span class="k">require</span>(<span class="s">"puppeteer"</span>);
+
+(<span class="k">async</span> () =&gt; {
+  <span class="k">const</span> browser = <span class="k">await</span> puppeteer.launch();
+  <span class="k">const</span> page = <span class="k">await</span> browser.newPage();
+  <span class="k">await</span> page.goto(<span class="s">"https://app.example.com/login"</span>);
+  <span class="k">await</span> page.type(<span class="s">"#email"</span>, <span class="s">"alice@example.com"</span>);
+  <span class="k">await</span> page.type(<span class="s">"#password"</span>, process.env.PW);
+  <span class="k">await</span> page.keyboard.press(<span class="s">"Enter"</span>);
+  <span class="k">await</span> page.waitForSelector(<span class="s">".dashboard"</span>);
+  <span class="k">await</span> browser.close();
+})();</code></pre>
+          </div>
+          <div class="demo-arrow">→ <span style="color: var(--text-muted); font-size: 11px;">@taprun/from-puppeteer</span> →</div>
+          <div class="demo-panel after">
+            <div class="demo-label"><span class="dot"></span>After — example/login.tap.json (deterministic)</div>
+<pre><code><span class="c">// page.type → fill (semantic alignment)</span>
+<span class="c">// keyboard.press → press without target (focused element)</span>
+<span class="c">// browser.launch / close → silently dropped (lifecycle, not action)</span>
+{
+  <span class="s">"body"</span>: {
+    <span class="s">"type"</span>: <span class="s">"tap:ExecutionPlan"</span>,
+    <span class="s">"site"</span>: <span class="s">"example"</span>, <span class="s">"name"</span>: <span class="s">"login"</span>,
+    <span class="s">"intent"</span>: <span class="s">"write"</span>,
+    <span class="s">"ops"</span>: [
+      { <span class="s">"op"</span>: <span class="s">"nav"</span>, <span class="s">"url"</span>: <span class="s">"https://app.example.com/login"</span> },
+      { <span class="s">"op"</span>: <span class="s">"input"</span>, <span class="s">"kind"</span>: <span class="s">"fill"</span>, <span class="s">"target"</span>: <span class="s">"#email"</span>, <span class="s">"value"</span>: <span class="s">"alice@example.com"</span> },
+      { <span class="s">"op"</span>: <span class="s">"input"</span>, <span class="s">"kind"</span>: <span class="s">"fill"</span>, <span class="s">"target"</span>: <span class="s">"#password"</span>, <span class="s">"value"</span>: <span class="s">"{{env.PW}}"</span> },
+      { <span class="s">"op"</span>: <span class="s">"input"</span>, <span class="s">"kind"</span>: <span class="s">"press"</span>, <span class="s">"value"</span>: <span class="s">"Enter"</span> },
+      { <span class="s">"op"</span>: <span class="s">"wait"</span>, <span class="s">"selector"</span>: <span class="s">".dashboard"</span> }
+    ]
+  }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pane: Stagehand -->
+      <div class="demo-pane" data-pane="st">
+        <div class="demo-grid">
+          <div class="demo-panel before">
+            <div class="demo-label"><span class="dot"></span>Before — your existing Stagehand (.ts)</div>
+<pre><code><span class="c">// scripts/search-pr.ts — hybrid: deterministic + NL</span>
+<span class="k">import</span> { Stagehand } <span class="k">from</span> <span class="s">"@browserbasehq/stagehand"</span>;
+<span class="k">import</span> { z } <span class="k">from</span> <span class="s">"zod"</span>;
+
+<span class="k">const</span> sh = <span class="k">new</span> Stagehand({ env: <span class="s">"LOCAL"</span> });
+<span class="k">await</span> sh.init();
+<span class="k">const</span> page = sh.context.pages()[<span class="n">0</span>];
+
+<span class="k">await</span> page.goto(<span class="s">"https://github.com/browserbase"</span>);
+<span class="k">await</span> sh.act(<span class="s">"click on the stagehand repo"</span>);
+<span class="k">const</span> { author, title } = <span class="k">await</span> sh.extract(
+  <span class="s">"the author and title of the latest PR"</span>,
+  z.object({ author: z.string(), title: z.string() })
+);
+<span class="k">await</span> page.screenshot();</code></pre>
+          </div>
+          <div class="demo-arrow">→ <span style="color: var(--text-muted); font-size: 11px;">@taprun/from-stagehand</span> →</div>
+          <div class="demo-panel after">
+            <div class="demo-label"><span class="dot"></span>After — github/search-pr.tap.json (hybrid, allowUnverifiable)</div>
+<pre><code><span class="c">// Deterministic page.* → plan ops verifiable by doctor</span>
+<span class="c">// NL sh.act / sh.extract → exec ops with prompt preserved</span>
+<span class="c">// allowUnverifiable: true tells doctor "needs LLM at runtime"</span>
+{
+  <span class="s">"body"</span>: {
+    <span class="s">"type"</span>: <span class="s">"tap:ExecutionPlan"</span>,
+    <span class="s">"site"</span>: <span class="s">"github"</span>, <span class="s">"name"</span>: <span class="s">"search-pr"</span>,
+    <span class="s">"intent"</span>: <span class="s">"read"</span>,
+    <span class="s">"ops"</span>: [
+      { <span class="s">"op"</span>: <span class="s">"nav"</span>, <span class="s">"url"</span>: <span class="s">"https://github.com/browserbase"</span> },
+      { <span class="s">"op"</span>: <span class="s">"exec"</span>, <span class="s">"fn"</span>: <span class="s">"/* stagehand act(\"click on the stagehand repo\") */"</span> },
+      { <span class="s">"op"</span>: <span class="s">"exec"</span>, <span class="s">"fn"</span>: <span class="s">"/* stagehand extract(\"the author and title of the latest PR\") */"</span> },
+      { <span class="s">"op"</span>: <span class="s">"screenshot"</span> }
+    ],
+    <span class="s">"allowUnverifiable"</span>: <span class="n">true</span>
+  }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <p class="demo-foot">Selectors stay yours. Lifecycle calls (browser.launch / close) silently dropped. Run with <code>tap run example/login</code> in your real Chrome. <a href="/spec/plan-v1/" style="color: var(--indigo-bright); text-decoration: none; border-bottom: 1px dotted rgba(165,180,252,0.4);">Format reference →</a></p>
     </div>
 
     <div class="vs-table-wrap reveal">
