@@ -1,0 +1,52 @@
+name: packages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "packages/**"
+      - "package.json"
+      - ".github/workflows/packages.yml"
+  pull_request:
+    paths:
+      - "packages/**"
+      - "package.json"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm install
+      - run: npm run build --workspaces --if-present
+      - run: npm test --workspaces --if-present
+
+  pack-dryrun:
+    # Runs `npm pack --dry-run` per workspace to catch publish-time
+    # failures (missing files, broken exports map, file: refs that
+    # leaked into devDependencies).
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm install
+      - run: npm run build --workspaces --if-present
+      - name: pack-dryrun all packages
+        run: |
+          set -e
+          for pkg in spec from-playwright from-puppeteer from-stagehand create-tap-script; do
+            echo "=== $pkg ==="
+            cd packages/$pkg
+            # Fail loud if package.json contains 'file:' (would corrupt npm registry)
+            if grep -q '"file:' package.json; then
+              echo "ERROR: $pkg/package.json contains a file: reference. Forbidden in publishable packages."
+              exit 1
+            fi
+            npm pack --dry-run
+            cd ../..
+          done

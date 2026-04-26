@@ -70,8 +70,11 @@ test("parseArgs accepts --help with no positional args", async () => {
 
 test("buildStarterPlan produces conformant plan-v1", async () => {
   const { buildStarterPlan } = await import(CREATE_DIST);
-  const specPath = resolve(__dirname, "..", "..", "spec", "dist", "index.js");
-  const spec = await import(specPath);
+  // Resolve via package name now that @taprun/spec is a devDep — npm
+  // workspaces (root public/package.json) symlinks local src so this
+  // works in dev; once published, the devDep version constraint
+  // ^0.3.0 governs.
+  const spec = await import("@taprun/spec");
   const plan = buildStarterPlan({
     site: "github",
     name: "trending",

@@ -51,7 +51,7 @@
     "@taprun/spec": "^0.3.0"
   },
   "devDependencies": {
-    "@taprun/spec": "file:../spec",
+    "@taprun/spec": "^0.3.0",
     "typescript": "^5.5.0"
   }
 }

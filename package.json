@@ -1,0 +1,18 @@
+{
+  "name": "tap-public-monorepo",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Workspace root for the public Tap packages (spec / adapters / create-tap-script). Not published — exists so npm workspaces can link local source between packages during development. Each package under packages/ is independently versioned and published.",
+  "workspaces": [
+    "packages/spec",
+    "packages/from-playwright",
+    "packages/from-puppeteer",
+    "packages/from-stagehand",
+    "packages/create-tap-script"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present"
+  },
+  "license": "MIT"
+}

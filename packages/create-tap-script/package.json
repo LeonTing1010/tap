@@ -43,6 +43,7 @@
   "license": "MIT",
   "author": "Leon Ting <noreply@taprun.dev>",
   "devDependencies": {
+    "@taprun/spec": "^0.3.0",
     "typescript": "^5.5.0",
     "@types/node": "^22.0.0"
   }
