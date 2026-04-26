@@ -1,0 +1,33 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "type": "Annotation",
+  "motivation": "tap:executing",
+  "target": "https://github.com/browserbase",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "github",
+    "name": "browserbase-search",
+    "intent": "read",
+    "ops": [
+      { "op": "nav", "url": "https://github.com/browserbase" },
+      {
+        "op": "exec",
+        "fn": "async function(handle, args) { /* stagehand act(\"click on the stagehand repo\") (line 19, requires LLM at runtime — see plan.allowUnverifiable): await stagehand.act(\"click on the stagehand repo\"); */ }"
+      },
+      {
+        "op": "exec",
+        "fn": "async function(handle, args) { /* stagehand extract(\"the author and title of the latest PR\") (line 20, requires LLM at runtime — see plan.allowUnverifiable): const { author, title } = await stagehand.extract(\"the author and title of the latest PR\", z.object({ author: z.string(), title: z.string() })); */ }"
+      },
+      { "op": "screenshot" }
+    ],
+    "allowUnverifiable": true
+  },
+  "generator": {
+    "id": "https://taprun.dev/from-stagehand",
+    "type": "SoftwareAgent",
+    "version": "0.x"
+  }
+}

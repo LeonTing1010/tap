@@ -1,0 +1,58 @@
+{
+  "name": "@taprun/from-stagehand",
+  "version": "0.1.0",
+  "description": "Convert Stagehand scripts (.ts / .js source) into Tap plan-v1 .tap.json files. Deterministic Playwright calls map to plan ops; stagehand.act/extract/observe map to allowUnverifiable exec ops with the original NL prompt preserved.",
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "node --test 'test/**/*.test.mjs'",
+    "prepublishOnly": "npm run build"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "tap",
+    "taprun",
+    "stagehand",
+    "browserbase",
+    "adapter",
+    "browser-automation",
+    "ai-agent",
+    "drift-detection",
+    "plan-v1"
+  ],
+  "homepage": "https://taprun.dev/spec/plan-v1/?utm_source=npm&utm_medium=package&utm_campaign=from-stagehand",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LeonTing1010/tap.git",
+    "directory": "packages/from-stagehand"
+  },
+  "bugs": {
+    "url": "https://github.com/LeonTing1010/tap/issues"
+  },
+  "license": "MIT",
+  "author": "Leon Ting <noreply@taprun.dev>",
+  "peerDependencies": {
+    "@taprun/spec": "^0.3.0"
+  },
+  "devDependencies": {
+    "@taprun/spec": "file:../spec",
+    "typescript": "^5.5.0"
+  }
+}
