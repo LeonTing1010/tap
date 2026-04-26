@@ -34,8 +34,8 @@
     <line x1="960" y1="0" x2="960" y2="640"/>
   </g>
 
-  <!-- Logo -->
-  <g transform="translate(540, 80) scale(0.32)">
+  <!-- Logo (Taprun bird) -->
+  <g transform="translate(540, 60) scale(0.32)">
     <circle cx="256" cy="256" r="240" fill="url(#logo-bg)"/>
     <circle cx="290" cy="275" r="80" fill="white"/>
     <circle cx="230" cy="210" r="58" fill="white"/>
@@ -54,42 +54,48 @@
     <path d="M 68 180 A 30 30 0 0 1 68 228" fill="none" stroke="white" stroke-width="2.5" opacity="0.35" stroke-linecap="round"/>
   </g>
 
-  <!-- Title -->
-  <text x="640" y="310" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="72" fill="white" font-weight="400" letter-spacing="-2">Tap</text>
+  <!-- Brand mark -->
+  <text x="640" y="290" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="64" fill="white" font-weight="400" letter-spacing="-2">Taprun</text>
 
-  <!-- Tagline -->
-  <text x="640" y="370" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="26" fill="#9892B0" font-weight="300">The interface protocol for AI agents</text>
+  <!-- Hero line 1 -->
+  <text x="640" y="350" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="30" fill="#E5E7EB" font-weight="300">Browser automation that runs in <tspan fill="white" font-weight="500">your browser,</tspan></text>
 
-  <!-- Subtitle -->
-  <text x="640" y="415" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="18" fill="#FBBF24" font-weight="400" font-style="italic">forge once, run forever</text>
+  <!-- Hero line 2 (highlighted) -->
+  <text x="640" y="392" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="26" fill="#FBBF24" font-weight="400" font-style="italic">not someone else's cloud.</text>
+
+  <!-- Sub-tagline -->
+  <text x="640" y="438" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="16" fill="#9892B0" font-weight="300" letter-spacing="0.3">Local-first by architecture · plan-as-data · 5 npm packages live · zero LLM tokens at runtime</text>
 
   <!-- Stats row -->
-  <g transform="translate(280, 470)">
-    <!-- Kernel -->
+  <g transform="translate(280, 478)">
+    <!-- npm packages -->
     <g transform="translate(0, 0)">
       <rect x="0" y="0" width="160" height="64" rx="12" fill="rgba(79,70,229,0.1)" stroke="rgba(79,70,229,0.2)" stroke-width="1"/>
-      <text x="80" y="30" text-anchor="middle" font-family="Georgia, serif" font-size="24" fill="white">8</text>
-      <text x="80" y="50" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="#5D5680" letter-spacing="1.5">KERNEL</text>
+      <text x="80" y="30" text-anchor="middle" font-family="Georgia, serif" font-size="24" fill="white">5</text>
+      <text x="80" y="50" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="#5D5680" letter-spacing="1.5">PACKAGES</text>
     </g>
-    <!-- Stdlib -->
+    <!-- ops -->
     <g transform="translate(180, 0)">
       <rect x="0" y="0" width="160" height="64" rx="12" fill="rgba(79,70,229,0.1)" stroke="rgba(79,70,229,0.2)" stroke-width="1"/>
-      <text x="80" y="30" text-anchor="middle" font-family="Georgia, serif" font-size="24" fill="white">17</text>
-      <text x="80" y="50" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="#5D5680" letter-spacing="1.5">STDLIB</text>
+      <text x="80" y="30" text-anchor="middle" font-family="Georgia, serif" font-size="24" fill="white">24</text>
+      <text x="80" y="50" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="#5D5680" letter-spacing="1.5">CLOSED OPS</text>
     </g>
-    <!-- Skills -->
+    <!-- community taps -->
     <g transform="translate(360, 0)">
       <rect x="0" y="0" width="160" height="64" rx="12" fill="rgba(251,191,36,0.08)" stroke="rgba(251,191,36,0.15)" stroke-width="1"/>
-      <text x="80" y="30" text-anchor="middle" font-family="Georgia, serif" font-size="24" fill="white">106</text>
+      <text x="80" y="30" text-anchor="middle" font-family="Georgia, serif" font-size="24" fill="white">140+</text>
       <text x="80" y="50" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="#5D5680" letter-spacing="1.5">SKILLS</text>
     </g>
-    <!-- Cost -->
+    <!-- runtime location -->
     <g transform="translate(540, 0)">
       <rect x="0" y="0" width="160" height="64" rx="12" fill="rgba(251,191,36,0.08)" stroke="rgba(251,191,36,0.15)" stroke-width="1"/>
-      <text x="80" y="30" text-anchor="middle" font-family="Georgia, serif" font-size="24" fill="#FBBF24">$0</text>
+      <text x="80" y="30" text-anchor="middle" font-family="Georgia, serif" font-size="22" fill="#FBBF24">LOCAL</text>
       <text x="80" y="50" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="#5D5680" letter-spacing="1.5">RUNTIME</text>
     </g>
   </g>
+
+  <!-- Domain footer -->
+  <text x="640" y="600" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" fill="#5D5680" letter-spacing="2">TAPRUN.DEV</text>
 
   <!-- Bottom accent line -->
   <rect x="0" y="636" width="1280" height="4" fill="url(#logo-bg)"/>

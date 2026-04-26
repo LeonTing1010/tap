@@ -2673,6 +2673,8 @@ tap doctor example/login                    <span style="color: var(--text-muted
   .onramp-card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
   .onramp-card h3 { font-family: var(--font-mono); font-size: 13.5px; font-weight: 600; color: var(--white); margin: 0; letter-spacing: -0.01em; }
   .onramp-card .ver { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 1px 6px; }
+  .onramp-card .badges { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+  .onramp-card .badges img { display: block; height: 18px; image-rendering: -webkit-optimize-contrast; }
   .onramp-card p.tag { font-size: 13px; line-height: 1.55; color: var(--text-dim); margin: 0; min-height: 38px; }
   .onramp-card pre { background: var(--bg-deep); border: 1px solid rgba(255,255,255,0.04); border-radius: 6px; padding: 9px 11px; margin: 0; overflow-x: auto; }
   .onramp-card pre code { font-family: var(--font-mono); font-size: 11.5px; color: var(--text); white-space: pre; }
@@ -2707,7 +2709,10 @@ tap doctor example/login                    <span style="color: var(--text-muted
       <div class="onramp-card">
         <div class="onramp-card-head">
           <h3>@taprun/from-playwright</h3>
-          <span class="ver">0.1.0</span>
+          <div class="badges">
+            <a href="https://www.npmjs.com/package/@taprun/from-playwright" target="_blank" rel="noopener"><img src="https://img.shields.io/npm/v/@taprun/from-playwright?style=flat-square&label=npm&color=6366f1" alt="npm version"></a>
+            <a href="https://www.npmjs.com/package/@taprun/from-playwright" target="_blank" rel="noopener"><img src="https://img.shields.io/npm/dw/@taprun/from-playwright?style=flat-square&label=weekly&color=818cf8" alt="weekly downloads"></a>
+          </div>
         </div>
         <p class="tag">Convert Playwright .ts/.js scripts to .tap.json. 8 page.* APIs mapped 1:1.</p>
         <pre><code><span class="c"># 47M weekly downloads — most likely the SDK you have</span>
@@ -2718,7 +2723,10 @@ npm i @taprun/from-playwright</code></pre>
       <div class="onramp-card">
         <div class="onramp-card-head">
           <h3>@taprun/from-puppeteer</h3>
-          <span class="ver">0.1.0</span>
+          <div class="badges">
+            <a href="https://www.npmjs.com/package/@taprun/from-puppeteer" target="_blank" rel="noopener"><img src="https://img.shields.io/npm/v/@taprun/from-puppeteer?style=flat-square&label=npm&color=6366f1" alt="npm version"></a>
+            <a href="https://www.npmjs.com/package/@taprun/from-puppeteer" target="_blank" rel="noopener"><img src="https://img.shields.io/npm/dw/@taprun/from-puppeteer?style=flat-square&label=weekly&color=818cf8" alt="weekly downloads"></a>
+          </div>
         </div>
         <p class="tag">Convert Puppeteer scripts. 7 page.* APIs + keyboard.press, page.type → fill semantics.</p>
         <pre><code><span class="c"># Legacy scrapers welcome</span>
@@ -2729,7 +2737,10 @@ npm i @taprun/from-puppeteer</code></pre>
       <div class="onramp-card">
         <div class="onramp-card-head">
           <h3>@taprun/from-stagehand</h3>
-          <span class="ver">0.1.0</span>
+          <div class="badges">
+            <a href="https://www.npmjs.com/package/@taprun/from-stagehand" target="_blank" rel="noopener"><img src="https://img.shields.io/npm/v/@taprun/from-stagehand?style=flat-square&label=npm&color=6366f1" alt="npm version"></a>
+            <a href="https://www.npmjs.com/package/@taprun/from-stagehand" target="_blank" rel="noopener"><img src="https://img.shields.io/npm/dw/@taprun/from-stagehand?style=flat-square&label=weekly&color=818cf8" alt="weekly downloads"></a>
+          </div>
         </div>
         <p class="tag">Hybrid: deterministic page.* → plan ops. NL stagehand.act/extract → exec ops, allowUnverifiable.</p>
         <pre><code><span class="c"># Honest about which steps need an LLM</span>
@@ -2740,7 +2751,10 @@ npm i @taprun/from-stagehand</code></pre>
       <div class="onramp-card">
         <div class="onramp-card-head">
           <h3>create-tap-script</h3>
-          <span class="ver">0.1.0</span>
+          <div class="badges">
+            <a href="https://www.npmjs.com/package/create-tap-script" target="_blank" rel="noopener"><img src="https://img.shields.io/npm/v/create-tap-script?style=flat-square&label=npm&color=6366f1" alt="npm version"></a>
+            <a href="https://www.npmjs.com/package/create-tap-script" target="_blank" rel="noopener"><img src="https://img.shields.io/npm/dw/create-tap-script?style=flat-square&label=weekly&color=818cf8" alt="weekly downloads"></a>
+          </div>
         </div>
         <p class="tag">Scaffold a starter .tap.json envelope from &lt;site&gt;/&lt;name&gt; &lt;url&gt;. Output passes runConformance.</p>
         <pre><code><span class="c"># One command. One starter. Ready to customize.</span>
