@@ -1,0 +1,27 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "type": "Annotation",
+  "motivation": "tap:executing",
+  "target": "https://example.test/login",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "example",
+    "name": "login",
+    "intent": "write",
+    "ops": [
+      { "op": "nav", "url": "https://example.test/login" },
+      { "op": "input", "kind": "fill", "target": "#username", "value": "alice" },
+      { "op": "input", "kind": "fill", "target": "#password", "value": "secret" },
+      { "op": "input", "kind": "press", "value": "Enter" },
+      { "op": "wait", "selector": ".dashboard" }
+    ]
+  },
+  "generator": {
+    "id": "https://taprun.dev/from-puppeteer",
+    "type": "SoftwareAgent",
+    "version": "0.x"
+  }
+}

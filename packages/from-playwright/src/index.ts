@@ -107,6 +107,17 @@ const RE_SCREENSHOT = /\.screenshot\s*\(/;
 /** Page-API smell — any `.something(` call we can attribute to Playwright. */
 const RE_PAGE_CALL = /(?:page|context|browser|locator)\s*\.\s*([a-zA-Z_$][\w$]*)\s*\(/;
 
+/** Lifecycle methods that are test scaffolding, not user actions —
+ *  silently dropped (no plan op emitted, no warning). */
+const LIFECYCLE_METHODS: ReadonlySet<string> = new Set([
+  "launch",
+  "newPage",
+  "newContext",
+  "defaultBrowserContext",
+  "close",
+  "disconnect",
+]);
+
 /**
  * Extract the matched string content from any of the three capture groups
  * `(double | single | backtick)`. Returns the first non-undefined one.
@@ -213,6 +224,9 @@ export function playwrightToTap(
       const generic = trimmed.match(RE_PAGE_CALL);
       if (generic) {
         const method = generic[1];
+        // Lifecycle methods (browser.launch / page.close / etc.) are
+        // test scaffolding — silently drop them.
+        if (LIFECYCLE_METHODS.has(method)) continue;
         if (options.strict === true) {
           throw new PlaywrightConversionError(
             `Unsupported Playwright API on line ${i + 1}: page.${method}(`,
