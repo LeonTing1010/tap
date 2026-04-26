@@ -57,10 +57,10 @@ When higher-trust layers disagree with the layer the plan currently uses, doctor
 }
 ```
 
-The `motivation` is W3C-standard `"assessing"` — Tap does **not** mint a `tap:diagnosing` motivation; doctor reports ride the W3C envelope directly. See [`tap-v1` namespace](/ns/tap-v1/) for the full term list including verdict states (`healthy` / `broken` / `stale` / `layer-mismatch` / `unreachable` / `unverified`) and the optional `tap:suggest_authoritative` field.
+The `motivation` is W3C-standard `"assessing"` — Tap does **not** mint a `tap:diagnosing` motivation; doctor reports ride the W3C envelope directly. See [`tap-v1` namespace](/ns/tap-v1/) for the full term list including verdict states (`healthy` / `broken` / `stale` / `layer-mismatch` / `unreachable` / `unverified`) and the optional `tap:suggestAuthoritative` field.
 
 ## Related
 
 - [`plan-v1` reference](/spec/plan-v1/) — the plan format doctor cross-validates against
-- [`tap-v1` namespace](/ns/tap-v1/) — the JSON-LD vocabulary including `tap:DriftReport` and `tap:layerDisagreement`
+- [`tap-v1` namespace](/ns/tap-v1/) — the JSON-LD vocabulary defining `tap:verdict`, `tap:compiledFromLayer`, `tap:recommendedLayer`, `tap:crossValidation`, `tap:suggestions`, `tap:suggestAuthoritative`
 - [Why competitors can't solve silent rot](/compare/stagehand/) — the architectural argument

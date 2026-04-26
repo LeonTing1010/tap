@@ -18,7 +18,7 @@
   "@id": "https://taprun.dev/ns/tap-v1",
   "@type": "owl:Ontology",
   "dcterms:title": "Tap v1 Web Annotation Extension Vocabulary",
-  "dcterms:description": "Tap-namespaced extensions to the W3C Web Annotation Data Model. Two surfaces ship terms on disk: a compiled Tap program stored as a `.tap.json` W3C Annotation (motivation `tap:executing`, body `tap:ExecutionPlan`), and a doctor assessment Annotation (motivation `oa:assessing`, body carrying `tap:verdict` and related diagnostic properties). Additional terms (`tap:SemanticHashState`, `tap:JsonPathSelector`, and their sub-properties) are defined for forge-time intermediate fingerprint artifacts and are not persisted in a stored `.tap.json`. The Tap runtime parses `tap:*` fields by literal key and does not require a remote-context fetch; this document exists as a stable identifier and as documentation for external tooling.",
+  "dcterms:description": "Tap-namespaced extensions to the W3C Web Annotation Data Model. Scope: only terms that ship across a consumer boundary in a stored `.tap.json` envelope are defined here — internal implementation types (forge-time fingerprints, intermediate selector candidates) are TypeScript-only and intentionally excluded. Two surfaces ship terms on disk: a compiled Tap program stored as a `.tap.json` W3C Annotation (motivation `tap:executing`, body `tap:ExecutionPlan`), and a doctor assessment Annotation (motivation `oa:assessing`, body carrying `tap:verdict` and related diagnostic properties). The Tap runtime parses `tap:*` fields by literal key and does not require a remote-context fetch; this document exists as a stable identifier and as documentation for external tooling. Naming follows JSON-LD/RDF convention: classes are PascalCase, properties are camelCase, motivations are lowercase verbs (per W3C anno).",
   "dcterms:issued": "2026-04-15",
   "dcterms:modified": "2026-04-23",
   "dcterms:creator": {
@@ -106,7 +106,7 @@
       "@id": "tap:verdict",
       "@type": "rdf:Property",
       "rdfs:label": "verdict",
-      "rdfs:comment": "Doctor verdict on an assessing annotation — one of `healthy`, `broken`, `stale`, `layer-mismatch`, `unreachable`, `unverified`. `unreachable` signals that the target resource could not be fetched (DNS failure, timeout, network error) and is distinct from `broken`, which signals that the tap ran against a fetched page but produced output that violates its health contract. `unverified` signals that the tap's output passed its own health contract but no independent authoritative source was available to cross-check it; pair with `tap:suggest_authoritative` when a known-shape source for the target exists so consumers can close the verification gap.",
+      "rdfs:comment": "Doctor verdict on an assessing annotation — one of `healthy`, `broken`, `stale`, `layer-mismatch`, `unreachable`, `unverified`. `unreachable` signals that the target resource could not be fetched (DNS failure, timeout, network error) and is distinct from `broken`, which signals that the tap ran against a fetched page but produced output that violates its health contract. `unverified` signals that the tap's output passed its own health contract but no independent authoritative source was available to cross-check it; pair with `tap:suggestAuthoritative` when a known-shape source for the target exists so consumers can close the verification gap.",
       "rdfs:range": { "@id": "xsd:string" },
       "rdfs:isDefinedBy": { "@id": "https://taprun.dev/ns/tap-v1" }
     },
@@ -146,76 +146,10 @@
     },
 
     {
-      "@id": "tap:JsonPathSelector",
-      "@type": "rdfs:Class",
-      "rdfs:subClassOf": { "@id": "oa:Selector" },
-      "rdfs:label": "JSONPath Selector",
-      "rdfs:comment": "Selects a JSON value using a JSONPath expression per RFC 9535. Used by forge during structural candidate selection against Layer 1/2 JSON sources — JSON-LD blocks, embedded state globals (e.g. `__NEXT_DATA__`), and structured API responses. Scope: forge-time intermediate only; not persisted in a stored `.tap.json`. Not part of W3C Selectors and States (2017) because JSONPath was not ratified until RFC 9535 in 2024.",
-      "dcterms:conformsTo": { "@id": "https://www.rfc-editor.org/rfc/rfc9535" },
-      "rdfs:isDefinedBy": { "@id": "https://taprun.dev/ns/tap-v1" }
-    },
-
-    {
-      "@id": "tap:SemanticHashState",
-      "@type": "rdfs:Class",
-      "rdfs:subClassOf": { "@id": "oa:State" },
-      "rdfs:label": "Semantic Hash State",
-      "rdfs:comment": "Fingerprint blob capturing the structural hash of a target resource at authoring time. Properties: `tap:rootHash`, `tap:selectors`, `tap:endpoints`, `tap:jsonLdValues`. Scope: forge-time intermediate only — the fingerprint is tracked inside Tap but is not serialized into a stored `.tap.json` Annotation body. Doctor's drift detection walks the live fingerprint, not a stored copy.",
-      "rdfs:isDefinedBy": { "@id": "https://taprun.dev/ns/tap-v1" }
-    },
-
-    {
-      "@id": "tap:rootHash",
+      "@id": "tap:suggestAuthoritative",
       "@type": "rdf:Property",
-      "rdfs:label": "rootHash",
-      "rdfs:comment": "FNV-1a Merkle root hash over all captured sub-hashes (selectors, endpoints, globals, JSON-LD types, page, write actions). Enables O(1) drift detection: if the root changes the tap may be STALE or BROKEN. Scope: forge-time fingerprint property, not persisted in a stored `.tap.json`.",
-      "rdfs:domain": { "@id": "tap:SemanticHashState" },
-      "rdfs:range": { "@id": "xsd:string" },
-      "rdfs:isDefinedBy": { "@id": "https://taprun.dev/ns/tap-v1" }
-    },
-
-    {
-      "@id": "tap:selectors",
-      "@type": "rdf:Property",
-      "rdfs:label": "selectors",
-      "rdfs:comment": "Captured selector population summary — count and ARIA/semantic hash. Opaque JSON object; Tap is the authoritative consumer. Scope: forge-time fingerprint property, not persisted in a stored `.tap.json`.",
-      "rdfs:domain": { "@id": "tap:SemanticHashState" },
-      "rdfs:isDefinedBy": { "@id": "https://taprun.dev/ns/tap-v1" }
-    },
-
-    {
-      "@id": "tap:endpoints",
-      "@type": "rdf:Property",
-      "rdfs:label": "endpoints",
-      "rdfs:comment": "Captured network endpoints observed during forge, each with URL and JSON response shape hash (keys + types). Array of objects; Tap is the authoritative consumer. Scope: forge-time fingerprint property, not persisted in a stored `.tap.json`.",
-      "rdfs:domain": { "@id": "tap:SemanticHashState" },
-      "rdfs:isDefinedBy": { "@id": "https://taprun.dev/ns/tap-v1" }
-    },
-
-    {
-      "@id": "tap:jsonLdValues",
-      "@type": "rdf:Property",
-      "rdfs:label": "jsonLdValues",
-      "rdfs:comment": "Deduplicated list of Schema.org `@type` names observed in Layer-1 (JSON-LD) blocks at authoring time. Used by doctor as a cheap drift signal — if the set of declared `@type` tokens changes between forge and run, the page's structural contract has shifted. Cross-layer value validation (DOM-vs-JSON-LD disagreement → `layer-mismatch` verdict) uses the live fingerprint diff at doctor time rather than a stored field→value snapshot. Represented as `string[]`. Scope: forge-time fingerprint property, not persisted in a stored `.tap.json`.",
-      "rdfs:domain": { "@id": "tap:SemanticHashState" },
-      "rdfs:isDefinedBy": { "@id": "https://taprun.dev/ns/tap-v1" }
-    },
-
-    {
-      "@id": "tap:suggest_authoritative",
-      "@type": "rdf:Property",
-      "rdfs:label": "suggest_authoritative",
+      "rdfs:label": "suggestAuthoritative",
       "rdfs:comment": "Optional ready-to-embed `AuthoritativeSpec` payload appended to a doctor `assessing` annotation when verdict is `unverified` AND the tap's target resolves to a known-shape source (e.g. an HN/Reddit/GitHub endpoint, or a feed advertised by the page). Lets agents/scripts close the verification gap by copying the spec into the tap's `body.authoritative` field rather than hand-writing V config. Absent otherwise — doctor never emits an empty or fabricated suggestion. The shape is one of three variants: single-step JSON fetch, two-step JSON fetch, or Atom feed; each carries `row_mapping`, `match_key`, and per-field `comparators`.",
-      "rdfs:isDefinedBy": { "@id": "https://taprun.dev/ns/tap-v1" }
-    },
-
-    {
-      "@id": "tap:extracting",
-      "@type": "oa:Motivation",
-      "owl:deprecated": true,
-      "rdfs:label": "extracting",
-      "rdfs:comment": "DEPRECATED as of tap-v1 (2026-04-23). Superseded by `tap:executing`. Historically declared as the motivation for a data-extraction annotation, but shipped only in forge-time intermediate candidate selectors — never reached a stored `.tap.json`. Retained for namespace stability; consumers should treat any occurrence as equivalent to `tap:executing`.",
-      "owl:equivalentProperty": { "@id": "tap:executing" },
       "rdfs:isDefinedBy": { "@id": "https://taprun.dev/ns/tap-v1" }
     }
   ]

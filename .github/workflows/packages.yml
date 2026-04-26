@@ -7,12 +7,14 @@ on:
       - "packages/**"
       - "package.json"
       - "docs/spec/plan-v1.schema.json"
+      - "docs/ns/tap-v1/**"
       - ".github/workflows/packages.yml"
   pull_request:
     paths:
       - "packages/**"
       - "package.json"
       - "docs/spec/plan-v1.schema.json"
+      - "docs/ns/tap-v1/**"
 
 jobs:
   schema-deploy-drift:
@@ -34,6 +36,70 @@ jobs:
             exit 1
           fi
           echo "OK: $src == $dst"
+
+  ns-cross-consumer-only:
+    # Asserts the tap-v1 namespace defines exactly the cross-consumer
+    # protocol contract — no more, no less. Two-way enforcement:
+    #   1) Every term defined in index.jsonld must be listed in README.md
+    #      (so the human-readable doc and the machine-readable context
+    #      cannot drift).
+    #   2) Both must match the canonical 13-term set encoded below. New
+    #      terms require an explicit edit here, which forces a code
+    #      review on the protocol surface — internal-only types
+    #      (forge-time fingerprints, intermediate selector candidates)
+    #      cannot sneak in by being added to source code without
+    #      protocol intent.
+    # The 13 terms below = exactly what core actually emits in a stored
+    # .tap.json envelope or a doctor `assessing` annotation body.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Diff ns terms (jsonld vs README vs canonical set)
+        run: |
+          set -e
+          # Canonical: terms that ship across a consumer boundary.
+          # When adding a term: edit this list AND index.jsonld AND README.md.
+          # When removing: edit this list AND mark deprecated in index.jsonld + README.md.
+          expected=$(cat <<'TERMS' | sort
+          tap:executing
+          tap:ExecutionPlan
+          tap:site
+          tap:name
+          tap:intent
+          tap:health
+          tap:args
+          tap:verdict
+          tap:compiledFromLayer
+          tap:recommendedLayer
+          tap:crossValidation
+          tap:suggestions
+          tap:suggestAuthoritative
+          TERMS
+          )
+          # Extract @id values starting with tap: from the JSON-LD context.
+          jsonld_ids=$(grep -oE '"@id":\s*"tap:[a-zA-Z_]+"' docs/ns/tap-v1/index.jsonld | grep -oE 'tap:[a-zA-Z_]+' | sort -u)
+          # Extract terms in the README's two contract tables (lines that wrap a tap:* in backticks under '## What it defines').
+          readme_terms=$(awk '/^## What it defines/{flag=1; next} /^## /{flag=0} flag' docs/ns/tap-v1/README.md \
+                         | grep -oE '`tap:[a-zA-Z_]+`' | grep -oE 'tap:[a-zA-Z_]+' | sort -u)
+
+          fail=0
+          if ! diff -u <(echo "$expected") <(echo "$jsonld_ids") >/tmp/diff_jsonld 2>&1; then
+            echo "::error::index.jsonld term set differs from canonical:"
+            cat /tmp/diff_jsonld
+            fail=1
+          fi
+          if ! diff -u <(echo "$expected") <(echo "$readme_terms") >/tmp/diff_readme 2>&1; then
+            echo "::error::README.md term set differs from canonical:"
+            cat /tmp/diff_readme
+            fail=1
+          fi
+          if [ $fail -eq 1 ]; then
+            echo
+            echo "Adding a term: update this guard, index.jsonld, and README.md together."
+            echo "Removing a term: mark owl:deprecated in jsonld + README, keep it in this list with a # deprecated comment."
+            exit 1
+          fi
+          echo "OK: ns canonical (13 terms) == index.jsonld == README.md"
 
   test:
     runs-on: ubuntu-latest

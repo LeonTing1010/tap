@@ -1,6 +1,6 @@
 ---
 title: "tap-v1 — Web Annotation extension vocabulary"
-description: "Stable JSON-LD vocabulary that extends W3C Web Annotation with tap-specific terms (tap:ExecutionPlan, tap:executing, tap:layer). Versioned at tap-v1 since 2026-04-15."
+description: "Stable JSON-LD vocabulary that extends W3C Web Annotation with tap-specific terms (tap:executing, tap:ExecutionPlan, tap:verdict). Cross-consumer protocol contract only — internal implementation types are TypeScript-only and excluded by design. Versioned at tap-v1 since 2026-04-15."
 permalink: /ns/tap-v1/
 ---
 
@@ -18,31 +18,26 @@ permalink: /ns/tap-v1/
 `tap-v1` is the namespace for Tap-specific extensions to the
 [W3C Web Annotation Data Model](https://www.w3.org/TR/annotation-model/).
 
-Two on-disk surfaces carry `tap:*` terms:
+Scope rule: the namespace defines **only** terms that ship across a
+consumer boundary in a stored `.tap.json` envelope — internal
+implementation types (forge-time fingerprints, intermediate selector
+candidates) are TypeScript-only and intentionally excluded. Two on-disk
+surfaces carry `tap:*` terms:
 
 1. **A compiled Tap program** — stored as a `.tap.json` W3C Annotation with
-   motivation `tap:executing` and a `tap:ExecutionPlan` body. Authors write
-   programs in JavaScript (`.tap.js` is a plain ES module, not an
-   Annotation); Tap's migrator compiles that source into the `.tap.json`
-   plan that runtimes actually execute.
-2. **A doctor assessment** — a W3C Annotation with motivation
-   `oa:assessing` whose body carries `tap:verdict` and related diagnostic
+   motivation `tap:executing` and a `tap:ExecutionPlan` body.
+2. **A doctor assessment** — a W3C Annotation with motivation `assessing`
+   (W3C-standard) whose body carries `tap:verdict` and related diagnostic
    properties.
-
-A third set of terms (`tap:SemanticHashState`, `tap:JsonPathSelector`,
-and their sub-properties) is defined for Tap's forge-time intermediate
-fingerprint artifacts. These are used inside the toolchain but are not
-persisted in a stored `.tap.json`.
 
 ## Why it exists
 
 The W3C Web Annotation context (`http://www.w3.org/ns/anno.jsonld`) does
-not define tokens for program execution plans, structural-hash
-fingerprints, or doctor diagnostics. Without a published `tap-v1`
-context, every `tap:*` CURIE in a Tap annotation would fail strict
-JSON-LD validation. This document is what lets external tooling
-(annotation stores, EPUB readers, validators) consume Tap annotations
-without a custom profile.
+not define tokens for execution plans or doctor diagnostics. Without a
+published `tap-v1` context, every `tap:*` CURIE in a Tap annotation
+would fail strict JSON-LD validation. This document is what lets
+external tooling (annotation stores, validators, agent platforms)
+consume Tap annotations without a custom profile.
 
 Tap itself parses `tap:*` fields by literal key and does not require
 runtime context resolution, so the runtime cost of this document is zero
@@ -57,7 +52,7 @@ external consumers.
 |---|---|---|
 | `tap:executing` | `oa:Motivation` | Motivation of a compiled Tap program |
 | `tap:ExecutionPlan` | `rdfs:Class` | Body type of a compiled Tap program |
-| `tap:site`, `tap:name`, `tap:intent` | properties | Tap identity/direction (appear as bare keys inside `tap:ExecutionPlan`) |
+| `tap:site`, `tap:name`, `tap:intent` | properties | Tap identity/direction (bare keys inside `tap:ExecutionPlan`) |
 | `tap:health`, `tap:args` | properties | Tap contract + argument schema (bare keys inside `tap:ExecutionPlan`) |
 
 ### Live in a doctor `assessing` annotation
@@ -69,24 +64,12 @@ external consumers.
 | `tap:recommendedLayer` | property | Layer doctor recommends re-forging from |
 | `tap:crossValidation` | property | Layer-1 vs. observed-value disagreement record (`{layer1Value, observedValue, disagreement}`) |
 | `tap:suggestions` | property | Ordered diagnostic suggestions (free-text) |
-| `tap:suggest_authoritative` | property | Optional ready-to-embed `AuthoritativeSpec` shown only when verdict is `unverified` AND a known-shape source exists for the target. Lets agents close the verification gap without hand-writing the V config. |
-
-### Forge-time intermediate (not persisted)
-
-| Term | Kind | Role |
-|---|---|---|
-| `tap:JsonPathSelector` | `rdfs:Class`, subclass of `oa:Selector` | JSONPath candidate selector per RFC 9535 |
-| `tap:SemanticHashState` | `rdfs:Class`, subclass of `oa:State` | Forge fingerprint blob |
-| `tap:rootHash`, `tap:selectors`, `tap:endpoints`, `tap:jsonLdValues` | properties | Fingerprint sub-hashes inside `tap:SemanticHashState` |
-
-### Deprecated
-
-| Term | Kind | Note |
-|---|---|---|
-| `tap:extracting` | `oa:Motivation` | Superseded by `tap:executing` (2026-04-23). Never reached a stored `.tap.json`; retained for namespace stability. |
+| `tap:suggestAuthoritative` | property | Optional ready-to-embed `AuthoritativeSpec` shown only when verdict is `unverified` AND a known-shape source exists for the target. Lets agents close the verification gap without hand-writing the V config. |
 
 See [`index.jsonld`](./index.jsonld) for the full context document and
-normative definitions.
+normative definitions. CI guards (`packages.yml :: ns-cross-consumer-only`)
+keep the term set in this README equal to the term set in the JSON-LD
+context so the two never drift.
 
 ## Example: a compiled Tap program
 
@@ -161,18 +144,29 @@ the program against the declared target.
 }
 ```
 
+## Naming convention
+
+Terms follow JSON-LD / RDF convention:
+
+- **Classes** — PascalCase (`tap:ExecutionPlan`)
+- **Properties** — camelCase (`tap:compiledFromLayer`, `tap:suggestAuthoritative`)
+- **Motivations** — lowercase verb (`tap:executing`), matching the W3C anno style (`oa:assessing`, `oa:describing`)
+
 ## Stability
 
 - The namespace URI `https://taprun.dev/ns/tap-v1` is **stable
-  forever**. Once `tap:JsonPathSelector` means what it means in this
+  forever**. Once `tap:ExecutionPlan` means what it means in this
   document, it means that permanently.
 - Backward-incompatible changes ship under a new namespace (`tap-v2/`).
 - Additive, non-breaking refinements may update this document in place
-  (e.g. adding a new property, or marking a term deprecated). The
-  version identifier stays `tap-v1`.
+  (e.g. adding a new property). The version identifier stays `tap-v1`.
 - Deprecated terms are kept in the document (marked
   `owl:deprecated: true`) rather than removed, so external data that
   referenced them remains valid.
+- A CI guard (`packages.yml :: ns-cross-consumer-only`) enforces the
+  scope rule mechanically — terms that appear in this document but are
+  not actually emitted in a stored `.tap.json` or doctor assessment
+  fail the build, and vice versa.
 
 ## License
 
