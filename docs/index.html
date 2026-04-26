@@ -2362,8 +2362,80 @@ h2 .hl {
 .nav.over-press .nav-brand svg {
   filter: none;
 }
+/* Hand-stamped pressmark — anchors the local-first promise like an
+   editor's red ink seal. Floats top-right relative to .press-inner;
+   on mobile it falls inline above the byline so it never collides
+   with the headline. */
+.press-edition .press-seal {
+  position: absolute;
+  top: clamp(46px, 5vw, 78px);
+  right: clamp(0px, 2vw, 24px);
+  width: clamp(112px, 11vw, 148px);
+  height: clamp(112px, 11vw, 148px);
+  color: var(--press-red);
+  pointer-events: none;
+  z-index: 2;
+  transform: rotate(-9deg);
+  opacity: 0;
+  animation:
+    press-seal-stamp 0.7s cubic-bezier(0.18, 1.4, 0.4, 1) 1.05s forwards,
+    press-seal-breathe 6s ease-in-out 2s infinite;
+  filter: drop-shadow(0 1px 0 rgba(126, 43, 28, 0.18));
+  mix-blend-mode: multiply;
+}
+.press-edition .press-seal svg { width: 100%; height: 100%; display: block; }
+@keyframes press-seal-stamp {
+  0%   { opacity: 0; transform: rotate(-22deg) scale(1.6); }
+  60%  { opacity: 1; transform: rotate(-7deg) scale(0.94); }
+  100% { opacity: 0.92; transform: rotate(-9deg) scale(1); }
+}
+@keyframes press-seal-breathe {
+  0%, 100% { transform: rotate(-9deg) scale(1); }
+  50%      { transform: rotate(-8.4deg) scale(1.012); }
+}
+@media (max-width: 1100px) {
+  .press-edition .press-seal {
+    width: 116px; height: 116px;
+    top: 56px; right: 12px;
+  }
+}
+@media (max-width: 720px) {
+  .press-edition .press-seal {
+    position: relative;
+    top: auto; right: auto;
+    margin: 0 0 28px auto;
+    transform: rotate(-7deg);
+    width: 124px; height: 124px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .press-edition .press-seal {
+    animation: none;
+    opacity: 0.92;
+    transform: rotate(-9deg);
+  }
+}
+
 .press-edition .press-dek-wrap {
   max-width: 720px; margin-left: clamp(0px, 6vw, 96px); margin-bottom: 56px;
+}
+.press-edition .press-byline strong {
+  font-family: var(--press-font-display);
+  font-weight: 700;
+  font-size: 22px;
+  font-variation-settings: "SOFT" 20, "opsz" 144, "wght" 700;
+  letter-spacing: -0.012em;
+  color: var(--press-ink);
+  display: block;
+  margin-bottom: 10px;
+  text-transform: none;
+}
+.press-edition .press-byline strong em {
+  font-style: italic;
+  color: var(--press-red);
+  font-variation-settings: "SOFT" 80, "opsz" 144, "wght" 620;
+  letter-spacing: 0;
+  text-transform: none;
 }
 .press-edition .press-byline {
   font-size: 11px; letter-spacing: 0.26em; text-transform: uppercase;
@@ -2519,17 +2591,40 @@ h2 .hl {
   </header>
 
   <p class="press-dateline">
-    <span>FOR</span> &mdash; <em>solo SaaS founders, Playwright/Puppeteer teams, privacy-bound automators</em> &mdash; Browser stays yours.
+    <span>FOR</span> &mdash; <em>developers building AI agents, Playwright/Puppeteer teams, privacy-bound automators</em> &mdash; Cookies never leave your machine.
   </p>
 
   <h1 class="press-headline">
-    <span class="press-beat press-beat-1">Your scraper broke</span>
-    <span class="press-beat press-beat-2">when LinkedIn <em>redesigned</em></span>
-    <span class="press-beat press-beat-3">— again.</span>
+    <span class="press-beat press-beat-1">Compile once.</span>
+    <span class="press-beat press-beat-2">Run <em>forever</em>.</span>
+    <span class="press-beat press-beat-3">Diff the drift.</span>
   </h1>
 
+  <aside class="press-seal" aria-hidden="true">
+    <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <path id="press-seal-arc-top" d="M 80,80 m -58,0 a 58,58 0 1,1 116,0"/>
+        <path id="press-seal-arc-bot" d="M 80,80 m -58,0 a 58,58 0 1,0 116,0"/>
+      </defs>
+      <circle cx="80" cy="80" r="68" fill="none" stroke="currentColor" stroke-width="1"/>
+      <circle cx="80" cy="80" r="58" fill="none" stroke="currentColor" stroke-width="2.5"/>
+      <circle cx="80" cy="80" r="48" fill="none" stroke="currentColor" stroke-width="0.5"/>
+      <text font-family="Fraunces, serif" font-size="11.5" font-weight="600" letter-spacing="3.6" fill="currentColor">
+        <textPath href="#press-seal-arc-top" startOffset="50%" text-anchor="middle">LOCAL · FIRST · BY · ARCHITECTURE</textPath>
+      </text>
+      <text font-family="Fraunces, serif" font-size="10" font-style="italic" letter-spacing="2.4" fill="currentColor">
+        <textPath href="#press-seal-arc-bot" startOffset="50%" text-anchor="middle">EST · 2026 — taprun.dev</textPath>
+      </text>
+      <g transform="translate(80,80)" fill="currentColor">
+        <text x="0" y="-6" text-anchor="middle" font-family="Fraunces, serif" font-style="italic" font-size="14" font-weight="500" letter-spacing="0.8">browser</text>
+        <text x="0" y="11" text-anchor="middle" font-family="Fraunces, serif" font-size="20" font-weight="700" letter-spacing="-0.5">stays</text>
+        <text x="0" y="28" text-anchor="middle" font-family="Fraunces, serif" font-style="italic" font-size="14" font-weight="500" letter-spacing="0.8">yours.</text>
+      </g>
+    </svg>
+  </aside>
+
   <div class="press-dek-wrap">
-    <p class="press-byline">Convert your existing Playwright / Puppeteer / Stagehand source to a deterministic <code>.tap.json</code> plan in 30 seconds. Run it in <em>your already-logged-in Chrome</em>. Cookies never leave your machine — by architecture, not policy.</p>
+    <p class="press-byline"><strong>Browser automation that runs in <em>your</em> browser, not someone else's cloud.</strong> Convert your existing Playwright / Puppeteer / Stagehand source to a deterministic <code>.tap.json</code> plan in 30 seconds. Replay it in your real Chrome — <em>cookies never leave your machine, by architecture, not policy.</em></p>
     <pre class="press-code" style="background: rgba(20,17,12,0.04); border: 1px solid rgba(20,17,12,0.12); border-radius: 8px; padding: 18px 22px; margin: 20px 0 0; font-family: var(--font-mono); font-size: 14px; line-height: 1.65; color: var(--text); overflow-x: auto;"><code><span style="color: var(--text-muted);"># 1. Convert your existing Playwright test (no rewrite).</span>
 npm install @taprun/from-playwright @taprun/spec
 node -e <span style="color: var(--indigo-bright);">"import('@taprun/from-playwright').then(m =&gt; \
@@ -3144,7 +3239,7 @@ npx create-tap-script gh/x https://github.com</code></pre>
           <li><span class="bullet">+</span> <code>tap schedule</code> + Slack/webhook drift alerts</li>
           <li><span class="bullet">+</span> Works in Claude Code, Cursor, Cline, Windsurf — any MCP host</li>
         </ul>
-        <a href="https://api.taprun.dev/checkout?plan=hacker" class="price-btn price-btn--outline">Start Capturing</a>
+        <a href="https://www.creem.io/payment/prod_2ueXfXelMdowyjKmHlSxBk?utm_source=taprun.dev&utm_campaign=capture" class="price-btn price-btn--outline">Start Capturing</a>
       </div>
 
       <div class="price-card price-card--featured">
@@ -3166,7 +3261,7 @@ npx create-tap-script gh/x https://github.com</code></pre>
           <li><span class="bullet">+</span> Heal history + drift report archive</li>
           <li><span class="bullet">+</span> 100% local — heal runs on your machine</li>
         </ul>
-        <a href="https://api.taprun.dev/checkout?plan=pro" class="price-btn price-btn--gold">Get Repair</a>
+        <a href="https://www.creem.io/payment/prod_79SU00FKJvcgEdPqYst2mQ?utm_source=taprun.dev&utm_campaign=repair" class="price-btn price-btn--gold">Get Repair</a>
       </div>
 
       <div class="price-card">
@@ -3187,7 +3282,7 @@ npx create-tap-script gh/x https://github.com</code></pre>
           <li><span class="bullet">+</span> Shared plan registry across the team</li>
           <li><span class="bullet">+</span> Priority support, SLA on response times</li>
         </ul>
-        <a href="https://api.taprun.dev/checkout?plan=team" class="price-btn price-btn--outline">Get Team &rarr;</a>
+        <a href="https://www.creem.io/payment/prod_48Veq1vPhyinoDD0IJuloi?utm_source=taprun.dev&utm_campaign=team" class="price-btn price-btn--outline">Get Team &rarr;</a>
       </div>
 
     </div>
@@ -3253,7 +3348,7 @@ npx create-tap-script gh/x https://github.com</code></pre>
       <path d="M 150 145 L 180 190 L 162 185 L 148 150 Z" fill="#6366F1"/>
     </svg>
     <h2>Browser automation that runs in <span class="hl">your browser,</span><br>not someone else's cloud.</h2>
-    <p class="section-desc">Your programs on your disk. Your browser with your sessions. Zero tokens per run. <em>Cookies never leave your machine — by architecture.</em> When the site changes, you hear about it first.</p>
+    <p class="section-desc"><strong>Compile once.</strong> AI authors the plan, then steps off the runtime path. <strong>Run forever.</strong> Your programs on your disk, replayed in your real Chrome at zero tokens. <strong>Diff the drift.</strong> When the site changes, <em>you hear about it first</em> — and cookies never leave your machine, by architecture.</p>
     <div class="hero-actions">
       <a href="#install" class="btn btn-primary">Install in 2 Minutes</a>
       <a href="/local-first/" class="btn btn-ghost">Why local-first →</a>
@@ -3286,7 +3381,7 @@ npx create-tap-script gh/x https://github.com</code></pre>
           <path d="M 145 140 L 175 185 L 155 180 L 140 145 Z" fill="#818CF8"/>
           <path d="M 150 145 L 180 190 L 162 185 L 148 150 Z" fill="#6366F1"/>
         </svg>
-        Taprun &mdash; Compile once. Keep it forever. Outrun the drift.
+        Taprun &mdash; Compile once. Run forever. Diff the drift.
       </div>
       <ul class="footer-links">
         <li><a href="https://github.com/LeonTing1010/tap">GitHub</a></li>
