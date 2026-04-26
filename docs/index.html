@@ -2417,26 +2417,84 @@ h2 .hl {
 }
 
 .press-edition .press-dek-wrap {
-  max-width: 720px; margin-left: clamp(0px, 6vw, 96px); margin-bottom: 56px;
+  max-width: 760px; margin-left: clamp(0px, 6vw, 96px); margin-bottom: 56px;
 }
-.press-edition .press-byline strong {
+/* Two-line lede — display serif up top, italic close below.
+   Replaces the uppercase newspaper-deck that read as visual noise. */
+.press-edition .press-lede {
   font-family: var(--press-font-display);
-  font-weight: 700;
-  font-size: 22px;
-  font-variation-settings: "SOFT" 20, "opsz" 144, "wght" 700;
-  letter-spacing: -0.012em;
+  font-size: clamp(22px, 2.4vw, 30px);
+  line-height: 1.25;
+  letter-spacing: -0.018em;
   color: var(--press-ink);
-  display: block;
-  margin-bottom: 10px;
-  text-transform: none;
+  font-variation-settings: "SOFT" 20, "opsz" 144, "wght" 660;
+  margin: 0 0 14px;
+  max-width: 680px;
 }
-.press-edition .press-byline strong em {
+.press-edition .press-lede em {
   font-style: italic;
   color: var(--press-red);
   font-variation-settings: "SOFT" 80, "opsz" 144, "wght" 620;
-  letter-spacing: 0;
-  text-transform: none;
 }
+.press-edition .press-lede-strike {
+  position: relative;
+  white-space: nowrap;
+}
+.press-edition .press-lede-strike::after {
+  content: '';
+  position: absolute;
+  left: -2px; right: -2px;
+  top: 56%;
+  height: 3px;
+  background: var(--press-red);
+  transform: skewY(-2deg);
+  opacity: 0.85;
+  border-radius: 2px;
+}
+.press-edition .press-lede-sub {
+  font-family: var(--press-font-body);
+  font-size: clamp(15px, 1.15vw, 17px);
+  line-height: 1.5;
+  color: var(--press-ink-soft);
+  margin: 0 0 22px;
+  font-weight: 400;
+}
+.press-edition .press-lede-sub em {
+  font-style: italic;
+  color: var(--press-ink);
+  font-weight: 500;
+}
+/* Unified code block — listings style, monospace, paper background.
+   Margin/padding/colors set here so HTML stays semantic (no inline styles). */
+.press-edition .press-code {
+  background: var(--press-paper-deep);
+  border: 1px solid var(--press-rule-soft);
+  border-radius: 4px;
+  padding: 22px 26px;
+  margin: 0;
+  font-family: var(--press-font-mono);
+  font-size: 13.5px;
+  line-height: 1.75;
+  color: var(--press-ink);
+  overflow-x: auto;
+  position: relative;
+}
+.press-edition .press-code::before {
+  content: 'Listing 1 — Conversion · Run · Diff';
+  position: absolute;
+  top: -10px; left: 22px;
+  background: var(--press-paper);
+  padding: 0 10px;
+  font-family: var(--press-font-body);
+  font-size: 11px;
+  font-style: italic;
+  color: var(--press-ink-faint);
+  letter-spacing: 0.02em;
+}
+.press-edition .press-code code { font-family: inherit; font-size: inherit; color: inherit; background: none; padding: 0; border: 0; }
+.press-edition .press-code .c  { color: var(--press-ink-faint); font-style: italic; }
+.press-edition .press-code .k  { color: var(--press-red); font-weight: 600; }
+.press-edition .press-code .o  { color: var(--press-gold); }
 .press-edition .press-byline {
   font-size: 11px; letter-spacing: 0.26em; text-transform: uppercase;
   color: var(--press-ink-faint); margin-bottom: 14px;
@@ -2624,18 +2682,16 @@ h2 .hl {
   </aside>
 
   <div class="press-dek-wrap">
-    <p class="press-byline"><strong>Browser automation that runs in <em>your</em> browser, not someone else's cloud.</strong> Convert your existing Playwright / Puppeteer / Stagehand source to a deterministic <code>.tap.json</code> plan in 30 seconds. Replay it in your real Chrome — <em>cookies never leave your machine, by architecture, not policy.</em></p>
-    <pre class="press-code" style="background: rgba(20,17,12,0.04); border: 1px solid rgba(20,17,12,0.12); border-radius: 8px; padding: 18px 22px; margin: 20px 0 0; font-family: var(--font-mono); font-size: 14px; line-height: 1.65; color: var(--text); overflow-x: auto;"><code><span style="color: var(--text-muted);"># 1. Convert your existing Playwright test (no rewrite).</span>
-npm install @taprun/from-playwright @taprun/spec
-node -e <span style="color: var(--indigo-bright);">"import('@taprun/from-playwright').then(m =&gt; \
-  console.log(m.playwrightToTap(require('fs').readFileSync('tests/login.spec.ts','utf8'), \
-    {site:'example', name:'login'})))"</span> &gt; example/login.tap.json
+    <p class="press-lede">Browser automation that runs in <em>your</em> browser, <span class="press-lede-strike">not someone else's cloud</span>.</p>
+    <p class="press-lede-sub">Cookies never leave your machine — <em>by architecture, not policy.</em></p>
+    <pre class="press-code"><code><span class="c"># Drop in your existing Playwright / Puppeteer / Stagehand source.</span>
+<span class="c"># Out comes a deterministic .tap.json plan, replayable in your real Chrome.</span>
 
-<span style="color: var(--text-muted);"># 2. Run in your real Chrome — cookies stay local.</span>
-tap run example/login                       <span style="color: var(--text-muted);"># 0 LLM tokens, deterministic.</span>
+$ <span class="k">npm install</span> @taprun/from-playwright @taprun/spec
+$ <span class="k">npx</span> from-playwright tests/login.spec.ts <span class="o">&gt;</span> example/login.tap.json   <span class="c"># 30 sec, no rewrite</span>
 
-<span style="color: var(--text-muted);"># 3. Site changed? Doctor catches drift before your data does.</span>
-tap doctor example/login                    <span style="color: var(--text-muted);"># 'ok' | 'broken' | 'stale'</span></code></pre>
+$ <span class="k">tap run</span> example/login                                       <span class="c"># 0 LLM tokens · deterministic</span>
+$ <span class="k">tap doctor</span> example/login                                    <span class="c"># ok · broken · stale</span></code></pre>
   </div>
 
   <div class="press-ornament">✦ &nbsp; ✦ &nbsp; ✦</div>

@@ -73,6 +73,8 @@ Each section reuses the ⟨Their layer · Tap layer · Where they don't overlap 
 
 #### vs Browserbase + Stagehand
 
+> [Deep comparison →](/compare/stagehand/) — full architectural breakdown, where each wins, when they compose.
+>
 > Browserbase hosts the browser; Tap defines the program. A `.tap.json` plan can run on Browserbase the same way it runs on local Chrome — the plan is the substrate.
 >
 > *Where they don't overlap*: Browserbase's value is infra (hosted execution, replay, sessions); Tap's value is the program format (compile-once `.tap.json` + doctor + heal). *Where they compose*: Tap's `--runtime playwright` runs against any Playwright endpoint, including Browserbase-hosted browsers. Browserbase becomes a deployment target.
