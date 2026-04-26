@@ -77,19 +77,23 @@ jobs:
             echo "Manual dispatch — packages: $input"
           fi
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
       - name: Publish to JSR
         run: |
           set -e
           for pkg in ${{ steps.target.outputs.list }}; do
             echo "::group::publishing @taprun/$pkg"
             cd "packages/$pkg"
-            # If the package declares a node_modules-style dir (e.g.
-            # create-tap-script needs @types/node to resolve `node:*`
-            # imports), pre-install so `deno publish` can typecheck.
-            if grep -q '"nodeModulesDir"' deno.json 2>/dev/null \
-               || grep -q '"nodeModulesDir"' jsr.json 2>/dev/null; then
-              echo "deno install (nodeModulesDir present)"
-              deno install --entrypoint src/*.ts || deno install || true
+            # If the package's package.json lists @types/node as a
+            # devDep (e.g. create-tap-script ships a Node CLI shim that
+            # imports node:fs/promises etc.), npm-install it so
+            # `deno publish` can resolve type references at typecheck.
+            if [ -f package.json ] && grep -q '"@types/node"' package.json; then
+              echo "npm install (@types/node devDep present)"
+              npm install --no-audit --no-fund --silent
             fi
             # --allow-slow-types: the .ts source has some inferred
             # return types that don't pass JSR's "explicit types"

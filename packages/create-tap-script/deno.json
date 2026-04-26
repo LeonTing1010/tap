@@ -6,10 +6,6 @@
     ".": "./src/cli.ts",
     "./create": "./src/create.ts"
   },
-  "nodeModulesDir": "auto",
-  "imports": {
-    "@types/node": "npm:@types/node@^22"
-  },
   "compilerOptions": {
     "lib": ["dom", "deno.ns", "esnext"]
   },
