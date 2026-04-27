@@ -3890,5 +3890,42 @@ if (navToggle && navLinks) {
 })();
 </script>
 
+<style>
+  pre { position: relative; }
+  pre::after {
+    content: 'click to copy';
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    font: 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+    color: rgba(255, 255, 255, 0.35);
+    pointer-events: none;
+    transition: color 0.2s;
+    user-select: none;
+  }
+  pre:hover { cursor: pointer; }
+  pre:hover::after { color: rgba(255, 255, 255, 0.75); }
+  pre.tap-copied::after { content: 'copied ✓'; color: #34d399; }
+  :not(pre) > code:hover { cursor: pointer; outline: 1px dashed rgba(165,180,252,0.45); outline-offset: 2px; border-radius: 3px; }
+  code.tap-copied { outline: 1px solid #34d399 !important; }
+  code.tap-copied::after { content: ' ✓'; color: #34d399; }
+</style>
+<script>
+  document.addEventListener('click', function(e) {
+    if (!navigator.clipboard) return;
+    if (e.target.closest && e.target.closest('a')) return;
+    var pre = e.target.closest && e.target.closest('pre');
+    var target = pre || (e.target.closest && e.target.closest('code'));
+    if (!target) return;
+    var text = (target.innerText || target.textContent || '').replace(/^\s+|\s+$/g, '');
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(function() {
+      target.classList.add('tap-copied');
+      setTimeout(function() { target.classList.remove('tap-copied'); }, 1500);
+      if (window.gtag) window.gtag('event', 'code_copy', { snippet_chars: text.length, kind: pre ? 'block' : 'inline' });
+    }).catch(function() {});
+  });
+</script>
+
 </body>
 </html>
