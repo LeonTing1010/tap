@@ -6,7 +6,15 @@
 <description>Engineering insights on browser automation, AI agents, and deterministic programs.</description>
 <language>en-us</language>
 <atom:link href="https://taprun.dev/blog/feed.xml" rel="self" type="application/rss+xml"/>
-<lastBuildDate>Wed, 22 Apr 2026 00:00:00 +0000</lastBuildDate>
+<lastBuildDate>Mon, 27 Apr 2026 00:00:00 +0000</lastBuildDate>
+
+<item>
+<title>Compile-time AI is safe. Runtime AI deleted a production database.</title>
+<link>https://taprun.dev/blog/compile-time-ai-not-runtime-ai.html</link>
+<description>An AI agent dropped a production database this week and the HN thread hit 600+ points. The fix isn't a better prompt or a stricter system message — it's deciding where in the lifecycle the AI is allowed to think. Compile-time AI produces a program a human can review before it runs. Runtime AI produces an action the system already executed.</description>
+<pubDate>Mon, 27 Apr 2026 00:00:00 +0000</pubDate>
+<guid>https://taprun.dev/blog/compile-time-ai-not-runtime-ai.html</guid>
+</item>
 
 <item>
 <title>Install Tap MCP in Claude Code, Cursor, Cline, Windsurf, or VS Code — 60 Seconds Each</title>

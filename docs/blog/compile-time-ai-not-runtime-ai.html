@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) — production host only -->
+<script>
+  (function() {
+    if (location.hostname !== 'taprun.dev') return;
+    var s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=G-RH14PQ10QK';
+    document.head.appendChild(s);
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function(){ dataLayer.push(arguments); };
+    gtag('js', new Date());
+    gtag('config', 'G-RH14PQ10QK');
+  })();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Compile-time AI is safe. Runtime AI deleted a production database. — Tap Blog</title>
+<meta name="description" content="An AI agent dropped a production database this week and the HN thread hit 600+ points. The fix isn't a better prompt or a stricter system message — it's deciding where in the lifecycle the AI is allowed to think. Compile-time AI is reviewable. Runtime AI is not.">
+<meta name="keywords" content="AI agent safety, runtime AI, compile-time AI, deterministic browser automation, agent dropped production database, agent confession, AI agent risk, MCP browser tool safety">
+<link rel="canonical" href="https://taprun.dev/blog/compile-time-ai-not-runtime-ai.html">
+<meta property="og:title" content="Compile-time AI is safe. Runtime AI deleted a production database.">
+<meta property="og:description" content="An AI agent dropped a production database this week. The fix isn't a better prompt — it's deciding where in the lifecycle the AI is allowed to think.">
+<meta property="og:url" content="https://taprun.dev/blog/compile-time-ai-not-runtime-ai.html">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://taprun.dev/social-preview.png">
+<meta property="article:published_time" content="2026-04-27">
+<meta property="article:author" content="Leon Ting">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Compile-time AI is safe. Runtime AI deleted a production database.">
+<meta name="twitter:description" content="An AI agent dropped a production database this week. The fix isn't a better prompt — it's deciding where in the lifecycle the AI is allowed to think.">
+<meta name="twitter:image" content="https://taprun.dev/social-preview.png">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='105' cy='115' r='55' fill='%23FFFFFF'/%3E%3Ccircle cx='85' cy='70' r='45' fill='%23FFFFFF'/%3E%3Cellipse cx='75' cy='32' rx='15' ry='22' fill='%23EF4444'/%3E%3Cellipse cx='90' cy='30' rx='12' ry='20' fill='%23DC2626'/%3E%3Cellipse cx='103' cy='35' rx='10' ry='16' fill='%23B91C1C'/%3E%3Cpath d='M 55 68 L 8 75 L 55 85 Z' fill='%23FBBF24'/%3E%3Cpath d='M 55 85 L 8 75 L 12 82 Z' fill='%23D97706'/%3E%3Ccircle cx='70' cy='65' r='14' fill='%231F2937'/%3E%3Ccircle cx='66' cy='61' r='5' fill='%23FFFFFF'/%3E%3Ccircle cx='74' cy='68' r='2.5' fill='%23FFFFFF'/%3E%3Cellipse cx='50' cy='78' rx='8' ry='5' fill='%23FECACA' opacity='0.8'/%3E%3Cellipse cx='125' cy='115' rx='35' ry='30' fill='%23818CF8'/%3E%3Cellipse cx='125' cy='115' rx='25' ry='20' fill='%236366F1'/%3E%3Ccircle cx='95' cy='130' r='25' fill='%23F9FAFB'/%3E%3Cpath d='M 145 140 L 175 185 L 155 180 L 140 145 Z' fill='%23818CF8'/%3E%3Cpath d='M 150 145 L 180 190 L 162 185 L 148 150 Z' fill='%236366F1'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,300..900,0..100;1,9..144,300..900,0..100&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Compile-time AI is safe. Runtime AI deleted a production database.",
+  "description": "An AI agent dropped a production database this week. The fix isn't a better prompt — it's deciding where in the lifecycle the AI is allowed to think.",
+  "datePublished": "2026-04-27",
+  "author": {
+    "@type": "Person",
+    "name": "Leon Ting",
+    "url": "https://github.com/LeonTing1010"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Tap",
+    "url": "https://taprun.dev"
+  },
+  "url": "https://taprun.dev/blog/compile-time-ai-not-runtime-ai.html",
+  "mainEntityOfPage": "https://taprun.dev/blog/compile-time-ai-not-runtime-ai.html",
+  "image": "https://taprun.dev/social-preview.png"
+}
+</script>
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Fraunces','Hoefler Text',Georgia,serif; background: #F4EDDE; color: #14110C; line-height: 1.7; }
+.container { max-width: 720px; margin: 0 auto; padding: 60px 24px; }
+h1 { font-size: 2rem; font-weight: 600; color: #14110C; margin-bottom: 8px; line-height: 1.3; }
+h2 { font-size: 1.35rem; font-weight: 500; color: #14110C; margin-top: 48px; margin-bottom: 16px; }
+h3 { font-size: 1.1rem; font-weight: 500; color: #14110C; margin-top: 32px; margin-bottom: 12px; }
+p, li { font-size: 0.95rem; color: #3B332A; margin-bottom: 16px; }
+ul, ol { padding-left: 24px; }
+a { color: #1C2D5A; text-decoration: none; }
+a:hover { text-decoration: underline; }
+.meta { font-size: 0.85rem; color: #7A6F60; margin-bottom: 40px; }
+.back { display: inline-block; margin-bottom: 24px; font-size: 0.9rem; }
+code { background: rgba(28,45,90,0.08); padding: 2px 6px; border-radius: 0; font-size: 0.9em; font-family: 'JetBrains Mono', monospace; }
+pre { background: #14110C; border: 1px solid rgba(20,17,12,0.15); border-radius: 0; padding: 16px 20px; overflow-x: auto; margin: 20px 0; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; line-height: 1.6; color: #c8c8d0; }
+pre .comment { color: #7A6F60; }
+pre .cmd { color: #d8c490; }
+pre .output { color: #b3c896; }
+pre .flag { color: #d99a4a; }
+blockquote { border-left: 3px solid #7E2B1C; padding: 12px 16px; margin: 20px 0; background: rgba(126,43,28,0.05); border-radius: 0; }
+blockquote p { color: #3B332A; margin-bottom: 0; font-style: italic; }
+blockquote cite { display: block; margin-top: 8px; font-size: 0.85rem; color: #7A6F60; font-style: normal; }
+table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid rgba(20,17,12,0.15); font-size: 0.9rem; }
+th { color: #14110C; font-weight: 500; }
+td { color: #3B332A; }
+.check { color: #3D5E3B; }
+.cross { color: #7E2B1C; }
+.tilde { color: #A67A2E; }
+.cta { margin-top: 48px; padding: 24px; background: rgba(28,45,90,0.06); border: 1px solid #7E2B1C; border-radius: 0; }
+.cta h3 { color: #14110C; font-size: 1.1rem; margin-bottom: 12px; margin-top: 0; }
+.cta pre { margin-bottom: 0; }
+hr { border: none; border-top: 1px solid rgba(20,17,12,0.15); margin: 48px 0; }
+</style>
+<script src="https://analytics.ahrefs.com/analytics.js" data-key="G1wKuningnrw+t5LQJ+MPw" async></script>
+</head>
+<body>
+<div class="container">
+<a href="../" class="back">&larr; Tap</a> &middot; <a href="./" class="back">Blog</a>
+<h1>Compile-time AI is safe. Runtime AI deleted a production database.</h1>
+<p class="meta">April 27, 2026 &middot; Leon Ting &middot; 7 min read</p>
+
+<p>The top of Hacker News today, 600+ points and climbing: <a href="https://news.ycombinator.com/item?id=47911524">&ldquo;An AI agent deleted our production database. The agent's confession is below.&rdquo;</a></p>
+
+<p>The reactions split predictably. Half are <em>better prompts would have prevented this.</em> Half are <em>never give an agent write access.</em> Both miss the actual lever.</p>
+
+<p>The lever is <strong>where in the lifecycle the AI is allowed to think</strong>. There are exactly two choices, and one of them is the one that just dropped a table.</p>
+
+<h2>Two places to put the AI</h2>
+
+<p>Every AI-driven automation puts the model in one of two positions:</p>
+
+<table>
+<tr><th></th><th>Compile-time AI</th><th>Runtime AI</th></tr>
+<tr><td>When the model thinks</td><td>Once, while you write the program</td><td>On every call, forever</td></tr>
+<tr><td>What it produces</td><td>A program a human can read</td><td>An action the system executes</td></tr>
+<tr><td>Review surface</td><td>A diff, before anything runs</td><td>Logs, after something happened</td></tr>
+<tr><td>Op space at execution</td><td>Frozen at compile time</td><td>Whatever the model decides next</td></tr>
+<tr><td>Token cost per call</td><td>Zero</td><td>Linear in tasks</td></tr>
+<tr><td>Prompt-injection surface</td><td>The author's IDE</td><td>Every page the agent visits</td></tr>
+</table>
+
+<p>Both architectures are real, both ship today, and the difference is invisible from the outside &mdash; until something gets dropped.</p>
+
+<h2>What runtime AI actually means in production</h2>
+
+<p>When an AI agent has runtime authority over your systems, the surface looks innocent on day one:</p>
+
+<pre><span class="comment"># &ldquo;Help me clean up the staging environment&rdquo;</span>
+<span class="cmd">agent run</span> <span class="flag">--db</span> production_creds.json <span class="flag">--task</span> <span class="output">"clean staging"</span></pre>
+
+<p>The credentials are real. The op space is whatever the agent's tool list contains &mdash; usually <code>execute_sql</code>, <code>http_request</code>, <code>shell</code>, with no constraint on what arguments those tools receive. The model decides, on each call, which tool to invoke and with which arguments. The decision is influenced by every token of context that scrolled past it &mdash; including, notably, anything injected by a hostile page or a hallucinated screenshot caption.</p>
+
+<p>The HN incident isn't surprising in this architecture. It's the expected failure mode. Give a stochastic decision-maker production credentials and an unbounded action space, and somewhere in the long tail it will choose <code>DROP TABLE</code> for a plausible-looking reason. The next iteration of the model won't fix this; it just shifts the failure to a less common prompt.</p>
+
+<h2>What compile-time AI looks like instead</h2>
+
+<p>Compile-time AI inverts the timing. The model writes a program <em>once</em>, the program is reviewed by a human, and then the program runs forever without the model. The model is not in the loop at runtime; only the program it wrote is.</p>
+
+<p>Concretely, the program has three properties the agent loop doesn't:</p>
+
+<ol>
+<li><strong>The op set is closed before runtime starts.</strong> A program that says &ldquo;read these three URLs and project these four fields&rdquo; cannot, at execution time, decide to issue a DELETE. The op vocabulary was fixed when the program was written.</li>
+<li><strong>Side-effecting intent is declared on the envelope.</strong> A program that intends to write is labeled <code>write</code>, runs only when explicitly authorized, and is excluded from automatic re-runs. A program that intends to read is labeled <code>read</code>; reading cannot become writing later.</li>
+<li><strong>Drift is detected before action, not after.</strong> When the site or schema changes, the program's structural fingerprint stops matching before the wrong data flows downstream. The check happens on a known-good baseline, not on an LLM's interpretation of what the page looks like today.</li>
+</ol>
+
+<p>None of this requires the model to be smarter, more aligned, or better-prompted. It requires the model to be <strong>elsewhere</strong> &mdash; specifically, not in the runtime path.</p>
+
+<h2>This is the architecture Tap is built on</h2>
+
+<p>Tap's plan format is a <a href="/spec/plan-v1/">closed 24-op union</a>. The full vocabulary is fixed; a plan cannot, at execution time, introduce an op the runtime doesn't know. The plan runtime is mechanically prevented from loading new code paths &mdash; a static guard rejects <code>new Worker</code>, <code>new Function</code>, <code>eval</code>, and dynamic <code>.js</code> imports inside the plan-runtime module. The model that wrote the plan cannot influence what runs.</p>
+
+<p>Intent is declared on the envelope. <code>intent: "read"</code> taps run under <code>tap doctor</code> automatically and on every drift event. <code>intent: "write"</code> taps are explicitly skipped from automation paths and require an opt-in flag to execute. A read tap cannot quietly become a write tap; that's a different envelope, signed differently, requiring a different review.</p>
+
+<p>And drift detection runs <em>before</em> data flows. <code>tap doctor</code> independently fetches the authoritative source (RSS, Schema.org JSON-LD, declared APIs) and compares against the plan's structural fingerprint. If the fingerprint stops matching, the plan is marked <code>broken</code> or <code>stale</code> and stops returning data, instead of returning wrong data. The verification arm sees what the plan was supposed to read, not what an LLM thinks the page now says.</p>
+
+<h2>What this architecture cannot prevent</h2>
+
+<p>Honesty about the boundary, because it matters:</p>
+
+<ul>
+<li><strong>A maliciously authored write tap still writes.</strong> The architecture prevents a read program from spontaneously becoming destructive. It does not prevent a human (or compile-time agent) from deliberately writing a tap that calls <code>DELETE /admin/users/all</code>. That tap is still reviewable as a diff before it ever runs &mdash; but if a reviewer approves it, it runs.</li>
+<li><strong>The compile-time AI can still hallucinate.</strong> When you ask an agent to forge a tap, the model can pick a wrong selector, target the wrong endpoint, or invent a field that doesn't exist. The difference is the failure shows up in a verification step before the tap is saved, not after the tap has run 10,000 times in production.</li>
+<li><strong>Local-first is doing some of the work here.</strong> Tap programs run in your own browser with your own session, not on a cloud server with vendored credentials. That removes a separate, much larger blast radius &mdash; the agent operator can't see or replay your auth state &mdash; but it's not what's preventing the runtime-AI failure mode. The closed op union is.</li>
+</ul>
+
+<p>The architecture is doing one job: it's making the difference between &ldquo;an LLM might do something destructive&rdquo; and &ldquo;a reviewable program does exactly what was reviewed.&rdquo;</p>
+
+<h2>Why this didn't already happen</h2>
+
+<p>The reason runtime-AI architectures dominate the current generation of agent tools is not that they're better &mdash; it's that they're the obvious shape when you start from <em>&ldquo;how do we let the LLM use tools?&rdquo;</em></p>
+
+<p>If your starting question is <em>&ldquo;the LLM has tools, the LLM picks one each turn&rdquo;</em>, you end up with runtime AI by default. The model is in the loop because the framing put it there.</p>
+
+<p>If your starting question is <em>&ldquo;what's the smallest deterministic program that does this task, and where does the AI need to participate?&rdquo;</em>, you usually find the answer is <em>once, at the beginning, supervised</em>. Then the program runs without the model, and the model isn't around to pick the wrong tool.</p>
+
+<p>The cost is that you have to define the op space ahead of time. Tap's bet is that for browser automation specifically, 24 ops is enough &mdash; we've shipped <a href="/taps/">200+ programs</a> against that vocabulary, and the ones that need a 25th are rare enough to handle as a governance event, not as runtime improvisation.</p>
+
+<h2>The ask</h2>
+
+<p>If you've been running agents with production credentials and an unbounded tool list, the next time you read a thread like the HN one, the question to ask isn't <em>&ldquo;what prompt would have stopped this?&rdquo;</em> The question is <em>&ldquo;why was the model in the loop at runtime in the first place?&rdquo;</em></p>
+
+<p>Sometimes the answer is good &mdash; the task genuinely requires per-call decisions a fixed program can't make. Most of the time, the answer is that nobody asked.</p>
+
+<div class="cta">
+<h3>Try compile-time AI for browser work:</h3>
+<pre><span class="cmd">npm install -g @taprun/cli@latest</span>
+<span class="comment"># forge a program once, run forever:</span>
+<span class="cmd">tap forge https://your-site.com</span>
+<span class="cmd">tap run your-site/your-task</span></pre>
+</div>
+
+</div>
+</body>
+</html>
