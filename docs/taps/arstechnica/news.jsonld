@@ -1,0 +1,35 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/arstechnica/news",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/arstechnica/news",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "arstechnica",
+    "name": "news",
+    "intent": "read",
+    "description": "Ars Technica latest tech news and articles",
+    "columns": [
+      "title",
+      "author",
+      "comments",
+      "link"
+    ],
+    "args": {},
+    "health": {
+      "min_rows": 5,
+      "non_empty": [
+        "title",
+        "link"
+      ]
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/arstechnica/news.tap.js",
+    "https://taprun.dev/taps/arstechnica/news.html"
+  ]
+}

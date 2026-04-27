@@ -4,15 +4,15 @@
     "https://taprun.dev/ns/tap-v1"
   ],
   "@type": "Annotation",
-  "id": "https://taprun.dev/taps/lobsters/hot",
+  "id": "https://taprun.dev/taps/douban/hot",
   "motivation": "tap:executing",
-  "target": "https://taprun.dev/taps/lobsters/hot",
+  "target": "https://taprun.dev/taps/douban/hot",
   "body": {
     "type": "tap:ExecutionPlan",
-    "site": "lobsters",
+    "site": "douban",
     "name": "hot",
     "intent": "read",
-    "description": "Lobsters hot posts",
+    "description": "Douban trending movies",
     "columns": [],
     "args": {},
     "health": {
@@ -23,7 +23,7 @@
     }
   },
   "seeAlso": [
-    "https://github.com/LeonTing1010/tap-skills/blob/main/showcase/lobsters/hot.tap.js",
-    "https://taprun.dev/taps/lobsters/hot.html"
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/douban/hot.tap.js",
+    "https://taprun.dev/taps/douban/hot.html"
   ]
 }

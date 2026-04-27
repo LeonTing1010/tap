@@ -12,18 +12,15 @@
     "site": "hackernews",
     "name": "hot",
     "intent": "read",
-    "description": "Hacker News hot stories - Top stories from Hacker News front page, including rank, title, points, comment count, age, author, ID, and URL. The go-to information source for tech entrepreneurs and developers.",
-    "columns": ["rank", "title", "points", "comments", "age", "author", "id", "url"],
-    "args": {
-      "limit": {
-        "type": "int",
-        "default": 30,
-        "description": "Number of stories to return"
-      }
-    },
+    "description": "Hacker News top stories",
+    "columns": [],
+    "args": {},
     "health": {
       "min_rows": 10,
-      "non_empty": ["title", "points"]
+      "non_empty": [
+        "title",
+        "score"
+      ]
     }
   },
   "seeAlso": [

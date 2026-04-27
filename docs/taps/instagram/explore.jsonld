@@ -1,0 +1,30 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/instagram/explore",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/instagram/explore",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "instagram",
+    "name": "explore",
+    "intent": "read",
+    "description": "Instagram Explore (requires login)",
+    "columns": [],
+    "args": {},
+    "health": {
+      "min_rows": 3,
+      "non_empty": [
+        "caption"
+      ],
+      "requires_auth": true
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/instagram/explore.tap.js",
+    "https://taprun.dev/taps/instagram/explore.html"
+  ]
+}

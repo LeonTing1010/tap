@@ -1,0 +1,54 @@
+---
+layout: tap
+site_name: arxiv
+tap_name: search
+description: "Search arXiv papers"
+intent: read
+columns: []
+args:
+  - name: keyword
+    type: string
+args_json: |
+  {"keyword":{"type":"string"}}
+health_json: |
+  {"min_rows":3,"non_empty":["title"]}
+example_args: "--keyword 'large language model'"
+source_url: https://github.com/LeonTing1010/tap-skills/blob/main/community/arxiv/search.tap.js
+license: MIT
+---
+
+<section>
+  <h2>What it does</h2>
+  <p>Search arXiv papers</p>
+</section>
+
+<section>
+  <h2>Install Taprun once</h2>
+  <p>Taprun ships as a single MCP server exposing a catalog of compiled taps. One-time setup on macOS / Linux:</p>
+  <pre><code>brew install LeonTing1010/tap/taprun
+tap mcp connect</code></pre>
+  <p>Or drop this into your <code>claude_desktop_config.json</code> (works identically in Claude Code, Cursor, Cline, Windsurf — any MCP host):</p>
+  <pre><code>{
+  &quot;mcpServers&quot;: {
+    &quot;tap&quot;: {
+      &quot;command&quot;: &quot;tap&quot;,
+      &quot;args&quot;: [&quot;mcp&quot;, &quot;start&quot;]
+    }
+  }
+}</code></pre>
+</section>
+
+<section>
+  <h2>Call <code>arxiv/search</code></h2>
+  <p>Terminal, once installed:</p>
+  <pre><code>tap run arxiv/search --keyword 'large language model'</code></pre>
+  <p>From the MCP host — exact same compiled plan, deterministic replay, zero LLM tokens:</p>
+  <pre><code>tap.run({ site: &quot;arxiv&quot;, name: &quot;search&quot;, args: {&quot;keyword&quot;:&quot;large language model&quot;} })</code></pre>
+</section>
+
+<section>
+  <h2>Why compile it once</h2>
+  <p>This plan was forged once — the AI read <code>arxiv</code>, picked stable structural addresses (JSON-LD, ARIA, RSS, or declared API endpoints, in that priority order), and saved them to a <code>.tap.json</code>. Every replay since then has used zero LLM tokens. When <code>arxiv</code> ships a site change that breaks the extraction, <code>tap doctor</code> surfaces it before your data goes stale — not after your pipeline silently writes garbage for a week.</p>
+</section>
+
+

@@ -1,0 +1,30 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/tiktok/trending",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/tiktok/trending",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "tiktok",
+    "name": "trending",
+    "intent": "read",
+    "description": "TikTok Trending Videos (requires login or geo-access)",
+    "columns": [],
+    "args": {},
+    "health": {
+      "min_rows": 3,
+      "non_empty": [
+        "author"
+      ],
+      "requires_auth": true
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/tiktok/trending.tap.js",
+    "https://taprun.dev/taps/tiktok/trending.html"
+  ]
+}

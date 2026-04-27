@@ -1,0 +1,29 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/quora/feed-jp",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/quora/feed-jp",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "quora",
+    "name": "feed-jp",
+    "intent": "read",
+    "description": "Quora Japan homepage feed — questions + answer snippets from the explore feed. Each question is a L3/L5 signal container by construction.",
+    "columns": [],
+    "args": {},
+    "health": {
+      "min_rows": 3,
+      "non_empty": [
+        "title"
+      ]
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/quora/feed-jp.tap.js",
+    "https://taprun.dev/taps/quora/feed-jp.html"
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "@context": [
+    "http://www.w3.org/ns/anno.jsonld",
+    "https://taprun.dev/ns/tap-v1"
+  ],
+  "@type": "Annotation",
+  "id": "https://taprun.dev/taps/google/trends",
+  "motivation": "tap:executing",
+  "target": "https://taprun.dev/taps/google/trends",
+  "body": {
+    "type": "tap:ExecutionPlan",
+    "site": "google",
+    "name": "trends",
+    "intent": "read",
+    "description": "Google Trends daily trending searches",
+    "columns": [],
+    "args": {
+      "geo": {
+        "type": "string",
+        "default": "US"
+      }
+    },
+    "health": {
+      "min_rows": 5,
+      "non_empty": [
+        "title"
+      ]
+    }
+  },
+  "seeAlso": [
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/google/trends.tap.js",
+    "https://taprun.dev/taps/google/trends.html"
+  ]
+}

@@ -12,12 +12,12 @@
     "site": "wikipedia",
     "name": "most-read",
     "intent": "read",
-    "description": "Wikipedia most read - Get the most read Wikipedia articles today, including article description, title, and view count. Understand what topics global users are paying attention to.",
-    "columns": ["description", "title", "views"],
+    "description": "Wikipedia most read articles today",
+    "columns": [],
     "args": {},
     "health": {
-      "min_rows": 10,
-      "non_empty": ["title", "views"]
+      "min_rows": 1,
+      "non_empty": []
     }
   },
   "seeAlso": [
