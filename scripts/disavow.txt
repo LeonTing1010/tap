@@ -1,0 +1,30 @@
+# Google disavow file for taprun.dev
+# Generated 2026-04-27 from Ahrefs referring-domains tap output.
+# Submit at https://search.google.com/search-console/disavow-links
+# Format: https://support.google.com/webmasters/answer/2648487
+#
+# Confirmed spam (Ahrefs is_spam:true)
+domain:fiverr-seo-for-small-businesses.site
+domain:fiverr-seo-for-business-growth.site
+domain:fiverr-cost-effective-seo.site
+domain:primeseo.xyz
+domain:zoldexlinks.shop
+domain:grow-fast.website
+domain:seodaro.com
+domain:quantumwares.shop
+domain:digitalgearshop.shop
+domain:cybertoolbox.shop
+domain:technomarkethq.shop
+#
+# SEO link-farm pattern (not yet flagged by Ahrefs but
+# clearly low-quality .shop / "rank*" / "seopxl*" PBNs)
+domain:rglinks.org
+domain:rankcrown.shop
+domain:rankapex.shop
+domain:sideenhancer.online
+domain:ranktitan.shop
+domain:rankproven.shop
+domain:seopxl-traffic-growth-lab.shop
+domain:seopxl-ranking-boost-engine.shop
+domain:seopxl-optimization-lab.shop
+domain:seopxl-ranking-boost-lab.shop
