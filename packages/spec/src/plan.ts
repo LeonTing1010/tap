@@ -23,6 +23,12 @@ import type { Target } from "./annotation.ts";
 /** A JSONata expression string. Evaluated against the current plan scope. */
 export type JsonataExpr = string;
 
+/** Tap intent — `read` runs under doctor automatically, `write` is skipped
+ *  unless `--all` because it has side effects. Listed in CLAUDE.md
+ *  Classification Axes (Gating). 5 inline duplicates collapsed
+ *  2026-04-27 (Slice B.2). */
+export type Intent = "read" | "write";
+
 /** Either a literal value or a `{{expr}}` template string. */
 export type Templated<T> = T | string;
 
@@ -354,7 +360,7 @@ export interface ExecutionPlan {
   type: "tap:ExecutionPlan";
   site: string;
   name: string;
-  intent: "read" | "write";
+  intent: Intent;
   description?: string;
   columns?: string[];
   args?: Record<string, ArgSpec>;
