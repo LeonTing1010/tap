@@ -324,6 +324,52 @@ export function selectorLayer(sel: Selector): 1 | 2 | 3 | 4 {
   }
 }
 
+/**
+ * Walk an arbitrary value (TapModule, ExecutionPlan body, plan op, …) and
+ * return the highest-trust selectorLayer found anywhere inside, by treating
+ * every `selector` (or `startSelector`/`endSelector`) key as a candidate and
+ * gating with `isSelector`. Returns undefined when no selector is found —
+ * legacy taps without target metadata, or write taps whose ops carry no
+ * structural anchors.
+ *
+ * "Highest-trust" = lowest layer number — Layer 1 dominates Layer 4. A plan
+ * that mixes a JSON-LD root with a CSS leaf is "Layer 1" for the K(Δ)
+ * question because the JSON-LD root is what carries it across deploys.
+ *
+ * Bounded by recursion depth (16) — JSONata expressions and pathological
+ * cyclic graphs (which shouldn't reach this code, but defense-in-depth)
+ * cannot blow the stack.
+ */
+export function derivePlanSelectorLayer(value: unknown): 1 | 2 | 3 | 4 | undefined {
+  let best: 1 | 2 | 3 | 4 | undefined = undefined;
+  const visit = (v: unknown, depth: number): void => {
+    if (depth > 16 || v === null || typeof v !== "object") return;
+    if (isSelector(v)) {
+      const layer = selectorLayer(v);
+      if (best === undefined || layer < best) best = layer;
+      return;
+    }
+    if (Array.isArray(v)) {
+      for (const item of v) visit(item, depth + 1);
+      return;
+    }
+    for (const [k, child] of Object.entries(v)) {
+      // Selector-shaped keys carry the candidates we care about. We could
+      // walk every key, but that re-traverses huge trees (page_inspection
+      // payloads, fingerprint maps) for no signal. Constrain to known keys.
+      if (
+        k === "selector" || k === "selectors" ||
+        k === "startSelector" || k === "endSelector" ||
+        k === "target" || k === "body" || k === "ops"
+      ) {
+        visit(child, depth + 1);
+      }
+    }
+  };
+  visit(value, 0);
+  return best;
+}
+
 /** Structural type guard — no JSON Schema, just shape checks. */
 export function isSelector(x: unknown): x is Selector {
   if (!x || typeof x !== "object") return false;
