@@ -466,6 +466,78 @@ body::before {
   color: var(--text-muted);
 }
 
+/* Editor's-desk CTA — reference-edition voice, single block */
+.catalog-cta {
+  text-align: center;
+  margin: 80px auto 24px;
+  max-width: 620px;
+  padding: 0 24px;
+}
+.catalog-cta .cta-rule {
+  width: 64px;
+  height: 1px;
+  background: var(--gold);
+  margin: 0 auto 28px;
+}
+.catalog-cta .cta-kicker {
+  font-family: var(--font-heading);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 13px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold-dim);
+  margin-bottom: 12px;
+}
+.catalog-cta .cta-headline {
+  font-family: var(--font-heading);
+  font-weight: 400;
+  font-size: 28px;
+  line-height: 1.25;
+  color: var(--indigo);
+  margin-bottom: 14px;
+  font-variation-settings: "SOFT" 50;
+}
+.catalog-cta .cta-body {
+  font-family: var(--font-heading);
+  font-weight: 300;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--text-dim);
+  margin-bottom: 24px;
+  font-variation-settings: "SOFT" 100;
+}
+.catalog-cta .cta-button {
+  display: inline-block;
+  font-family: var(--font-heading);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 16px;
+  color: var(--paper);
+  background: var(--indigo);
+  padding: 12px 28px;
+  text-decoration: none;
+  border: 1px solid var(--indigo);
+  transition: background 0.15s ease;
+}
+.catalog-cta .cta-button:hover {
+  background: var(--indigo-light);
+}
+.catalog-cta .cta-fallback {
+  font-family: var(--font-heading);
+  font-style: italic;
+  font-weight: 300;
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 16px;
+}
+.catalog-cta .cta-fallback a {
+  color: var(--indigo);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.catalog-cta .cta-fallback a:hover { color: var(--red); }
+
 /* Scroll reveal */
 .reveal { opacity: 0; transform: translateY(16px); transition: opacity 0.7s ease, transform 0.7s ease; }
 .reveal.visible { opacity: 1; transform: translateY(0); }
@@ -550,6 +622,15 @@ body::before {
     {% endfor %}
   </section>
 {% endfor %}
+
+<aside class="catalog-cta reveal">
+  <div class="cta-rule"></div>
+  <div class="cta-kicker">Editor's Desk</div>
+  <h2 class="cta-headline">Need one of these in production?</h2>
+  <p class="cta-body">Every entry in this catalog runs locally with your own browser session. If you're building agents and want help wiring a specific source — or one that isn't here yet — book a fifteen-minute call.</p>
+  <a class="cta-button" href="https://cal.com/data-d-b6kqb5/15min?utm_source=taprun.dev&utm_medium=taps_catalog&utm_campaign=cta_15min">Book 15 min →</a>
+  <p class="cta-fallback">or write <a href="mailto:hello@taprun.dev?subject=Tap%20catalog%20%E2%80%94%20question%20from%20%2Ftaps%2F">hello@taprun.dev</a></p>
+</aside>
 
 <div class="end-ornament">
   <span class="rule"></span>
