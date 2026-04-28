@@ -1,7 +1,7 @@
 {
   "name": "@taprun/from-stagehand",
-  "version": "0.1.1",
-  "description": "Convert Stagehand scripts (.ts / .js source) into Tap plan-v1 .tap.json files. Deterministic Playwright calls map to plan ops; stagehand.act/extract/observe map to allowUnverifiable exec ops with the original NL prompt preserved.",
+  "version": "0.1.2",
+  "description": "Migrate Stagehand (Browserbase) AI flows to MCP-compatible plans. Deterministic Playwright calls compile to plan ops; stagehand.act/extract/observe preserve their natural-language prompts. Run agent flows at zero LLM tokens in Claude Code, Cursor, and any MCP host.",
   "publishConfig": {
     "access": "public"
   },
@@ -27,14 +27,27 @@
     "node": ">=18"
   },
   "keywords": [
+    "stagehand",
+    "stagehand-mcp",
+    "stagehand-alternative",
+    "browserbase",
+    "browserbase-alternative",
+    "mcp",
+    "mcp-server",
+    "model-context-protocol",
+    "claude-code",
+    "cursor",
+    "ai-agent",
+    "browser-agent",
+    "browser-automation",
+    "playwright",
+    "deterministic",
+    "compile",
+    "replay",
+    "natural-language-automation",
+    "drift-detection",
     "tap",
     "taprun",
-    "stagehand",
-    "browserbase",
-    "adapter",
-    "browser-automation",
-    "ai-agent",
-    "drift-detection",
     "plan-v1"
   ],
   "homepage": "https://taprun.dev/spec/plan-v1/?utm_source=npm&utm_medium=package&utm_campaign=from-stagehand",
@@ -49,10 +62,10 @@
   "license": "MIT",
   "author": "Leon Ting <noreply@taprun.dev>",
   "peerDependencies": {
-    "@taprun/spec": "^0.3.0"
+    "@taprun/spec": "^0.4.0"
   },
   "devDependencies": {
-    "@taprun/spec": "^0.3.0",
+    "@taprun/spec": "^0.4.0",
     "typescript": "^5.5.0"
   }
 }

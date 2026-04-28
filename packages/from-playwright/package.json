@@ -1,7 +1,7 @@
 {
   "name": "@taprun/from-playwright",
-  "version": "0.1.1",
-  "description": "Convert Playwright test scripts (.ts / .js source) into Tap plan-v1 .tap.json files. Reference adapter for the @taprun/spec format.",
+  "version": "0.1.2",
+  "description": "Migrate Playwright scripts to MCP-compatible browser automation plans. Convert .spec.ts / .test.ts files into deterministic .tap.json that runs at zero LLM tokens in Claude Code, Cursor, and any MCP host.",
   "publishConfig": {
     "access": "public"
   },
@@ -27,13 +27,25 @@
     "node": ">=18"
   },
   "keywords": [
-    "tap",
-    "taprun",
     "playwright",
-    "adapter",
+    "playwright-migration",
+    "playwright-converter",
+    "playwright-to-mcp",
+    "mcp",
+    "mcp-server",
+    "model-context-protocol",
+    "claude-code",
+    "cursor",
+    "ai-agent",
     "browser-automation",
+    "browser-agent",
+    "deterministic",
+    "compile",
+    "replay",
     "scraping",
     "drift-detection",
+    "tap",
+    "taprun",
     "plan-v1"
   ],
   "homepage": "https://taprun.dev/spec/plan-v1/?utm_source=npm&utm_medium=package&utm_campaign=from-playwright",
@@ -48,10 +60,10 @@
   "license": "MIT",
   "author": "Leon Ting <noreply@taprun.dev>",
   "peerDependencies": {
-    "@taprun/spec": "^0.3.0"
+    "@taprun/spec": "^0.4.0"
   },
   "devDependencies": {
-    "@taprun/spec": "^0.3.0",
+    "@taprun/spec": "^0.4.0",
     "typescript": "^5.5.0"
   }
 }

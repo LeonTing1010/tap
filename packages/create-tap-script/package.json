@@ -1,7 +1,7 @@
 {
   "name": "create-tap-script",
-  "version": "0.1.1",
-  "description": "Scaffold a starter .tap.json plan in seconds. Run via `npx create-tap-script <site>/<name> <url>`.",
+  "version": "0.1.2",
+  "description": "Scaffold a browser automation plan in seconds. `npx create-tap-script <site>/<name> <url>` generates a deterministic .tap.json that runs at zero LLM tokens in Claude Code, Cursor, and any MCP host.",
   "publishConfig": {
     "access": "public"
   },
@@ -22,13 +22,24 @@
     "node": ">=18"
   },
   "keywords": [
-    "tap",
-    "taprun",
     "scaffold",
     "create",
     "starter",
+    "npx-template",
+    "mcp",
+    "mcp-server",
+    "model-context-protocol",
+    "claude-code",
+    "cursor",
+    "ai-agent",
     "browser-automation",
+    "browser-agent",
+    "scraper-template",
+    "playwright-alternative",
+    "puppeteer-alternative",
     "drift-detection",
+    "tap",
+    "taprun",
     "plan-v1"
   ],
   "homepage": "https://taprun.dev/?utm_source=npm&utm_medium=package&utm_campaign=create-tap-script",
@@ -43,7 +54,7 @@
   "license": "MIT",
   "author": "Leon Ting <noreply@taprun.dev>",
   "devDependencies": {
-    "@taprun/spec": "^0.3.0",
+    "@taprun/spec": "^0.4.0",
     "typescript": "^5.5.0",
     "@types/node": "^22.0.0"
   }
