@@ -1,4 +1,9 @@
 url: https://taprun.dev
+title: Tap
+description: Browser automation that runs in your browser, not someone else's cloud. Compile once, run forever, diff the drift.
+author:
+  name: Leon Ting
+  url: https://github.com/LeonTing1010
 
 plugins:
   - jekyll-sitemap

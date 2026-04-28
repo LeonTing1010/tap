@@ -1,0 +1,53 @@
+---
+layout: post
+title: "Notes from playwright-mcp #1530: named browser sessions need typed manifests"
+description: "A feature request to add named, persistent BrowserContexts to playwright-mcp surfaces a deeper problem: once sessions are first-class objects, the manifest describing them needs a stable schema before it grows a long tail of consumers."
+keywords: "playwright-mcp, named sessions, BrowserContext, session manifest, MCP server, AI agent identity, browser automation, storage state, manifest schema"
+date: 2026-04-28
+read_time: "6 min read"
+subtitle: "Why the auto-detection manifest is the load-bearing piece, not the session API"
+---
+
+<p><a href="https://github.com/microsoft/playwright-mcp/issues/1530">playwright-mcp issue #1530</a> proposes adding named, persistent <code>BrowserContext</code> sessions to the MCP server: <code>session_create</code>, <code>session_save</code>, <code>session_clone</code>, plus a manifest that auto-detects which services each saved session is logged into. The author shipped a working <a href="https://github.com/gabrielantonyxaviour/playwright-mcp">fork</a> with ~3,000 lines across three core files. The maintainer pushed back, suggesting <code>browser_storage_state</code> primitives plus running multiple MCP servers for role isolation.</p>
+
+<p>The pushback is technically fair. The interesting question — and the part the thread mostly skipped — is what happens to the manifest as it accretes consumers. Here are three engineering questions and one architectural observation, lifted from a comment I left on the issue and expanded for builders working in this space.</p>
+
+<h2>1. Service detection by cookie name/domain has a churn problem</h2>
+
+<p>The fork's <code>service-detector.ts</code> enumerates 50+ services. Cookie names and domains drift constantly:</p>
+
+<ul>
+  <li>Google's <code>__Secure-1PSID</code> changed shape twice in 2025</li>
+  <li>Vercel rotated their session cookie last year</li>
+  <li>AWS console SSO uses an opaque <code>aws-userInfo</code> blob that has no stable schema</li>
+</ul>
+
+<p>When a manifest reports "logged into Google as <em>user@x.com</em>" and the detector silently misses an auth refresh, an agent proceeds against a session that's now anonymous. The bug is invisible at the Playwright layer; everything works, the page just isn't the page the agent thought it was.</p>
+
+<p>A probe-based confirm step at <code>session_load</code> (one HEAD or GET to a known authenticated endpoint per service) catches this for $0.0001 per check and is the kind of thing you can't skip in production. It also gives you a natural way to retire matchers as services drift, instead of accumulating a 200-entry detector lookup that nobody trusts.</p>
+
+<h2>2. PID-based stale-lock detection breaks across containers</h2>
+
+<p>The fork's <code>state-store.ts</code> uses PID checks to detect stale locks: if the recorded PID no longer exists, the lock is claimable. This is correct on a single host. In a typical Spring AI or containerized deployment, <code>~/.playwright-sessions/</code> is often a host volume mounted into multiple containers, and each container has its own PID namespace.</p>
+
+<p>Two containers can each see "PID 47 doesn't exist locally — stale, claim it" while the real owner is alive in the other container. A host-id (random UUID generated and persisted to the manifest at first claim) plus PID disambiguates this with very little extra code. Either fix it or be explicit in the README that the lock is host-scoped — otherwise teams hit corrupt-state bugs that take half a day to track down.</p>
+
+<h2>3. Auto-detection isn't an "agent issue" — it's a shared-cache problem</h2>
+
+<p>The maintainer's framing was: agents should know which services they're authenticated with, and that's the agent's responsibility, not the MCP server's. Technically correct: an agent <em>could</em> re-derive this on each session load.</p>
+
+<p>Operationally, the framing is backwards. The moment you have N agents — Claude Code plus Cursor plus a CI runner — sharing one <code>~/.playwright-sessions/</code> directory, the manifest-side detection is a <strong>shared cache</strong> that prevents N redundant probes against live services and N divergent answers about the same bytes on disk. The information is a property of the saved session, not of any particular agent's runtime. Putting that cache in the MCP layer is the obvious home for it.</p>
+
+<p>Storage-state primitives alone don't address the "which identity is this?" question, which is the actual reason teams reach for sessions in the first place. The maintainer's "use two MCP servers" workaround scales to two, not to N.</p>
+
+<h2>The deeper gap: sessions need typed, addressable manifests</h2>
+
+<p>The deepest thing #1530 exposes is that "session" today means "cookies + localStorage." Once teams have named persistent contexts, the next thing they want is <em>typed</em>, <em>addressable</em> manifests so two agents handing one off can verify they got the same auth scopes.</p>
+
+<p>You don't have to sign anything on day one. But pinning a schema URL into <code>manifest.json</code> from the start saves a migration later — and gives the auto-detection table a stable contract for downstream tools that want to ingest your saved sessions without re-running detection. <a href="https://www.w3.org/TR/annotation-model/">W3C Web Annotations</a> are one off-the-shelf shape for this; <a href="https://json-ld.org/">JSON-LD contexts</a> are another. Either is better than ad-hoc JSON, and the cost of picking one early is roughly zero compared to the cost of versioning an untyped manifest after three downstream consumers depend on it.</p>
+
+<h2>Why this matters beyond playwright-mcp</h2>
+
+<p>Every project doing browser automation for AI agents will hit the same wall as soon as they cross the line from "ephemeral context per call" to "persistent named session." The session API is the easy part — three weeks of work, mostly mutex bookkeeping. The manifest is the load-bearing part, and it's the one you get exactly one chance to design before you have to ship migrations.</p>
+
+<p>If you're working in this space and want to compare notes, my email is in the footer. I read the fork because I've been working on the same shape from a different angle, and the cookie-detector churn problem in particular is one I'd like to see solved well in at least one canonical implementation.</p>

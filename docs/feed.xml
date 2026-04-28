@@ -1,0 +1,27 @@
+---
+layout: null
+permalink: /feed.xml
+sitemap: false
+---
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+<channel>
+  <title>{{ site.title }}</title>
+  <link>{{ site.url }}/</link>
+  <description>{{ site.description }}</description>
+  <language>en-us</language>
+  <atom:link href="{{ site.url }}/feed.xml" rel="self" type="application/rss+xml" />
+  <lastBuildDate>{{ site.time | date_to_rfc822 }}</lastBuildDate>
+  {% assign posts = site.pages | where: "layout", "post" | sort: "date" | reverse %}
+  {% for post in posts limit: 30 %}
+  <item>
+    <title>{{ post.title | xml_escape }}</title>
+    <link>{{ site.url }}{{ post.url }}</link>
+    <guid isPermaLink="true">{{ site.url }}{{ post.url }}</guid>
+    {% if post.description %}<description>{{ post.description | xml_escape }}</description>{% endif %}
+    {% if post.date %}<pubDate>{{ post.date | date_to_rfc822 }}</pubDate>{% endif %}
+    <author>noreply@taprun.dev (Leon Ting)</author>
+  </item>
+  {% endfor %}
+</channel>
+</rss>
