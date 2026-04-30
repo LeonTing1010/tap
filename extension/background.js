@@ -847,7 +847,23 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
 
     case 'session.create': {
       const sessionId = crypto.randomUUID().slice(0, 8)
-      const tab = await chrome.tabs.create({ active: false })
+      // Pick a normal window explicitly. Without windowId, chrome.tabs.create
+      // targets the focused window — but Chrome may have zero focused windows
+      // when the user is in another app (Claude Code, Slack, etc.), which
+      // throws "No current window". Prefer last-focused normal window; fall
+      // back to any normal window; create a new one only if zero exist.
+      const windows = await chrome.windows.getAll({ windowTypes: ['normal'] })
+      let windowId
+      if (windows.length === 0) {
+        const win = await chrome.windows.create({ focused: false })
+        windowId = win.id
+      } else {
+        try {
+          const lf = await chrome.windows.getLastFocused({ windowTypes: ['normal'] })
+          windowId = lf?.id ?? windows[0].id
+        } catch { windowId = windows[0].id }
+      }
+      const tab = await chrome.tabs.create({ windowId, active: false })
       sessions.set(sessionId, { tabId: tab.id, url: '', interceptActive: false, networkCapturing: false })
       // Await persist: if the SW gets killed between here and the client's
       // next command, storage MUST already contain this session or the tab
