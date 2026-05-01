@@ -1,6 +1,6 @@
 {
   "name": "@taprun/from-playwright",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Migrate Playwright scripts to MCP-compatible browser automation plans. Convert .spec.ts / .test.ts files into deterministic .tap.json that runs at zero LLM tokens in Claude Code, Cursor, and any MCP host.",
   "publishConfig": {
     "access": "public"

@@ -11,7 +11,8 @@
  * on-ramp from "I have a Playwright script" to "Tap can monitor and
  * heal it" without rewriting in another framework.
  *
- * MVP coverage (Iteration 2):
+ * Coverage (0.2):
+ *   Legacy API (0.1):
  *   page.goto(url)              → { op: "nav", url }
  *   page.click(selector)        → { op: "input", kind: "click", target }
  *   page.fill(selector, value)  → { op: "input", kind: "fill", target, value }
@@ -21,18 +22,24 @@
  *   page.waitForTimeout(ms)     → { op: "wait", ms }
  *   page.screenshot()           → { op: "screenshot" }
  *
- * Limitations (escape via Iteration 3 or hand-edit the output):
- *   - Variable-bound selectors (`const sel = "..."; page.click(sel)`) —
- *     MVP regex sees the variable name as the selector. Use literals.
- *   - Template-string interpolation in URLs/selectors works only when
- *     the entire string is `\`literal\`` — `\`${dynamic}\`` is reported.
- *   - locator chains, expect() assertions, fixtures, multi-context — out of
- *     MVP scope; left as future Iteration 3 work.
+ *   Locator chain API (0.2 — what Playwright codegen emits):
+ *   page.locator(sel).click/fill/type/press/waitFor()
+ *   page.getByText(text).action()        selector → "text=<text>"
+ *   page.getByTestId(id).action()        selector → "[data-testid="<id>"]"
+ *   page.getByLabel(label).action()      selector → "label=<label>"
+ *   page.getByPlaceholder(ph).action()   selector → "placeholder=<ph>"
+ *   page.getByRole(role,{name}).action() selector → "role=<role>[name="<name>"]"
+ *   page.getByAltText(alt).action()      selector → "[alt="<alt>"]"
+ *   page.getByTitle(title).action()      selector → "[title="<title>"]"
  *
- * Out-of-MVP page.* calls produce a `PlaywrightConversionError`
- * with a hint pointing at the offending source line. Callers can
- * either rewrite the script to use supported APIs or upgrade to
- * Iteration 3 once it ships AST-level fallback.
+ * Limitations:
+ *   - Variable-bound selectors — regex sees the variable name, not the value.
+ *   - Multi-line locator chains (const loc = page.locator(...); await loc.click()) —
+ *     fall through to exec in permissive mode.
+ *   - Template-string interpolation works only for pure literals.
+ *
+ * Unrecognised page.* calls produce a `PlaywrightConversionError` (strict) or
+ * an { op: "exec" } preserve op (permissive, default).
  */
 
 import type {
@@ -106,6 +113,112 @@ const RE_WAIT_MS = /\.waitForTimeout\s*\(\s*(\d+)\s*\)/;
 const RE_SCREENSHOT = /\.screenshot\s*\(/;
 /** Page-API smell — any `.something(` call we can attribute to Playwright. */
 const RE_PAGE_CALL = /(?:page|context|browser|locator)\s*\.\s*([a-zA-Z_$][\w$]*)\s*\(/;
+
+// ---------------------------------------------------------------------------
+// Locator chain support (0.2)
+// ---------------------------------------------------------------------------
+
+interface LocatorChainOp {
+  selector: string;
+  action: "click" | "fill" | "type" | "press" | "waitFor" | "waitForTimeout";
+  value?: string;
+  ms?: number;
+}
+
+/** Extract the first string literal from the start of s; return [value, rest] or null. */
+function extractFirstStr(s: string): [string, string] | null {
+  const m = s.match(/^\s*(?:"((?:[^"\\]|\\.)*)"|'((?:[^'\\]|\\.)*)'|`((?:[^`\\$]|\\.)*)`)/);
+  if (!m) return null;
+  return [(m[1] ?? m[2] ?? m[3])!, s.slice(m[0].length)];
+}
+
+/** Return rest of string after the matching closing ')' at depth 0. */
+function skipToCloseParen(s: string): string | null {
+  let depth = 0;
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (c === "(" || c === "{" || c === "[") depth++;
+    else if (c === ")" || c === "}" || c === "]") {
+      if (depth === 0 && c === ")") return s.slice(i + 1);
+      depth--;
+    }
+  }
+  return null;
+}
+
+const RE_GETTER_START =
+  /\.(?:locator|getByText|getByTestId|getByLabel|getByPlaceholder|getByRole|getByAltText|getByTitle)\s*\(/;
+
+/**
+ * Parse a single-line locator chain such as:
+ *   page.locator('sel').click()
+ *   page.getByRole('button', { name: 'Submit' }).fill('x')
+ * Returns null if the line doesn't match a supported pattern.
+ */
+function parseLocatorChain(line: string): LocatorChainOp | null {
+  const getterMatch = line.match(RE_GETTER_START);
+  if (!getterMatch) return null;
+
+  const getterName = (getterMatch[0].match(/\.(getBy\w+|locator)/)?.[1]) ?? "";
+  const afterOpen = line.slice(getterMatch.index! + getterMatch[0].length);
+
+  const arg1Result = extractFirstStr(afterOpen);
+  if (!arg1Result) return null;
+  const [arg1, afterArg1] = arg1Result;
+
+  // For getByRole also try to pick up { name: '...' }
+  let roleName: string | undefined;
+  const afterGetter: string | null = (() => {
+    if (getterName === "getByRole") {
+      const nameMatch = afterArg1.match(
+        /^\s*,\s*\{[^}]*?name\s*:\s*(?:"((?:[^"\\]|\\.)*)"|'((?:[^'\\]|\\.)*)'|`((?:[^`\\$]|\\.)*)`)/,
+      );
+      if (nameMatch) {
+        roleName = nameMatch[1] ?? nameMatch[2] ?? nameMatch[3];
+      }
+    }
+    return skipToCloseParen(afterArg1);
+  })();
+  if (!afterGetter) return null;
+
+  // Normalise selector string
+  let selector: string;
+  switch (getterName) {
+    case "locator":           selector = arg1; break;
+    case "getByText":         selector = `text=${arg1}`; break;
+    case "getByTestId":       selector = `[data-testid="${arg1}"]`; break;
+    case "getByLabel":        selector = `label=${arg1}`; break;
+    case "getByPlaceholder":  selector = `placeholder=${arg1}`; break;
+    case "getByAltText":      selector = `[alt="${arg1}"]`; break;
+    case "getByTitle":        selector = `[title="${arg1}"]`; break;
+    case "getByRole":
+      selector = roleName ? `role=${arg1}[name="${roleName}"]` : `role=${arg1}`;
+      break;
+    default: selector = arg1;
+  }
+
+  // Parse chained action: .click() .fill(val) .type(val) .press(key) .waitFor() .waitForTimeout(ms)
+  const actionMatch = afterGetter.match(
+    /^\s*\.\s*(click|fill|type|press|waitFor|waitForTimeout)\s*\(/,
+  );
+  if (!actionMatch) return null;
+
+  const action = actionMatch[1] as LocatorChainOp["action"];
+  const afterActionParen = afterGetter.slice(actionMatch[0].length);
+
+  if (action === "click" || action === "waitFor") return { selector, action };
+
+  if (action === "waitForTimeout") {
+    const msMatch = afterActionParen.match(/^\s*(\d+)/);
+    if (!msMatch) return null;
+    return { selector, action, ms: Number(msMatch[1]) };
+  }
+
+  // fill / type / press require a value arg
+  const valResult = extractFirstStr(afterActionParen);
+  if (!valResult) return null;
+  return { selector, action, value: valResult[0] };
+}
 
 /** Lifecycle methods that are test scaffolding, not user actions —
  *  silently dropped (no plan op emitted, no warning). */
@@ -216,6 +329,32 @@ export function playwrightToTap(
     } else if (RE_SCREENSHOT.test(trimmed)) {
       ops.push({ op: "screenshot" });
       matched = true;
+    } else {
+      // Modern Playwright locator chain API (0.2)
+      const chain = parseLocatorChain(trimmed);
+      if (chain) {
+        switch (chain.action) {
+          case "click":
+            ops.push({ op: "input", kind: "click", target: chain.selector });
+            break;
+          case "fill":
+            ops.push({ op: "input", kind: "fill", target: chain.selector, value: chain.value! });
+            break;
+          case "type":
+            ops.push({ op: "input", kind: "type", target: chain.selector, value: chain.value! });
+            break;
+          case "press":
+            ops.push({ op: "input", kind: "press", target: chain.selector, value: chain.value! });
+            break;
+          case "waitFor":
+            ops.push({ op: "wait", selector: chain.selector });
+            break;
+          case "waitForTimeout":
+            ops.push({ op: "wait", ms: chain.ms! });
+            break;
+        }
+        matched = true;
+      }
     }
 
     if (!matched) {

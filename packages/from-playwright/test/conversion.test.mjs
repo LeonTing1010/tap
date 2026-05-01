@@ -109,3 +109,78 @@ test("playwrightToTap strict mode throws on unsupported page.* call", async () =
       /Unsupported Playwright API/.test(err.message),
   );
 });
+
+// ── Locator chain (0.2) ──────────────────────────────────────────────────────
+
+test("locator chain: .locator(sel).click() → input/click", async () => {
+  const { playwrightToTap } = await import(DIST);
+  const got = playwrightToTap(
+    `await page.goto("https://x");\nawait page.locator('.btn').click();\n`,
+    { site: "x", name: "y" },
+  );
+  assert.deepStrictEqual(got.body.ops[1], { op: "input", kind: "click", target: ".btn" });
+});
+
+test("locator chain: .locator(sel).fill(val) → input/fill", async () => {
+  const { playwrightToTap } = await import(DIST);
+  const got = playwrightToTap(
+    `await page.goto("https://x");\nawait page.locator('#email').fill('a@b.com');\n`,
+    { site: "x", name: "y" },
+  );
+  assert.deepStrictEqual(got.body.ops[1], { op: "input", kind: "fill", target: "#email", value: "a@b.com" });
+});
+
+test("locator chain: .getByTestId(id).waitFor() → wait/selector", async () => {
+  const { playwrightToTap } = await import(DIST);
+  const got = playwrightToTap(
+    `await page.goto("https://x");\nawait page.getByTestId('banner').waitFor();\n`,
+    { site: "x", name: "y" },
+  );
+  assert.deepStrictEqual(got.body.ops[1], { op: "wait", selector: '[data-testid="banner"]' });
+});
+
+test("locator chain: .getByRole(role, {name}).click() → input/click with role selector", async () => {
+  const { playwrightToTap } = await import(DIST);
+  const got = playwrightToTap(
+    `await page.goto("https://x");\nawait page.getByRole('button', { name: 'Submit' }).click();\n`,
+    { site: "x", name: "y" },
+  );
+  assert.deepStrictEqual(got.body.ops[1], { op: "input", kind: "click", target: 'role=button[name="Submit"]' });
+});
+
+test("locator chain: .getByLabel(label).fill(val) → label= selector", async () => {
+  const { playwrightToTap } = await import(DIST);
+  const got = playwrightToTap(
+    `await page.goto("https://x");\nawait page.getByLabel('Email').fill('u@x.com');\n`,
+    { site: "x", name: "y" },
+  );
+  assert.deepStrictEqual(got.body.ops[1], { op: "input", kind: "fill", target: "label=Email", value: "u@x.com" });
+});
+
+test("locator chain: .getByText(text).click() → text= selector", async () => {
+  const { playwrightToTap } = await import(DIST);
+  const got = playwrightToTap(
+    `await page.goto("https://x");\nawait page.getByText('Submit').click();\n`,
+    { site: "x", name: "y" },
+  );
+  assert.deepStrictEqual(got.body.ops[1], { op: "input", kind: "click", target: "text=Submit" });
+});
+
+test("locator chain: .getByPlaceholder(ph).type(val) → placeholder= selector + type op", async () => {
+  const { playwrightToTap } = await import(DIST);
+  const got = playwrightToTap(
+    `await page.goto("https://x");\nawait page.getByPlaceholder('Search').type('query');\n`,
+    { site: "x", name: "y" },
+  );
+  assert.deepStrictEqual(got.body.ops[1], { op: "input", kind: "type", target: "placeholder=Search", value: "query" });
+});
+
+test("locator chain: unrecognised action falls through to exec in permissive mode", async () => {
+  const { playwrightToTap } = await import(DIST);
+  const got = playwrightToTap(
+    `await page.goto("https://x");\nawait page.locator('.btn').hover();\n`,
+    { site: "x", name: "y" },
+  );
+  assert.equal(got.body.ops[1].op, "exec");
+  assert.equal(got.body.allowUnverifiable, true);
+});
