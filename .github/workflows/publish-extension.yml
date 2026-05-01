@@ -40,6 +40,10 @@ jobs:
           zip -r ../tap-extension-${{ steps.version.outputs.version }}.zip . -x '.*'
 
       - name: Create GitHub Release
+        # softprops/action-gh-release needs a tag ref; on workflow_dispatch
+        # we run from a branch and don't want to fabricate a duplicate release
+        # (the v* release already exists, created by core's Release workflow).
+        if: github.event_name == 'push'
         uses: softprops/action-gh-release@v2
         with:
           files: tap-extension-${{ steps.version.outputs.version }}.zip
