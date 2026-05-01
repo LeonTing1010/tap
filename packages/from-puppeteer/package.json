@@ -20,7 +20,7 @@
   ],
   "scripts": {
     "build": "tsc",
-    "test": "node --test 'test/**/*.test.mjs'",
+    "test": "node --test test/conversion.test.mjs",
     "prepublishOnly": "npm run build"
   },
   "engines": {

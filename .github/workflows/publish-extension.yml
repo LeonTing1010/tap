@@ -22,6 +22,10 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Verify tag matches manifest version
+        # Skip on manual dispatch — `gh workflow run` runs from a branch ref
+        # (e.g. `main`), not a tag, so there's no tag version to compare
+        # against. The check still gates the auto-release tag-push path.
+        if: github.event_name == 'push'
         run: |
           TAG_VERSION="${GITHUB_REF_NAME#v}"
           MANIFEST_VERSION="${{ steps.version.outputs.version }}"

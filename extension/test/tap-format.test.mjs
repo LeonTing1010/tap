@@ -83,9 +83,16 @@ console.log('\n.tap.js format constraints\n')
 
 const tapFiles = await findTapFiles(TAPS_DIR)
 
-test('at least one .tap.js file exists', () => {
-  assert(tapFiles.length > 0, `no .tap.js files found in ${TAPS_DIR}`)
-})
+// The corpus migrated from .tap.js → .tap.json (plan-only runtime, Phase 2,
+// 2026-04). Once tap-skills finishes the migration the count drops to zero;
+// this test still has value for any remaining .tap.js but doesn't force-fail
+// on an empty .tap.js corpus. The .tap.json format has its own conformance
+// gate at @taprun/spec/conformance.
+if (tapFiles.length === 0) {
+  console.log(`\n  (no .tap.js files in ${TAPS_DIR} — corpus migrated to .tap.json; nothing to validate)`)
+  console.log(`\n0 constraints, 0 passed, 0 failed\n`)
+  process.exit(0)
+}
 
 for (const { site, name, path } of tapFiles) {
   console.log(`\n  ${site}/${name}.tap.js`)
