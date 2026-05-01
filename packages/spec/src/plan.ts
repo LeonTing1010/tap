@@ -50,6 +50,14 @@ export interface FetchOp extends BaseOp {
   headers?: Record<string, Templated<string>>;
   body?: unknown;
   format?: "json" | "text" | "arrayBuffer";
+  /** Credential source. Default `deno-host` preserves the existing
+   *  behaviour (request goes through the Deno fetch — no browser
+   *  cookies). Set `page-session` to dispatch via the runtime's
+   *  active browser session — the runtime resolves cookies for the
+   *  URL's origin from the browser profile and attaches them as
+   *  `Cookie:` headers. Same-origin only; lint rejects cross-origin
+   *  uses. See ADR docs/adr/2026-05-01-op-fetch-page-session.md (S1). */
+  credentials?: "deno-host" | "page-session";
 }
 
 export interface NavOp extends BaseOp {
@@ -382,6 +390,22 @@ export interface ExecutionPlan {
    *  setting this to true makes the trade-off explicit and auditable.
    *  See plan-lint.ts verifiability contract. */
   allowUnverifiable?: boolean;
+  /** Grandfather marker for the pre-2026-05-01 single-`exec` corpus.
+   *  Set by `wrapDeclaredSourceAsAnnotation` (legacy code-only path) and by
+   *  the corpus migration script. T2 will tighten plan-lint to require this
+   *  marker on any single-exec plan; new compileFromX paths must emit
+   *  composable pipes and never set `legacy`. See plan:
+   *  docs/composability-drainage-2026-05-01.md. */
+  legacy?: true;
+  /** Session management for multi-step browser workflows.
+   *   - "auto": Create session on first browser op, reuse for all ops, destroy after completion
+   *   - string: Use explicit session ID (advanced use case)
+   *   - undefined: Each op manages its own session (default, backward compatible)
+   * 
+   * Why: Multi-step workflows (nav → click → star) need state persistence.
+   * Audit: 2026-Q4 (session management review)
+   */
+  session?: "auto" | string;
 }
 
 // ---------------------------------------------------------------------------
