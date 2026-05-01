@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+  (function() {
+    if (location.hostname !== 'taprun.dev') return;
+    var s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=G-RH14PQ10QK';
+    document.head.appendChild(s);
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function(){ dataLayer.push(arguments); };
+    gtag('js', new Date());
+    gtag('config', 'G-RH14PQ10QK');
+  })();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Code Browser Automation — Run Logged-In Websites From Claude Code | Tap</title>
+<meta name="description" content="Three real options for browser automation from Claude Code: Tap (your own logged-in Chrome), Playwright MCP (headless, no auth), Stagehand (cloud + Browserbase). Side-by-side comparison + decision tree.">
+<link rel="canonical" href="https://taprun.dev/blog/claude-code-browser-automation.html">
+<meta property="og:title" content="Claude Code Browser Automation — Run Logged-In Websites From Claude Code">
+<meta property="og:description" content="Side-by-side comparison: Tap vs Playwright MCP vs Stagehand. Which fits your task?">
+<meta property="og:url" content="https://taprun.dev/blog/claude-code-browser-automation.html">
+<meta property="og:type" content="article">
+<meta property="article:published_time" content="2026-05-01">
+<meta property="article:author" content="Leon Ting">
+<meta property="og:image" content="https://taprun.dev/social-preview.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Claude Code Browser Automation — Run Logged-In Websites From Claude Code">
+<meta name="twitter:description" content="Tap vs Playwright MCP vs Stagehand. Side-by-side comparison for indie devs.">
+<meta name="twitter:image" content="https://taprun.dev/social-preview.png">
+<meta name="keywords" content="claude code browser automation, claude code MCP browser, claude code login session, claude code chrome cookies, MCP browser automation, playwright mcp, stagehand browserbase, anti-detect browser automation">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Claude Code Browser Automation — Run Logged-In Websites From Claude Code",
+  "description": "Three real options for browser automation from Claude Code, compared side-by-side with a decision tree.",
+  "datePublished": "2026-05-01",
+  "author": { "@type": "Person", "name": "Leon Ting", "url": "https://github.com/LeonTing1010" },
+  "publisher": { "@type": "Organization", "name": "Tap", "url": "https://taprun.dev" },
+  "url": "https://taprun.dev/blog/claude-code-browser-automation.html",
+  "mainEntityOfPage": "https://taprun.dev/blog/claude-code-browser-automation.html",
+  "image": "https://taprun.dev/social-preview.png"
+}
+</script>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='100' cy='100' r='80' fill='%23818CF8'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,300..900,0..100;1,9..144,300..900,0..100&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Fraunces','Hoefler Text',Georgia,serif; background: #F4EDDE; color: #14110C; line-height: 1.7; }
+.container { max-width: 720px; margin: 0 auto; padding: 60px 24px; }
+h1 { font-size: 2rem; font-weight: 600; color: #14110C; margin-bottom: 8px; line-height: 1.3; }
+h2 { font-size: 1.35rem; font-weight: 500; color: #14110C; margin-top: 48px; margin-bottom: 16px; }
+p, li { font-size: 0.95rem; color: #3B332A; margin-bottom: 16px; }
+ul, ol { padding-left: 24px; }
+a { color: #1C2D5A; text-decoration: none; }
+a:hover { text-decoration: underline; }
+.meta { font-size: 0.85rem; color: #7A6F60; margin-bottom: 40px; }
+.back { display: inline-block; margin-bottom: 24px; font-size: 0.9rem; }
+code { background: rgba(28,45,90,0.08); padding: 2px 6px; border-radius: 0; font-size: 0.9em; font-family: 'JetBrains Mono', monospace; }
+pre { background: #14110C; border: 1px solid rgba(20,17,12,0.15); border-radius: 0; padding: 16px 20px; overflow-x: auto; margin: 20px 0; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; line-height: 1.6; color: #c8c8d0; }
+blockquote { border-left: 3px solid #7E2B1C; padding: 12px 16px; margin: 20px 0; background: rgba(126,43,28,0.05); border-radius: 0; }
+blockquote p { color: #3B332A; margin-bottom: 0; font-style: italic; }
+table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid rgba(20,17,12,0.15); font-size: 0.9rem; }
+th { color: #14110C; font-weight: 500; }
+td { color: #3B332A; }
+.cta { margin-top: 48px; padding: 24px; background: rgba(28,45,90,0.06); border: 1px solid #7E2B1C; border-radius: 0; }
+.cta h3 { color: #14110C; font-size: 1.1rem; margin-bottom: 12px; margin-top: 0; }
+.cta pre { margin-bottom: 0; }
+hr { border: none; border-top: 1px solid rgba(20,17,12,0.15); margin: 48px 0; }
+.tldr { padding: 16px 20px; background: rgba(20,17,12,0.04); border-left: 3px solid #14110C; margin: 24px 0; }
+.tldr strong { color: #14110C; }
+</style>
+<script src="https://analytics.ahrefs.com/analytics.js" data-key="G1wKuningnrw+t5LQJ+MPw" async></script>
+</head>
+<body>
+<div class="container">
+<a href="../" class="back">&larr; Tap</a> &middot; <a href="./" class="back">Blog</a>
+<h1>Claude Code Browser Automation: How to Run Logged-In Websites from Claude Code</h1>
+<p class="meta">May 1, 2026 &middot; Leon Ting &middot; 7 min read</p>
+
+<div class="tldr">
+<strong>TL;DR.</strong> Claude Code on its own can't see your browser. If you want it to read your Reddit notifications, scrape a paid Cursor dashboard, click through Amazon Seller Central, or post on X &mdash; you need a browser MCP. Three real options exist: <strong>Tap</strong> (your own logged-in Chrome, local-only), <strong>Playwright MCP</strong> (headless, no login), <strong>Stagehand</strong> (cloud + Browserbase). Pick by whether the task needs your logged-in session and where you want credentials to live.
+</div>
+
+<h2>Why this comes up</h2>
+
+<p>Claude Code's built-in tools cover files, git, shell, and code edits. They don't cover the open web. The moment you ask it to "read my Reddit DMs," "find what I spent on Cursor last month," or "click through this dashboard and pull the table" &mdash; the agent has nothing. It can write a curl command, but most of those targets either reject anonymous traffic or require a login session.</p>
+
+<p>This is the gap browser-automation MCPs fill. Three of them have meaningful indie traction in 2026; below is what each is actually for.</p>
+
+<h2>The three real options</h2>
+
+<table>
+<thead>
+<tr><th></th><th>Tap</th><th>Playwright MCP</th><th>Stagehand MCP</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Runs where</strong></td><td>Your own Chrome, locally</td><td>Headless Chromium, locally</td><td>Browserbase cloud</td></tr>
+<tr><td><strong>Login sessions</strong></td><td>Yes &mdash; reuses your real cookies</td><td>No &mdash; logs out every run</td><td>Yes via Browserbase Sessions</td></tr>
+<tr><td><strong>Credentials leave your machine?</strong></td><td>Never (architecturally)</td><td>Never (no auth at all)</td><td>Yes &mdash; cookies cross to Browserbase cloud</td></tr>
+<tr><td><strong>Token cost per run</strong></td><td>Zero (compiled <code>.tap.json</code> plans)</td><td>Per-step LLM call</td><td>Per-step LLM call (cloud-side)</td></tr>
+<tr><td><strong>Drift detection</strong></td><td>Built-in &mdash; <code>tap doctor</code></td><td>Manual</td><td>Manual</td></tr>
+<tr><td><strong>Pricing</strong></td><td>Free; $19/mo for AI compile, $49/mo for self-heal</td><td>Free</td><td>Browserbase usage-based</td></tr>
+<tr><td><strong>Best for</strong></td><td>Logged-in tasks, repeat workflows, deterministic pipelines</td><td>Public sites, one-shot scrapes</td><td>Cloud-first orchestration with budget</td></tr>
+</tbody>
+</table>
+
+<h2>How to pick</h2>
+
+<p>The decision is almost always the credential-location axis.</p>
+
+<ol>
+<li><strong>Does the task need your login session?</strong>
+  <ul>
+    <li><strong>No</strong> &mdash; the page is public (HN, Wikipedia, public docs). Use Playwright MCP. It's the lightest path.</li>
+    <li><strong>Yes</strong> &mdash; continue.</li>
+  </ul>
+</li>
+<li><strong>Are you OK shipping cookies to a third-party cloud?</strong>
+  <ul>
+    <li><strong>Yes, with budget</strong> &mdash; Stagehand on Browserbase. The session stays in their cloud; you pay per-minute.</li>
+    <li><strong>No</strong> &mdash; Tap. The Chrome extension reads what your real browser already has. Cookies never cross a trust boundary, by architecture.</li>
+  </ul>
+</li>
+<li><strong>Will you run this more than three times?</strong>
+  <ul>
+    <li><strong>Yes</strong> &mdash; lean toward Tap. It compiles a <code>.tap.json</code> plan once and replays at zero LLM tokens forever after. Per-run token cost = $0.</li>
+    <li><strong>No</strong> &mdash; either tool's per-run AI cost is rounding error.</li>
+  </ul>
+</li>
+</ol>
+
+<h2>Concrete examples</h2>
+
+<p><strong>"Tell me what I spent on Cursor last month."</strong> Cursor's billing page is behind login. Stagehand needs your Cursor session in their cloud; Playwright MCP can't log in. Tap reads your already-open browser session locally. Tap.</p>
+
+<p><strong>"Pull the latest 50 stories from Hacker News."</strong> No login needed. Either MCP works. Playwright MCP is fine; Tap is overkill unless you're going to run this repeatedly (then the zero-token replay matters).</p>
+
+<p><strong>"Post this thread to X every Tuesday at 9am."</strong> X requires login. Cookies-in-cloud (Stagehand) means a Browserbase compromise = your X account. Tap keeps the cookies in your real Chrome on your laptop, runs scheduled via your local cron. Tap.</p>
+
+<p><strong>"Build a research agent that visits 20 random sites and summarizes."</strong> Public web, no login, one-shot. Playwright MCP. It's literally the design target.</p>
+
+<p><strong>"Track Helium 10 competitor prices for my Amazon listings."</strong> Needs your Amazon Seller Central session. Tap.</p>
+
+<h2>Why Tap exists</h2>
+
+<p>The cloud-first SDKs (Stagehand, Apify, Vercel-Agent-Browser) all share a structural property: <strong>they need to ship your credentials to their cloud to function.</strong> That's not a policy choice; it's an architectural choice. The session has to exist somewhere, and they're not in your browser.</p>
+
+<p>Tap inverts the topology. The session stays in your real, logged-in Chrome, on your real machine. The Chrome extension reads what's already there. Nothing crosses a trust boundary because there's no trust boundary to cross. That's a real difference for anyone whose threat model includes "I don't want to give my Reddit / Cursor / Amazon login to a YC-stage startup's database."</p>
+
+<p>The trade-off is honest: Tap can't run on a server you don't have. If you need cloud-scale orchestration where the agent spins up 50 parallel sessions, Stagehand is built for that and Tap isn't. For the indie / single-developer / "automate the things I already do" cohort, the trade-off lands the other direction.</p>
+
+<h2>Setup</h2>
+
+<p>If you've decided on Tap:</p>
+
+<div class="cta">
+<h3>Install</h3>
+<pre>brew install LeonTing1010/tap/tap
+tap mcp connect    # registers Tap with your Claude Code config</pre>
+</div>
+
+<p>The first <code>tap mcp connect</code> opens a Chrome extension prompt. Approve it. Tap is now an MCP server in your Claude Code session, with 31 tools covering nav, click, fetch, extract, and a forge pipeline that compiles new automations from natural language.</p>
+
+<p>From there: ask Claude Code to do something on a logged-in site. It'll use Tap as the runtime. The first run is interactive; the second run replays the compiled <code>.tap.json</code> plan at zero LLM tokens.</p>
+
+<h2>If you're not sure yet</h2>
+
+<p>Try Playwright MCP first. It's the smallest commitment &mdash; nothing to install beyond the npm package, no extension, no browser permissions. If you hit a wall on a login-required task, come back to this page.</p>
+
+<p>The wall comes faster than people expect.</p>
+
+<hr>
+
+<p class="meta">Related reading: <a href="six-products-same-form-factor.html">Six Products. Same Form Factor. Tap Is the Substrate.</a> &middot; <a href="authenticated-browser-mcp.html">Authenticated browser MCP &mdash; what changes when the credential is yours</a> &middot; <a href="playwright-mcp-token-cost-alternative.html">Playwright MCP vs Tap: token cost</a></p>
+
+</div>
+</body>
+</html>
