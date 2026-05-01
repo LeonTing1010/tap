@@ -364,26 +364,60 @@ export type AuthoritativeSpec =
   | AuthoritativeFetchJsonTwoStep
   | AuthoritativeFetchAtom;
 
+/**
+ * ExecutionPlan — body of a `.tap.json` annotation envelope.
+ *
+ * Field categorization (Slice 0 of spec-as-artifact, ADR
+ * `docs/adr/2026-05-01-spec-as-artifact.md`):
+ *
+ *   SPEC fields    — authoritative, user-authored source-of-truth.
+ *                    Stable across site drift; forge reads these as input.
+ *                    `site`, `name`, `intent`, `description`,
+ *                    `args`, `examples`, `health`, `authoritative`.
+ *
+ *   DERIVED fields — compilation output produced by forge from the spec
+ *                    plus observed site state. Regenerable; heal/refresh
+ *                    rewrites these when V detects drift.
+ *                    `ops`, `locals`, `return`, `columns`.
+ *
+ *   META fields    — flags / drainage markers / runtime concerns.
+ *                    `allowUnverifiable`, `legacy`, `session`.
+ *
+ * This categorization is documentation only in Slice 0. Runtime behavior
+ * is unchanged; the labels exist to give future slices a stable target
+ * (e.g. forge.refresh regenerates only DERIVED fields from SPEC fields).
+ */
 export interface ExecutionPlan {
   type: "tap:ExecutionPlan";
+  /** SPEC — site identifier (origin scope for the plan). */
   site: string;
+  /** SPEC — tap name within the site. */
   name: string;
+  /** SPEC — side-effect contract; gates doctor auto-run + refresh safety. */
   intent: Intent;
+  /** SPEC — user-authored semantics; surfaced in `tap list`. */
   description?: string;
+  /** DERIVED — output schema; forge can infer from the first run.
+   *  Strict contract callers should attach `health.required_fields`. */
   columns?: string[];
+  /** SPEC — input surface declared by the author. */
   args?: Record<string, ArgSpec>;
-  /** Example invocations — used by doctor to pick exemplar args and by
-   *  forge/heal/refresh to smoke-run the tap with realistic input. */
+  /** SPEC — example invocations used by doctor to pick exemplar args
+   *  and by forge/heal/refresh to smoke-run the tap with realistic input. */
   examples?: Array<Record<string, unknown>>;
+  /** SPEC — invariants the output must satisfy (min_rows, required_fields). */
   health?: HealthContract;
-  /** Optional declarative cross-validation source. When present, `tap doctor`
+  /** SPEC — declarative cross-validation source. When present, `tap doctor`
    *  runs V (src/verify.ts) against the output instead of relying on shape
    *  checks. Taps without this field are reported as `verdict: unverified`. */
   authoritative?: AuthoritativeSpec;
-  /** Plan-scope variables computed before ops run or during ops via `save`. */
+  /** DERIVED — plan-scope variables computed before ops run or during ops
+   *  via `save`. Forge regenerates these alongside `ops`. */
   locals?: Record<string, JsonataExpr>;
+  /** DERIVED — the compiled op pipeline. Heal/refresh's primary regeneration
+   *  target when V detects drift. */
   ops: Op[];
-  /** JSONata expression returning the tap's output rows; default = last save. */
+  /** DERIVED — JSONata expression returning the tap's output rows; default = last save. */
   return?: JsonataExpr;
   /** Opt-in flag for plans that contain unverifiable ops (eval/exec).
    *  By default doctor cannot verify arbitrary JS against world changes;
