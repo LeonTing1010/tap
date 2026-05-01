@@ -1,6 +1,6 @@
 {
   "name": "@taprun/spec",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Browser automation plan format for MCP servers and AI agents — TypeScript types + W3C Annotation validator + JSON Schema for .tap.json. Used by Tap and its Playwright / Puppeteer / Stagehand converters. Typecheck or validate plans without the full Tap CLI.",
   "publishConfig": {
     "access": "public"
