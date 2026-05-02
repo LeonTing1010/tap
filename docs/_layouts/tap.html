@@ -5,11 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{{ page.site_name }}/{{ page.tap_name }} — Taprun</title>
 <meta name="description" content="{{ page.description }}">
-{% assign tap_canonical = page.url | remove: '.html' %}
-<link rel="canonical" href="https://taprun.dev{{ tap_canonical }}">
+<link rel="canonical" href="https://taprun.dev{{ page.url }}">
 <meta property="og:title" content="{{ page.site_name }}/{{ page.tap_name }} — Taprun">
 <meta property="og:description" content="{{ page.description }}">
-<meta property="og:url" content="https://taprun.dev{{ tap_canonical }}">
+<meta property="og:url" content="https://taprun.dev{{ page.url }}">
 <meta property="og:type" content="article">
 <meta property="og:image" content="https://taprun.dev/social-preview.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -25,7 +24,7 @@
     "https://taprun.dev/ns/tap-v1"
   ],
   "@type": "Annotation",
-  "id": "https://taprun.dev{{ tap_canonical }}",
+  "id": "https://taprun.dev{{ page.url }}",
   "motivation": "tap:executing",
   "target": "https://taprun.dev/taps/{{ page.site_name }}/{{ page.tap_name }}",
   "body": {

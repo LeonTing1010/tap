@@ -42,7 +42,7 @@
   "label": "Taprun tap library",
   "total": {{ tap_pages.size }},
   "items": [
-    {% for tap in tap_pages %}"https://taprun.dev{{ tap.url | remove: '.html' }}"{% unless forloop.last %},{% endunless %}{% endfor %}
+    {% for tap in tap_pages %}"https://taprun.dev{{ tap.url }}"{% unless forloop.last %},{% endunless %}{% endfor %}
   ]
 }
 </script>
@@ -604,7 +604,7 @@ body::before {
     {% for tap in site_taps %}
     <article class="tap-row">
       <div class="tap-name-col">
-        <a class="tap-name" href="{{ tap.url | remove: '.html' }}">{{ tap.tap_name }}</a>
+        <a class="tap-name" href="{{ tap.url }}">{{ tap.tap_name }}</a>
         {% if tap.description %}<div class="desc">{{ tap.description }}</div>{% endif %}
       </div>
       {% assign t_intent = tap.intent | default: "read" %}
