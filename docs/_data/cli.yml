@@ -84,14 +84,19 @@ install:
     { "mcpServers": { "tap": { "command": "npx", "args": ["-y", "@taprun/cli", "mcp", "stdio"] } } }
 
 # ─── Pricing tiers ───────────────────────────────────────────────────────
-# `internal` is the Tier name in core/auth.ts; `display` is what users see.
-# `cap` is the saved-plan fleet limit enforced by gateCaptureSave.
+# Per ADR `tap-core/docs/adr/2026-05-04-paid-tier-deferred.md`, all paid-tier
+# infrastructure was deleted from the engine (core/auth.ts gone; gateCaptureSave/
+# gateAiForge/gateRepair gone; CREEM_TIER_MAP gone). Single tier published until
+# first paying customer + concrete feature land atomically (per the ADR's
+# §4 dissolution invariant). The Creem product IDs (prod_2ueXfX..., prod_79SU...)
+# remain configured on the Creem side but receive 0 traffic from binaries.
 tiers:
-  - { internal: free,   display: "Spec & Run", price_usd: 0,  cap: 3,  creem_id: ""                          }
-  - { internal: hacker, display: "Capture",    price_usd: 19, cap: 5,  creem_id: "prod_2ueXfXelMdowyjKmHlSxBk" }
-  - { internal: pro,    display: "Repair",     price_usd: 49, cap: 20, creem_id: "prod_79SU00FKJvcgEdPqYst2mQ" }
+  - { internal: free, display: "Free", price_usd: 0, cap: 0, creem_id: "" }
 
-upgrade_url: "https://taprun.dev/#pricing"
+# Pre-deletion, this was "https://taprun.dev/#pricing" — a self-referential
+# upgrade prompt. With paid tiers deferred, an upgrade attempt has no destination;
+# point to the contact form so genuinely-interested-in-paying users can self-identify.
+upgrade_url: "mailto:hello@taprun.dev?subject=Taprun%20paid-tier%20interest"
 
 # ─── Inventory counts (round, advertise-friendly) ────────────────────────
 counts:

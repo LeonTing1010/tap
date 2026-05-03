@@ -60,9 +60,7 @@
   "codeRepository": "https://github.com/LeonTing1010/tap",
   "keywords": ["AI agents", "MCP", "tap protocol", "forge", "deterministic automation", "Chrome extension", "Playwright", "sandbox", "verify", "snapshot", "health contracts", "silent failure detection", "API auto-detection"],
   "offers": [
-    {%- for t in site.data.cli.tiers %}
-    {"@type": "Offer", "price": "{{ t.price_usd }}", "priceCurrency": "USD", "description": "{{ t.display }} — {% if t.price_usd == 0 %}Free forever. @taprun/spec 1.0, {{ site.data.cli.counts.npm_packages }} npm packages, Chrome extension, tap CLI ({{ site.data.cli.verbs.capture.name }}/{{ site.data.cli.verbs.verify.name }}/{{ site.data.cli.verbs.mark.name }} + saved-tap run + migrate scan), {{ site.data.cli.counts.community_taps }}+ community taps. Up to {{ t.cap }} saved plans.{% elsif t.internal == 'hacker' %}`{{ site.data.cli.verbs.capture.cli }} <url>` turns URLs or natural-language intent into a bare v2 Plan via Claude/GPT/Ollama. Up to {{ t.cap }} plans. BYOK. Works in any MCP host.{% else %}3-path repair pipeline (cache 0 tokens / minimal-patch ~1.1K / full rewrite ~14K). 4-arm {{ site.data.cli.verbs.verify.name }} verdict with per-tap CEL predicate. Up to {{ t.cap }} plans. 100% local.{% endif %}"}{% unless forloop.last %},{% endunless %}
-    {%- endfor %}
+    {"@type": "Offer", "price": "0", "priceCurrency": "USD", "description": "Free during v0.x. @taprun/spec 1.0, {{ site.data.cli.counts.npm_packages }} npm packages, Chrome extension, tap CLI ({{ site.data.cli.verbs.capture.name }}/{{ site.data.cli.verbs.verify.name }}/{{ site.data.cli.verbs.mark.name }} + saved-tap run + migrate scan), {{ site.data.cli.counts.community_taps }}+ community taps. Paid tiers TBD post-demand."}
   ]
 }
 </script>
@@ -96,7 +94,7 @@
   "@type": "FAQPage",
   "mainEntity": [
     {"@type": "Question", "name": "What does 'compile once' mean?", "acceptedAnswer": {"@type": "Answer", "text": "AI runs once at authoring time to capture a site's stable structural addresses (JSON-LD, OpenAPI, ARIA, RSS) — not to generate fragile CSS selectors. The compiled program is then replayed deterministically, no LLM at runtime."}},
-    {"@type": "Question", "name": "What happens when the site changes?", "acceptedAnswer": {"@type": "Answer", "text": "Run `tap verify <site>/<name>`. The verdict is one of four — equivalent · drifted · first_snapshot · unreachable — derived from a per-tap CEL `snapshot_equivalent` predicate so you decide what counts as drift, not us. On the Repair tier, re-running `tap capture` against the same site/name proposes an AI-written patch; the next `verify` rebaselines after human approval."}},
+    {"@type": "Question", "name": "What happens when the site changes?", "acceptedAnswer": {"@type": "Answer", "text": "Run `tap verify <site>/<name>`. The verdict is one of four — equivalent · drifted · first_snapshot · unreachable — derived from a per-tap CEL `snapshot_equivalent` predicate so you decide what counts as drift, not us. Re-running `tap capture` against the same site/name overwrites the stored Plan and resets the snapshot baseline — that is the heal path."}},
     {"@type": "Question", "name": "Is my data safe?", "acceptedAnswer": {"@type": "Answer", "text": "Everything runs on your machine. Plans are structured data — closed 11-op vocabulary (7 substrate + 3 control flow + 1 typed-eval escape), not arbitrary JavaScript. No runtime eval, no Worker, no cloud exfiltration. See the SECURITY.md in the public repo."}}
   ]
 }
@@ -1788,8 +1786,13 @@ pre.code-block code {
   max-width: 960px;
   margin: 0 auto;
 }
+.pricing-grid--single {
+  grid-template-columns: 1fr;
+  max-width: 540px;
+}
 @media (max-width: 1080px) {
   .pricing-grid { grid-template-columns: repeat(2, 1fr); max-width: 720px; }
+  .pricing-grid--single { grid-template-columns: 1fr; max-width: 540px; }
 }
 .pricing-compliance {
   max-width: 960px;
@@ -2750,7 +2753,7 @@ $ <span class="k">tap verify</span> example/login                               
     <article class="press-chapter">
       <span class="press-chapter-num">§ III.</span>
       <h3 class="press-chapter-title">When the site changes</h3>
-      <p>Minor frontend change broke your selectors? <code>tap verify</code> flags it before your pipeline notices. Repair tier escalates through three paths &mdash; cache hit (0 tokens), minimal patch (~1.1K), full rewrite (~14K) &mdash; then caches the fix so subsequent runs replay at 0 tokens.</p>
+      <p>Minor frontend change broke your selectors? <code>tap verify</code> flags it before your pipeline notices. Re-run <code>tap capture</code> against the same <code>&lt;site&gt;/&lt;name&gt;</code> to overwrite the stored Plan and reset the snapshot baseline &mdash; the heal path is just re-capture.</p>
     </article>
   </div>
 
@@ -2836,7 +2839,7 @@ $ <span class="k">tap verify</span> example/login                               
       <article class="evidence-card reveal" data-num="03">
         <div class="evidence-card-body">
           <h3>Diff the <span class="hl">drift.</span></h3>
-          <p class="evidence-claim"><code>tap verify</code> emits one of four verdicts — <code>equivalent · drifted · first_snapshot · unreachable</code> — using a per-tap CEL <code>snapshot_equivalent</code> predicate. You declare what counts as drift; verify never guesses. On the Repair tier, re-running <code>tap capture</code> against the same site/name proposes an AI-written patch; the next <code>verify</code> rebaselines only after a human approves. Lifecycle as a first-class primitive — not an afterthought retry loop.</p>
+          <p class="evidence-claim"><code>tap verify</code> emits one of four verdicts — <code>equivalent · drifted · first_snapshot · unreachable</code> — using a per-tap CEL <code>snapshot_equivalent</code> predicate. You declare what counts as drift; verify never guesses. Re-running <code>tap capture</code> against the same <code>&lt;site&gt;/&lt;name&gt;</code> overwrites the stored Plan and resets the snapshot baseline — that is the heal path. Lifecycle as a first-class primitive — not an afterthought retry loop.</p>
           <blockquote class="evidence-quote">
             "I'd be curious whether you measure success as 'initial generation works' or 'the same flow still passes after small DOM/layout changes a week later' — that's the boundary between a neat demo and something a team can rely on."
             <cite>— potter098, <a href="https://news.ycombinator.com/item?id=47780971" rel="noopener">HN, 2026-04-15 (question left unanswered by the compile-only competitor)</a></cite>
@@ -3433,7 +3436,7 @@ test(<span class="s">"login"</span>, <span class="k">async</span> ({ page }) =&g
             <span class="calc-line-value">$0</span>
           </div>
           <div class="calc-line calc-line--hero">
-            <span class="calc-line-label">Versus Taprun Repair ($49/mo flat)</span>
+            <span class="calc-line-label">Versus Taprun ($0 during v0.x)</span>
             <span class="calc-line-value" id="calc-delta">&mdash;</span>
           </div>
         </div>
@@ -3499,90 +3502,45 @@ test(<span class="s">"login"</span>, <span class="k">async</span> ({ page }) =&g
   <div class="container">
     <div class="pricing-header">
       <div class="section-tag reveal">Pricing</div>
-      <h2 class="reveal"><span class="hl">$0</span> to run. <span class="hl">$19</span> to capture. <span class="hl">$49</span> to self-repair.</h2>
-      <p class="section-desc reveal">The format spec, all five npm packages, the runtime, and the Chrome extension are free forever. AI compile and AI repair are paid. Need a multi-seat or on-prem plan? <a href="mailto:hello@taprun.dev?subject=Taprun%20Team%20Plan" style="color:var(--indigo-bright);text-decoration:underline;">Contact us</a>. <em>Every tier runs on your machine.</em></p>
+      <h2 class="reveal"><span class="hl">$0</span>. All features. v0.x.</h2>
+      <p class="section-desc reveal">Tap is free during v0.x. The runtime, the Chrome extension, the CLI, the spec, every npm package, every community tap — all free, all local. Paid tiers will land when there's a concrete user paying for a concrete feature; until then, the honest position is no price card at all. <em>Every byte of execution still runs on your machine.</em></p>
     </div>
 
-    <div class="pricing-grid reveal">
-
+    <div class="pricing-grid reveal pricing-grid--single">
       <div class="price-card">
         <div class="price-rung">
           <span class="rung-num">01</span>
           <span class="rung-line"></span>
-          <span class="rung-label">Spec &amp; Run</span>
+          <span class="rung-label">Free</span>
         </div>
         <div class="price-amount"><span class="currency">$</span>0</div>
-        <div class="price-label">Free forever.</div>
-        <p class="price-poem">Format spec. All adapters. Chrome extension. CLI runtime. Basic structural verify. The full distribution flywheel — $0.</p>
+        <div class="price-label">Everything, during v0.x.</div>
+        <p class="price-poem">No tier gates, no plan-fleet caps, no license to acquire. Install, run, capture, verify, mark — all paths open. When paid tiers arrive, they'll arrive next to a feature that actually justifies them.</p>
         <div class="price-divider"></div>
         <ul class="price-features">
           <li><span class="bullet">+</span> <code>@taprun/spec</code> v1.0 — types, JSON Schema, conformance suite</li>
           <li><span class="bullet">+</span> <code>@taprun/from-{playwright,puppeteer}</code> — converters to v2 Plans</li>
           <li><span class="bullet">+</span> <code>create-tap-script</code> — npx scaffolder</li>
           <li><span class="bullet">+</span> Chrome extension — login-session bridge</li>
-          <li><span class="bullet">+</span> <code>tap &lt;site&gt;/&lt;name&gt;</code> · <code>list</code> · <code>show</code> — deterministic plan execution</li>
+          <li><span class="bullet">+</span> <code>tap capture</code> · <code>verify</code> · <code>mark</code> · <code>&lt;site&gt;/&lt;name&gt;</code> — full CLI surface</li>
           <li><span class="bullet">+</span> <code>tap verify</code> — 4-arm verdict with per-tap CEL <code>snapshot_equivalent</code> predicate</li>
           <li><span class="bullet">+</span> <code>tap migrate scan</code> — one-shot survey of v1 corpus migratability</li>
           <li><span class="bullet">+</span> 70+ community taps via <a href="https://github.com/LeonTing1010/tap-skills" style="color:var(--indigo-bright);text-decoration:underline;">tap-skills</a></li>
         </ul>
-        <a href="#install" class="price-btn price-btn--outline">Install Free</a>
+        <a href="#install" class="price-btn price-btn--outline">Install</a>
       </div>
-
-      <div class="price-card">
-        <div class="price-rung">
-          <span class="rung-num">02</span>
-          <span class="rung-line"></span>
-          <span class="rung-label">Capture</span>
-        </div>
-        <div class="price-amount"><span class="currency">$</span>19<span class="period">/mo</span></div>
-        <div class="price-label">AI compiles once. Replay is free.</div>
-        <p class="price-poem">Point it at a URL or describe the task — AI runs once at compile time, picks the strongest structural address, and emits a deterministic plan. After that, every run is $0 and zero tokens. BYOK.</p>
-        <div class="price-divider"></div>
-        <ul class="price-features">
-          <li><span class="bullet">+</span> Everything in Spec &amp; Run</li>
-          <li><span class="bullet">+</span> <strong>Forge</strong> — <code>tap capture &lt;url&gt; --intent "..."</code> turns URLs or NL into bare v2 Plans (Claude/GPT/Ollama BYOK)</li>
-          <li><span class="bullet">+</span> Deterministic templates cover ~80% of common shapes; AI fills the long tail</li>
-          <li><span class="bullet">+</span> Up to <strong>5 plans</strong> in fleet</li>
-          <li><span class="bullet">+</span> Every saved tap auto-projects as a typed MCP tool — <code>&lt;site&gt;.&lt;name&gt;</code></li>
-          <li><span class="bullet">+</span> Works in Claude Code, Cursor, Cline, Windsurf — any MCP host</li>
-        </ul>
-        <a href="https://www.creem.io/payment/{{ site.data.cli.tiers[1].creem_id }}?utm_source=taprun.dev&utm_campaign=capture" class="price-btn price-btn--outline">Start Capturing</a>
-      </div>
-
-      <div class="price-card price-card--featured">
-        <div class="price-sticker">Most Popular</div>
-        <div class="price-rung price-rung--gold">
-          <span class="rung-num">03</span>
-          <span class="rung-line"></span>
-          <span class="rung-label">Repair</span>
-        </div>
-        <div class="price-amount"><span class="currency">$</span>49<span class="period">/mo</span></div>
-        <div class="price-label">When the site changes, plans fix themselves.</div>
-        <p class="price-poem">Minor frontend change broke your selectors? <code>tap verify</code> flags it before your pipeline notices. AI rewrites the broken op while you sleep, then caches the fix — subsequent runs replay at 0 tokens.</p>
-        <div class="price-divider"></div>
-        <ul class="price-features">
-          <li><span class="bullet">+</span> Everything in Capture</li>
-          <li><span class="bullet">+</span> <strong>3-path repair pipeline</strong> — cache hit (0 tokens) → minimal-patch (~1.1K) → full rewrite (~14K)</li>
-          <li><span class="bullet">+</span> Up to <strong>20 plans</strong> in fleet</li>
-          <li><span class="bullet">+</span> Per-tap <code>snapshot_equivalent</code> CEL — 40% false-positive reduction (PoC-measured)</li>
-          <li><span class="bullet">+</span> Repair history + drift report archive</li>
-          <li><span class="bullet">+</span> 100% local — repair runs on your machine</li>
-        </ul>
-        <a href="https://www.creem.io/payment/{{ site.data.cli.tiers[2].creem_id }}?utm_source=taprun.dev&utm_campaign=repair" class="price-btn price-btn--gold">Get Repair</a>
-      </div>
-
     </div>
 
     <div class="pricing-compliance reveal">
       <div class="pricing-compliance-text">
-        <strong>Team plans &amp; Compliance — contact us</strong>
-        <span>Multi-seat fleets, shared <code>.tap.json</code> registry, SSO, audit log, on-prem deployment, SOC2-ready, HIPAA-compatible local execution. For teams and regulated cohorts (legal, healthcare, finance) where data must not cross a vendor boundary. Pricing scoped to your seat count + governance needs.</span>
+        <strong>Want to pay for something specific? — contact us</strong>
+        <span>If a feature you'd pay for isn't here yet (multi-seat fleets, shared <code>.tap.json</code> registry, SSO, audit log, on-prem deployment, SOC2-ready, HIPAA-compatible local execution), tell us what — we ship features against named demand, not aspirational tiers. Same email if you're regulated cohort (legal, healthcare, finance) and need data-residency guarantees.</span>
       </div>
-      <a href="mailto:hello@taprun.dev?subject=Taprun%20Team%20%2F%20Compliance" class="price-btn price-btn--outline">Talk to us</a>
+      <a href="mailto:hello@taprun.dev?subject=Taprun%20paid-tier%20interest" class="price-btn price-btn--outline">Tell us</a>
     </div>
 
     <p class="pricing-proof reveal">
-      <code>tap CLI / @taprun/spec 1.0</code><span class="proof-sep">·</span>5 npm packages live<span class="proof-sep">·</span>local execution<span class="proof-sep">·</span><code>$0</code>/run on free tier
+      <code>tap CLI / @taprun/spec 1.0</code><span class="proof-sep">·</span>5 npm packages live<span class="proof-sep">·</span>local execution<span class="proof-sep">·</span><code>$0</code>/run, every tier
     </p>
   </div>
 </section>
@@ -3601,7 +3559,7 @@ test(<span class="s">"login"</span>, <span class="k">async</span> ({ page }) =&g
       </details>
       <details class="faq-item">
         <summary>What happens when the site changes?</summary>
-        <div class="faq-answer">Run <code>tap verify &lt;site&gt;/&lt;name&gt;</code>. The verdict is one of four — <code>equivalent · drifted · first_snapshot · unreachable</code> — derived from a per-tap CEL <code>snapshot_equivalent</code> predicate. You declare what counts as drift; verify never guesses. On the Repair tier, re-running <code>tap capture</code> against the same site/name proposes an AI-written patch; the next <code>verify</code> rebaselines after human approval.</div>
+        <div class="faq-answer">Run <code>tap verify &lt;site&gt;/&lt;name&gt;</code>. The verdict is one of four — <code>equivalent · drifted · first_snapshot · unreachable</code> — derived from a per-tap CEL <code>snapshot_equivalent</code> predicate. You declare what counts as drift; verify never guesses. Re-running <code>tap capture</code> against the same <code>&lt;site&gt;/&lt;name&gt;</code> overwrites the stored Plan and resets the snapshot baseline — that is the heal path.</div>
       </details>
       <details class="faq-item">
         <summary>Is my data safe?</summary>
