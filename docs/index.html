@@ -17,18 +17,18 @@
     gtag('config', 'G-RH14PQ10QK');
   })();
 </script>
-<title>Taprun — Local-first browser automation that runs in your browser, not someone else's cloud</title>
-<meta name="description" content="Convert your Playwright, Puppeteer, or Stagehand script to a deterministic .tap.json plan in 30 seconds. Run it in your already-logged-in Chrome — cookies never leave your machine. Self-healing when sites change. Local by architecture, not policy.">
-<meta property="og:title" content="Taprun — Local-first browser automation">
-<meta property="og:description" content="Your Playwright script broke after LinkedIn redesigned again? Convert it to .tap.json in 30 seconds. Run it in your already-logged-in Chrome. Cookies never leave your machine.">
+<title>Taprun — Browser automation with no hallucinated clicks. Predictable token cost. Sessions that complete.</title>
+<meta name="description" content="Tired of watching browser-use hallucinate clicks? Stagehand burning tokens on every step? Convert your Playwright, Puppeteer, or Stagehand script to a deterministic .tap.json plan in 30 seconds. Runs in your real Chrome — no re-login, no mid-run session fail.">
+<meta property="og:title" content="Taprun — No hallucinated clicks. Predictable cost. Sessions that complete.">
+<meta property="og:description" content="100 reruns: browser-use $4.20, Tap $0.003. Crossover at run 2. AI runs once at compile time; replay is deterministic and free. Real Chrome session — no re-login.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://taprun.dev/">
 <meta property="og:image" content="https://taprun.dev/social-preview.svg">
 <meta property="og:image:width" content="1280">
 <meta property="og:image:height" content="640">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Taprun — Local-first browser automation">
-<meta name="twitter:description" content="Browser automation that compiles once and runs forever. Zero tokens at runtime. Catches drift before it breaks.">
+<meta name="twitter:title" content="Taprun — No hallucinated clicks. Predictable cost. Sessions that complete.">
+<meta name="twitter:description" content="Compile once with AI. Replay forever at $0/run. Real Chrome session — no re-login, no mid-run fail. browser-use $4.20 vs Tap $0.003 over 100 reruns.">
 <meta name="twitter:image" content="https://taprun.dev/social-preview.svg">
 <meta name="keywords" content="AI coding agent protocol, MCP, model context protocol, Chrome extension, Playwright, tap protocol, forge, deterministic automation, sandbox, automatic diagnostics, macOS automation, doctor, fingerprint, website automation, AI agent, web scraping, browser automation, API auto-detection, JSON-LD, RSS, OpenAPI">
 <meta name="author" content="LeonTing1010">
@@ -41,7 +41,7 @@
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
   "name": "Taprun",
-  "description": "Browser automation that compiles AI understanding once, runs deterministically forever at zero tokens, and detects structural drift before production breaks. Three-part lifecycle: compile, run, diff.",
+  "description": "Browser automation with no hallucinated clicks, predictable token cost, and sessions that complete. AI compiles once into a deterministic plan; replay is free and runs in your real Chrome — no re-login, no mid-run session fail. Drift is caught before your pipeline notices.",
   "url": "https://taprun.dev/",
   "downloadUrl": "https://github.com/LeonTing1010/tap/releases/latest",
   "softwareVersion": "0.13.0",
@@ -55,9 +55,9 @@
   "codeRepository": "https://github.com/LeonTing1010/tap",
   "keywords": ["AI agents", "MCP", "tap protocol", "forge", "deterministic automation", "Chrome extension", "Playwright", "sandbox", "doctor", "fingerprint", "health contracts", "silent failure detection", "API auto-detection"],
   "offers": [
-    {"@type": "Offer", "price": "0", "priceCurrency": "USD", "description": "Free — 65+ skills in any MCP agent, API auto-detection forge, doctor, watch. 3-day trial on paid features."},
-    {"@type": "Offer", "price": "9", "priceCurrency": "USD", "description": "Hacker — AI creates taps for you. Full forge pipeline in Claude Code, Cursor, any MCP host. BYOK."},
-    {"@type": "Offer", "price": "29", "priceCurrency": "USD", "description": "Pro — Taps run themselves. Auto-repair, auto-refresh, scheduled runs, team server. 100% local-first."}
+    {"@type": "Offer", "price": "0", "priceCurrency": "USD", "description": "Spec & Run — Free forever. Format spec, all five npm packages, Chrome extension, CLI runtime, structural verify, 140+ community taps."},
+    {"@type": "Offer", "price": "19", "priceCurrency": "USD", "description": "Capture — AI compiles for you. Natural-language → .tap.json via Claude/GPT/Ollama. Up to 5 plans in fleet. BYOK. Works in any MCP host."},
+    {"@type": "Offer", "price": "49", "priceCurrency": "USD", "description": "Repair — Plans heal themselves. Drift detected → minimal-patch AI → cached replay. Up to 20 plans. 100% local — heal runs on your machine."}
   ]
 }
 </script>
@@ -91,7 +91,7 @@
   "@type": "FAQPage",
   "mainEntity": [
     {"@type": "Question", "name": "What does 'compile once' mean?", "acceptedAnswer": {"@type": "Answer", "text": "AI runs once at authoring time to capture a site's stable structural addresses (JSON-LD, OpenAPI, ARIA, RSS) — not to generate fragile CSS selectors. The compiled program is then replayed deterministically, no LLM at runtime."}},
-    {"@type": "Question", "name": "What happens when the site changes?", "acceptedAnswer": {"@type": "Answer", "text": "Run `tap doctor`. It compares captured fingerprints against the live page and flags drift — before your data goes stale. On Pro, `tap fix` proposes an AI-written patch; `tap refresh` rebaselines after human approval."}},
+    {"@type": "Question", "name": "What happens when the site changes?", "acceptedAnswer": {"@type": "Answer", "text": "Run `tap doctor`. It compares captured fingerprints against the live page and flags drift — before your data goes stale. On the Repair tier, `tap fix` proposes an AI-written patch; `tap refresh` rebaselines after human approval."}},
     {"@type": "Question", "name": "Is my data safe?", "acceptedAnswer": {"@type": "Answer", "text": "Everything runs on your machine. Programs are structured data plans (closed 25-op vocabulary), not arbitrary JavaScript. No runtime eval, no new Worker, no cloud exfiltration. See the SECURITY.md in the public repo."}}
   ]
 }
@@ -2678,13 +2678,13 @@ pre.code-block code {
       <span class="masthead-sep">·</span>
       <span>THE INTERFACE COMPILER</span>
       <span class="masthead-sep">·</span>
-      <span>EDITION 0.14 / LOCAL-FIRST BY ARCHITECTURE / 5 NPM PACKAGES LIVE</span>
+      <span>EDITION 0.14 / NO HALLUCINATED CLICKS / 5 NPM PACKAGES LIVE</span>
     </div>
     <div class="masthead-double"></div>
   </header>
 
   <p class="press-dateline">
-    <span>FOR</span> &mdash; <em>developers building AI agents, Playwright/Puppeteer teams, privacy-bound automators</em> &mdash; Cookies never leave your machine.
+    <span>FOR</span> &mdash; <em>developers tired of watching browser-use hallucinate clicks, Stagehand burn tokens on every step, sessions fail mid-run</em> &mdash; AI runs once at compile time. Replay is deterministic and free.
   </p>
 
   <h1 class="press-headline">
@@ -2703,7 +2703,7 @@ pre.code-block code {
       <circle cx="80" cy="80" r="58" fill="none" stroke="currentColor" stroke-width="2.5"/>
       <circle cx="80" cy="80" r="48" fill="none" stroke="currentColor" stroke-width="0.5"/>
       <text font-family="Fraunces, serif" font-size="11.5" font-weight="600" letter-spacing="3.6" fill="currentColor">
-        <textPath href="#press-seal-arc-top" startOffset="50%" text-anchor="middle">LOCAL · FIRST · BY · ARCHITECTURE</textPath>
+        <textPath href="#press-seal-arc-top" startOffset="50%" text-anchor="middle">DETERMINISTIC · BY · ARCHITECTURE</textPath>
       </text>
       <text font-family="Fraunces, serif" font-size="10" font-style="italic" letter-spacing="2.4" fill="currentColor">
         <textPath href="#press-seal-arc-bot" startOffset="50%" text-anchor="middle">EST · 2026 — taprun.dev</textPath>
@@ -2717,8 +2717,8 @@ pre.code-block code {
   </aside>
 
   <div class="press-dek-wrap">
-    <p class="press-lede">Browser automation that runs in <em>your</em> browser, <span class="press-lede-strike">not someone else's cloud</span>.</p>
-    <p class="press-lede-sub">Cookies never leave your machine — <em>by architecture, not policy.</em></p>
+    <p class="press-lede">No hallucinated clicks. Predictable token cost. <span class="press-lede-strike">Sessions that actually complete.</span></p>
+    <p class="press-lede-sub">AI compiles once into a deterministic plan — replay is free and runs in your real Chrome. <em>No re-login. No mid-run session fail.</em></p>
     <pre class="press-code"><code><span class="c"># Drop in your existing Playwright / Puppeteer / Stagehand source.</span>
 <span class="c"># Out comes a deterministic .tap.json plan, replayable in your real Chrome.</span>
 
@@ -2740,12 +2740,12 @@ $ <span class="k">tap doctor</span> example/login                               
     <article class="press-chapter">
       <span class="press-chapter-num">§ II.</span>
       <h3 class="press-chapter-title">Scope, plainly</h3>
-      <p>v1 compiles browser-use <code>AgentHistory</code> &mdash; <em>navigation always replays at 0 tokens</em>. Extraction is also free at Tier 0 destinations (RSS, JSON-LD, agents.json, OpenAPI). Stagehand &amp; Anthropic computer-use on the roadmap.</p>
+      <p>v1 compiles browser-use <code>AgentHistory</code> &mdash; <em>navigation always replays at 0 tokens</em>. Extraction is also free when the site exposes a structural address (RSS, JSON-LD, agents.json, OpenAPI). Stagehand &amp; Anthropic computer-use on the roadmap.</p>
     </article>
     <article class="press-chapter">
       <span class="press-chapter-num">§ III.</span>
-      <h3 class="press-chapter-title">Drift</h3>
-      <p><code>tap doctor</code> independently fetches the authoritative source and diffs &mdash; catches drift a self-replay can&rsquo;t see. Pro tier replays cached patches at 0 tokens; misses fall back to a minimal-patch LLM call.</p>
+      <h3 class="press-chapter-title">When the site changes</h3>
+      <p>Minor frontend change broke your selectors? <code>tap doctor</code> flags it before your pipeline notices. Repair tier rewrites the broken op while you sleep, then caches the fix &mdash; subsequent runs replay at 0 tokens.</p>
     </article>
   </div>
 
@@ -2831,7 +2831,7 @@ $ <span class="k">tap doctor</span> example/login                               
       <article class="evidence-card reveal" data-num="03">
         <div class="evidence-card-body">
           <h3>Diff the <span class="hl">drift.</span></h3>
-          <p class="evidence-claim"><code>tap doctor</code> compares the captured fingerprint against the live page and flags structural drift <em>before</em> your data goes stale. <code>tap fix</code> proposes an AI-written patch on Pro. <code>tap refresh</code> re-baselines only after a human approves. Lifecycle as a first-class primitive — not an afterthought retry loop.</p>
+          <p class="evidence-claim"><code>tap doctor</code> compares the captured fingerprint against the live page and flags structural drift <em>before</em> your data goes stale. <code>tap fix</code> proposes an AI-written patch on the Repair tier. <code>tap refresh</code> re-baselines only after a human approves. Lifecycle as a first-class primitive — not an afterthought retry loop.</p>
           <blockquote class="evidence-quote">
             "I'd be curious whether you measure success as 'initial generation works' or 'the same flow still passes after small DOM/layout changes a week later' — that's the boundary between a neat demo and something a team can rely on."
             <cite>— potter098, <a href="https://news.ycombinator.com/item?id=47780971" rel="noopener">HN, 2026-04-15 (question left unanswered by the compile-only competitor)</a></cite>
@@ -3427,7 +3427,7 @@ test(<span class="s">"login"</span>, <span class="k">async</span> ({ page }) =&g
             <span class="calc-line-value">$0</span>
           </div>
           <div class="calc-line calc-line--hero">
-            <span class="calc-line-label">Versus Taprun Pro ($29/mo flat)</span>
+            <span class="calc-line-label">Versus Taprun Repair ($49/mo flat)</span>
             <span class="calc-line-value" id="calc-delta">&mdash;</span>
           </div>
         </div>
@@ -3528,8 +3528,8 @@ test(<span class="s">"login"</span>, <span class="k">async</span> ({ page }) =&g
           <span class="rung-label">Capture</span>
         </div>
         <div class="price-amount"><span class="currency">$</span>19<span class="period">/mo</span></div>
-        <div class="price-label">AI compiles for you.</div>
-        <p class="price-poem">Point it at a URL or describe the task — your agent inspects the page, picks the strongest selector layer, and emits a deterministic plan. BYOK.</p>
+        <div class="price-label">AI compiles once. Replay is free.</div>
+        <p class="price-poem">Point it at a URL or describe the task — AI runs once at compile time, picks the strongest structural address, and emits a deterministic plan. After that, every run is $0 and zero tokens. BYOK.</p>
         <div class="price-divider"></div>
         <ul class="price-features">
           <li><span class="bullet">+</span> Everything in Spec &amp; Run</li>
@@ -3549,8 +3549,8 @@ test(<span class="s">"login"</span>, <span class="k">async</span> ({ page }) =&g
           <span class="rung-label">Repair</span>
         </div>
         <div class="price-amount"><span class="currency">$</span>49<span class="period">/mo</span></div>
-        <div class="price-label">Plans heal themselves.</div>
-        <p class="price-poem">Site changed? Doctor's 4-layer cross-validation flags it. Heal AI rewrites the broken op while you sleep. Cache replays patches at 0 tokens.</p>
+        <div class="price-label">When the site changes, plans fix themselves.</div>
+        <p class="price-poem">Minor frontend change broke your selectors? Doctor flags it before your pipeline notices. AI rewrites the broken op while you sleep, then caches the fix — subsequent runs replay at 0 tokens.</p>
         <div class="price-divider"></div>
         <ul class="price-features">
           <li><span class="bullet">+</span> Everything in Capture</li>
@@ -3593,7 +3593,7 @@ test(<span class="s">"login"</span>, <span class="k">async</span> ({ page }) =&g
       </details>
       <details class="faq-item">
         <summary>What happens when the site changes?</summary>
-        <div class="faq-answer">Run <code>tap doctor</code>. It compares captured fingerprints against the live page and flags drift &mdash; before your data goes stale. On Pro, <code>tap fix</code> proposes an AI-written patch; <code>tap refresh</code> rebaselines after human approval.</div>
+        <div class="faq-answer">Run <code>tap doctor</code>. It compares captured fingerprints against the live page and flags drift &mdash; before your data goes stale. On the Repair tier, <code>tap fix</code> proposes an AI-written patch; <code>tap refresh</code> rebaselines after human approval.</div>
       </details>
       <details class="faq-item">
         <summary>Is my data safe?</summary>
