@@ -1,0 +1,97 @@
+name: Fence
+
+# Static guard: nothing tracked in this repo may leak closed-source
+# implementation paths, private memory references, internal development
+# phase numbers, real secret-shaped strings, or specific operational IDs
+# from local-only scripts. Patterns are deliberately concrete; review the
+# diff if you need to add one. New legitimate matches go in EXCLUDE_FILES.
+#
+# Triggered on every push/PR to main. Fails the job on any match.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  fence:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Closed-source path leakage
+        # pre-publish-check.ts maintains a banned-import allow-list; it
+        # legitimately enumerates these paths to enforce the same fence.
+        run: |
+          if grep -rnE 'core/(forge|doctor|heal|identity|migration|experiments|capability|capture|verify|replay|compose)' \
+            --include='*.md' --include='*.html' --include='*.ts' --include='*.tsx' --include='*.js' \
+            --include='*.json' --include='*.yml' --include='*.yaml' --include='*.txt' \
+            --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=_site --exclude-dir=.git \
+            --exclude=fence.yml --exclude=pre-publish-check.ts \
+            .; then
+            echo "::error::Closed-source path leak. Remove the core/<area>/ reference or move it to a private doc."
+            exit 1
+          fi
+
+      - name: Private memory and home-dir leakage
+        run: |
+          if grep -rnE '/Users/[a-z]+/|~/\.claude/projects/|(project_w[0-9]+|project_slice)[a-z0-9_]*\.md|feedback_[a-z0-9_]+\.md' \
+            --include='*.md' --include='*.html' --include='*.ts' --include='*.tsx' --include='*.js' \
+            --include='*.json' --include='*.yml' --include='*.yaml' --include='*.txt' \
+            --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=_site --exclude-dir=.git \
+            --exclude=fence.yml \
+            .; then
+            echo "::error::Private path or memory file reference. Use env vars or generic phrasing."
+            exit 1
+          fi
+
+      - name: Internal development phase / private-annotation leakage
+        run: |
+          if grep -rnE '[Ss]lice [0-9]+ [a-z]|\(private\)|the closed tap-core' \
+            --include='*.md' --include='*.html' --include='*.ts' --include='*.tsx' --include='*.js' \
+            --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=_site --exclude-dir=.git \
+            --exclude=fence.yml \
+            .; then
+            echo "::error::Internal phase number or private annotation. Strip before publishing."
+            exit 1
+          fi
+
+      - name: Closed log/schema fragment leakage
+        run: |
+          if grep -rnE 'cache_creation_input_tokens|cache_read_input_tokens|ai_usage\.jsonl' \
+            --include='*.md' --include='*.html' --include='*.ts' --include='*.tsx' --include='*.js' \
+            --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=_site --exclude-dir=.git \
+            --exclude=fence.yml \
+            .; then
+            echo "::error::Internal log file or token-usage schema field. Generalize the wording."
+            exit 1
+          fi
+
+      - name: Real secret-shape strings
+        run: |
+          if grep -rnE 'GOCSPX-[A-Za-z0-9_-]{20,}|sk-ant-[A-Za-z0-9_-]{50,}|ghp_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{40,}|AKIA[0-9A-Z]{16}|AIza[A-Za-z0-9_-]{35}|-----BEGIN [A-Z ]+PRIVATE KEY-----' \
+            --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=_site --exclude-dir=.git \
+            --exclude=fence.yml \
+            .; then
+            echo "::error::Real secret-shaped token detected. Rotate immediately and remove from tracking."
+            exit 1
+          fi
+
+      - name: Operational IDs that belong in env vars only
+        # Project numbers / zone IDs from local ops scripts. If any tracked
+        # file references these, it almost certainly should be reading them
+        # from env or a gitignored config instead.
+        # Note: the Microsoft Clarity site ID is intentionally rendered into
+        # every public HTML page by the analytics include, so it isn't part
+        # of this list — it's a public identifier by design.
+        run: |
+          if grep -rnE '200215826367|c0ea314ee2cd7f483c43ea91b69ea131' \
+            --include='*.md' --include='*.html' --include='*.ts' --include='*.tsx' --include='*.js' \
+            --include='*.json' --include='*.yml' --include='*.yaml' \
+            --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=_site --exclude-dir=.git \
+            --exclude=fence.yml \
+            .; then
+            echo "::error::Operational ID hardcoded. Move to env var (Actions secret or gitignored config)."
+            exit 1
+          fi
