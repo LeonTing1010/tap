@@ -93,7 +93,7 @@ Each section reuses the ⟨Their layer · Tap layer · Where they don't overlap 
 
 > Steel keeps the session alive; Tap keeps the program correct. Both solve different halves of "agents that don't break in production."
 >
-> *Where they don't overlap*: Steel solves session reliability and anti-bot; Tap solves selector/extraction stability over time (drift, heal). *Where they compose*: Tap's `intent: "read"` taps running against Steel-hosted browsers gets Tap's compile-once + Steel's anti-detection.
+> *Where they don't overlap*: Steel solves session reliability and anti-bot; Tap solves selector/extraction stability over time (drift, heal). *Where they compose*: Tap's read-variant Plans running against Steel-hosted browsers gets Tap's compile-once + Steel's anti-detection.
 >
 > *Honest weakness*: Steel has YC backing and infrastructure depth Tap doesn't replicate. Tap is the program; Steel is one possible runtime target.
 
@@ -115,7 +115,7 @@ Don't embed the full chart here — keep this page focused on positioning. Bench
 
 ### Footer
 
-> Tap is closed-source / proprietary; the 24-op `.tap.json` format is open and documented at [taprun.dev/spec/plan-v1/](https://taprun.dev/spec/plan-v1/) (W3C Annotation extension; CC0 vocabulary at [/ns/tap-v1/](https://taprun.dev/ns/tap-v1/)).
+> Tap is closed-source / proprietary; the 11-op bare Plan format is open and documented at [taprun.dev/spec/plan-v1/](https://taprun.dev/spec/plan-v1/). The v1 W3C Annotation vocabulary at [/ns/tap-v1/](https://taprun.dev/ns/tap-v1/) is preserved as a historical archive.
 >
 > Found an error in this page? [Open an issue](https://github.com/LeonTing1010/tap/issues).
 

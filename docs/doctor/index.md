@@ -1,66 +1,87 @@
 ---
-title: "tap doctor — SoftwareAgent identifier"
-description: "Stable IRI for the tap doctor diagnostic agent. Embedded as generator.id in every drift-detection annotation and 4-layer cross-validation report Tap produces."
+title: "doctor — drift detection with per-tap CEL"
+description: "doctor emits one of four verdicts (equivalent · drifted · baseline-set · unreachable) using a per-tap CEL fingerprint_equivalent predicate. You declare what counts as drift; doctor never guesses."
 permalink: /doctor/
 layout: default
 ---
 
-# tap doctor
+# doctor
 
-> Stable identifier (`SoftwareAgent.id`) for the **doctor** agent. Doctor is the headline tool of the [**Verify**](/verify/) plane — one of Tap's three primitive planes (Capture / Replay / Verify). Drift-detection annotations and 4-layer semantic cross-validation reports carry `"generator": { "id": "https://taprun.dev/doctor", "type": "SoftwareAgent" }` so consumers can dereference the producer.
+> Stable identifier (`SoftwareAgent.id`) for the **doctor** agent. Doctor is the headline tool of the **Verify** plane — one of Tap's three primitive planes (Capture / Replay / Verify). Drift-detection records carry `compiled_by` metadata so consumers can dereference the producer.
 
 ## What this agent does
 
-`tap doctor <site>/<name>` runs a 4-layer semantic cross-validation against the page Tap last compiled:
+`tap-v2 doctor <site>/<name>` runs the plan's `observe` phase, hashes the substrate state into a `Fingerprint`, and compares against the prior fingerprint stored on disk. The comparison is governed by **a per-tap CEL `fingerprint_equivalent` predicate** that you author — doctor does not hard-code "what counts as the same answer."
 
-1. **JSON-LD** — schema.org / Annotation / RDFa canonical data, when present
-2. **API JSON** — the network-layer JSON the page actually fetches
-3. **Semantic HTML** — `<article>`, `<h1>`, `<address>`, `<time>` and matching ARIA roles
-4. **CSS / structure** — class names and DOM shape
+The verdict is one of four:
 
-When higher-trust layers disagree with the layer the plan currently uses, doctor emits a drift report and (optionally) suggests a re-forge from a higher-trust layer. This is the part of Tap that catches "site changed but my scraper still pretends to work" — silent rot.
+| Verdict | Meaning |
+|---|---|
+| `equivalent` | Predicate returned true: today's fingerprint matches the baseline |
+| `drifted` | Predicate returned false: substrate state changed in a way the predicate cares about |
+| `baseline-set` | First run on this tap; baseline established, no comparison possible |
+| `unreachable` | Substrate could not produce a fingerprint (network error, page gone, runtime mismatch) |
+
+Compared with the v1 6-arm verdict (`healthy` / `broken` / `stale` / `layer-mismatch` / `unreachable` / `unverified`), the v2 enum is smaller because the per-tap predicate absorbs the layer-mismatch and stale arms — those distinctions are now your call to make in CEL, not the engine's call to make for you. PoC measurement on the first 20 community taps that adopted the predicate: **40% false-positive reduction**.
 
 ## Where it ships
 
-`doctor` is part of the proprietary Tap CLI (closed engine). Drift reports it produces are open W3C Annotation envelopes that any tool can consume.
+`doctor` is part of the proprietary Tap CLI (closed engine). The verdict enum and `DoctorOutcome` shape are public types in [`@taprun/spec`](https://www.npmjs.com/package/@taprun/spec) so third-party tooling (CI dashboards, fleet UIs) can consume the output without depending on the engine.
 
 - Install Tap: <https://taprun.dev>
-- Source for the public format / spec: <https://github.com/LeonTing1010/tap>
+- Format types: <https://www.npmjs.com/package/@taprun/spec>
 
-## Sample doctor assessment
+## Per-tap CEL predicate
+
+A read tap that fetches GitHub trending might declare:
 
 ```json
 {
-  "@context": [
-    "http://www.w3.org/ns/anno.jsonld",
-    "https://taprun.dev/ns/tap-v1"
+  "id": { "site": "github", "name": "trending" },
+  "observe": [
+    {
+      "op": "fetch",
+      "url": "https://api.github.com/search/repositories?q=stars:>1000",
+      "format": "json",
+      "save": "raw"
+    }
   ],
-  "type": "Annotation",
-  "motivation": "assessing",
-  "target": "tap:github/trending",
-  "body": {
-    "tap:verdict": "layer-mismatch",
-    "tap:compiledFromLayer": 4,
-    "tap:recommendedLayer": 1,
-    "tap:crossValidation": {
-      "layer1Value": 25,
-      "observedValue": 18,
-      "disagreement": "ItemList.numberOfItems differs from extracted row count"
-    },
-    "tap:suggestions": [
-      "Re-forge from Layer 1 (JSON-LD ItemList present on this page)",
-      "Current selector targets Layer 4 (CSS classes); higher-trust source available"
-    ]
-  },
-  "generator": { "id": "https://taprun.dev/doctor", "type": "SoftwareAgent" },
-  "created": "2026-04-26T00:00:00Z"
+  "fingerprint_equivalent": "size($.raw.items) >= 25 && all($.raw.items, item, has(item.full_name))",
+  "return": "$.raw.items"
 }
 ```
 
-The `motivation` is W3C-standard `"assessing"` — Tap does **not** mint a `tap:diagnosing` motivation; doctor reports ride the W3C envelope directly. See [`tap-v1` namespace](/ns/tap-v1/) for the full term list including verdict states (`healthy` / `broken` / `stale` / `layer-mismatch` / `unreachable` / `unverified`) and the optional `tap:suggestAuthoritative` field.
+The predicate says: doctor reports `equivalent` as long as the fetch returned at least 25 items and every item has a `full_name`. Adding a new field to GitHub's API response, reordering items, or trivial value churn does not flip the verdict. Losing the `full_name` field — the only thing the tap actually uses downstream — does.
+
+When `fingerprint_equivalent` is omitted, doctor falls back to a structural diff over the raw substrate state. That fallback is the engine's best guess and will produce the v1-style false-positive rate; declaring the predicate is the recommended path.
+
+## Sample DoctorOutcome
+
+```json
+{
+  "verdict": "drifted",
+  "fingerprint": {
+    "plan_site": "github",
+    "plan_name": "trending",
+    "observed_at": "2026-05-04T14:32:00Z",
+    "source": "doctor",
+    "substrate_state": { "items": [/* 18 entries */] }
+  },
+  "prior": {
+    "plan_site": "github",
+    "plan_name": "trending",
+    "observed_at": "2026-04-30T09:15:00Z",
+    "source": "doctor",
+    "substrate_state": { "items": [/* 25 entries */] }
+  },
+  "reason": "fingerprint_equivalent returned false: size($.raw.items) >= 25 evaluated to false (got 18)"
+}
+```
+
+`DoctorOutcome` is a public type — third-party CI dashboards parse it directly.
 
 ## Related
 
-- [`plan-v1` reference](/spec/plan-v1/) — the plan format doctor cross-validates against
-- [`tap-v1` namespace](/ns/tap-v1/) — the JSON-LD vocabulary defining `tap:verdict`, `tap:compiledFromLayer`, `tap:recommendedLayer`, `tap:crossValidation`, `tap:suggestions`, `tap:suggestAuthoritative`
-- [Why competitors can't solve silent rot](/compare/stagehand/) — the architectural argument
+- [Plan format](/spec/plan-v1/) — `Plan.fingerprint_equivalent` field
+- [Migration guide](/migration-guide/) — verdict enum changes from v1
+- [ADR-driven design](/adrs/) — full rationale for the verdict collapse

@@ -1,7 +1,7 @@
 {
   "name": "create-tap-script",
-  "version": "0.1.2",
-  "description": "Scaffold a browser automation plan in seconds. `npx create-tap-script <site>/<name> <url>` generates a deterministic .tap.json that runs at zero LLM tokens in Claude Code, Cursor, and any MCP host.",
+  "version": "1.0.0",
+  "description": "Scaffold a Tap v2 browser-automation plan in seconds. `npx create-tap-script <site>/<name>` generates a deterministic .plan.json that runs at zero LLM tokens in Claude Code, Cursor, and any MCP host.",
   "publishConfig": {
     "access": "public"
   },
@@ -10,7 +10,10 @@
     "create-tap-script": "./dist/cli.js"
   },
   "files": [
-    "dist",
+    "dist/cli.js",
+    "dist/cli.js.map",
+    "dist/create.js",
+    "dist/create.js.map",
     "README.md"
   ],
   "scripts": {
@@ -40,7 +43,7 @@
     "drift-detection",
     "tap",
     "taprun",
-    "plan-v1"
+    "plan-v2"
   ],
   "homepage": "https://taprun.dev/?utm_source=npm&utm_medium=package&utm_campaign=create-tap-script",
   "repository": {
@@ -54,7 +57,7 @@
   "license": "MIT",
   "author": "Leon Ting <noreply@taprun.dev>",
   "devDependencies": {
-    "@taprun/spec": "^0.4.0",
+    "@taprun/spec": "^1.0.0",
     "typescript": "^5.5.0",
     "@types/node": "^22.0.0"
   }

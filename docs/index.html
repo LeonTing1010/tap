@@ -18,7 +18,7 @@
   })();
 </script>
 <title>Taprun — Browser automation with no hallucinated clicks. Predictable token cost. Sessions that complete.</title>
-<meta name="description" content="Tired of watching browser-use hallucinate clicks? Stagehand burning tokens on every step? Convert your Playwright, Puppeteer, or Stagehand script to a deterministic .tap.json plan in 30 seconds. Runs in your real Chrome — no re-login, no mid-run session fail.">
+<meta name="description" content="Tired of watching browser-use hallucinate clicks? Burning tokens on every step? Convert your Playwright or Puppeteer script to a deterministic v2 Plan (11-op closed vocabulary) in 30 seconds. Runs in your real Chrome — no re-login, no mid-run session fail.">
 <meta property="og:title" content="Taprun — No hallucinated clicks. Predictable cost. Sessions that complete.">
 <meta property="og:description" content="100 reruns: browser-use $4.20, Tap $0.003. Crossover at run 2. AI runs once at compile time; replay is deterministic and free. Real Chrome session — no re-login.">
 <meta property="og:type" content="website">
@@ -55,9 +55,9 @@
   "codeRepository": "https://github.com/LeonTing1010/tap",
   "keywords": ["AI agents", "MCP", "tap protocol", "forge", "deterministic automation", "Chrome extension", "Playwright", "sandbox", "doctor", "fingerprint", "health contracts", "silent failure detection", "API auto-detection"],
   "offers": [
-    {"@type": "Offer", "price": "0", "priceCurrency": "USD", "description": "Spec & Run — Free forever. Format spec, all five npm packages, Chrome extension, CLI runtime, structural verify, 140+ community taps."},
-    {"@type": "Offer", "price": "19", "priceCurrency": "USD", "description": "Capture — AI compiles for you. Natural-language → .tap.json via Claude/GPT/Ollama. Up to 5 plans in fleet. BYOK. Works in any MCP host."},
-    {"@type": "Offer", "price": "49", "priceCurrency": "USD", "description": "Repair — Plans heal themselves. Drift detected → minimal-patch AI → cached replay. Up to 20 plans. 100% local — heal runs on your machine."}
+    {"@type": "Offer", "price": "0", "priceCurrency": "USD", "description": "Spec & Run — Free forever. @taprun/spec 1.0, 4 npm packages, Chrome extension, tap-v2 run/list/doctor/intents/lint/migrate-legacy, 140+ community taps."},
+    {"@type": "Offer", "price": "19", "priceCurrency": "USD", "description": "Capture — forge.inspect + forge.draft turn URLs or NL into bare v2 Plans via Claude/GPT/Ollama. Up to 5 plans. BYOK. Works in any MCP host."},
+    {"@type": "Offer", "price": "49", "priceCurrency": "USD", "description": "Repair — 3-path heal (cache 0 tokens / minimal-patch ~1.1K / full rewrite ~14K). 4-arm doctor verdict with per-tap CEL predicate. Up to 20 plans. 100% local."}
   ]
 }
 </script>
@@ -91,8 +91,8 @@
   "@type": "FAQPage",
   "mainEntity": [
     {"@type": "Question", "name": "What does 'compile once' mean?", "acceptedAnswer": {"@type": "Answer", "text": "AI runs once at authoring time to capture a site's stable structural addresses (JSON-LD, OpenAPI, ARIA, RSS) — not to generate fragile CSS selectors. The compiled program is then replayed deterministically, no LLM at runtime."}},
-    {"@type": "Question", "name": "What happens when the site changes?", "acceptedAnswer": {"@type": "Answer", "text": "Run `tap doctor`. It compares captured fingerprints against the live page and flags drift — before your data goes stale. On the Repair tier, `tap fix` proposes an AI-written patch; `tap refresh` rebaselines after human approval."}},
-    {"@type": "Question", "name": "Is my data safe?", "acceptedAnswer": {"@type": "Answer", "text": "Everything runs on your machine. Programs are structured data plans (closed 25-op vocabulary), not arbitrary JavaScript. No runtime eval, no new Worker, no cloud exfiltration. See the SECURITY.md in the public repo."}}
+    {"@type": "Question", "name": "What happens when the site changes?", "acceptedAnswer": {"@type": "Answer", "text": "Run `tap-v2 doctor`. The verdict is one of four — equivalent · drifted · baseline-set · unreachable — derived from a per-tap CEL `fingerprint_equivalent` predicate so you decide what counts as drift, not us. On the Repair tier, `tap-v2 fix` proposes an AI-written patch; refresh rebaselines after human approval."}},
+    {"@type": "Question", "name": "Is my data safe?", "acceptedAnswer": {"@type": "Answer", "text": "Everything runs on your machine. Plans are structured data — closed 11-op vocabulary (7 substrate + 3 control flow + 1 typed-eval escape), not arbitrary JavaScript. No runtime eval, no Worker, no cloud exfiltration. See the SECURITY.md in the public repo."}}
   ]
 }
 </script>
@@ -2719,14 +2719,14 @@ pre.code-block code {
   <div class="press-dek-wrap">
     <p class="press-lede">No hallucinated clicks. Predictable token cost. <span class="press-lede-strike">Sessions that actually complete.</span></p>
     <p class="press-lede-sub">AI compiles once into a deterministic plan — replay is free and runs in your real Chrome. <em>No re-login. No mid-run session fail.</em></p>
-    <pre class="press-code"><code><span class="c"># Drop in your existing Playwright / Puppeteer / Stagehand source.</span>
-<span class="c"># Out comes a deterministic .tap.json plan, replayable in your real Chrome.</span>
+    <pre class="press-code"><code><span class="c"># Drop in your existing Playwright or Puppeteer source.</span>
+<span class="c"># Out comes a deterministic v2 Plan, replayable in your real Chrome.</span>
 
-$ <span class="k">npm install</span> @taprun/from-playwright @taprun/spec
-$ <span class="k">npx</span> from-playwright tests/login.spec.ts <span class="o">&gt;</span> example/login.tap.json   <span class="c"># 30 sec, no rewrite</span>
+$ <span class="k">npm install</span> @taprun/from-playwright@1 @taprun/spec@1
+$ <span class="k">npx</span> from-playwright tests/login.spec.ts <span class="o">&gt;</span> example/login.plan.json   <span class="c"># 30 sec, no rewrite</span>
 
-$ <span class="k">tap run</span> example/login                                       <span class="c"># 0 LLM tokens · deterministic</span>
-$ <span class="k">tap doctor</span> example/login                                    <span class="c"># ok · broken · stale</span></code></pre>
+$ <span class="k">tap-v2 run</span> example/login                                       <span class="c"># 0 LLM tokens · deterministic</span>
+$ <span class="k">tap-v2 doctor</span> example/login                                    <span class="c"># equivalent · drifted · baseline-set · unreachable</span></code></pre>
   </div>
 
   <div class="press-ornament">✦ &nbsp; ✦ &nbsp; ✦</div>
@@ -2745,7 +2745,7 @@ $ <span class="k">tap doctor</span> example/login                               
     <article class="press-chapter">
       <span class="press-chapter-num">§ III.</span>
       <h3 class="press-chapter-title">When the site changes</h3>
-      <p>Minor frontend change broke your selectors? <code>tap doctor</code> flags it before your pipeline notices. Repair tier rewrites the broken op while you sleep, then caches the fix &mdash; subsequent runs replay at 0 tokens.</p>
+      <p>Minor frontend change broke your selectors? <code>tap-v2 doctor</code> flags it before your pipeline notices. Repair tier escalates through three paths &mdash; cache hit (0 tokens), minimal patch (~1.1K), full rewrite (~14K) &mdash; then caches the fix so subsequent runs replay at 0 tokens.</p>
     </article>
   </div>
 
@@ -2809,7 +2809,7 @@ $ <span class="k">tap doctor</span> example/login                               
       <article class="evidence-card reveal" data-num="01">
         <div class="evidence-card-body">
           <h3>Compile <span class="hl">once.</span></h3>
-          <p class="evidence-claim">AI runs exactly once — at authoring time. It captures the site's stable structural addresses (JSON-LD, OpenAPI, ARIA landmarks, RSS) instead of brittle CSS selectors the next deploy will wipe out. The compiled program is <em>data</em>, not code: a 25-op closed vocabulary that can't eval, can't spawn workers, can't reach the network outside declared endpoints.</p>
+          <p class="evidence-claim">AI runs exactly once — at authoring time. It captures the site's stable structural addresses (JSON-LD, OpenAPI, ARIA landmarks, RSS) instead of brittle CSS selectors the next deploy will wipe out. The compiled program is <em>data</em>, not code: an <strong>11-op closed vocabulary</strong> (7 substrate + 3 control flow + 1 typed-eval escape) that can't run free-form JavaScript, can't spawn workers, can't reach the network outside declared endpoints.</p>
           <blockquote class="evidence-quote">
             "LLMs frequently generate CSS class selectors or XPath rather than Playwright's recommended getByRole / getByLabel / getByText approach, even when accessible-name selectors would work. The generated code can 'work' on first run but break on the first layout tweak."
             <cite>— jimmypk, <a href="https://news.ycombinator.com/item?id=47780971" rel="noopener">HN discussion on a deterministic-automation launch, 2026-04-15</a></cite>
@@ -2831,7 +2831,7 @@ $ <span class="k">tap doctor</span> example/login                               
       <article class="evidence-card reveal" data-num="03">
         <div class="evidence-card-body">
           <h3>Diff the <span class="hl">drift.</span></h3>
-          <p class="evidence-claim"><code>tap doctor</code> compares the captured fingerprint against the live page and flags structural drift <em>before</em> your data goes stale. <code>tap fix</code> proposes an AI-written patch on the Repair tier. <code>tap refresh</code> re-baselines only after a human approves. Lifecycle as a first-class primitive — not an afterthought retry loop.</p>
+          <p class="evidence-claim"><code>tap-v2 doctor</code> emits one of four verdicts — <code>equivalent · drifted · baseline-set · unreachable</code> — using a per-tap CEL <code>fingerprint_equivalent</code> predicate. You declare what counts as drift; doctor never guesses. <code>tap-v2 fix</code> proposes an AI-written patch on the Repair tier. Refresh re-baselines only after a human approves. Lifecycle as a first-class primitive — not an afterthought retry loop.</p>
           <blockquote class="evidence-quote">
             "I'd be curious whether you measure success as 'initial generation works' or 'the same flow still passes after small DOM/layout changes a week later' — that's the boundary between a neat demo and something a team can rely on."
             <cite>— potter098, <a href="https://news.ycombinator.com/item?id=47780971" rel="noopener">HN, 2026-04-15 (question left unanswered by the compile-only competitor)</a></cite>
@@ -2977,15 +2977,15 @@ npm i @taprun/from-puppeteer</code></pre>
 
       <div class="onramp-card">
         <div class="onramp-card-head">
-          <h3>@taprun/from-stagehand</h3>
+          <h3>@taprun/from-stagehand <span style="color:#7E2B1C;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;">deprecated</span></h3>
           <div class="badges">
             <a href="https://www.npmjs.com/package/@taprun/from-stagehand" target="_blank" rel="noopener"><img src="https://img.shields.io/npm/v/@taprun/from-stagehand?style=flat-square&label=npm&color=6366f1" alt="npm version"></a>
           </div>
         </div>
-        <p class="tag">Hybrid: deterministic page.* → plan ops. NL stagehand.act/extract → exec ops, allowUnverifiable.</p>
-        <pre><code><span class="c"># Honest about which steps need an LLM</span>
-npm i @taprun/from-stagehand</code></pre>
-        <a class="npm-link" href="https://www.npmjs.com/package/@taprun/from-stagehand" target="_blank" rel="noopener">npmjs.com →</a>
+        <p class="tag">Stagehand requires Browserbase (cloud-coupled) — contradicts v2 local-first. v0.x stays installable; no v1.0 ships.</p>
+        <pre><code><span class="c"># Use from-playwright instead — Stagehand wraps Playwright anyway</span>
+npm i @taprun/from-playwright</code></pre>
+        <a class="npm-link" href="/migration-guide/">Migration path →</a>
       </div>
 
       <div class="onramp-card">
@@ -3035,25 +3035,23 @@ test(<span class="s">"login"</span>, <span class="k">async</span> ({ page }) =&g
           </div>
           <div class="demo-arrow">→ <span style="color: var(--text-muted); font-size: 11px;">@taprun/from-playwright</span> →</div>
           <div class="demo-panel after">
-            <div class="demo-label"><span class="dot"></span>After — example/login.tap.json (deterministic)</div>
+            <div class="demo-label"><span class="dot"></span>After — example/login.plan.json (bare v2 Plan)</div>
 <pre><code>{
-  <span class="s">"@context"</span>: [<span class="s">"http://www.w3.org/ns/anno.jsonld"</span>,
-               <span class="s">"https://taprun.dev/ns/tap-v1"</span>],
-  <span class="s">"type"</span>: <span class="s">"Annotation"</span>,
-  <span class="s">"motivation"</span>: <span class="s">"tap:executing"</span>,
-  <span class="s">"target"</span>: <span class="s">"https://app.example.com/login"</span>,
-  <span class="s">"body"</span>: {
-    <span class="s">"type"</span>: <span class="s">"tap:ExecutionPlan"</span>,
-    <span class="s">"site"</span>: <span class="s">"example"</span>, <span class="s">"name"</span>: <span class="s">"login"</span>,
-    <span class="s">"intent"</span>: <span class="s">"write"</span>,
-    <span class="s">"ops"</span>: [
-      { <span class="s">"op"</span>: <span class="s">"nav"</span>, <span class="s">"url"</span>: <span class="s">"https://app.example.com/login"</span> },
-      { <span class="s">"op"</span>: <span class="s">"input"</span>, <span class="s">"kind"</span>: <span class="s">"fill"</span>, <span class="s">"target"</span>: <span class="s">"#email"</span>, <span class="s">"value"</span>: <span class="s">"alice@example.com"</span> },
-      { <span class="s">"op"</span>: <span class="s">"input"</span>, <span class="s">"kind"</span>: <span class="s">"fill"</span>, <span class="s">"target"</span>: <span class="s">"#password"</span>, <span class="s">"value"</span>: <span class="s">"{{env.PW}}"</span> },
-      { <span class="s">"op"</span>: <span class="s">"input"</span>, <span class="s">"kind"</span>: <span class="s">"click"</span>, <span class="s">"target"</span>: <span class="s">"button[type='submit']"</span> },
-      { <span class="s">"op"</span>: <span class="s">"wait"</span>, <span class="s">"selector"</span>: <span class="s">".dashboard"</span> }
-    ]
-  }
+  <span class="s">"id"</span>: { <span class="s">"site"</span>: <span class="s">"example"</span>, <span class="s">"name"</span>: <span class="s">"login"</span> },
+  <span class="s">"args"</span>: { <span class="s">"password"</span>: { <span class="s">"type"</span>: <span class="s">"string"</span>, <span class="s">"required"</span>: <span class="n">true</span> } },
+  <span class="s">"key"</span>: <span class="s">"$.args.password"</span>,
+  <span class="s">"observe"</span>: [
+    { <span class="s">"op"</span>: <span class="s">"nav"</span>, <span class="s">"url"</span>: <span class="s">"https://app.example.com/login"</span> }
+  ],
+  <span class="s">"act"</span>: [
+    { <span class="s">"op"</span>: <span class="s">"input"</span>, <span class="s">"kind"</span>: <span class="s">"fill"</span>, <span class="s">"target"</span>: <span class="s">"#email"</span>, <span class="s">"value"</span>: <span class="s">"alice@example.com"</span> },
+    { <span class="s">"op"</span>: <span class="s">"input"</span>, <span class="s">"kind"</span>: <span class="s">"fill"</span>, <span class="s">"target"</span>: <span class="s">"#password"</span>, <span class="s">"value"</span>: <span class="s">"{{$.args.password}}"</span> },
+    { <span class="s">"op"</span>: <span class="s">"input"</span>, <span class="s">"kind"</span>: <span class="s">"click"</span>, <span class="s">"target"</span>: <span class="s">"button[type='submit']"</span> }
+  ],
+  <span class="s">"confirm"</span>: [
+    { <span class="s">"op"</span>: <span class="s">"wait"</span>, <span class="s">"selector"</span>: <span class="s">".dashboard"</span>, <span class="s">"timeout_ms"</span>: <span class="n">5000</span> }
+  ],
+  <span class="s">"return"</span>: <span class="s">"$.confirm[0]"</span>
 }</code></pre>
           </div>
         </div>
@@ -3080,23 +3078,26 @@ test(<span class="s">"login"</span>, <span class="k">async</span> ({ page }) =&g
           </div>
           <div class="demo-arrow">→ <span style="color: var(--text-muted); font-size: 11px;">@taprun/from-puppeteer</span> →</div>
           <div class="demo-panel after">
-            <div class="demo-label"><span class="dot"></span>After — example/login.tap.json (deterministic)</div>
-<pre><code><span class="c">// page.type → fill (semantic alignment)</span>
-<span class="c">// keyboard.press → press without target (focused element)</span>
+            <div class="demo-label"><span class="dot"></span>After — example/login.plan.json (bare v2 Plan)</div>
+<pre><code><span class="c">// page.type → input.fill (semantic alignment)</span>
+<span class="c">// keyboard.press → input.press without target (focused element)</span>
 <span class="c">// browser.launch / close → silently dropped (lifecycle, not action)</span>
 {
-  <span class="s">"body"</span>: {
-    <span class="s">"type"</span>: <span class="s">"tap:ExecutionPlan"</span>,
-    <span class="s">"site"</span>: <span class="s">"example"</span>, <span class="s">"name"</span>: <span class="s">"login"</span>,
-    <span class="s">"intent"</span>: <span class="s">"write"</span>,
-    <span class="s">"ops"</span>: [
-      { <span class="s">"op"</span>: <span class="s">"nav"</span>, <span class="s">"url"</span>: <span class="s">"https://app.example.com/login"</span> },
-      { <span class="s">"op"</span>: <span class="s">"input"</span>, <span class="s">"kind"</span>: <span class="s">"fill"</span>, <span class="s">"target"</span>: <span class="s">"#email"</span>, <span class="s">"value"</span>: <span class="s">"alice@example.com"</span> },
-      { <span class="s">"op"</span>: <span class="s">"input"</span>, <span class="s">"kind"</span>: <span class="s">"fill"</span>, <span class="s">"target"</span>: <span class="s">"#password"</span>, <span class="s">"value"</span>: <span class="s">"{{env.PW}}"</span> },
-      { <span class="s">"op"</span>: <span class="s">"input"</span>, <span class="s">"kind"</span>: <span class="s">"press"</span>, <span class="s">"value"</span>: <span class="s">"Enter"</span> },
-      { <span class="s">"op"</span>: <span class="s">"wait"</span>, <span class="s">"selector"</span>: <span class="s">".dashboard"</span> }
-    ]
-  }
+  <span class="s">"id"</span>: { <span class="s">"site"</span>: <span class="s">"example"</span>, <span class="s">"name"</span>: <span class="s">"login"</span> },
+  <span class="s">"args"</span>: { <span class="s">"password"</span>: { <span class="s">"type"</span>: <span class="s">"string"</span>, <span class="s">"required"</span>: <span class="n">true</span> } },
+  <span class="s">"key"</span>: <span class="s">"$.args.password"</span>,
+  <span class="s">"observe"</span>: [
+    { <span class="s">"op"</span>: <span class="s">"nav"</span>, <span class="s">"url"</span>: <span class="s">"https://app.example.com/login"</span> }
+  ],
+  <span class="s">"act"</span>: [
+    { <span class="s">"op"</span>: <span class="s">"input"</span>, <span class="s">"kind"</span>: <span class="s">"fill"</span>, <span class="s">"target"</span>: <span class="s">"#email"</span>, <span class="s">"value"</span>: <span class="s">"alice@example.com"</span> },
+    { <span class="s">"op"</span>: <span class="s">"input"</span>, <span class="s">"kind"</span>: <span class="s">"fill"</span>, <span class="s">"target"</span>: <span class="s">"#password"</span>, <span class="s">"value"</span>: <span class="s">"{{$.args.password}}"</span> },
+    { <span class="s">"op"</span>: <span class="s">"input"</span>, <span class="s">"kind"</span>: <span class="s">"press"</span>, <span class="s">"value"</span>: <span class="s">"Enter"</span> }
+  ],
+  <span class="s">"confirm"</span>: [
+    { <span class="s">"op"</span>: <span class="s">"wait"</span>, <span class="s">"selector"</span>: <span class="s">".dashboard"</span>, <span class="s">"timeout_ms"</span>: <span class="n">5000</span> }
+  ],
+  <span class="s">"return"</span>: <span class="s">"$.confirm[0]"</span>
 }</code></pre>
           </div>
         </div>
@@ -3123,31 +3124,31 @@ test(<span class="s">"login"</span>, <span class="k">async</span> ({ page }) =&g
 );
 <span class="k">await</span> page.screenshot();</code></pre>
           </div>
-          <div class="demo-arrow">→ <span style="color: var(--text-muted); font-size: 11px;">@taprun/from-stagehand</span> →</div>
+          <div class="demo-arrow">→ <span style="color: var(--text-muted); font-size: 11px;">re-forge via tap-v2</span> →</div>
           <div class="demo-panel after">
-            <div class="demo-label"><span class="dot"></span>After — github/search-pr.tap.json (hybrid, allowUnverifiable)</div>
-<pre><code><span class="c">// Deterministic page.* → plan ops verifiable by doctor</span>
-<span class="c">// NL sh.act / sh.extract → exec ops with prompt preserved</span>
-<span class="c">// allowUnverifiable: true tells doctor "needs LLM at runtime"</span>
+            <div class="demo-label"><span class="dot"></span>After — github/search-pr.plan.json (re-forged, deterministic)</div>
+<pre><code><span class="c">// from-stagehand is deprecated: Stagehand requires Browserbase</span>
+<span class="c">// (cloud-coupled), which contradicts v2's local-first stance.</span>
+<span class="c">// Recommended path — re-forge the same flow against the live</span>
+<span class="c">// page; the GitHub PR list is exposed as JSON-LD, so this</span>
+<span class="c">// compiles to a deterministic v2 Plan with no NL escape hatch.</span>
 {
-  <span class="s">"body"</span>: {
-    <span class="s">"type"</span>: <span class="s">"tap:ExecutionPlan"</span>,
-    <span class="s">"site"</span>: <span class="s">"github"</span>, <span class="s">"name"</span>: <span class="s">"search-pr"</span>,
-    <span class="s">"intent"</span>: <span class="s">"read"</span>,
-    <span class="s">"ops"</span>: [
-      { <span class="s">"op"</span>: <span class="s">"nav"</span>, <span class="s">"url"</span>: <span class="s">"https://github.com/browserbase"</span> },
-      { <span class="s">"op"</span>: <span class="s">"exec"</span>, <span class="s">"fn"</span>: <span class="s">"/* stagehand act(\"click on the stagehand repo\") */"</span> },
-      { <span class="s">"op"</span>: <span class="s">"exec"</span>, <span class="s">"fn"</span>: <span class="s">"/* stagehand extract(\"the author and title of the latest PR\") */"</span> },
-      { <span class="s">"op"</span>: <span class="s">"screenshot"</span> }
-    ],
-    <span class="s">"allowUnverifiable"</span>: <span class="n">true</span>
-  }
+  <span class="s">"id"</span>: { <span class="s">"site"</span>: <span class="s">"github"</span>, <span class="s">"name"</span>: <span class="s">"search-pr"</span> },
+  <span class="s">"observe"</span>: [
+    {
+      <span class="s">"op"</span>: <span class="s">"fetch"</span>,
+      <span class="s">"url"</span>: <span class="s">"https://api.github.com/repos/browserbase/stagehand/pulls?per_page=1&state=all"</span>,
+      <span class="s">"format"</span>: <span class="s">"json"</span>,
+      <span class="s">"save"</span>: <span class="s">"prs"</span>
+    }
+  ],
+  <span class="s">"return"</span>: <span class="s">"{ author: $.prs[0].user.login, title: $.prs[0].title }"</span>
 }</code></pre>
           </div>
         </div>
       </div>
 
-      <p class="demo-foot">Selectors stay yours. Lifecycle calls (browser.launch / close) silently dropped. Run with <code>tap run example/login</code> in your real Chrome. <a href="/spec/plan-v1/" style="color: var(--indigo-bright); text-decoration: none; border-bottom: 1px dotted rgba(165,180,252,0.4);">Format reference →</a></p>
+      <p class="demo-foot">Selectors stay yours. Lifecycle calls (browser.launch / close) silently dropped. Run with <code>tap-v2 run example/login</code> in your real Chrome. <a href="/spec/plan-v1/" style="color: var(--indigo-bright); text-decoration: none; border-bottom: 1px dotted rgba(165,180,252,0.4);">Format reference →</a></p>
     </div>
 
     <div class="vs-table-wrap reveal">
@@ -3260,7 +3261,7 @@ test(<span class="s">"login"</span>, <span class="k">async</span> ({ page }) =&g
         <h3>Monitor what changes</h3>
         <p>Poll on an interval, archive snapshots, query history for diffs and trends.</p>
         <div class="usecase-examples">
-          <code>tap watch github/trending --every 5m</code>
+          <code>tap-v2 watch github/trending --every 5m</code>
           <code>tap history github/trending --trend stars</code>
         </div>
         <a class="usecase-story" href="/blog/websites-change-automation-shouldnt-stop.html">→ Read: <em>Websites change. Your automation shouldn't stop.</em></a>
@@ -3282,8 +3283,8 @@ test(<span class="s">"login"</span>, <span class="k">async</span> ({ page }) =&g
         <h3>Teach it a new site</h3>
         <p>Your AI agent inspects, picks the highest-trust structural address, compiles a program that runs forever.</p>
         <div class="usecase-examples">
-          <code>tap forge https://news.ycombinator.com</code>
-          <code>tap forge "get Douban top 250 movies"</code>
+          <code>tap-v2 forge.draft url=https://news.ycombinator.com</code>
+          <code>tap-v2 forge.draft prompt="get Douban top 250 movies"</code>
         </div>
         <a class="usecase-story" href="/blog/facebook-anti-scraping-flexbox-order.html">→ Read: <em>Facebook scrambles author names, not post bodies</em></a>
       </article>
@@ -3435,7 +3436,7 @@ test(<span class="s">"login"</span>, <span class="k">async</span> ({ page }) =&g
 
       <div class="arithmetic-copy">
         <p class="arithmetic-copy-line"><strong>Claude for Chrome, Atlas, Browser Use, Stagehand</strong> &mdash; each invokes an LLM on every task. Tokens are a per-run cost that scales linearly with activity. When prices rise or supply tightens, the bill rises with them.</p>
-        <p class="arithmetic-copy-line"><strong>Taprun calls AI once, at forge-time.</strong> The compiled <code>.tap.json</code> is a 25-op data structure that any MCP host replays deterministically. Replay is pure dispatch &mdash; <em>structurally</em> zero tokens, not cached zero.</p>
+        <p class="arithmetic-copy-line"><strong>Taprun calls AI once, at forge-time.</strong> The compiled plan is an 11-op data structure (7 substrate · 3 control flow · 1 typed-eval escape) that any MCP host replays deterministically. Replay is pure dispatch &mdash; <em>structurally</em> zero tokens, not cached zero.</p>
         <p class="arithmetic-copy-line"><strong>The architecture is the hedge.</strong> Competitors can&rsquo;t patch this without becoming a different product. When GPUs get rationed, the only agents that still scale are the ones that never needed one at runtime.</p>
         <div class="arithmetic-proof">
           <p class="arithmetic-proof-head">Controlled measurement &middot; 2026-04-24</p>
@@ -3510,12 +3511,13 @@ test(<span class="s">"login"</span>, <span class="k">async</span> ({ page }) =&g
         <p class="price-poem">Format spec. All adapters. Chrome extension. CLI runtime. Basic structural verify. The full distribution flywheel — $0.</p>
         <div class="price-divider"></div>
         <ul class="price-features">
-          <li><span class="bullet">+</span> <code>@taprun/spec</code> — types, JSON Schema, conformance suite</li>
-          <li><span class="bullet">+</span> <code>@taprun/from-{playwright,puppeteer,stagehand}</code> — converters</li>
+          <li><span class="bullet">+</span> <code>@taprun/spec</code> v1.0 — types, JSON Schema, conformance suite</li>
+          <li><span class="bullet">+</span> <code>@taprun/from-{playwright,puppeteer}</code> — converters to v2 Plans</li>
           <li><span class="bullet">+</span> <code>create-tap-script</code> — npx scaffolder</li>
           <li><span class="bullet">+</span> Chrome extension — login-session bridge</li>
-          <li><span class="bullet">+</span> <code>tap run</code> — deterministic <code>.tap.json</code> execution</li>
-          <li><span class="bullet">+</span> <code>tap doctor</code> structural fingerprint check</li>
+          <li><span class="bullet">+</span> <code>tap-v2 run</code> · <code>list</code> · <code>intents</code> · <code>lint</code> — deterministic plan execution</li>
+          <li><span class="bullet">+</span> <code>tap-v2 doctor</code> — 4-arm verdict with per-tap CEL predicate</li>
+          <li><span class="bullet">+</span> <code>tap-v2 migrate-legacy scan</code> — one-shot upgrade from v1 envelopes</li>
           <li><span class="bullet">+</span> 140+ community taps via <a href="https://github.com/LeonTing1010/tap-skills" style="color:var(--indigo-bright);text-decoration:underline;">tap-skills</a></li>
         </ul>
         <a href="#install" class="price-btn price-btn--outline">Install Free</a>
@@ -3533,9 +3535,10 @@ test(<span class="s">"login"</span>, <span class="k">async</span> ({ page }) =&g
         <div class="price-divider"></div>
         <ul class="price-features">
           <li><span class="bullet">+</span> Everything in Spec &amp; Run</li>
-          <li><span class="bullet">+</span> <strong>AI forge</strong> — natural-language → <code>.tap.json</code> via Claude/GPT/Ollama</li>
+          <li><span class="bullet">+</span> <strong>Forge</strong> — <code>forge.inspect</code> + <code>forge.draft</code> turn URLs or NL into bare v2 Plans (Claude/GPT/Ollama BYOK)</li>
+          <li><span class="bullet">+</span> Deterministic templates cover ~80% of common shapes; AI fills the long tail</li>
           <li><span class="bullet">+</span> Up to <strong>5 plans</strong> in fleet</li>
-          <li><span class="bullet">+</span> <code>tap schedule</code> + Slack/webhook drift alerts</li>
+          <li><span class="bullet">+</span> <code>tap-v2 mcp-tool</code> — expose any plan as a typed MCP tool</li>
           <li><span class="bullet">+</span> Works in Claude Code, Cursor, Cline, Windsurf — any MCP host</li>
         </ul>
         <a href="https://www.creem.io/payment/prod_2ueXfXelMdowyjKmHlSxBk?utm_source=taprun.dev&utm_campaign=capture" class="price-btn price-btn--outline">Start Capturing</a>
@@ -3554,9 +3557,9 @@ test(<span class="s">"login"</span>, <span class="k">async</span> ({ page }) =&g
         <div class="price-divider"></div>
         <ul class="price-features">
           <li><span class="bullet">+</span> Everything in Capture</li>
-          <li><span class="bullet">+</span> <strong>Auto-heal</strong> — drift detected → minimal-patch AI → cached replay</li>
+          <li><span class="bullet">+</span> <strong>3-path heal</strong> — cache hit (0 tokens) → minimal-patch (~1.1K) → full rewrite (~14K)</li>
           <li><span class="bullet">+</span> Up to <strong>20 plans</strong> in fleet</li>
-          <li><span class="bullet">+</span> Semantic 4-layer verify (JSON-LD / OpenAPI / sitemap cross-check)</li>
+          <li><span class="bullet">+</span> Per-tap <code>fingerprint_equivalent</code> CEL — 40% false-positive reduction (PoC-measured)</li>
           <li><span class="bullet">+</span> Heal history + drift report archive</li>
           <li><span class="bullet">+</span> 100% local — heal runs on your machine</li>
         </ul>
@@ -3574,7 +3577,7 @@ test(<span class="s">"login"</span>, <span class="k">async</span> ({ page }) =&g
     </div>
 
     <p class="pricing-proof reveal">
-      <code>tap v0.14</code><span class="proof-sep">·</span>5 npm packages live<span class="proof-sep">·</span>local execution<span class="proof-sep">·</span><code>$0</code>/run on free tier
+      <code>tap-v2 / @taprun/spec 1.0</code><span class="proof-sep">·</span>4 npm packages live<span class="proof-sep">·</span>local execution<span class="proof-sep">·</span><code>$0</code>/run on free tier
     </p>
   </div>
 </section>
@@ -3593,11 +3596,11 @@ test(<span class="s">"login"</span>, <span class="k">async</span> ({ page }) =&g
       </details>
       <details class="faq-item">
         <summary>What happens when the site changes?</summary>
-        <div class="faq-answer">Run <code>tap doctor</code>. It compares captured fingerprints against the live page and flags drift &mdash; before your data goes stale. On the Repair tier, <code>tap fix</code> proposes an AI-written patch; <code>tap refresh</code> rebaselines after human approval.</div>
+        <div class="faq-answer">Run <code>tap-v2 doctor</code>. The verdict is one of four — <code>equivalent · drifted · baseline-set · unreachable</code> — derived from a per-tap CEL <code>fingerprint_equivalent</code> predicate. You declare what counts as drift; doctor never guesses. On the Repair tier, <code>tap-v2 fix</code> proposes an AI-written patch; refresh rebaselines after human approval.</div>
       </details>
       <details class="faq-item">
         <summary>Is my data safe?</summary>
-        <div class="faq-answer">Everything runs on your machine. Programs are structured data plans (closed 25-op vocabulary), not arbitrary JavaScript. No runtime eval, no new Worker, no cloud exfiltration. See <a href="https://github.com/LeonTing1010/tap/blob/main/SECURITY.md">SECURITY.md</a> in the public repo.</div>
+        <div class="faq-answer">Everything runs on your machine. Plans are structured data &mdash; closed 11-op vocabulary (7 substrate ops · 3 control flow · 1 typed-eval escape) &mdash; not arbitrary JavaScript. No runtime <code>eval</code>, no Worker, no dynamic import, no cloud exfiltration. See <a href="https://github.com/LeonTing1010/tap/blob/main/SECURITY.md">SECURITY.md</a> in the public repo.</div>
       </details>
     </div>
   </div>
@@ -3757,23 +3760,23 @@ if (navToggle && navLinks) {
 (function() {
   // type: 'type' = char-by-char typing, 'print' = instant line appear
   var lines = [
-    { type: 'type',  text: '$ tap doctor', delay: 0, speed: 50 },
+    { type: 'type',  text: '$ tap-v2 doctor', delay: 0, speed: 50 },
     { type: 'print', html: '&nbsp;', delay: 700 },
     { type: 'print', html: '  <span class="cmd">Health check</span>              <span class="muted">47 taps in fleet</span>', delay: 800 },
     { type: 'print', html: '&nbsp;', delay: 900 },
     { type: 'print', html: '  <span style="color:#6ee7b7">\u2713</span> github/trending      <span class="muted">25 rows</span>   <span style="color:#6ee7b7">ok</span>     <span class="muted">890ms</span>', delay: 1000 },
     { type: 'print', html: '  <span style="color:#6ee7b7">\u2713</span> hackernews/hot       <span class="muted">30 rows</span>   <span style="color:#6ee7b7">ok</span>     <span class="muted">420ms</span>', delay: 1200 },
     { type: 'print', html: '  <span style="color:#6ee7b7">\u2713</span> reddit/search        <span class="muted">25 rows</span>   <span style="color:#6ee7b7">ok</span>     <span class="muted">1.2s</span>', delay: 1400 },
-    { type: 'print', html: '  <span style="color:#f87171">\u2717</span> ecommerce/products   <span class="muted"> 0 rows</span>   <span style="color:#f87171">FAIL</span>   <span class="muted">2.1s</span>', delay: 1600 },
+    { type: 'print', html: '  <span style="color:#f87171">\u2717</span> ecommerce/products   <span class="muted"> 0 rows</span>   <span style="color:#f87171">drifted</span> <span class="muted">2.1s</span>', delay: 1600 },
     { type: 'print', html: '    <span style="color:#f87171">range:</span> <span class="muted">"price" value 0.99 outside [1, 50000] in 3 rows</span>', delay: 1900 },
     { type: 'print', html: '    <span style="color:#fbbf24">\u26A0</span> <span class="muted">fingerprint: semantic_hash changed on .product-card</span>', delay: 2100 },
     { type: 'print', html: '  <span style="color:#6ee7b7">\u2713</span> arxiv/search         <span class="muted">15 rows</span>   <span style="color:#6ee7b7">ok</span>     <span class="muted">1.8s</span>', delay: 2300 },
     { type: 'print', html: '  <span class="muted">... 42 more passed</span>', delay: 2500 },
     { type: 'print', html: '&nbsp;', delay: 2700 },
     { type: 'print', html: '  <span class="table-border">\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500</span>', delay: 2800 },
-    { type: 'print', html: '  <span style="color:#6ee7b7">46 ok</span>  <span style="color:#f87171">1 fail</span>  <span class="muted">0 error</span>                   <span class="muted">12.4s</span>', delay: 3000 },
+    { type: 'print', html: '  <span style="color:#6ee7b7">46 equivalent</span>  <span style="color:#f87171">1 drifted</span>  <span class="muted">0 unreachable</span>      <span class="muted">12.4s</span>', delay: 3000 },
     { type: 'print', html: '&nbsp;', delay: 3200 },
-    { type: 'print', html: '  <span class="muted">Run</span> <span class="cmd">tap fix ecommerce/products</span> <span class="muted">to collect diagnostics</span>', delay: 3400 }
+    { type: 'print', html: '  <span class="muted">Run</span> <span class="cmd">tap-v2 fix ecommerce/products</span> <span class="muted">to escalate through cache → minimal-patch → rewrite</span>', delay: 3400 }
   ];
 
   var terminalEl = document.getElementById('terminal-output');

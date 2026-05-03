@@ -453,14 +453,15 @@ footer.colophon .ornament { color: var(--gold); letter-spacing: 0.6em; }
     {% assign p_intent = page.intent | default: "read" %}
     <span class="badge intent">{% if p_intent == "write" %}modifies data (write){% else %}read-only{% endif %}</span>
     {% if page.layer_source %}<span class="badge layer">source: {{ page.layer_source }}</span>{% endif %}
-    {% if page.doctor_verdict == "healthy" %}<span class="badge doctor-ok"><span class="dot"></span>doctor: healthy{% if page.doctor_checked %} · {{ page.doctor_checked }}{% endif %}</span>{% endif %}
-    {% if page.doctor_verdict == "stale" %}<span class="badge doctor-stale"><span class="dot"></span>doctor: stale{% if page.doctor_checked %} · {{ page.doctor_checked }}{% endif %}</span>{% endif %}
-    {% if page.doctor_verdict == "broken" %}<span class="badge doctor-broken"><span class="dot"></span>doctor: broken{% if page.doctor_checked %} · {{ page.doctor_checked }}{% endif %}</span>{% endif %}
+    {% if page.doctor_verdict == "healthy" or page.doctor_verdict == "equivalent" %}<span class="badge doctor-ok"><span class="dot"></span>doctor: equivalent{% if page.doctor_checked %} · {{ page.doctor_checked }}{% endif %}</span>{% endif %}
+    {% if page.doctor_verdict == "stale" or page.doctor_verdict == "baseline-set" %}<span class="badge doctor-stale"><span class="dot"></span>doctor: baseline-set{% if page.doctor_checked %} · {{ page.doctor_checked }}{% endif %}</span>{% endif %}
+    {% if page.doctor_verdict == "broken" or page.doctor_verdict == "drifted" %}<span class="badge doctor-broken"><span class="dot"></span>doctor: drifted{% if page.doctor_checked %} · {{ page.doctor_checked }}{% endif %}</span>{% endif %}
+    {% if page.doctor_verdict == "unreachable" %}<span class="badge doctor-broken"><span class="dot"></span>doctor: unreachable{% if page.doctor_checked %} · {{ page.doctor_checked }}{% endif %}</span>{% endif %}
   </div>
 
   <section class="block">
     <h2 class="section-head"><span>Run it</span></h2>
-    <div class="run-card"><span class="prompt">$</span> <span class="cmd-word">tap run</span> <span class="arg">{{ page.site_name }} {{ page.tap_name }}{% if page.example_args %} {{ page.example_args }}{% endif %}</span></div>
+    <div class="run-card"><span class="prompt">$</span> <span class="cmd-word">tap-v2 run</span> <span class="arg">{{ page.site_name }}/{{ page.tap_name }}{% if page.example_args %} {{ page.example_args }}{% endif %}</span></div>
   </section>
 
   <section class="block">

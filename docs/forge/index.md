@@ -1,68 +1,79 @@
 ---
-title: "tap forge — SoftwareAgent identifier"
-description: "Stable IRI for the tap forge agent. Embedded as generator.id in every .tap.json plan compiled from a URL or natural-language description by the proprietary Tap CLI's forge command."
+title: "forge — capture-plane agent"
+description: "Stable IRI for the forge agent. forge.inspect + forge.draft turn a URL or natural-language description into a deterministic v2 Plan. Deterministic templates first, AI long-tail."
 permalink: /forge/
 layout: default
 ---
 
-# tap forge
+# forge
 
-> Stable identifier (`SoftwareAgent.id`) for the **forge** agent. Forge is the headline tool of the [**Capture**](/capture/) plane — one of Tap's three primitive planes (Capture / Replay / Verify). Plans compiled by `tap forge <url|"description">` carry `"generator": { "id": "https://taprun.dev/forge", "type": "SoftwareAgent" }` so consumers can dereference the producer.
+> Stable identifier (`SoftwareAgent.id`) for the **forge** agent. Forge is the headline tool of the **Capture** plane — one of Tap's three primitive planes (Capture / Replay / Verify). Plans produced by forge carry `compiled_by` metadata so consumers can distinguish forge output from hand-edits.
 
 ## What this agent does
 
-`tap forge <url>` (or `tap forge "<natural-language description>"`) compiles a target page into a deterministic `.tap.json` plan. The pipeline is structural-first:
+Forge is split into two MCP tools that share an inspect cache:
 
-1. **Inspect** — pull the live page's structural signal: JSON-LD, schema.org, Annotation/RDFa data, semantic HTML, network-layer JSON the page actually fetches.
-2. **Tier 0 compile** — when a high-trust source (Layer 1 / Layer 2) carries the answer, forge emits a deterministic program directly. No LLM token is spent on Tier 0 plans.
-3. **AI fallback** — when Tier 0 fails, forge prompts an AI model with the structural signal as context and asks it to produce a `body.ops` array. The model writes plan ops, not arbitrary code.
-4. **Conformance gate** — forge runs the output through `runConformance` from [`@taprun/spec`](https://jsr.io/@taprun/spec) before saving. Non-conformant outputs are rejected; the AI is reprompted up to N times.
+1. **`forge.inspect <url>`** — pulls the live page's structural signal: JSON-LD, schema.org, Annotation/RDFa data, semantic HTML, network-layer JSON the page actually fetches, agents.json descriptors, OpenAPI references. Output is a normalised structural report; no plan is written.
 
-The result is a `.tap.json` plan that any other Tap install can replay at zero LLM cost.
+2. **`forge.draft`** — consumes the inspect report (or a natural-language description) and emits a bare v2 `Plan`. Two paths:
+   - **Deterministic templates** (~80% of common shapes) — when a high-trust source carries the answer (RSS feed, JSON-LD, OpenAPI, agents.json, observed API endpoint), forge emits a template-derived Plan with no LLM tokens spent.
+   - **AI fallback** (long tail) — when no template fits, forge prompts an AI model with the structural signal as context and asks it to produce the `observe` (or `act`+`confirm`+`key`) array. The model writes Plan ops within the closed 11-op vocabulary, not arbitrary code.
+
+3. **Lint gate** — forge runs the output through `lintPlan` before saving. Non-conformant outputs are rejected; the AI is reprompted up to N times. Saved plans land in `~/.tap/plans/<site>/<name>.plan.json`.
 
 ## Where it ships
 
-`forge` is part of the proprietary Tap CLI (closed engine). The output is an open `.tap.json` envelope conforming to [`@taprun/spec`](https://jsr.io/@taprun/spec).
+`forge` is part of the proprietary Tap CLI (closed engine). The output conforms to [`@taprun/spec`](https://www.npmjs.com/package/@taprun/spec) v1.0+.
 
 - Install Tap: <https://taprun.dev>
-- Source for the public format / spec: <https://github.com/LeonTing1010/tap>
+- Format types and JSON Schema: <https://www.npmjs.com/package/@taprun/spec>
 
-## Sample envelope produced
+## Sample plans produced
+
+### Read variant
 
 ```json
 {
-  "@context": [
-    "http://www.w3.org/ns/anno.jsonld",
-    "https://taprun.dev/ns/tap-v1"
+  "id": { "site": "github", "name": "trending" },
+  "description": "Trending repos via the search API",
+  "observe": [
+    {
+      "op": "fetch",
+      "url": "https://api.github.com/search/repositories?q=stars:>1000",
+      "format": "json",
+      "save": "raw"
+    }
   ],
-  "type": "Annotation",
-  "motivation": "tap:executing",
-  "target": "https://github.com/trending",
-  "body": {
-    "type": "tap:ExecutionPlan",
-    "site": "github",
-    "name": "trending",
-    "intent": "read",
-    "ops": [
-      { "op": "fetch", "url": "https://github.com/trending" },
-      { "op": "extract", "root": "article.Box-row", "per_item": { "repo": "h2 a" } }
-    ]
-  },
-  "generator": {
-    "id": "https://taprun.dev/forge",
-    "type": "SoftwareAgent",
-    "version": "plan-v1"
-  }
+  "return": "$.raw.items"
 }
 ```
 
-## Why this URL exists
+### Write variant
 
-The IRI is the protocol-stable identifier for "this plan was produced by Tap forge". Tap consumers (or any W3C Web Annotation consumer) can dereference it to learn what compiled the plan, its versioning policy, and how to verify the output via `tap doctor`.
+```json
+{
+  "id": { "site": "twitter", "name": "post" },
+  "args": { "text": { "type": "string", "required": true } },
+  "key": "$.args.text",
+  "observe": [
+    { "op": "fetch", "url": "https://twitter.com/api/me/drafts", "save": "drafts" }
+  ],
+  "act": [
+    { "op": "input", "kind": "fill",  "target": "[data-testid='tweetTextarea_0']", "value": "{{$.args.text}}" },
+    { "op": "input", "kind": "click", "target": "[data-testid='tweetButton']" }
+  ],
+  "confirm": [
+    { "op": "wait", "selector": "[data-testid='toast']", "timeout_ms": 5000 }
+  ],
+  "return": "$.confirm[0]"
+}
+```
+
+The read variant has no `act` or `key` (TypeScript: `never`). The write variant requires both. Invalid combinations are unrepresentable at the type level, not just at lint time.
 
 ## Related
 
-- [`plan-v1` reference](/spec/plan-v1/) — the format produced
-- [`tap-v1` namespace](/ns/tap-v1/) — the JSON-LD vocabulary
-- [`tap doctor`](/doctor/) — drift-detection on plans forge produced
-- Already have a script? Use the dedicated adapters: [`@taprun/from-playwright`](/from-playwright/) · [`@taprun/from-puppeteer`](/from-puppeteer/) · [`@taprun/from-stagehand`](/from-stagehand/)
+- [Plan format](/spec/plan-v1/) — bare `Plan` reference
+- [doctor](/doctor/) — 4-arm verdict on forge output
+- [Migration guide](/migration-guide/) — upgrading v1 envelopes to v2 Plans
+- Already have a script? Use the dedicated adapters: [`@taprun/from-playwright`](/from-playwright/) · [`@taprun/from-puppeteer`](/from-puppeteer/) · ([`@taprun/from-stagehand`](/from-stagehand/) is deprecated — see [migration guide](/migration-guide/))

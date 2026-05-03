@@ -7,7 +7,7 @@ layout: default
 
 # Replay
 
-> **One of Tap's three primitive planes.** Replay takes an immutable `.tap.json` plan plus your identity context and produces rows. **Zero LLM tokens** — the plan is already compiled. This is the plane that ships in every Tap install and runs forever.
+> **One of Tap's three primitive planes.** Replay takes an immutable bare v2 Plan plus your identity context and produces rows. **Zero LLM tokens** — the plan is already compiled. This is the plane that ships in every Tap install and runs forever.
 
 ## What Replay is for
 
@@ -20,15 +20,15 @@ Replay solves A2 (LLMs are probabilistic) by separating compile-time AI use from
 | `plan-runtime` | the op-handler dispatcher (INV-P3 pure: no `new Worker`, no `new Function`, no bare `eval`, no dynamic import) |
 | `plan-dispatch` | the `tapToPlanHandle` adapter + the bounded `exec` op bridge |
 | `plan-lint` | static lint at save / forge.draft / resolvePlan time |
-| Op handlers | one per op-name; the closed [24-op union](/spec/plan-v1/) |
+| Op handlers | one per op-name; the closed [11-op v2 union](/spec/plan-v1/) (7 substrate · 3 control flow · 1 typed-eval) |
 
 ## The closed-op invariant
 
-Replay can only execute ops in the closed `OP_NAMES` set defined by [`@taprun/spec`](https://jsr.io/@taprun/spec). Adding an op requires:
+Replay can only execute ops in the closed `OP_NAMES_V2` set defined by [`@taprun/spec`](https://www.npmjs.com/package/@taprun/spec) v1.0+. Adding an op requires:
 
 1. The semantics aren't expressible via fewer existing ops, or composition is unsafe.
 2. The op traces to one of five source-domain primitives (read DOM · call API · wait · interact · extract structured data).
-3. An ADR in `core/docs/adr/<date>-add-<op>.md`.
+3. An ADR amendment to the parent v2 schema decision (`2026-05-03-unified-tap-primitive`).
 
 This keeps Replay's surface stable and re-implementable across runtimes (Chrome extension / Playwright / macOS).
 
@@ -46,7 +46,7 @@ All three replay the same `.tap.json` against the same op semantics. Identity (c
 
 ## Cross-plane composition
 
-- **Replay** is the only plane safe to invoke automatically on every cron / refresh / fleet sweep — it has no side effects beyond the ones the plan declares (`intent: "read"` vs `"write"`).
+- **Replay** is the only plane safe to invoke automatically on every cron / refresh / fleet sweep — it has no side effects beyond the ones the plan declares (read variant has only `observe`; write variant declares `act`+`confirm`).
 - **Heal** and **Refresh** workflows route around a Replay step that returned drift signals, but never modify Replay itself.
 
 ## Related

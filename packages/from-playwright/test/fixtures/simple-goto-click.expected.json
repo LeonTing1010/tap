@@ -1,25 +1,11 @@
 {
-  "@context": [
-    "http://www.w3.org/ns/anno.jsonld",
-    "https://taprun.dev/ns/tap-v1"
+  "id": { "site": "github", "name": "search" },
+  "return": "null",
+  "observe": [],
+  "act": [
+    { "op": "nav", "url": "https://github.com" },
+    { "op": "input", "kind": "fill", "target": "input[name='q']", "value": "tap automation" },
+    { "op": "input", "kind": "click", "target": "button[type='submit']" }
   ],
-  "type": "Annotation",
-  "motivation": "tap:executing",
-  "target": "https://github.com",
-  "body": {
-    "type": "tap:ExecutionPlan",
-    "site": "github",
-    "name": "search",
-    "intent": "read",
-    "ops": [
-      { "op": "nav", "url": "https://github.com" },
-      { "op": "input", "kind": "fill", "target": "input[name='q']", "value": "tap automation" },
-      { "op": "input", "kind": "click", "target": "button[type='submit']" }
-    ]
-  },
-  "generator": {
-    "id": "https://taprun.dev/from-playwright",
-    "type": "SoftwareAgent",
-    "version": "0.x"
-  }
+  "key": "TODO_DECLARE_KEY"
 }

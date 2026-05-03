@@ -1,7 +1,7 @@
 {
   "name": "@taprun/spec",
-  "version": "0.4.3",
-  "description": "Browser automation plan format for MCP servers and AI agents — TypeScript types + W3C Annotation validator + JSON Schema for .tap.json. Used by Tap and its Playwright / Puppeteer / Stagehand converters. Typecheck or validate plans without the full Tap CLI.",
+  "version": "1.0.0",
+  "description": "Tap v2 plan format — public TypeScript types for the 11-op closed union, Plan discriminated union, and state-machine enums (Verdict, IntentState). Schema break vs v0.x; see ADR 2026-05-04-ecosystem-v2-launch.",
   "publishConfig": {
     "access": "public"
   },
@@ -12,47 +12,36 @@
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
-    },
-    "./schema": "./schemas/plan-v1.schema.json",
-    "./schemas/plan-v1.schema.json": "./schemas/plan-v1.schema.json"
+    }
   },
   "files": [
-    "dist",
-    "schemas",
+    "dist/types.js",
+    "dist/types.d.ts",
+    "dist/lint.js",
+    "dist/lint.d.ts",
+    "dist/index.js",
+    "dist/index.d.ts",
     "README.md"
   ],
   "scripts": {
     "build": "tsc",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build && node scripts/pre-publish-check.ts"
   },
   "engines": {
     "node": ">=18"
   },
   "keywords": [
-    "spec",
-    "json-schema",
-    "w3c-annotation",
-    "mcp",
-    "mcp-server",
-    "model-context-protocol",
-    "claude-code",
-    "cursor",
-    "ai-agent",
-    "browser-automation",
-    "browser-agent",
-    "playwright",
-    "puppeteer",
-    "stagehand",
-    "deterministic",
-    "compile",
-    "replay",
-    "scraping",
-    "drift-detection",
     "tap",
     "taprun",
-    "plan-v1"
+    "plan-v2",
+    "spec",
+    "types",
+    "mcp",
+    "model-context-protocol",
+    "browser-automation",
+    "ai-agent"
   ],
-  "homepage": "https://taprun.dev/spec/plan-v1/?utm_source=npm&utm_medium=package&utm_campaign=spec",
+  "homepage": "https://taprun.dev/spec/plan-v2/?utm_source=npm&utm_medium=package&utm_campaign=spec",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/LeonTing1010/tap.git",

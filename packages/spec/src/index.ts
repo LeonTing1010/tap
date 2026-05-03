@@ -1,156 +1,70 @@
 /**
- * @taprun/spec — Tap plan-v1 format spec.
+ * @taprun/spec — Tap v2 plan format (public TypeScript types).
  *
- * Public TypeScript types + W3C Web Annotation MUST-level validator for
- * compiled `.tap.json` plans. Use this package to typecheck or validate
- * Tap plans without depending on the closed Tap CLI.
+ * Public contract third-party tools build against to construct, display,
+ * or type-narrow Tap v2 plans without depending on the proprietary Tap
+ * engine.
  *
- * Spec doc:    https://taprun.dev/spec/plan-v1/
- * Vocabulary:  https://taprun.dev/ns/tap-v1/
- *
- * Source-of-truth: vendored byte-equivalent from core/compose/plan.ts,
- * core/compose/annotation.ts, core/compose/annotation_validator.ts in
- * the closed tap-core repo. Drift guarded by spec_extraction_test.ts.
+ * Spec doc:    https://taprun.dev/spec/plan-v2/
+ * Schema break vs v0.x: see ADR
+ *   https://github.com/LeonTing1010/tap/blob/main/docs/adr/2026-05-04-ecosystem-v2-launch.md
  *
  * What's in scope (PUBLIC):
- *   - ExecutionPlan        body of a .tap.json envelope
- *   - TapAnnotation        W3C Annotation envelope wrapping ExecutionPlan
- *   - OP_NAMES, OpName     closed union of plan ops
- *   - All op interfaces (FetchOp, NavOp, WaitOp, ExtractOp, ...)
- *   - HealthContract, AuthoritativeSpec, ArgSpec
- *   - validateAnnotation() zero-runtime-dep W3C MUST-level validator
- *   - W3C Annotation types (Selector, State, Target, Annotation)
- *   - Pure helpers (selectorLayer, isSelector, isAnnotation)
- *   - Constants (W3C_ANNO, TAP_NS)
+ *   - Plan, ArgSpec, TapId
+ *   - Op (11-arm closed union) + every member interface
+ *   - OP_NAMES_V2, OpName
+ *   - Verdict, IntentState (state-machine enums)
+ *   - CelExpr, Json (primitive aliases)
+ *   - LintError, LintRuleName, LINT_RULE_NAMES (consumer-side typing)
  *
- * What's NOT in scope (lives in the proprietary Tap CLI):
- *   - forge: compiling URLs / natural language into plans
- *   - doctor: semantic 4-layer cross-validation against authoritative sources
- *   - heal: AI-driven plan repair
- *   - identity, auth, runtime execution
+ * What's NOT in scope (proprietary engine — never published):
+ *   - forge (compiling URLs / natural language into plans)
+ *   - doctor (semantic cross-validation)
+ *   - heal (AI-driven plan repair)
+ *   - Run, IntentRecord, Transition, Fingerprint, DoctorOutcome
+ *   - Substrate, OpContext (runtime dispatch)
  */
 
-// Plan types — ExecutionPlan body, op closed-union, AuthoritativeSpec.
 export type {
-  // Envelope / plan body
-  ExecutionPlan,
-  TapAnnotation,
-  // Op interfaces
-  BaseOp,
+  // Identity + primitives
+  TapId,
+  CelExpr,
+  Json,
+  ArgSpec,
+  // Op union + members
+  Op,
+  OpName,
   FetchOp,
   NavOp,
   WaitOp,
   InputOp,
   ExtractOp,
   ExtractSpec,
-  EvalOp,
-  ExecOp,
-  ParseXmlOp,
   CookiesOp,
-  ScreenshotOp,
-  ScrollOp,
-  ComputeOp,
-  FilterOp,
-  ProjectOp,
-  SortOp,
-  DedupeOp,
-  PickOp,
-  LimitOp,
-  ConcatOp,
-  PipeOp,
+  TapOp,
   IfOp,
   ForeachOp,
   ParallelOp,
-  TapOp,
-  // Op union + name token type
-  Op,
-  OpName,
-  // Plan body sub-shapes
-  ArgSpec,
-  HealthContract,
-  FieldComparator,
-  AuthoritativeSpec,
-  AuthoritativeFetchJson,
-  AuthoritativeFetchJsonTwoStep,
-  AuthoritativeFetchAtom,
-  // Expression aliases
-  JsonataExpr,
-  Templated,
-} from "./plan.ts";
-
-// Op name closed union — runtime value, used by validators and serializers.
-export { OP_NAMES } from "./plan.ts";
-
-// W3C Web Annotation Data Model — types + pure helpers.
-export type {
-  Motivation,
-  SelectorType,
-  FragmentSelector,
-  CssSelector,
-  XPathSelector,
-  TextQuoteSelector,
-  TextPositionSelector,
-  DataPositionSelector,
-  SvgSelector,
-  RangeSelector,
-  JsonPathSelector,
-  Selector,
-  TimeState,
-  HttpRequestState,
-  SemanticHashState,
-  State,
-  SpecificResource,
-  Target,
-  Annotation,
-  AnnotationCollection,
-} from "./annotation.ts";
+  EvalOp,
+  // Plan
+  Plan,
+  // State-machine enums
+  IntentState,
+  Verdict,
+} from "./types.ts";
 
 export {
-  // Context constants
-  W3C_ANNO,
-  TAP_NS,
-  // Pure helpers
-  selectorLayer,
-  isSelector,
-  isAnnotation,
-} from "./annotation.ts";
-
-// W3C MUST-level validator — zero runtime dependencies.
-export { validateAnnotation } from "./annotation_validator.ts";
+  OP_NAMES_V2,
+  INTENT_STATES,
+  VERDICT_VALUES,
+} from "./types.ts";
 
 export type {
-  ValidationError,
-  ValidationWarning,
-  ValidationResult,
-} from "./annotation_validator.ts";
+  LintError,
+  LintSeverity,
+  LintRuleName,
+} from "./lint.ts";
 
-// Plan-v1 conformance — combines W3C envelope + plan-level checks +
-// fixture corpus for adapter authors.
 export {
-  runConformance,
-  CONFORMANCE_FIXTURES,
-} from "./conformance.ts";
-
-export type {
-  ConformanceCategory,
-  ConformanceFailure,
-  ConformanceResult,
-  ConformanceFixture,
-} from "./conformance.ts";
-
-// tap-v1 namespace — exact cross-consumer protocol contract term set.
-// CI guards consume these constants; downstream consumers (incl. the
-// proprietary Tap CLI) can `import { TAP_V1_NS_TERMS } from "@taprun/spec"`
-// to keep emit sites aligned with the namespace doc.
-export {
-  TAP_V1_PLAN_TERMS,
-  TAP_V1_ASSESSMENT_TERMS,
-  TAP_V1_NS_TERMS,
-  TAP_V1_NS_IRI,
-} from "./ns-vocabulary.ts";
-
-export type {
-  TapV1PlanTerm,
-  TapV1AssessmentTerm,
-  TapV1NsTerm,
-} from "./ns-vocabulary.ts";
+  LINT_RULE_NAMES,
+} from "./lint.ts";

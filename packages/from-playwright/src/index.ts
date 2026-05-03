@@ -1,68 +1,105 @@
 /**
- * @taprun/from-playwright — Playwright source → Tap plan-v1 adapter.
+ * @taprun/from-playwright v1.0 — Playwright source → Tap v2 Plan adapter.
  *
  * Reference implementation that converts a Playwright test script
- * (.ts / .js source text) into a TapAnnotation envelope. Output passes
- * runConformance() from @taprun/spec.
+ * (.ts / .js source text) into a v2 `Plan` per `@taprun/spec@1.x`.
+ *
+ * Per ADR 2026-05-04 §2.4 (Ecosystem v2 launch — lockstep major bump),
+ * v1.0 emits the v2 Plan shape:
+ *   - bare Plan (no W3C Annotation envelope)
+ *   - 11-op closure: fetch / nav / wait / input / extract / cookies / tap /
+ *     if / foreach / parallel / eval
+ *   - `op:exec` is GONE — `op:eval` is the escape hatch with mandatory
+ *     `returns.type`
+ *   - Read variant has no `act`/`key`; write variant requires both
  *
  * Why this package exists: Playwright is the dominant browser-automation
- * SDK on npm (47M weekly downloads — 60× the next SDK). Most users
- * with broken scrapers wrote them in Playwright. This adapter is the
- * on-ramp from "I have a Playwright script" to "Tap can monitor and
- * heal it" without rewriting in another framework.
+ * SDK on npm (47M weekly downloads — 60× the next SDK). Most users with
+ * broken scrapers wrote them in Playwright. This adapter is the on-ramp
+ * from "I have a Playwright script" to "Tap can monitor and heal it"
+ * without rewriting in another framework.
  *
- * Coverage (0.2):
- *   Legacy API (0.1):
+ * Mapping (v1.0):
  *   page.goto(url)              → { op: "nav", url }
  *   page.click(selector)        → { op: "input", kind: "click", target }
  *   page.fill(selector, value)  → { op: "input", kind: "fill", target, value }
  *   page.type(selector, value)  → { op: "input", kind: "type", target, value }
- *   page.press(selector, key)   → { op: "input", kind: "press", target, value: key }
+ *   page.press(selector, key)   → { op: "input", kind: "press", target, value }
  *   page.waitForSelector(s)     → { op: "wait", selector }
  *   page.waitForTimeout(ms)     → { op: "wait", ms }
- *   page.screenshot()           → { op: "screenshot" }
+ *   page.context().cookies()    → { op: "cookies" }
+ *   page.evaluate(fn)           → { op: "eval", fn, returns: { type: "object" } }
  *
- *   Locator chain API (0.2 — what Playwright codegen emits):
- *   page.locator(sel).click/fill/type/press/waitFor()
- *   page.getByText(text).action()        selector → "text=<text>"
- *   page.getByTestId(id).action()        selector → "[data-testid="<id>"]"
- *   page.getByLabel(label).action()      selector → "label=<label>"
- *   page.getByPlaceholder(ph).action()   selector → "placeholder=<ph>"
- *   page.getByRole(role,{name}).action() selector → "role=<role>[name="<name>"]"
- *   page.getByAltText(alt).action()      selector → "[alt="<alt>"]"
- *   page.getByTitle(title).action()      selector → "[title="<title>"]"
+ * Locator chain (Playwright codegen):
+ *   page.locator(sel).action()        sel passes through
+ *   page.getByText(t).action()        → "text=<t>"
+ *   page.getByTestId(id).action()     → "[data-testid=\"<id>\"]"
+ *   page.getByLabel(l).action()       → "label=<l>"
+ *   page.getByPlaceholder(p).action() → "placeholder=<p>"
+ *   page.getByRole(r,{name}).action() → "role=<r>[name=\"<name>\"]"
+ *   page.getByAltText(a).action()     → "[alt=\"<a>\"]"
+ *   page.getByTitle(t).action()       → "[title=\"<t>\"]"
+ *
+ * v2 retired ops (handled with warning + op:eval fallback):
+ *   page.screenshot() — no v2 op; emit eval with TODO comment.
+ *
+ * Read vs write detection (heuristic):
+ *   The script is treated as WRITE iff a click target matches one of
+ *   the submit-like patterns: `[type=submit]`, `[type='submit']`,
+ *   `button[type="submit"]`, role="button"+name~"submit|post|send|publish|save".
+ *   Write plans get a TODO `key` placeholder (`'TODO_DECLARE_KEY'`) and
+ *   minimal `act` body. Hand-rolling a real CEL `key` is out of scope —
+ *   that requires AI / authoritative-source knowledge.
  *
  * Limitations:
  *   - Variable-bound selectors — regex sees the variable name, not the value.
- *   - Multi-line locator chains (const loc = page.locator(...); await loc.click()) —
- *     fall through to exec in permissive mode.
+ *   - Multi-line locator chains (const loc = page.locator(...); await loc.click())
+ *     fall through to op:eval in permissive mode.
  *   - Template-string interpolation works only for pure literals.
  *
- * Unrecognised page.* calls produce a `PlaywrightConversionError` (strict) or
- * an { op: "exec" } preserve op (permissive, default).
+ * Unrecognised page.* calls produce a `PlaywrightConversionError` (strict)
+ * or an `{ op: "eval" }` preserve op (permissive, default) carrying a
+ * structured warning.
  */
 
-import type {
-  ExecutionPlan,
-  Op,
-  TapAnnotation,
-} from "@taprun/spec";
+import type { Plan, Op } from "@taprun/spec";
 
 export interface PlaywrightToTapOptions {
   /** Required — the tap's site identifier (e.g., "github"). */
   site: string;
   /** Required — the tap's name within the site (e.g., "trending"). */
   name: string;
-  /** Optional — declared intent. Defaults to "read". */
-  intent?: "read" | "write";
   /** Optional — human description for the resulting tap. */
   description?: string;
-  /** Optional — the URL the tap targets (defaults to first page.goto in source). */
-  target?: string;
   /** When true, throws on any unrecognized page.* call. When false (default),
-   *  emits a warning op { op: "exec", allowUnverifiable: true } preserving
-   *  the original line. */
+   *  emits an `{ op: "eval" }` placeholder preserving the original line and
+   *  attaches a structured warning to the result. */
   strict?: boolean;
+  /** Optional override — force read or write variant. When omitted, the
+   *  adapter heuristically infers write iff a submit-like click is seen. */
+  variant?: "read" | "write";
+}
+
+export interface PlaywrightToTapResult {
+  plan: Plan;
+  /** Structured warnings the adapter could not represent losslessly. */
+  warnings: PlaywrightConversionWarning[];
+}
+
+export interface PlaywrightConversionWarning {
+  /** "eval-fallback" — emitted op:eval as escape hatch.
+   *  "todo-key"      — write variant emitted with placeholder key.
+   *  "screenshot-dropped" — page.screenshot() is no-op in v2.
+   *  "lifecycle-dropped"  — browser.launch / page.close silently dropped. */
+  kind:
+    | "eval-fallback"
+    | "todo-key"
+    | "screenshot-dropped"
+    | "lifecycle-dropped";
+  line?: number;
+  message: string;
+  /** When kind=eval-fallback, the original Playwright line. */
+  source?: string;
 }
 
 export class PlaywrightConversionError extends Error {
@@ -89,12 +126,10 @@ const STR = /(?:"((?:[^"\\]|\\.)*)"|'((?:[^'\\]|\\.)*)'|`((?:[^`\\$]|\\.)*)`)/.s
 const WS = /\s*/.source;
 
 /**
- * Build a regex that matches `page.<method>(<args>)` with `n` string args
- * and an optional trailing options object (which we just allow-match).
+ * Build a regex matching `.<method>(<args>)` with `n` string args and an
+ * optional trailing options object (allow-match).
  */
 function callRe(method: string, n: 1 | 2): RegExp {
-  // Allow `page` or any identifier — Playwright tests sometimes destructure.
-  // We just look for `.<method>(` to keep MVP tight.
   if (n === 1) {
     return new RegExp(`\\.${method}\\s*\\(${WS}${STR}${WS}\\s*[,)]`);
   }
@@ -111,11 +146,17 @@ const RE_PRESS = callRe("press", 2);
 const RE_WAIT_SEL = callRe("waitForSelector", 1);
 const RE_WAIT_MS = /\.waitForTimeout\s*\(\s*(\d+)\s*\)/;
 const RE_SCREENSHOT = /\.screenshot\s*\(/;
+const RE_COOKIES = /\.context\s*\(\s*\)\s*\.\s*cookies\s*\(/;
+const RE_EVALUATE = /\.evaluate\s*\(/;
 /** Page-API smell — any `.something(` call we can attribute to Playwright. */
 const RE_PAGE_CALL = /(?:page|context|browser|locator)\s*\.\s*([a-zA-Z_$][\w$]*)\s*\(/;
 
+/** Submit-like click selectors that strongly imply write side effects. */
+const RE_SUBMIT_SELECTOR = /(?:type\s*=\s*["']?submit["']?)|(?:type\s*=\s*submit)/i;
+const RE_SUBMIT_NAME = /\b(submit|post|send|publish|save|create|delete|remove|update)\b/i;
+
 // ---------------------------------------------------------------------------
-// Locator chain support (0.2)
+// Locator chain support
 // ---------------------------------------------------------------------------
 
 interface LocatorChainOp {
@@ -125,7 +166,7 @@ interface LocatorChainOp {
   ms?: number;
 }
 
-/** Extract the first string literal from the start of s; return [value, rest] or null. */
+/** Extract first string literal from start of s; return [value, rest] or null. */
 function extractFirstStr(s: string): [string, string] | null {
   const m = s.match(/^\s*(?:"((?:[^"\\]|\\.)*)"|'((?:[^'\\]|\\.)*)'|`((?:[^`\\$]|\\.)*)`)/);
   if (!m) return null;
@@ -149,12 +190,6 @@ function skipToCloseParen(s: string): string | null {
 const RE_GETTER_START =
   /\.(?:locator|getByText|getByTestId|getByLabel|getByPlaceholder|getByRole|getByAltText|getByTitle)\s*\(/;
 
-/**
- * Parse a single-line locator chain such as:
- *   page.locator('sel').click()
- *   page.getByRole('button', { name: 'Submit' }).fill('x')
- * Returns null if the line doesn't match a supported pattern.
- */
 function parseLocatorChain(line: string): LocatorChainOp | null {
   const getterMatch = line.match(RE_GETTER_START);
   if (!getterMatch) return null;
@@ -166,7 +201,6 @@ function parseLocatorChain(line: string): LocatorChainOp | null {
   if (!arg1Result) return null;
   const [arg1, afterArg1] = arg1Result;
 
-  // For getByRole also try to pick up { name: '...' }
   let roleName: string | undefined;
   const afterGetter: string | null = (() => {
     if (getterName === "getByRole") {
@@ -181,7 +215,6 @@ function parseLocatorChain(line: string): LocatorChainOp | null {
   })();
   if (!afterGetter) return null;
 
-  // Normalise selector string
   let selector: string;
   switch (getterName) {
     case "locator":           selector = arg1; break;
@@ -197,7 +230,6 @@ function parseLocatorChain(line: string): LocatorChainOp | null {
     default: selector = arg1;
   }
 
-  // Parse chained action: .click() .fill(val) .type(val) .press(key) .waitFor() .waitForTimeout(ms)
   const actionMatch = afterGetter.match(
     /^\s*\.\s*(click|fill|type|press|waitFor|waitForTimeout)\s*\(/,
   );
@@ -214,39 +246,42 @@ function parseLocatorChain(line: string): LocatorChainOp | null {
     return { selector, action, ms: Number(msMatch[1]) };
   }
 
-  // fill / type / press require a value arg
   const valResult = extractFirstStr(afterActionParen);
   if (!valResult) return null;
   return { selector, action, value: valResult[0] };
 }
 
-/** Lifecycle methods that are test scaffolding, not user actions —
- *  silently dropped (no plan op emitted, no warning). */
 const LIFECYCLE_METHODS: ReadonlySet<string> = new Set([
-  "launch",
-  "newPage",
-  "newContext",
-  "defaultBrowserContext",
-  "close",
-  "disconnect",
+  "launch", "newPage", "newContext", "defaultBrowserContext",
+  "close", "disconnect",
 ]);
 
-/**
- * Extract the matched string content from any of the three capture groups
- * `(double | single | backtick)`. Returns the first non-undefined one.
- */
 function pickStr(m: RegExpMatchArray): string | undefined {
   return m[1] ?? m[2] ?? m[3];
 }
 
-/**
- * Same shape but for two-string calls — picks group 1/2/3 (first arg) and
- * group 4/5/6 (second arg).
- */
 function pickStr2(m: RegExpMatchArray): [string, string] | undefined {
   const a = m[1] ?? m[2] ?? m[3];
   const b = m[4] ?? m[5] ?? m[6];
   return a !== undefined && b !== undefined ? [a, b] : undefined;
+}
+
+/** Heuristic — does this click target look like a write submit?
+ *
+ * Matches:
+ *   - `[type=submit]` / `[type='submit']` — HTML submit attribute
+ *   - `role=button[name="..."]` where name contains submit-like word
+ *   - `text=Submit` / `text=Post` / etc. — Playwright text selector
+ *   - `text="Sign up"` style content with submit-like word
+ *
+ * Conservative: a missed-positive (read mistakenly classified write) is
+ * cheap (user passes `variant: "read"` to override). A missed-negative
+ * (write classified as read) silently produces a Plan that can't dedup. */
+function isSubmitLikeTarget(target: string): boolean {
+  if (RE_SUBMIT_SELECTOR.test(target)) return true;
+  if (target.startsWith("role=button") && RE_SUBMIT_NAME.test(target)) return true;
+  if (target.startsWith("text=") && RE_SUBMIT_NAME.test(target)) return true;
+  return false;
 }
 
 // ---------------------------------------------------------------------------
@@ -256,7 +291,7 @@ function pickStr2(m: RegExpMatchArray): [string, string] | undefined {
 export function playwrightToTap(
   source: string,
   options: PlaywrightToTapOptions,
-): TapAnnotation {
+): PlaywrightToTapResult {
   if (!options.site || !options.name) {
     throw new PlaywrightConversionError(
       "site and name are required in PlaywrightToTapOptions",
@@ -266,28 +301,21 @@ export function playwrightToTap(
 
   const lines = source.split(/\r?\n/);
   const ops: Op[] = [];
-  let firstNavUrl: string | undefined;
+  const warnings: PlaywrightConversionWarning[] = [];
+  let sawSubmitLikeClick = false;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    // Skip pure-comment + blank lines. Don't strip trailing `//` because
-    // URLs contain `//` and a naive strip would corrupt page.goto("https://…").
-    // Limitation: trailing line comments stay in the source visible to the
-    // regex matchers — they only affect the unhandled-line warning, never
-    // a successful match.
     const trimmed = line.trim();
     if (!trimmed || trimmed.startsWith("//")) continue;
 
     let matched = false;
-
-    // Order matters — try the most specific patterns first.
     let m: RegExpMatchArray | null;
 
     if ((m = trimmed.match(RE_GOTO))) {
       const url = pickStr(m);
       if (url !== undefined) {
         ops.push({ op: "nav", url });
-        if (firstNavUrl === undefined) firstNavUrl = url;
         matched = true;
       }
     } else if ((m = trimmed.match(RE_FILL))) {
@@ -312,6 +340,7 @@ export function playwrightToTap(
       const target = pickStr(m);
       if (target !== undefined) {
         ops.push({ op: "input", kind: "click", target });
+        if (isSubmitLikeTarget(target)) sawSubmitLikeClick = true;
         matched = true;
       }
     } else if ((m = trimmed.match(RE_WAIT_SEL))) {
@@ -326,16 +355,48 @@ export function playwrightToTap(
         ops.push({ op: "wait", ms });
         matched = true;
       }
+    } else if (RE_COOKIES.test(trimmed)) {
+      ops.push({ op: "cookies" });
+      matched = true;
     } else if (RE_SCREENSHOT.test(trimmed)) {
-      ops.push({ op: "screenshot" });
+      // v2 has no screenshot op — drop with warning.
+      warnings.push({
+        kind: "screenshot-dropped",
+        line: i + 1,
+        message:
+          "page.screenshot() has no v2 equivalent; dropped from output. " +
+          "If you need a snapshot, capture via op:eval over document.title or similar.",
+      });
+      matched = true;
+    } else if (RE_EVALUATE.test(trimmed)) {
+      // page.evaluate(fn) → op:eval with mandatory returns.type. Caller
+      // must declare returns shape; we default to "object" + TODO warning.
+      const fnSrc = trimmed
+        .replace(/^await\s+/, "")
+        .replace(/^.*?\.evaluate\s*\(/, "")
+        .replace(/\)\s*;?\s*$/, "");
+      ops.push({
+        op: "eval",
+        fn: fnSrc,
+        returns: { type: "object" },
+      });
+      warnings.push({
+        kind: "eval-fallback",
+        line: i + 1,
+        message:
+          "page.evaluate emitted as op:eval with returns.type='object' (default). " +
+          "Verify and adjust the declared return type to match the function's actual output.",
+        source: line,
+      });
       matched = true;
     } else {
-      // Modern Playwright locator chain API (0.2)
+      // Locator chain
       const chain = parseLocatorChain(trimmed);
       if (chain) {
         switch (chain.action) {
           case "click":
             ops.push({ op: "input", kind: "click", target: chain.selector });
+            if (isSubmitLikeTarget(chain.selector)) sawSubmitLikeClick = true;
             break;
           case "fill":
             ops.push({ op: "input", kind: "fill", target: chain.selector, value: chain.value! });
@@ -358,28 +419,46 @@ export function playwrightToTap(
     }
 
     if (!matched) {
-      // Detect any unhandled page.* call so we can decide strict vs
-      // permissive behavior.
       const generic = trimmed.match(RE_PAGE_CALL);
       if (generic) {
         const method = generic[1];
-        // Lifecycle methods (browser.launch / page.close / etc.) are
-        // test scaffolding — silently drop them.
-        if (LIFECYCLE_METHODS.has(method)) continue;
+        if (LIFECYCLE_METHODS.has(method)) {
+          warnings.push({
+            kind: "lifecycle-dropped",
+            line: i + 1,
+            message: `page.${method}() is test scaffolding — dropped from output.`,
+          });
+          continue;
+        }
         if (options.strict === true) {
           throw new PlaywrightConversionError(
             `Unsupported Playwright API on line ${i + 1}: page.${method}(`,
             source,
-            `MVP supports goto/click/fill/type/press/waitForSelector/waitForTimeout/screenshot. ` +
-              `Run with strict:false to emit { op: "exec" } and preserve the original line.`,
+            `v1.0 supports goto/click/fill/type/press/waitForSelector/` +
+              `waitForTimeout/cookies/evaluate. Run with strict:false to ` +
+              `emit op:eval and preserve the original line.`,
             i + 1,
           );
         }
-        // Permissive: preserve the original line as an exec op so the
-        // plan still round-trips. Mark the plan unverifiable.
+        // Permissive: preserve original line as op:eval. The function body
+        // is wrapped to be syntactically valid; runtime execution remains
+        // a TODO for the user to complete.
+        const fnSrc = `(() => { /* TODO original Playwright line ${i + 1}: ${
+          line.replace(/\*\//g, "*\\/")
+        } */ return null; })()`;
         ops.push({
-          op: "exec",
-          fn: `async function(handle, args) { /* original Playwright line ${i + 1} not auto-converted: ${line.replace(/\*\//g, "*\\/")} */ }`,
+          op: "eval",
+          fn: fnSrc,
+          returns: { type: "object" },
+        });
+        warnings.push({
+          kind: "eval-fallback",
+          line: i + 1,
+          message:
+            `page.${method}() has no direct v2 mapping; emitted as op:eval ` +
+            `placeholder. Replace the body with logic that returns a value ` +
+            `matching returns.type.`,
+          source: line,
         });
       }
     }
@@ -393,38 +472,49 @@ export function playwrightToTap(
     );
   }
 
-  // Compute target URL from first page.goto if caller didn't pass one.
-  const target = options.target ?? firstNavUrl ??
-    `urn:playwright:${options.site}:${options.name}`;
+  // Decide read vs write variant. Caller override wins.
+  const variant: "read" | "write" =
+    options.variant ?? (sawSubmitLikeClick ? "write" : "read");
 
-  // Build the plan body.
-  const body: ExecutionPlan = {
-    type: "tap:ExecutionPlan",
-    site: options.site,
-    name: options.name,
-    intent: options.intent ?? "read",
-    ops,
-  };
-  if (options.description) body.description = options.description;
+  const common = {
+    id: { site: options.site, name: options.name },
+    description: options.description,
+    return: "null",
+  } as const;
 
-  // If any exec op was emitted, the plan is unverifiable as a whole.
-  if (ops.some((o) => o.op === "exec")) {
-    body.allowUnverifiable = true;
+  let plan: Plan;
+  if (variant === "write") {
+    warnings.push({
+      kind: "todo-key",
+      message:
+        "Write variant detected via submit-like click. The emitted plan " +
+        "carries a placeholder `key: 'TODO_DECLARE_KEY'` — replace with a " +
+        "real CEL expression keying on the user-controlled fields (typically " +
+        "from $args) before relying on dedup semantics.",
+    });
+    plan = {
+      ...common,
+      observe: [],
+      act: ops,
+      key: "TODO_DECLARE_KEY",
+    };
+  } else {
+    plan = {
+      ...common,
+      observe: ops,
+    };
   }
 
-  return {
-    "@context": [
-      "http://www.w3.org/ns/anno.jsonld",
-      "https://taprun.dev/ns/tap-v1",
-    ],
-    type: "Annotation",
-    motivation: "tap:executing",
-    target,
-    body,
-    generator: {
-      id: "https://taprun.dev/from-playwright",
-      type: "SoftwareAgent",
-      version: "0.x",
-    },
-  };
+  // Drop undefined description so JSON output is tight.
+  if (plan.description === undefined) {
+    delete (plan as { description?: string }).description;
+  }
+
+  return { plan, warnings };
 }
+
+// ---------------------------------------------------------------------------
+// Re-exports for convenience
+// ---------------------------------------------------------------------------
+
+export type { Plan, Op } from "@taprun/spec";

@@ -1,30 +1,16 @@
 {
-  "@context": [
-    "http://www.w3.org/ns/anno.jsonld",
-    "https://taprun.dev/ns/tap-v1"
+  "id": { "site": "example", "name": "signup" },
+  "return": "null",
+  "observe": [],
+  "act": [
+    { "op": "nav", "url": "https://example.com/signup" },
+    { "op": "input", "kind": "fill", "target": "label=Email", "value": "user@example.com" },
+    { "op": "input", "kind": "fill", "target": "label=Password", "value": "s3cr3t" },
+    { "op": "input", "kind": "click", "target": "role=button[name=\"Sign up\"]" },
+    { "op": "wait", "selector": "[data-testid=\"welcome-banner\"]" },
+    { "op": "input", "kind": "fill", "target": ".search-input", "value": "hello" },
+    { "op": "input", "kind": "type", "target": "placeholder=Search…", "value": "query" },
+    { "op": "input", "kind": "click", "target": "text=Submit" }
   ],
-  "type": "Annotation",
-  "motivation": "tap:executing",
-  "target": "https://example.com/signup",
-  "body": {
-    "type": "tap:ExecutionPlan",
-    "site": "example",
-    "name": "signup",
-    "intent": "write",
-    "ops": [
-      { "op": "nav", "url": "https://example.com/signup" },
-      { "op": "input", "kind": "fill", "target": "label=Email", "value": "user@example.com" },
-      { "op": "input", "kind": "fill", "target": "label=Password", "value": "s3cr3t" },
-      { "op": "input", "kind": "click", "target": "role=button[name=\"Sign up\"]" },
-      { "op": "wait", "selector": "[data-testid=\"welcome-banner\"]" },
-      { "op": "input", "kind": "fill", "target": ".search-input", "value": "hello" },
-      { "op": "input", "kind": "type", "target": "placeholder=Search…", "value": "query" },
-      { "op": "input", "kind": "click", "target": "text=Submit" }
-    ]
-  },
-  "generator": {
-    "id": "https://taprun.dev/from-playwright",
-    "type": "SoftwareAgent",
-    "version": "0.x"
-  }
+  "key": "TODO_DECLARE_KEY"
 }

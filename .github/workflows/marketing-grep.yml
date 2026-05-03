@@ -1,0 +1,119 @@
+# Marketing copy grep gate — DRAFT, NOT ENABLED.
+#
+# Per ADR 2026-05-04-ecosystem-v2-launch.md §2.1 deletion test and §7 risk
+# table ("Marketing copy still cites retired terms post-launch"), this
+# workflow greps the published Jekyll source for v1 terms that became
+# factually wrong in v2. It MUST NOT be enabled until:
+#
+#   1. The full v2 marketing rewrite has shipped (Track 6 of the v2 launch).
+#   2. The /spec/plan-v1/ namespace pages have been either retired or
+#      converted to historical archive (they intentionally cite v1 terms).
+#   3. The compare/ subtree has been audited (some pages cite v1 terms in
+#      a comparative context — those need allow-listing or rewriting).
+#
+# Until then, this file lives as a draft so the rule is visible, reviewable,
+# and version-controlled. Move to `pull_request:` / `push:` triggers when
+# Track 6 closes.
+#
+# To dry-run locally:
+#   FORBIDDEN_TERMS=("op:exec" "allowUnverifiable" 'intent: "read"' \
+#                    "8 core ops" "17 built-in" "24 ops" "6-arm verdict" \
+#                    "3-token-class" 'tap:ExecutionPlan' '"Annotation"')
+#   for t in "${FORBIDDEN_TERMS[@]}"; do
+#     grep -RnFI "$t" docs/ \
+#       --exclude-dir=ns/tap-v1 \
+#       --exclude-dir=spec/plan-v1 \
+#       --exclude=migration-guide.md \
+#       --exclude=blog/why-v2.html \
+#       && exit 1
+#   done
+
+name: marketing-grep (DRAFT)
+
+# Disabled until Track 6 closes and the historical-archive carve-outs are
+# allow-listed below. Switch to:
+#   on:
+#     pull_request:
+#       paths: [docs/**]
+#     push:
+#       branches: [main]
+#       paths: [docs/**]
+on:
+  workflow_dispatch:
+
+jobs:
+  forbidden-terms:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Grep for retired v1 terms
+        run: |
+          set -euo pipefail
+          FORBIDDEN=(
+            'op:exec'
+            'allowUnverifiable'
+            'intent: "read"'
+            '8 core ops'
+            '17 built-in'
+            '24 ops'
+            '6-arm verdict'
+            '3-token-class'
+            'tap:ExecutionPlan'
+            '"Annotation"'
+            '25-op'
+            '24-op'
+          )
+          # Carve-outs (intentional historical/archival uses):
+          #   docs/ns/tap-v1/                — v1 vocabulary archive
+          #   docs/spec/plan-v1/             — v1 plan reference archive
+          #   docs/migration-guide.md        — must mention v1 terms to map them
+          #   docs/blog/why-v2.html          — discusses the schema break
+          #   docs/migrate/index.md          — describes what migrate-legacy translates
+          EXCLUDES=(
+            --exclude-dir=ns/tap-v1
+            --exclude-dir=spec/plan-v1
+            --exclude=migration-guide.md
+            --exclude=adrs.md
+          )
+          fail=0
+          for term in "${FORBIDDEN[@]}"; do
+            if grep -RnFI "$term" docs/ "${EXCLUDES[@]}" \
+                 --include='*.html' --include='*.md' --include='*.yml'; then
+              echo "::error::forbidden v1 term '$term' found in docs/"
+              fail=1
+            fi
+          done
+          exit $fail
+
+      - name: Grep for retired CLI verbs
+        run: |
+          set -euo pipefail
+          # `tap doctor` / `tap forge` / `tap fix` were the v1 verb names.
+          # v2 uses `tap-v2 doctor`, `tap-v2 forge.draft`, `tap-v2 fix`.
+          # Bare `tap` is allowed in some contexts (brand name, install flow);
+          # a grep on `tap doctor`/`tap fix`/`tap forge` (with the space) is
+          # tighter than `\btap\b`.
+          BAD_VERBS=(
+            'tap doctor'
+            'tap fix'
+            'tap forge'
+            'tap heal'
+            'tap refresh'
+          )
+          # The same archive carve-outs apply.
+          EXCLUDES=(
+            --exclude-dir=ns/tap-v1
+            --exclude-dir=spec/plan-v1
+            --exclude=migration-guide.md
+            --exclude=adrs.md
+          )
+          fail=0
+          for verb in "${BAD_VERBS[@]}"; do
+            if grep -RnF "$verb" docs/ "${EXCLUDES[@]}" \
+                 --include='*.html' --include='*.md'; then
+              echo "::error::v1 CLI verb '$verb' found in docs/ — use tap-v2 prefix"
+              fail=1
+            fi
+          done
+          exit $fail

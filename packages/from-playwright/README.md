@@ -1,76 +1,91 @@
 # @taprun/from-playwright
 
-> Convert Playwright test scripts into Tap plan-v1 `.tap.json` files.
+> Convert Playwright test scripts into Tap **v2** Plan JSON.
 
 ```bash
 npm install @taprun/from-playwright @taprun/spec
 ```
 
-Take any Playwright `.ts/.js` script, get back a `.tap.json` envelope that `tap doctor` and `tap heal` understand. Reuse the script you already have; add monitoring + self-healing on top.
+Take any Playwright `.ts/.js` script, get back a v2 `Plan` that `tap doctor` and `tap heal` understand. Reuse the script you already have; add monitoring + self-healing on top.
 
-## Status
+## v1.0 — v2 schema
 
-**0.1.0** — MVP works. `page.goto / click / fill / type / press / waitForSelector / waitForTimeout / screenshot` are mapped to plan-v1 ops. Anything else permissively becomes `{ op: "exec" }` preserving the original line, or throws under `strict: true`.
+**1.0** ships v2 plan output. Per [ADR 2026-05-04 Ecosystem v2 Launch](https://github.com/LeonTing1010/tap/blob/main/docs/adr/2026-05-04-ecosystem-v2-launch.md), the entire ecosystem moved off the v1 W3C Annotation envelope to a bare `Plan` shape with the 11-op closure. Output of v1.0 is **not** backwards compatible with v0.x — install `@taprun/spec@1.x` alongside.
+
+> v0.x targets the legacy Tap v1 schema. It still compiles for users on existing lockfiles; new installs should use v1.0+.
 
 ## Usage
 
 ```ts
 import { readFile, writeFile } from "fs/promises";
 import { playwrightToTap } from "@taprun/from-playwright";
-import { runConformance } from "@taprun/spec";
 
 const source = await readFile("tests/github.spec.ts", "utf8");
-const plan = playwrightToTap(source, {
+const { plan, warnings } = playwrightToTap(source, {
   site: "github",
   name: "search",
-  intent: "read",
 });
 
-const v = runConformance(plan);
-if (!v.pass) throw new Error("adapter output not conformant: " + JSON.stringify(v.failures));
+if (warnings.length) {
+  console.warn("Conversion warnings:", warnings);
+}
 
-await writeFile("github/search.tap.json", JSON.stringify(plan, null, 2));
+await writeFile("github/search.plan.json", JSON.stringify(plan, null, 2));
 ```
 
-## Scope
+## Mapping (v1.0)
 
-| Playwright API | → plan-v1 op | Status |
+| Playwright API | → v2 Op | Status |
 |---|---|---|
-| `page.goto(url)` | `{ op: "nav", url }` | ✓ 0.1 |
-| `page.click(selector)` | `{ op: "input", kind: "click", target }` | ✓ 0.1 |
-| `page.fill(s, v)` | `{ op: "input", kind: "fill", target, value }` | ✓ 0.1 |
-| `page.type(s, v)` | `{ op: "input", kind: "type", target, value }` | ✓ 0.1 |
-| `page.press(s, k)` | `{ op: "input", kind: "press", target, value: k }` | ✓ 0.1 |
-| `page.waitForSelector(s)` | `{ op: "wait", selector }` | ✓ 0.1 |
-| `page.waitForTimeout(ms)` | `{ op: "wait", ms }` | ✓ 0.1 |
-| `page.screenshot()` | `{ op: "screenshot" }` | ✓ 0.1 |
-| `page.locator(s).textContent()` | `{ op: "extract", root, per_item: { text: "" } }` | planned 0.2 |
-| `page.evaluate(...)` | `{ op: "exec", allowUnverifiable: true }` (permissive) or throws (strict) | ✓ 0.1 |
+| `page.goto(url)` | `{ op: "nav", url }` | supported |
+| `page.click(selector)` | `{ op: "input", kind: "click", target }` | supported |
+| `page.fill(s, v)` | `{ op: "input", kind: "fill", target, value }` | supported |
+| `page.type(s, v)` | `{ op: "input", kind: "type", target, value }` | supported |
+| `page.press(s, k)` | `{ op: "input", kind: "press", target, value }` | supported |
+| `page.waitForSelector(s)` | `{ op: "wait", selector }` | supported |
+| `page.waitForTimeout(ms)` | `{ op: "wait", ms }` | supported |
+| `page.context().cookies()` | `{ op: "cookies" }` | supported |
+| `page.evaluate(fn)` | `{ op: "eval", fn, returns: { type: "object" } }` | supported (verify `returns.type`) |
+| `page.locator(sel).<action>()` | passthrough on `target` | supported |
+| `page.getByRole/Text/TestId/Label/Placeholder/AltText/Title(...)` | normalised selector | supported |
+| `page.screenshot()` | dropped (no v2 op); warning emitted | retired |
+| anything else | `{ op: "eval", ..., returns: { type: "object" } }` placeholder + warning | escape hatch |
 
-### MVP limitations
+The 11-op v2 closure has no `op:exec`. The eval escape hatch must declare `returns.type` per ADR 2026-05-03 §11.5 #47, so AI / human review is required to finalise an eval-fallback plan.
 
-The Iter-2 MVP uses a regex-then-string-literal scanner. Known gotchas:
-- Variable-bound selectors (`const sel = "..."; page.click(sel)`) — the scanner sees the variable name, not the value. Inline literals work; variables don't.
-- Template-string interpolation works only when the entire string is a literal. `\`${dynamic}\`` falls through to permissive `exec`.
-- Trailing line comments stay in the source visible to regex (they don't affect successful matches but may cause the unhandled-line warning to fire on commented-out calls).
+## Read vs write variant
 
-These will be addressed in 0.2 when the scanner upgrades to a real TypeScript AST walk.
+The v2 Plan is a discriminated union. The adapter heuristically picks:
 
-Out of scope (escaped via `{ op: "exec", fn: <original code>, allowUnverifiable: true }`):
+- **read** (default) — output has `observe: [...]`, no `act`, no `key`.
+- **write** — output has `act: [...]` plus a placeholder `key: "TODO_DECLARE_KEY"`. Triggered when a click target matches a submit-like pattern (`[type=submit]`, role=button + name~"submit|post|send|publish|save|...").
+
+Override with `options.variant: "read" | "write"` if the heuristic guesses wrong. Hand-rolling a real CEL `key` (the dedup contract) is out of scope for this deterministic adapter; expect to fill it in manually after conversion.
+
+## Limitations
+
+The v1.0 scanner is the same regex-then-string-literal walker as v0.x. Known gotchas:
+
+- Variable-bound selectors fall through to `op:eval` placeholder.
+- Template-string interpolation works only when the entire string is a literal.
+- Trailing line comments stay in the source visible to regex.
+
+These will be addressed when the scanner upgrades to a TypeScript AST walk.
+
+Out of scope (escaped via `op:eval` placeholder):
 - Custom test fixtures
-- `expect()` assertions (use `health.non_empty` / `authoritative` instead)
+- `expect()` assertions (use authoritative-source verification in the v2 Plan instead)
 - Multi-context / multi-page setups
 - Playwright trace files (separate adapter)
 
 ## Part of the Tap ecosystem
 
-[Tap](https://taprun.dev?utm_source=jsr&utm_medium=readme&utm_campaign=from-playwright) is local-first browser automation — compile your scraper once, run it in your own browser forever, and diff the drift when sites change.
+[Tap](https://taprun.dev?utm_source=npm&utm_medium=readme&utm_campaign=from-playwright) is local-first browser automation — compile your scraper once, run it in your own browser forever, and diff the drift when sites change.
 
-- Format spec: [`@taprun/spec`](https://jsr.io/@taprun/spec) — W3C-compliant validator for `.tap.json`
-- Sibling adapters: [`@taprun/from-puppeteer`](https://jsr.io/@taprun/from-puppeteer) · [`@taprun/from-stagehand`](https://jsr.io/@taprun/from-stagehand)
+- Format spec: [`@taprun/spec`](https://www.npmjs.com/package/@taprun/spec) — TypeScript types + JSON Schema for v2 plans
+- Sibling adapter: [`@taprun/from-puppeteer`](https://www.npmjs.com/package/@taprun/from-puppeteer)
 - Scaffold a fresh plan: `npx create-tap-script <site>/<name> <url>`
-- Run locally: [Tap Chrome extension](https://taprun.dev?utm_source=jsr&utm_medium=readme&utm_campaign=from-playwright) — credentials never leave your machine
-- Compare to Stagehand / Browserbase: <https://taprun.dev/compare/stagehand/?utm_source=jsr&utm_medium=readme&utm_campaign=from-playwright>
+- Run locally: [Tap Chrome extension](https://taprun.dev?utm_source=npm&utm_medium=readme&utm_campaign=from-playwright) — credentials never leave your machine
 - Source: <https://github.com/LeonTing1010/tap> · npm: <https://www.npmjs.com/~taprun>
 
 ## License

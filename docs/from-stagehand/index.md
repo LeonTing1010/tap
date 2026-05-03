@@ -1,67 +1,38 @@
 ---
-title: "@taprun/from-stagehand — SoftwareAgent identifier"
-description: "Stable IRI for the @taprun/from-stagehand adapter. Embedded as generator.id in every .tap.json plan compiled from a Stagehand script. Hybrid: deterministic ops where structure is known, NL fallback at runtime where it isn't — runs locally, no Browserbase egress."
+title: "@taprun/from-stagehand — deprecated"
+description: "from-stagehand is deprecated as of v2. Stagehand requires Browserbase (cloud-coupled), which contradicts v2's local-first stance. Use @taprun/from-playwright instead."
 permalink: /from-stagehand/
 layout: default
+robots: noindex
 ---
 
-# @taprun/from-stagehand
+# @taprun/from-stagehand — deprecated
 
-> Stable identifier (`SoftwareAgent.id`) for the [`@taprun/from-stagehand`](https://jsr.io/@taprun/from-stagehand) adapter. Every `.tap.json` plan compiled from a Stagehand source carries `"generator": { "id": "https://taprun.dev/from-stagehand", "type": "SoftwareAgent" }` so any W3C Web Annotation consumer can dereference the producer.
+> The `@taprun/from-stagehand` adapter is **deprecated as of the v2 release** (2026-05-04). No `v1.0` will be published. The `v0.x` line stays installable forever; existing lockfiles continue to resolve. This page exists for users following old links.
 
-Part of the [**Capture**](/capture/) plane — one of Tap's three primitive planes (Capture / Replay / Verify).
+## Why
 
-## What this adapter does
+Stagehand requires Browserbase to run — its `act()` / `extract()` / `observe()` primitives are bound to a cloud-hosted browser. Tap v2 is **local-first by architecture** (see the parent [unified-tap-primitive ADR](/adrs/) §1.1): cookies and credentials never leave the user's machine. Rewriting `from-stagehand` to emit v2 Plans would force the Tap substrate interface to grow a cloud implementation alongside the local one, dragging the cloud-coupling problem into the engine. We drew the line at the adapter boundary instead.
 
-Convert Stagehand scripts to `.tap.json` and run them locally — keep your `act()` / `extract()` calls, drop the cloud dependency. Hybrid mode:
+The decision is documented in [`2026-05-04-ecosystem-v2-launch.md`](/adrs/) §6.2.
 
-- Deterministic Playwright surface (`page.goto`, `.click`, `.fill`, etc.) → fixed plan-v1 ops
-- Stagehand NL surface (`stagehand.act`, `stagehand.extract`, `stagehand.observe`, `stagehand.agent().execute`) → `{ op: "exec", allowUnverifiable: true }` with the original prompt preserved in the `fn` field
+## What to do instead
 
-The result is a partially deterministic plan: Tap can `doctor` and `fix` the deterministic portion; the NL portion remains a black box that Stagehand re-resolves at runtime. Tap reports each NL step via `allowUnverifiable: true` so consumers know exactly which steps require an LLM.
+Stagehand wraps Playwright. The deterministic page-level calls inside your Stagehand script (`page.goto`, `.click`, `.fill`, `.waitForSelector`) are exactly what [`@taprun/from-playwright`](/from-playwright/) understands. Capture the same flow against your own local Chromium:
 
-## Install
-
-- JSR: <https://jsr.io/@taprun/from-stagehand>
-- npm: <https://www.npmjs.com/package/@taprun/from-stagehand>
-- Source: <https://github.com/LeonTing1010/tap>
-
-## Sample envelope produced
-
-```json
-{
-  "@context": [
-    "http://www.w3.org/ns/anno.jsonld",
-    "https://taprun.dev/ns/tap-v1"
-  ],
-  "type": "Annotation",
-  "motivation": "tap:executing",
-  "target": "https://github.com/trending",
-  "body": {
-    "type": "tap:ExecutionPlan",
-    "site": "github",
-    "name": "trending-search",
-    "intent": "read",
-    "ops": [
-      { "op": "nav", "url": "https://github.com/trending" },
-      {
-        "op": "exec",
-        "allowUnverifiable": true,
-        "fn": "stagehand.act('click the language filter and pick TypeScript')"
-      }
-    ]
-  },
-  "generator": {
-    "id": "https://taprun.dev/from-stagehand",
-    "type": "SoftwareAgent",
-    "name": "@taprun/from-stagehand"
-  }
-}
+```bash
+npm install @taprun/from-playwright@^1 @taprun/spec@^1
+npx from-playwright path/to/your/stagehand-script.ts > out.plan.json
 ```
+
+For the natural-language `stagehand.act()` / `.extract()` parts, the recommended path is to re-forge against the live page using `tap-v2 forge.draft` — most sites that work via NL also expose JSON-LD or a public API, so the AI compile usually finds a deterministic source. See the [Migration guide](/migration-guide/).
+
+## Existing v0.x consumers
+
+`v0.x` is not unpublished. If you have a lockfile pinned to a `0.x` version of `@taprun/from-stagehand`, nothing changes; the package keeps resolving from npm. The only difference is the `npm deprecate` notice that points back here.
 
 ## Related
 
-- [`plan-v1` reference](/spec/plan-v1/) — the format produced
-- [`tap-v1` namespace](/ns/tap-v1/) — the JSON-LD vocabulary
-- Sister adapters: [`@taprun/from-playwright`](/from-playwright/) · [`@taprun/from-puppeteer`](/from-puppeteer/)
-- [Why Tap vs Stagehand / Browserbase](/compare/stagehand/) — the architectural argument for going local-first
+- [Migration guide](/migration-guide/) — full v1 → v2 walkthrough
+- [`@taprun/from-playwright`](/from-playwright/) — the recommended replacement
+- [ADR: ecosystem v2 launch](/adrs/) — §6.2 Stagehand deprecation rationale

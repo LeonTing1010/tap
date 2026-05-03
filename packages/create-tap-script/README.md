@@ -1,75 +1,90 @@
 # create-tap-script
 
-> One command. One starter `.tap.json`. Ready to customize.
+> One command. One starter `.plan.json`. Ready to customize.
 
 ```bash
-npx create-tap-script github/trending https://github.com/trending
+npx create-tap-script@latest github/issues "List issues for a repo"
 ```
 
 Creates:
 
 ```
 github/
-├── trending.tap.json     # plan-v1 conformant starter envelope
-└── trending.README.md    # next-steps notes
+├── issues.plan.json     # Tap v2 Plan starter
+└── issues.README.md     # next-steps notes
 ```
 
 ## Why
 
-The friction model that won Stagehand 745K weekly downloads is "one command, ready to go." `npx create-tap-script` mirrors that for Tap. Stop hand-writing W3C Annotation envelopes — start with a working stub.
+The friction model that won Stagehand 745K weekly downloads is "one command, ready to go." `npx create-tap-script` mirrors that for Tap v2. Stop hand-writing Plan documents — start with a working stub that already uses the user's authenticated browser session via `credentials: "page-session"`.
 
 ## Usage
 
 ```bash
-npx create-tap-script <site>/<name> <url> [options]
+npx create-tap-script@latest <site>/<name> ["description"] [options]
 ```
 
 | Option | Default | Notes |
 |---|---|---|
-| `--intent read\|write` | `read` | Declares whether the plan has side effects |
+| `--write` | off | Scaffold a write-variant plan (adds `act` + `key`) |
+| `--variant read\|write` | `read` | Equivalent to `--write` |
 | `--out DIR` | cwd | Output directory |
 | `--force` | off | Overwrite existing files |
 | `--help` | — | Show usage |
 
 ## What you get
 
+A read-variant starter (the default):
+
 ```jsonc
 {
-  "@context": ["http://www.w3.org/ns/anno.jsonld", "https://taprun.dev/ns/tap-v1"],
-  "type": "Annotation",
-  "motivation": "tap:executing",
-  "target": "https://github.com/trending",
-  "body": {
-    "type": "tap:ExecutionPlan",
-    "site": "github",
-    "name": "trending",
-    "intent": "read",
-    "description": "Starter plan scaffolded by create-tap-script. Customize body.ops.",
-    "ops": [
-      { "op": "nav", "url": "https://github.com/trending" }
-    ]
+  "id": { "site": "github", "name": "issues" },
+  "description": "List issues for a repo",
+  "args": {
+    "someArg": {
+      "type": "string",
+      "required": true,
+      "description": "Example argument referenced by the templated fetch URL."
+    }
   },
-  "generator": { ... },
-  "created": "2026-04-27T..."
+  "requires": { "runtime": "extension" },
+  "observe": [
+    {
+      "op": "fetch",
+      "url": "https://api.github.example.com/{{ args.someArg }}",
+      "method": "GET",
+      "format": "json",
+      "credentials": "page-session",
+      "save": "$1"
+    }
+  ],
+  "return": "$1.body"
 }
 ```
 
-The output passes `runConformance` from `@taprun/spec` out of the box. Add more ops (`extract`, `fetch`, `input`, etc.) — see [the plan-v1 reference](https://taprun.dev/spec/plan-v1/).
+Pass `--write` to scaffold a mutation tap with `act` + `key` (intent dedup) instead.
+
+## Spec & op set
+
+The output is a bare Tap v2 Plan (`@taprun/spec` v1.0+) — the W3C Annotation envelope and `op:exec` from v0.x are gone. Plans use the closed 11-op union: `fetch` · `nav` · `wait` · `input` · `extract` · `cookies` · `tap` · `if` · `foreach` · `parallel` · `eval`. CEL handles all data shaping; there is no `intent: "read"|"write"` field — read vs write is encoded as the Plan discriminated union (presence of `act` + `key`).
+
+See <https://taprun.dev/spec/> for the full reference.
 
 ## Have an existing script?
 
 Use one of the dedicated adapters instead:
-- [`@taprun/from-playwright`](https://jsr.io/@taprun/from-playwright) — convert Playwright `.ts/.js`
-- [`@taprun/from-puppeteer`](https://jsr.io/@taprun/from-puppeteer) — convert Puppeteer `.ts/.js`
-- [`@taprun/from-stagehand`](https://jsr.io/@taprun/from-stagehand) — convert Stagehand `.ts/.js`
+
+- [`@taprun/from-playwright`](https://www.npmjs.com/package/@taprun/from-playwright) — convert Playwright `.ts/.js`
+- [`@taprun/from-puppeteer`](https://www.npmjs.com/package/@taprun/from-puppeteer) — convert Puppeteer `.ts/.js`
+
+(Stagehand is cloud-coupled and is not supported in v2 — see ADR 2026-05-04 §6.2.)
 
 ## Part of the Tap ecosystem
 
-[Tap](https://taprun.dev?utm_source=jsr&utm_medium=readme&utm_campaign=create-tap-script) is local-first browser automation — compile your scraper once, run it in your own browser forever, and diff the drift when sites change.
+[Tap](https://taprun.dev?utm_source=npm&utm_medium=readme&utm_campaign=create-tap-script) is local-first browser automation — compile your scraper once, run it in your own browser forever, and diff the drift when sites change.
 
-- Format spec: [`@taprun/spec`](https://jsr.io/@taprun/spec) — W3C-compliant validator for `.tap.json`
-- Run locally: [Tap Chrome extension](https://taprun.dev?utm_source=jsr&utm_medium=readme&utm_campaign=create-tap-script) — credentials never leave your machine
-- Compare to Stagehand / Browserbase: <https://taprun.dev/compare/stagehand/?utm_source=jsr&utm_medium=readme&utm_campaign=create-tap-script>
+- Format spec: [`@taprun/spec`](https://www.npmjs.com/package/@taprun/spec) — TypeScript types + JSON Schema validator for `.plan.json`
+- Run locally: [Tap Chrome extension](https://taprun.dev) — credentials never leave your machine
 - Source: <https://github.com/LeonTing1010/tap> · npm: <https://www.npmjs.com/~taprun>
 
 ## License

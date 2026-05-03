@@ -1,63 +1,71 @@
 ---
-title: "create-tap-script — SoftwareAgent identifier"
-description: "Stable IRI for the create-tap-script scaffolder. Embedded as generator.id in every starter .tap.json plan produced via `npx create-tap-script <site>/<name> <url>`."
+title: "create-tap-script — v2 starter scaffolder"
+description: "create-tap-script scaffolds a bare v2 Plan in one command, ready to customize."
 permalink: /create-tap-script/
 layout: default
 ---
 
 # create-tap-script
 
-> Stable identifier (`SoftwareAgent.id`) for the [`create-tap-script`](https://jsr.io/@taprun/create-tap-script) scaffolder. Every starter `.tap.json` plan produced by the CLI carries `"generator": { "id": "https://taprun.dev/create-tap-script", "type": "SoftwareAgent" }` so any W3C Web Annotation consumer can dereference the producer.
+> Stable identifier for the [`create-tap-script`](https://www.npmjs.com/package/create-tap-script) scaffolder. Bumped to **v1.0** for the v2 schema break. Output is a bare v2 `Plan` — no W3C envelope.
 
-Part of the [**Capture**](/capture/) plane — one of Tap's three primitive planes (Capture / Replay / Verify).
+Part of the **Capture** plane — one of Tap's three primitive planes (Capture / Replay / Verify).
 
 ## What this tool does
 
-Scaffold a starter `.tap.json` plan in one command:
+Scaffold a starter v2 Plan in one command:
 
 ```bash
-npx create-tap-script <site>/<name> <url> [--intent read|write] [--out DIR]
+npx create-tap-script@latest <site>/<name> <url> [--mode read|write] [--out DIR]
 ```
 
-Outputs a valid plan-v1 envelope (passes `runConformance` from `@taprun/spec` out of the box) plus a `<name>.README.md` with next-step notes. Customize the `body.ops` array from there.
+Outputs a valid bare `Plan` (passes `lintPlan` from `@taprun/spec@^1` out of the box) plus a `<name>.README.md` with next-step notes. Customize the `observe` (or `act`+`confirm`) array from there.
 
 ## Install
 
 - npm: <https://www.npmjs.com/package/create-tap-script>
-- JSR: <https://jsr.io/@taprun/create-tap-script>
-- Source: <https://github.com/LeonTing1010/tap>
+- Format types: <https://www.npmjs.com/package/@taprun/spec>
 
-## Sample envelope produced
+## Sample plans produced
+
+### Read variant (default)
 
 ```json
 {
-  "@context": [
-    "http://www.w3.org/ns/anno.jsonld",
-    "https://taprun.dev/ns/tap-v1"
+  "id": { "site": "github", "name": "trending" },
+  "description": "Starter plan scaffolded by create-tap-script. Customize observe[].",
+  "observe": [
+    { "op": "nav", "url": "https://github.com/trending" }
   ],
-  "type": "Annotation",
-  "motivation": "tap:executing",
-  "target": "https://github.com/trending",
-  "body": {
-    "type": "tap:ExecutionPlan",
-    "site": "github",
-    "name": "trending",
-    "intent": "read",
-    "description": "Starter plan scaffolded by create-tap-script. Customize body.ops.",
-    "ops": [
-      { "op": "nav", "url": "https://github.com/trending" }
-    ]
-  },
-  "generator": {
-    "id": "https://taprun.dev/create-tap-script",
-    "type": "SoftwareAgent",
-    "version": "0.1.1"
-  }
+  "return": "$.observe[0]"
 }
 ```
 
+### Write variant (with `--mode write`)
+
+```json
+{
+  "id": { "site": "example", "name": "post" },
+  "description": "Starter write plan. Fill in act[] + confirm[].",
+  "args": { "text": { "type": "string", "required": true } },
+  "key": "$.args.text",
+  "observe": [
+    { "op": "nav", "url": "https://example.com" }
+  ],
+  "act": [
+    { "op": "input", "kind": "click", "target": "button.compose" }
+  ],
+  "confirm": [
+    { "op": "wait", "selector": ".toast", "timeout_ms": 5000 }
+  ],
+  "return": "$.confirm[0]"
+}
+```
+
+The read variant has `observe` only; the write variant requires `act` + `key` together (TypeScript discriminated union — the type system rejects `{act: [...]}` without `key`).
+
 ## Related
 
-- [`plan-v1` reference](/spec/plan-v1/) — the format produced
-- [`tap-v1` namespace](/ns/tap-v1/) — the JSON-LD vocabulary
-- Already have a script? Use the dedicated adapters: [`@taprun/from-playwright`](/from-playwright/) · [`@taprun/from-puppeteer`](/from-puppeteer/) · [`@taprun/from-stagehand`](/from-stagehand/)
+- [Plan format](/spec/plan-v1/) — bare `Plan` reference
+- [Migration guide](/migration-guide/) — v1 envelope → v2 bare Plan
+- Already have a script? Use the dedicated adapters: [`@taprun/from-playwright`](/from-playwright/) · [`@taprun/from-puppeteer`](/from-puppeteer/)

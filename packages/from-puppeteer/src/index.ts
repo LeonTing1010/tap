@@ -1,9 +1,10 @@
 /**
- * @taprun/from-puppeteer — Puppeteer source → Tap plan-v1 adapter.
+ * @taprun/from-puppeteer — Puppeteer source → Tap Plan v2 adapter.
  *
  * Reference implementation that converts a Puppeteer script
- * (.ts / .js source text) into a TapAnnotation envelope. Output passes
- * runConformance() from @taprun/spec.
+ * (.ts / .js source text) into a v2 `Plan` object. Output is conformant
+ * with `@taprun/spec@^1.0` (the v2 schema; see ADR
+ * `2026-05-04-ecosystem-v2-launch.md` §2.4).
  *
  * Why a separate package from from-playwright: Puppeteer and Playwright
  * share most of the `page.*` API but diverge on a few important calls
@@ -11,41 +12,55 @@
  * `page.waitForTimeout` deprecation note). Splitting keeps the regex
  * sets unambiguous and the failure modes per-framework legible.
  *
- * MVP coverage:
+ * v2 mapping (per ADR §2.5):
  *   page.goto(url)              → { op: "nav", url }
  *   page.click(selector)        → { op: "input", kind: "click", target }
- *   page.type(selector, value)  → { op: "input", kind: "fill", target, value }
- *                                 (Puppeteer's `type` semantically fills;
- *                                  we map to plan-v1 "fill" for the
- *                                  cross-adapter consistency story)
+ *   page.type(selector, value)  → { op: "input", kind: "type", target, value }
  *   page.keyboard.press(key)    → { op: "input", kind: "press", value: key }
- *                                 (target is implicit / focused element)
+ *                                 (target implicit / focused element)
  *   page.waitForSelector(s)     → { op: "wait", selector }
  *   page.waitForTimeout(ms)     → { op: "wait", ms }
- *                                 (deprecated in modern Puppeteer but
- *                                  still common in scripts users want
- *                                  to convert)
- *   page.screenshot()           → { op: "screenshot" }
+ *                                 (deprecated in modern Puppeteer too,
+ *                                  but still common in legacy scripts)
+ *   page.cookies()              → { op: "cookies" }
+ *   page.$$eval(sel, fn)        → { op: "eval", fn, returns: { type: "array" } }
+ *                                 (TODO note in fn comment — author should
+ *                                  refine returns.type if known)
+ *   page.evaluate(fn)           → { op: "eval", fn, returns: { type: "object" } }
+ *                                 (TODO note — declare correct returns.type)
+ *   page.screenshot()           → falls through to op:eval (RE_PAGE_CALL
+ *                                 permissive default; not silently dropped).
+ *                                 In strict:true mode, throws like other
+ *                                 unsupported page.* calls.
  *
- * Limitations match from-playwright (variable-bound selectors fall
- * through to permissive exec; trailing line comments stay visible).
- * Out-of-MVP page.* calls become { op: "exec", allowUnverifiable: true }
- * with original-line preserved in the fn comment, or throw under
- * `strict: true`.
+ * Read vs Write variant heuristic:
+ *   Default = read variant (no act/key — whole script becomes `observe`).
+ *   Write = if any click looks submit-like (matches /submit|login|signin|signup|
+ *           buy|checkout|publish|post/ in selector or button text), or any
+ *           page.type fills a password field, the script is treated as a write
+ *           and emitted as the `act` variant with a generated `key`.
+ *
+ * Anything outside the supported set becomes:
+ *   - permissive (default): { op: "eval", fn: "...", returns: { type: "object" } }
+ *     wrapping the original line as a string comment, with a TODO marker.
+ *   - strict: throws PuppeteerConversionError.
+ *
+ * NOTE: v2 has NO op:exec. All legacy escape paths route through op:eval
+ * with a mandatory `returns.type` declaration. The user MUST fix up
+ * `returns.type` before the plan will validate at runtime — `lint.ts`
+ * will flag any eval where returns.type is structurally unknown.
  */
 
-import type {
-  ExecutionPlan,
-  Op,
-  TapAnnotation,
-} from "@taprun/spec";
+import type { Op, Plan } from "@taprun/spec";
 
 export interface PuppeteerToTapOptions {
   site: string;
   name: string;
+  /** Force the variant. Auto-detected from heuristic when omitted. */
   intent?: "read" | "write";
   description?: string;
-  target?: string;
+  /** Emit error on any unsupported page.* call instead of an op:eval
+   *  fallback. Default false. */
   strict?: boolean;
 }
 
@@ -82,12 +97,18 @@ const RE_CLICK = callRe("click", 1);
 const RE_TYPE = callRe("type", 2);
 const RE_WAIT_SEL = callRe("waitForSelector", 1);
 const RE_WAIT_MS = /\.waitForTimeout\s*\(\s*(\d+)\s*\)/;
-const RE_SCREENSHOT = /\.screenshot\s*\(/;
+const RE_COOKIES = /\.cookies\s*\(/;
 // keyboard.press("Enter") — note `keyboard.` prefix to avoid colliding
 // with locator/element.press in newer puppeteer.
 const RE_KEYBOARD_PRESS = new RegExp(
   `\\bkeyboard\\.press\\s*\\(${WS}${STR}${WS}\\s*[,)]`,
 );
+// page.$$eval(selector, fn[, ...args])
+const RE_DOLLAR_DOLLAR_EVAL = new RegExp(
+  `\\.\\$\\$eval\\s*\\(${WS}${STR}`,
+);
+// page.evaluate(fn[, ...args])
+const RE_EVALUATE = /\.evaluate\s*\(/;
 // Generic page.* call detector for permissive-mode fallback.
 const RE_PAGE_CALL =
   /(?:page|context|browser|frame)\s*\.\s*([a-zA-Z_$][\w$]*)\s*\(/;
@@ -103,6 +124,11 @@ const LIFECYCLE_METHODS: ReadonlySet<string> = new Set([
   "disconnect",
 ]);
 
+/** Heuristic: substring match against selector / value to decide whether
+ *  the action mutates server state. */
+const WRITE_RX = /submit|login|sign[\s_-]?in|sign[\s_-]?up|register|checkout|buy|publish|post|delete|create|update/i;
+const PASSWORD_RX = /password|passwd|pwd/i;
+
 function pickStr(m: RegExpMatchArray): string | undefined {
   return m[1] ?? m[2] ?? m[3];
 }
@@ -116,7 +142,7 @@ function pickStr2(m: RegExpMatchArray): [string, string] | undefined {
 export function puppeteerToTap(
   source: string,
   options: PuppeteerToTapOptions,
-): TapAnnotation {
+): Plan {
   if (!options.site || !options.name) {
     throw new PuppeteerConversionError(
       "site and name are required in PuppeteerToTapOptions",
@@ -126,7 +152,7 @@ export function puppeteerToTap(
 
   const lines = source.split(/\r?\n/);
   const ops: Op[] = [];
-  let firstNavUrl: string | undefined;
+  let detectedWrite = false;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
@@ -140,34 +166,33 @@ export function puppeteerToTap(
       const url = pickStr(m);
       if (url !== undefined) {
         ops.push({ op: "nav", url });
-        if (firstNavUrl === undefined) firstNavUrl = url;
         matched = true;
       }
     } else if ((m = trimmed.match(RE_TYPE))) {
       const pair = pickStr2(m);
       if (pair) {
-        // Puppeteer's page.type semantically fills the element. Map to
-        // plan-v1 "fill" so consumers don't need to know which framework
-        // produced the plan.
         ops.push({
           op: "input",
-          kind: "fill",
+          kind: "type",
           target: pair[0],
           value: pair[1],
         });
+        if (PASSWORD_RX.test(pair[0])) detectedWrite = true;
         matched = true;
       }
     } else if ((m = trimmed.match(RE_KEYBOARD_PRESS))) {
       const key = pickStr(m);
       if (key !== undefined) {
-        // No explicit target — focused element receives the press.
         ops.push({ op: "input", kind: "press", value: key });
+        // Enter on a form is a likely submit
+        if (/^enter$/i.test(key)) detectedWrite = true;
         matched = true;
       }
     } else if ((m = trimmed.match(RE_CLICK))) {
       const target = pickStr(m);
       if (target !== undefined) {
         ops.push({ op: "input", kind: "click", target });
+        if (WRITE_RX.test(target)) detectedWrite = true;
         matched = true;
       }
     } else if ((m = trimmed.match(RE_WAIT_SEL))) {
@@ -182,8 +207,30 @@ export function puppeteerToTap(
         ops.push({ op: "wait", ms });
         matched = true;
       }
-    } else if (RE_SCREENSHOT.test(trimmed)) {
-      ops.push({ op: "screenshot" });
+    } else if (RE_COOKIES.test(trimmed)) {
+      ops.push({ op: "cookies" });
+      matched = true;
+    } else if ((m = trimmed.match(RE_DOLLAR_DOLLAR_EVAL))) {
+      // page.$$eval(sel, fn) — selector available, fn body left as a
+      // structural placeholder. Author must refine returns.type.
+      ops.push({
+        op: "eval",
+        fn:
+          `/* TODO: paste original page.$$eval body from line ${i + 1};` +
+          ` declare correct returns.type. v2 forbids op:exec — ` +
+          `escape hatch is op:eval with mandatory returns. */ () => []`,
+        returns: { type: "array" },
+      });
+      matched = true;
+    } else if (RE_EVALUATE.test(trimmed)) {
+      ops.push({
+        op: "eval",
+        fn:
+          `/* TODO: paste original page.evaluate body from line ${i + 1};` +
+          ` declare correct returns.type. v2 forbids op:exec — ` +
+          `escape hatch is op:eval with mandatory returns. */ () => ({})`,
+        returns: { type: "object" },
+      });
       matched = true;
     }
 
@@ -198,16 +245,24 @@ export function puppeteerToTap(
           throw new PuppeteerConversionError(
             `Unsupported Puppeteer API on line ${i + 1}: ${method}(`,
             source,
-            `MVP supports goto/click/type/keyboard.press/waitForSelector/waitForTimeout/screenshot. ` +
-              `Run with strict:false to emit { op: "exec" } and preserve the original line.`,
+            `MVP v2 supports goto/click/type/keyboard.press/waitForSelector/` +
+              `waitForTimeout/cookies/$$eval/evaluate. ` +
+              `Run with strict:false to emit { op: "eval" } and preserve ` +
+              `the original line as a TODO comment.`,
             i + 1,
           );
         }
+        // Permissive fallback — emit an eval shell with returns: object.
+        // Author MUST fix up returns.type and fn body before the plan
+        // can pass v2 lint at runtime.
         ops.push({
-          op: "exec",
-          fn: `async function(handle, args) { /* original Puppeteer line ${
-            i + 1
-          } not auto-converted: ${line.replace(/\*\//g, "*\\/")} */ }`,
+          op: "eval",
+          fn:
+            `/* TODO: original Puppeteer line ${i + 1} not auto-` +
+            `converted: ${line.replace(/\*\//g, "*\\/")} ` +
+            `— v2 has no op:exec; rewrite as plan ops or declare ` +
+            `correct returns.type. */ () => ({})`,
+          returns: { type: "object" },
         });
       }
     }
@@ -221,34 +276,30 @@ export function puppeteerToTap(
     );
   }
 
-  const target = options.target ?? firstNavUrl ??
-    `urn:puppeteer:${options.site}:${options.name}`;
+  const intent = options.intent ?? (detectedWrite ? "write" : "read");
+  const id = { site: options.site, name: options.name };
 
-  const body: ExecutionPlan = {
-    type: "tap:ExecutionPlan",
-    site: options.site,
-    name: options.name,
-    intent: options.intent ?? "read",
-    ops,
-  };
-  if (options.description) body.description = options.description;
-  if (ops.some((o) => o.op === "exec")) {
-    body.allowUnverifiable = true;
+  if (intent === "write") {
+    // Write variant — act + key both required by v2 Plan discriminated
+    // union. We synthesize a placeholder key from site/name; author MUST
+    // refine to a real CEL expression that uniquely identifies the
+    // intended side-effect (per ADR §10 Plan.key dedup contract).
+    const plan: Plan = {
+      id,
+      ...(options.description ? { description: options.description } : {}),
+      act: ops,
+      key: `"${options.site}:${options.name}:" + string($args)`,
+      return: "true",
+    };
+    return plan;
   }
 
-  return {
-    "@context": [
-      "http://www.w3.org/ns/anno.jsonld",
-      "https://taprun.dev/ns/tap-v1",
-    ],
-    type: "Annotation",
-    motivation: "tap:executing",
-    target,
-    body,
-    generator: {
-      id: "https://taprun.dev/from-puppeteer",
-      type: "SoftwareAgent",
-      version: "0.x",
-    },
+  // Read variant — observe only, no act/key.
+  const plan: Plan = {
+    id,
+    ...(options.description ? { description: options.description } : {}),
+    observe: ops,
+    return: "true",
   };
+  return plan;
 }

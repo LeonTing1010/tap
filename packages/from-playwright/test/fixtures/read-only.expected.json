@@ -1,0 +1,10 @@
+{
+  "id": { "site": "github", "name": "trending" },
+  "observe": [
+    { "op": "nav", "url": "https://github.com/trending" },
+    { "op": "wait", "selector": "article.Box-row" },
+    { "op": "input", "kind": "click", "target": "a[href='/trending?since=weekly']" },
+    { "op": "wait", "ms": 500 }
+  ],
+  "return": "null"
+}

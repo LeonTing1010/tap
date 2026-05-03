@@ -1,58 +1,71 @@
 ---
-title: "@taprun/from-playwright — SoftwareAgent identifier"
-description: "Stable IRI for the @taprun/from-playwright adapter. Embedded as generator.id in every .tap.json plan compiled from a Playwright test. Convert Playwright scripts to local-first plan-v1 envelopes, no rewrite."
+title: "@taprun/from-playwright — Playwright → v2 Plan adapter"
+description: "Stable IRI for the @taprun/from-playwright adapter. Convert Playwright tests into local-first bare v2 Plans, no rewrite."
 permalink: /from-playwright/
 layout: default
 ---
 
 # @taprun/from-playwright
 
-> Stable identifier (`SoftwareAgent.id`) for the [`@taprun/from-playwright`](https://jsr.io/@taprun/from-playwright) adapter. Every `.tap.json` plan compiled from a Playwright source carries `"generator": { "id": "https://taprun.dev/from-playwright", "type": "SoftwareAgent" }` so any W3C Web Annotation consumer can dereference the producer.
+> Stable identifier for the [`@taprun/from-playwright`](https://www.npmjs.com/package/@taprun/from-playwright) adapter. Every plan compiled from a Playwright source carries `compiled_by` metadata so consumers can dereference the producer.
 
-Part of the [**Capture**](/capture/) plane — one of Tap's three primitive planes (Capture / Replay / Verify).
+Part of the **Capture** plane — one of Tap's three primitive planes (Capture / Replay / Verify). Bumped to **v1.0** for the v2 schema break (see [Migration guide](/migration-guide/)).
 
 ## What this adapter does
 
-Convert Playwright tests into local-first `.tap.json` plans, no rewrite. Maps the deterministic page-level APIs (`page.goto`, `.click`, `.fill`, `.type`, `.press`, `.waitForSelector`, `.waitForTimeout`, `.screenshot`) to the plan-v1 op union. Anything outside that surface becomes `{ op: "exec", allowUnverifiable: true }` preserving the original line, or throws under `strict: true`.
+Convert Playwright tests into local-first bare v2 `Plan`s, no rewrite. Maps the deterministic page-level APIs (`page.goto`, `.click`, `.fill`, `.type`, `.press`, `.waitForSelector`, `.waitForTimeout`) to the 11-op v2 closure. Lifecycle calls (`browser.launch` / `close`) silently dropped. Anything outside the deterministic surface either throws under `strict: true` or becomes a typed `op:eval` with the original line preserved as a comment for human follow-up — never free-form JS.
 
 ## Install
 
-- JSR: <https://jsr.io/@taprun/from-playwright>
 - npm: <https://www.npmjs.com/package/@taprun/from-playwright>
-- Source: <https://github.com/LeonTing1010/tap>
+- Format types: <https://www.npmjs.com/package/@taprun/spec>
 
-## Sample envelope produced
+```bash
+npm install @taprun/from-playwright@^1 @taprun/spec@^1
+```
+
+## Sample plan produced
+
+A read tap:
 
 ```json
 {
-  "@context": [
-    "http://www.w3.org/ns/anno.jsonld",
-    "https://taprun.dev/ns/tap-v1"
+  "id": { "site": "github", "name": "trending" },
+  "observe": [
+    { "op": "nav",  "url": "https://github.com/trending" },
+    { "op": "wait", "selector": "article.Box-row" }
   ],
-  "type": "Annotation",
-  "motivation": "tap:executing",
-  "target": "https://github.com/trending",
-  "body": {
-    "type": "tap:ExecutionPlan",
-    "site": "github",
-    "name": "trending",
-    "intent": "read",
-    "ops": [
-      { "op": "nav", "url": "https://github.com/trending" },
-      { "op": "wait", "selector": "article.Box-row" }
-    ]
-  },
-  "generator": {
-    "id": "https://taprun.dev/from-playwright",
-    "type": "SoftwareAgent",
-    "name": "@taprun/from-playwright"
-  }
+  "return": "$.observe[1]"
 }
 ```
 
+A write tap (login flow):
+
+```json
+{
+  "id": { "site": "example", "name": "login" },
+  "args": { "password": { "type": "string", "required": true } },
+  "key": "$.args.password",
+  "observe": [
+    { "op": "nav", "url": "https://app.example.com/login" }
+  ],
+  "act": [
+    { "op": "input", "kind": "fill",  "target": "#email",    "value": "alice@example.com" },
+    { "op": "input", "kind": "fill",  "target": "#password", "value": "{{$.args.password}}" },
+    { "op": "input", "kind": "click", "target": "button[type='submit']" }
+  ],
+  "confirm": [
+    { "op": "wait", "selector": ".dashboard", "timeout_ms": 5000 }
+  ],
+  "return": "$.confirm[0]"
+}
+```
+
+The output is a **bare Plan** — no `@context`, no W3C wrapper, no `body`. The discriminated union (read vs write) is encoded at the type level: a write tap that omits `key` fails compilation in `@taprun/spec`.
+
 ## Related
 
-- [`plan-v1` reference](/spec/plan-v1/) — the format produced
-- [`tap-v1` namespace](/ns/tap-v1/) — the JSON-LD vocabulary
-- Sister adapters: [`@taprun/from-puppeteer`](/from-puppeteer/) · [`@taprun/from-stagehand`](/from-stagehand/)
-- [Compare to Stagehand / Browserbase](/compare/stagehand/)
+- [Plan format](/spec/plan-v1/) — bare `Plan` reference
+- [Migration guide](/migration-guide/) — v0.x → v1.0 upgrade path
+- Sister adapter: [`@taprun/from-puppeteer`](/from-puppeteer/)
+- [`@taprun/from-stagehand`](/from-stagehand/) — deprecated; see migration guide for alternative

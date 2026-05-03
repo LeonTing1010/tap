@@ -55,7 +55,7 @@ That single architectural axis — *where do logged-in cookies live during autom
 | Dimension | Stagehand | Tap |
 |---|---|---|
 | **Where it runs** | Browserbase cloud (or your machine if self-hosted) | Your local Chrome (extension) or your local CLI |
-| **Plan representation** | TypeScript code: `act()`, `extract()`, `observe()` calls embedded in your `.ts` | `.tap.json` — W3C Annotation envelope, 24-op closed union, pure data |
+| **Plan representation** | TypeScript code: `act()`, `extract()`, `observe()` calls embedded in your `.ts` | Bare v2 Plan — 11-op closed union, pure data, no JS in the runtime path |
 | **AI in runtime?** | Yes — every `act()` calls an LLM to choose the next action (with caching) | No — LLM only at compile/`forge` time. Runtime is pure code. |
 | **Cookie / session storage** | Browserbase stores them (encrypted at rest, but they cross a boundary) | Local browser only — never serialized, never transmitted |
 | **What "self-healing" means** | LLM re-decides on retry when an `act()` fails | Structural fingerprint catches drift; `heal` re-compiles the broken op |
@@ -132,7 +132,7 @@ if (!v.pass) throw new Error(JSON.stringify(v.failures));
 await writeFile("github/browserbase-search.tap.json", JSON.stringify(plan, null, 2));
 ```
 
-Deterministic Playwright calls (`page.goto`, `page.click`, `page.fill`) inside your Stagehand script become plan ops Tap can verify and heal. Natural-language `stagehand.act()` / `.extract()` calls become `{ op: "exec", allowUnverifiable: true }` ops with the prompt preserved — Tap reports them honestly so you know which steps still require an LLM.
+> **Note:** `from-stagehand` is **deprecated as of v2.** Stagehand requires Browserbase (cloud-coupled), which contradicts the local-first stance. The recommended path is `@taprun/from-playwright` against the deterministic page-level calls in your Stagehand script (Stagehand wraps Playwright anyway), then re-forge the natural-language portions via `tap-v2 forge.draft`. See the [Migration guide](/migration-guide/).
 
 The result is a *partially* deterministic plan. Tap's `doctor` can verify the deterministic portions; the NL portions remain Stagehand's job. Most production Stagehand scripts have a deterministic backbone with NL embellishments — Tap converts the backbone, and you keep using Stagehand for the NL parts.
 
