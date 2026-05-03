@@ -124,7 +124,7 @@ hr { border: none; border-top: 1px solid rgba(20,17,12,0.15); margin: 48px 0; }
 
 <h3>P3 — Doctor verdicts are decided by per-tap CEL, not engine guess</h3>
 
-<p>v1 doctor compared substrate state with hard-coded structural diff. False positives on cosmetic site changes were common. v2 ships a per-tap <code>fingerprint_equivalent</code> CEL predicate — you declare what counts as "the same answer" for your tap. PoC measurement: 40% false-positive reduction on the first 20 community taps that adopted it.</p>
+<p>v1 doctor compared substrate state with hard-coded structural diff. False positives on cosmetic site changes were common. v2 ships a per-tap <code>snapshot_equivalent</code> CEL predicate — you declare what counts as "the same answer" for your tap. PoC measurement: 40% false-positive reduction on the first 20 community taps that adopted it.</p>
 
 <h3>P4 — Heal escalation is bounded</h3>
 
@@ -134,7 +134,7 @@ hr { border: none; border-top: 1px solid rgba(20,17,12,0.15); margin: 48px 0; }
 
 <p>We considered the soft path: ship v2 alongside v1, let users migrate when convenient. It got rejected for the same reason the original ADR called the soft path "strictly worse" — it would have left the engine maintaining two parallel runtimes (24 ops <em>and</em> 11 ops, two verdict enums, two heal pipelines) for no engineering gain. Users would have stayed on v1 by default; v2 would have looked like an experimental fork.</p>
 
-<p>Hard break, lockstep release, single migration boundary. <code>tap-v2 migrate-legacy scan</code> takes care of the auto-migratable plans (W3C envelope wrapping a body that already happens to use only v2 ops). The rest get a re-forge or a hand-rewrite. The migration tool dogfooded itself against the 65-tap community corpus before this post went live.</p>
+<p>Hard break, lockstep release, single migration boundary. <code>tap migrate scan</code> takes care of the auto-migratable plans (W3C envelope wrapping a body that already happens to use only v2 ops). The rest get a re-forge or a hand-rewrite. The migration tool dogfooded itself against the 65-tap community corpus before this post went live.</p>
 
 <h2>The 8 follow-up ADRs</h2>
 
@@ -169,8 +169,7 @@ $ npx create-tap-script@latest my-tap</code></pre>
 
 <p>If you have local taps to migrate, the path is one CLI call:</p>
 
-<pre><code>$ tap-v2 migrate-legacy scan      # see what's auto-migratable
-$ tap-v2 migrate-legacy migrate   # apply</code></pre>
+<pre><code>$ tap migrate scan      # inventory the v1 corpus</code></pre>
 
 <p>Step-by-step in the <a href="/migration-guide/">Migration guide</a>. The <code>from-stagehand</code> adapter is permanently deprecated — Stagehand requires Browserbase to run, which contradicts the local-first stance the rest of v2 is built around. Use <code>from-playwright</code> instead; the underlying Playwright control flow is what Stagehand wraps anyway.</p>
 

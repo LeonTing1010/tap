@@ -17,10 +17,10 @@ If you keep v0.x lockfiles pinned, nothing breaks today. If you upgrade, this is
 
 ```bash
 # 1. See what migrates automatically
-tap-v2 migrate-legacy scan
+tap migrate scan
 
 # 2. Apply
-tap-v2 migrate-legacy migrate
+tap migrate migrate
 
 # 3. Bump npm packages
 npm install @taprun/spec@^1 @taprun/from-playwright@^1 @taprun/from-puppeteer@^1
@@ -28,7 +28,7 @@ npm install @taprun/spec@^1 @taprun/from-playwright@^1 @taprun/from-puppeteer@^1
 
 The CLI prints a report of three buckets: **auto-migratable** (W3C envelope wrapping a body that already uses only v2 ops), **needs-rewrite** (uses deleted ops or fields), and **corrupt**. Auto-migratable plans land in `~/.tap/plans/<site>/<name>.plan.json`. Originals stay read-only in `~/.tap/taps/` for the deprecation window so nothing is lost.
 
-> **Be realistic about coverage.** Most v0.x plans were compiled with a universal `op:exec` body (the v1 escape hatch). Auto-migration coverage on the legacy corpus is therefore close to 0% — not because the migration tool is incomplete but because v1 leaned heavily on free-form JS. Most upgrades land in the **needs-rewrite** bucket. The cheapest path for those is `tap-v2 forge.draft` against the original target, not a hand port.
+> **Be realistic about coverage.** Most v0.x plans were compiled with a universal `op:exec` body (the v1 escape hatch). Auto-migration coverage on the legacy corpus is therefore close to 0% — not because the migration tool is incomplete but because v1 leaned heavily on free-form JS. Most upgrades land in the **needs-rewrite** bucket. The cheapest path for those is `tap capture <url> <site>/<name> --intent "..."` against the original target, not a hand port.
 
 ---
 
@@ -40,47 +40,49 @@ The CLI prints a report of three buckets: **auto-migratable** (W3C envelope wrap
 | Op count | 24 ops including `op:exec`, `op:pipe`, `op:parseXML`, `op:screenshot`, `op:scroll` | **11 ops** — 7 substrate + 3 control flow + 1 typed-eval escape |
 | Op:exec | Free-form Deno-host JS body | Replaced by `op:eval` (page-context) with required `returns` type, plus composition via `if`/`foreach`/`parallel` |
 | Read/write split | `intent: "read" \| "write"` field | Discriminated union on the `Plan` type itself: read variant has no `act`/`key`; write variant requires both |
-| Doctor verdict | 6 arms (`healthy` · `broken` · `stale` · `layer-mismatch` · `unreachable` · `unverified`) | **4 arms** — `equivalent` · `drifted` · `baseline-set` · `unreachable` |
-| Equivalence rule | Hard-coded structural diff in doctor | Per-tap CEL `fingerprint_equivalent` predicate that you author |
+| Doctor verdict | 6 arms (`healthy` · `broken` · `stale` · `layer-mismatch` · `unreachable` · `unverified`) | **4 arms** — `equivalent` · `drifted` · `first_snapshot` · `unreachable` |
+| Equivalence rule | Hard-coded structural diff in doctor | Per-tap CEL `snapshot_equivalent` predicate that you author |
 | `legacy: true`, `allowUnverifiable` | Pre-drainage escape hatches | Deleted; v2 lint rejects on save |
 | Heal classes | "3 token classes" (cache / minimal / rewrite) as separate codepaths | Same three paths, single escalation pipeline; reads as `cache` (0 tokens) → `minimal-patch` (~1.1K) → `full-rewrite` (~14K) |
 | `generator` field | Required | Optional `compiled_by` metadata under [forge-ai-lifecycle](/adrs/) ADR |
 
 The unifying move: every concept that used to be a string discriminator (`intent`, `legacy`, `allowUnverifiable`) became a TypeScript discriminated union. Invalid combinations are now unrepresentable.
 
+The verb surface itself collapsed too: v1's `tap-v2 doctor` is now `tap verify`; `tap-v2 fix` and the AI-write heal pipeline merged into the `capture` re-call path (re-running `capture` against an existing site+name is the heal path); `tap-v2 mcp-tool` is gone — every saved plan auto-projects as the MCP tool `<site>.<name>`.
+
 ---
 
 ## The three CLI verbs you need
 
-### `tap-v2 migrate-legacy scan`
+### `tap migrate scan`
 
 Read-only inventory. Walks `~/.tap/taps/` and classifies each `.tap.json` into one of three buckets. No file is moved. Output is a printable report with the count per bucket.
 
 ```bash
-tap-v2 migrate-legacy scan --root ~/.tap          # all sites
-tap-v2 migrate-legacy scan --site github          # one site
+tap migrate scan --root ~/.tap          # all sites
+tap migrate scan --site github          # one site
 ```
 
-### `tap-v2 migrate-legacy migrate`
+### `tap migrate migrate`
 
 Applies the conversion. For each auto-migratable plan: strips the W3C wrapper, drops the deleted top-level fields (`intent`, `legacy`, `allowUnverifiable`), synthesises `id: { site, name }` from the body, treats `ops` as `observe` for read taps, runs `lintPlan` on the result, and writes to `~/.tap/plans/<site>/<name>.plan.json` if lint passes. Originals stay untouched in `~/.tap/taps/` until you decide to delete them.
 
 ```bash
-tap-v2 migrate-legacy migrate --dry-run           # preview
-tap-v2 migrate-legacy migrate                     # apply
+tap migrate migrate --dry-run           # preview
+tap migrate migrate                     # apply
 ```
 
 `--dry-run` performs the full conversion + lint in memory and prints the same summary you'd get from a live run, so you can read the report before any file lands.
 
-Behaviour reference: the `tap-v2 migrate-legacy` CLI verb provided by the Tap binary. The migration adapter is part of the proprietary engine.
+Behaviour reference: the `tap migrate` CLI verb provided by the Tap binary. The migration adapter is part of the proprietary engine.
 
-### `tap-v2 lint`
+### `tap lint` (planned)
 
 If you author plans by hand, lint is the static gate. It rejects deleted fields (`legacy: true` on save, `intent` discriminator, `allowUnverifiable`), enforces the 11-op closure, and verifies the read/write discriminated union is well-formed.
 
 ```bash
-tap-v2 lint                                        # whole fleet
-tap-v2 lint github/trending                        # one tap
+tap lint                                        # whole fleet
+tap lint github/trending                        # one tap
 ```
 
 ---
@@ -94,7 +96,7 @@ A plan needs hand-rewriting if its body contains:
 - An `op:parseXML` / `op:screenshot` / `op:scroll` step — parseXML is now `op:fetch` + CEL extraction; screenshot is removed from the closure (use the chrome runtime directly if needed); scroll merges into `op:input` with `kind: "scroll"`.
 - A field set to `legacy: true` or `allowUnverifiable: true`.
 
-For these, the cheapest path is: `tap-v2 forge.inspect <url>` against the original target, then `tap-v2 forge.draft` to produce a fresh v2 Plan. The forge AI cost is usually 2–4K tokens per re-forge — cheaper than a hand-rewrite.
+For these, the cheapest path is: `tap capture <url> <site>/<name> --intent "..."` against the original target. The forge AI cost is usually 2–4K tokens per re-capture — cheaper than a hand-rewrite.
 
 If the plan is bespoke (no public source, no easy re-forge), open a tap-skills issue tagged `migration-help`. The core team sweeps the queue weekly during the deprecation window.
 
@@ -198,7 +200,7 @@ If your old `op:exec` was doing DOM mutation, model it as a sequence of `op:inpu
 
 ## Doctor verdict — what changed in CI
 
-If your CI parses `tap doctor` JSON output, the verdict enum collapsed from 6 arms to 4:
+If your CI parses `tap verify` JSON output (formerly `tap doctor` in v1), the verdict enum collapsed from 6 arms to 4:
 
 | v1 verdict | v2 verdict | Notes |
 |---|---|---|
@@ -206,10 +208,10 @@ If your CI parses `tap doctor` JSON output, the verdict enum collapsed from 6 ar
 | `broken` | `drifted` | Drift now includes the per-tap CEL predicate result |
 | `stale` | `drifted` | No separate state — the predicate decides |
 | `layer-mismatch` | `drifted` | Folded in |
-| `unverified` | `baseline-set` | First-run state on a fresh tap |
+| `unverified` | `first_snapshot` | First-run state on a fresh tap |
 | `unreachable` | `unreachable` | Unchanged |
 
-The 40% false-positive reduction (PoC-measured) comes from the per-tap `fingerprint_equivalent` CEL predicate — you decide which fields count as "the same answer."
+The 40% false-positive reduction (PoC-measured) comes from the per-tap `snapshot_equivalent` CEL predicate — you decide which fields count as "the same answer."
 
 ---
 

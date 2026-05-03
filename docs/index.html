@@ -1,3 +1,8 @@
+---
+# Empty frontmatter opts this file into Jekyll Liquid processing without
+# applying a layout. Required so {% include %} and {{ site.data.cli.* }} work.
+# Do not remove unless removing all Liquid references in this file.
+---
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -30,7 +35,7 @@
 <meta name="twitter:title" content="Taprun — No hallucinated clicks. Predictable cost. Sessions that complete.">
 <meta name="twitter:description" content="Compile once with AI. Replay forever at $0/run. Real Chrome session — no re-login, no mid-run fail. browser-use $4.20 vs Tap $0.003 over 100 reruns.">
 <meta name="twitter:image" content="https://taprun.dev/social-preview.svg">
-<meta name="keywords" content="AI coding agent protocol, MCP, model context protocol, Chrome extension, Playwright, tap protocol, forge, deterministic automation, sandbox, automatic diagnostics, macOS automation, doctor, fingerprint, website automation, AI agent, web scraping, browser automation, API auto-detection, JSON-LD, RSS, OpenAPI">
+<meta name="keywords" content="AI coding agent protocol, MCP, model context protocol, Chrome extension, Playwright, tap protocol, forge, deterministic automation, sandbox, automatic diagnostics, macOS automation, verify, snapshot, website automation, AI agent, web scraping, browser automation, API auto-detection, JSON-LD, RSS, OpenAPI">
 <meta name="author" content="LeonTing1010">
 <meta name="robots" content="index, follow">
 <meta name="googlebot" content="index, follow">
@@ -53,11 +58,11 @@
     "url": "https://github.com/LeonTing1010"
   },
   "codeRepository": "https://github.com/LeonTing1010/tap",
-  "keywords": ["AI agents", "MCP", "tap protocol", "forge", "deterministic automation", "Chrome extension", "Playwright", "sandbox", "doctor", "fingerprint", "health contracts", "silent failure detection", "API auto-detection"],
+  "keywords": ["AI agents", "MCP", "tap protocol", "forge", "deterministic automation", "Chrome extension", "Playwright", "sandbox", "verify", "snapshot", "health contracts", "silent failure detection", "API auto-detection"],
   "offers": [
-    {"@type": "Offer", "price": "0", "priceCurrency": "USD", "description": "Spec & Run — Free forever. @taprun/spec 1.0, 4 npm packages, Chrome extension, tap-v2 run/list/doctor/intents/lint/migrate-legacy, 140+ community taps."},
-    {"@type": "Offer", "price": "19", "priceCurrency": "USD", "description": "Capture — forge.inspect + forge.draft turn URLs or NL into bare v2 Plans via Claude/GPT/Ollama. Up to 5 plans. BYOK. Works in any MCP host."},
-    {"@type": "Offer", "price": "49", "priceCurrency": "USD", "description": "Repair — 3-path heal (cache 0 tokens / minimal-patch ~1.1K / full rewrite ~14K). 4-arm doctor verdict with per-tap CEL predicate. Up to 20 plans. 100% local."}
+    {%- for t in site.data.cli.tiers %}
+    {"@type": "Offer", "price": "{{ t.price_usd }}", "priceCurrency": "USD", "description": "{{ t.display }} — {% if t.price_usd == 0 %}Free forever. @taprun/spec 1.0, {{ site.data.cli.counts.npm_packages }} npm packages, Chrome extension, tap CLI ({{ site.data.cli.verbs.capture.name }}/{{ site.data.cli.verbs.verify.name }}/{{ site.data.cli.verbs.mark.name }} + saved-tap run + migrate scan), {{ site.data.cli.counts.community_taps }}+ community taps. Up to {{ t.cap }} saved plans.{% elsif t.internal == 'hacker' %}`{{ site.data.cli.verbs.capture.cli }} <url>` turns URLs or natural-language intent into a bare v2 Plan via Claude/GPT/Ollama. Up to {{ t.cap }} plans. BYOK. Works in any MCP host.{% else %}3-path repair pipeline (cache 0 tokens / minimal-patch ~1.1K / full rewrite ~14K). 4-arm {{ site.data.cli.verbs.verify.name }} verdict with per-tap CEL predicate. Up to {{ t.cap }} plans. 100% local.{% endif %}"}{% unless forloop.last %},{% endunless %}
+    {%- endfor %}
   ]
 }
 </script>
@@ -91,7 +96,7 @@
   "@type": "FAQPage",
   "mainEntity": [
     {"@type": "Question", "name": "What does 'compile once' mean?", "acceptedAnswer": {"@type": "Answer", "text": "AI runs once at authoring time to capture a site's stable structural addresses (JSON-LD, OpenAPI, ARIA, RSS) — not to generate fragile CSS selectors. The compiled program is then replayed deterministically, no LLM at runtime."}},
-    {"@type": "Question", "name": "What happens when the site changes?", "acceptedAnswer": {"@type": "Answer", "text": "Run `tap-v2 doctor`. The verdict is one of four — equivalent · drifted · baseline-set · unreachable — derived from a per-tap CEL `fingerprint_equivalent` predicate so you decide what counts as drift, not us. On the Repair tier, `tap-v2 fix` proposes an AI-written patch; refresh rebaselines after human approval."}},
+    {"@type": "Question", "name": "What happens when the site changes?", "acceptedAnswer": {"@type": "Answer", "text": "Run `tap verify <site>/<name>`. The verdict is one of four — equivalent · drifted · first_snapshot · unreachable — derived from a per-tap CEL `snapshot_equivalent` predicate so you decide what counts as drift, not us. On the Repair tier, re-running `tap capture` against the same site/name proposes an AI-written patch; the next `verify` rebaselines after human approval."}},
     {"@type": "Question", "name": "Is my data safe?", "acceptedAnswer": {"@type": "Answer", "text": "Everything runs on your machine. Plans are structured data — closed 11-op vocabulary (7 substrate + 3 control flow + 1 typed-eval escape), not arbitrary JavaScript. No runtime eval, no Worker, no cloud exfiltration. See the SECURITY.md in the public repo."}}
   ]
 }
@@ -2725,8 +2730,8 @@ pre.code-block code {
 $ <span class="k">npm install</span> @taprun/from-playwright@1 @taprun/spec@1
 $ <span class="k">npx</span> from-playwright tests/login.spec.ts <span class="o">&gt;</span> example/login.plan.json   <span class="c"># 30 sec, no rewrite</span>
 
-$ <span class="k">tap-v2 run</span> example/login                                       <span class="c"># 0 LLM tokens · deterministic</span>
-$ <span class="k">tap-v2 doctor</span> example/login                                    <span class="c"># equivalent · drifted · baseline-set · unreachable</span></code></pre>
+$ <span class="k">tap</span> example/login                                              <span class="c"># 0 LLM tokens · deterministic</span>
+$ <span class="k">tap verify</span> example/login                                       <span class="c"># equivalent · drifted · first_snapshot · unreachable</span></code></pre>
   </div>
 
   <div class="press-ornament">✦ &nbsp; ✦ &nbsp; ✦</div>
@@ -2745,7 +2750,7 @@ $ <span class="k">tap-v2 doctor</span> example/login                            
     <article class="press-chapter">
       <span class="press-chapter-num">§ III.</span>
       <h3 class="press-chapter-title">When the site changes</h3>
-      <p>Minor frontend change broke your selectors? <code>tap-v2 doctor</code> flags it before your pipeline notices. Repair tier escalates through three paths &mdash; cache hit (0 tokens), minimal patch (~1.1K), full rewrite (~14K) &mdash; then caches the fix so subsequent runs replay at 0 tokens.</p>
+      <p>Minor frontend change broke your selectors? <code>tap verify</code> flags it before your pipeline notices. Repair tier escalates through three paths &mdash; cache hit (0 tokens), minimal patch (~1.1K), full rewrite (~14K) &mdash; then caches the fix so subsequent runs replay at 0 tokens.</p>
     </article>
   </div>
 
@@ -2757,7 +2762,7 @@ $ <span class="k">tap-v2 doctor</span> example/login                            
     <div class="press-colophon-cta">
       <a href="#install" class="press-cta press-cta--primary">Install · 2 min</a>
       <a href="https://chromewebstore.google.com/detail/tap/llcidejeoobdegbkolbjhfoeckphldce" class="press-cta press-cta--ghost">Chrome Extension →</a>
-      <a href="/taps/" class="press-cta press-cta--ghost">Browse 200+ taps →</a>
+      <a href="/taps/" class="press-cta press-cta--ghost">Browse community taps →</a>
       <a href="https://github.com/LeonTing1010/tap" class="press-cta press-cta--ghost">View on GitHub →</a>
     </div>
   </div>
@@ -2831,7 +2836,7 @@ $ <span class="k">tap-v2 doctor</span> example/login                            
       <article class="evidence-card reveal" data-num="03">
         <div class="evidence-card-body">
           <h3>Diff the <span class="hl">drift.</span></h3>
-          <p class="evidence-claim"><code>tap-v2 doctor</code> emits one of four verdicts — <code>equivalent · drifted · baseline-set · unreachable</code> — using a per-tap CEL <code>fingerprint_equivalent</code> predicate. You declare what counts as drift; doctor never guesses. <code>tap-v2 fix</code> proposes an AI-written patch on the Repair tier. Refresh re-baselines only after a human approves. Lifecycle as a first-class primitive — not an afterthought retry loop.</p>
+          <p class="evidence-claim"><code>tap verify</code> emits one of four verdicts — <code>equivalent · drifted · first_snapshot · unreachable</code> — using a per-tap CEL <code>snapshot_equivalent</code> predicate. You declare what counts as drift; verify never guesses. On the Repair tier, re-running <code>tap capture</code> against the same site/name proposes an AI-written patch; the next <code>verify</code> rebaselines only after a human approves. Lifecycle as a first-class primitive — not an afterthought retry loop.</p>
           <blockquote class="evidence-quote">
             "I'd be curious whether you measure success as 'initial generation works' or 'the same flow still passes after small DOM/layout changes a week later' — that's the boundary between a neat demo and something a team can rely on."
             <cite>— potter098, <a href="https://news.ycombinator.com/item?id=47780971" rel="noopener">HN, 2026-04-15 (question left unanswered by the compile-only competitor)</a></cite>
@@ -3124,7 +3129,7 @@ test(<span class="s">"login"</span>, <span class="k">async</span> ({ page }) =&g
 );
 <span class="k">await</span> page.screenshot();</code></pre>
           </div>
-          <div class="demo-arrow">→ <span style="color: var(--text-muted); font-size: 11px;">re-forge via tap-v2</span> →</div>
+          <div class="demo-arrow">→ <span style="color: var(--text-muted); font-size: 11px;">re-forge via tap capture</span> →</div>
           <div class="demo-panel after">
             <div class="demo-label"><span class="dot"></span>After — github/search-pr.plan.json (re-forged, deterministic)</div>
 <pre><code><span class="c">// from-stagehand is deprecated: Stagehand requires Browserbase</span>
@@ -3148,7 +3153,7 @@ test(<span class="s">"login"</span>, <span class="k">async</span> ({ page }) =&g
         </div>
       </div>
 
-      <p class="demo-foot">Selectors stay yours. Lifecycle calls (browser.launch / close) silently dropped. Run with <code>tap-v2 run example/login</code> in your real Chrome. <a href="/spec/plan-v1/" style="color: var(--indigo-bright); text-decoration: none; border-bottom: 1px dotted rgba(165,180,252,0.4);">Format reference →</a></p>
+      <p class="demo-foot">Selectors stay yours. Lifecycle calls (browser.launch / close) silently dropped. Run with <code>tap example/login</code> in your real Chrome. <a href="/spec/plan-v1/" style="color: var(--indigo-bright); text-decoration: none; border-bottom: 1px dotted rgba(165,180,252,0.4);">Format reference →</a></p>
     </div>
 
     <div class="vs-table-wrap reveal">
@@ -3228,7 +3233,7 @@ test(<span class="s">"login"</span>, <span class="k">async</span> ({ page }) =&g
   <div class="container">
     <div class="usecases-header reveal">
       <div class="section-tag">What you can do</div>
-      <h2>One tool. Five patterns. 140+ prebuilt taps.</h2>
+      <h2>One tool. Five patterns. 70+ prebuilt taps.</h2>
       <p>If the job looks like <em>read</em>, <em>write</em>, <em>watch</em>, <em>compose</em>, or <em>teach it a new site</em> — it fits. Every pattern runs at <code>$0</code> after forge.</p>
     </div>
 
@@ -3261,8 +3266,8 @@ test(<span class="s">"login"</span>, <span class="k">async</span> ({ page }) =&g
         <h3>Monitor what changes</h3>
         <p>Poll on an interval, archive snapshots, query history for diffs and trends.</p>
         <div class="usecase-examples">
-          <code>tap-v2 watch github/trending --every 5m</code>
-          <code>tap history github/trending --trend stars</code>
+          <code>tap verify github/trending</code>
+          <code>tap github/trending  <span style="color:var(--text-muted)"># schedule via cron</span></code>
         </div>
         <a class="usecase-story" href="/blog/websites-change-automation-shouldnt-stop.html">→ Read: <em>Websites change. Your automation shouldn't stop.</em></a>
       </article>
@@ -3283,8 +3288,8 @@ test(<span class="s">"login"</span>, <span class="k">async</span> ({ page }) =&g
         <h3>Teach it a new site</h3>
         <p>Your AI agent inspects, picks the highest-trust structural address, compiles a program that runs forever.</p>
         <div class="usecase-examples">
-          <code>tap-v2 forge.draft url=https://news.ycombinator.com</code>
-          <code>tap-v2 forge.draft prompt="get Douban top 250 movies"</code>
+          <code>tap capture https://news.ycombinator.com hackernews/hot</code>
+          <code>tap capture https://movie.douban.com/top250 douban/top --intent "get top 250 movies"</code>
         </div>
         <a class="usecase-story" href="/blog/facebook-anti-scraping-flexbox-order.html">→ Read: <em>Facebook scrambles author names, not post bodies</em></a>
       </article>
@@ -3494,7 +3499,7 @@ test(<span class="s">"login"</span>, <span class="k">async</span> ({ page }) =&g
   <div class="container">
     <div class="pricing-header">
       <div class="section-tag reveal">Pricing</div>
-      <h2 class="reveal"><span class="hl">$0</span> to run. <span class="hl">$19</span> to capture. <span class="hl">$49</span> to self-heal.</h2>
+      <h2 class="reveal"><span class="hl">$0</span> to run. <span class="hl">$19</span> to capture. <span class="hl">$49</span> to self-repair.</h2>
       <p class="section-desc reveal">The format spec, all five npm packages, the runtime, and the Chrome extension are free forever. AI compile and AI repair are paid. Need a multi-seat or on-prem plan? <a href="mailto:hello@taprun.dev?subject=Taprun%20Team%20Plan" style="color:var(--indigo-bright);text-decoration:underline;">Contact us</a>. <em>Every tier runs on your machine.</em></p>
     </div>
 
@@ -3515,10 +3520,10 @@ test(<span class="s">"login"</span>, <span class="k">async</span> ({ page }) =&g
           <li><span class="bullet">+</span> <code>@taprun/from-{playwright,puppeteer}</code> — converters to v2 Plans</li>
           <li><span class="bullet">+</span> <code>create-tap-script</code> — npx scaffolder</li>
           <li><span class="bullet">+</span> Chrome extension — login-session bridge</li>
-          <li><span class="bullet">+</span> <code>tap-v2 run</code> · <code>list</code> · <code>intents</code> · <code>lint</code> — deterministic plan execution</li>
-          <li><span class="bullet">+</span> <code>tap-v2 doctor</code> — 4-arm verdict with per-tap CEL predicate</li>
-          <li><span class="bullet">+</span> <code>tap-v2 migrate-legacy scan</code> — one-shot upgrade from v1 envelopes</li>
-          <li><span class="bullet">+</span> 140+ community taps via <a href="https://github.com/LeonTing1010/tap-skills" style="color:var(--indigo-bright);text-decoration:underline;">tap-skills</a></li>
+          <li><span class="bullet">+</span> <code>tap &lt;site&gt;/&lt;name&gt;</code> · <code>list</code> · <code>show</code> — deterministic plan execution</li>
+          <li><span class="bullet">+</span> <code>tap verify</code> — 4-arm verdict with per-tap CEL <code>snapshot_equivalent</code> predicate</li>
+          <li><span class="bullet">+</span> <code>tap migrate scan</code> — one-shot survey of v1 corpus migratability</li>
+          <li><span class="bullet">+</span> 70+ community taps via <a href="https://github.com/LeonTing1010/tap-skills" style="color:var(--indigo-bright);text-decoration:underline;">tap-skills</a></li>
         </ul>
         <a href="#install" class="price-btn price-btn--outline">Install Free</a>
       </div>
@@ -3535,13 +3540,13 @@ test(<span class="s">"login"</span>, <span class="k">async</span> ({ page }) =&g
         <div class="price-divider"></div>
         <ul class="price-features">
           <li><span class="bullet">+</span> Everything in Spec &amp; Run</li>
-          <li><span class="bullet">+</span> <strong>Forge</strong> — <code>forge.inspect</code> + <code>forge.draft</code> turn URLs or NL into bare v2 Plans (Claude/GPT/Ollama BYOK)</li>
+          <li><span class="bullet">+</span> <strong>Forge</strong> — <code>tap capture &lt;url&gt; --intent "..."</code> turns URLs or NL into bare v2 Plans (Claude/GPT/Ollama BYOK)</li>
           <li><span class="bullet">+</span> Deterministic templates cover ~80% of common shapes; AI fills the long tail</li>
           <li><span class="bullet">+</span> Up to <strong>5 plans</strong> in fleet</li>
-          <li><span class="bullet">+</span> <code>tap-v2 mcp-tool</code> — expose any plan as a typed MCP tool</li>
+          <li><span class="bullet">+</span> Every saved tap auto-projects as a typed MCP tool — <code>&lt;site&gt;.&lt;name&gt;</code></li>
           <li><span class="bullet">+</span> Works in Claude Code, Cursor, Cline, Windsurf — any MCP host</li>
         </ul>
-        <a href="https://www.creem.io/payment/prod_2ueXfXelMdowyjKmHlSxBk?utm_source=taprun.dev&utm_campaign=capture" class="price-btn price-btn--outline">Start Capturing</a>
+        <a href="https://www.creem.io/payment/{{ site.data.cli.tiers[1].creem_id }}?utm_source=taprun.dev&utm_campaign=capture" class="price-btn price-btn--outline">Start Capturing</a>
       </div>
 
       <div class="price-card price-card--featured">
@@ -3553,17 +3558,17 @@ test(<span class="s">"login"</span>, <span class="k">async</span> ({ page }) =&g
         </div>
         <div class="price-amount"><span class="currency">$</span>49<span class="period">/mo</span></div>
         <div class="price-label">When the site changes, plans fix themselves.</div>
-        <p class="price-poem">Minor frontend change broke your selectors? Doctor flags it before your pipeline notices. AI rewrites the broken op while you sleep, then caches the fix — subsequent runs replay at 0 tokens.</p>
+        <p class="price-poem">Minor frontend change broke your selectors? <code>tap verify</code> flags it before your pipeline notices. AI rewrites the broken op while you sleep, then caches the fix — subsequent runs replay at 0 tokens.</p>
         <div class="price-divider"></div>
         <ul class="price-features">
           <li><span class="bullet">+</span> Everything in Capture</li>
-          <li><span class="bullet">+</span> <strong>3-path heal</strong> — cache hit (0 tokens) → minimal-patch (~1.1K) → full rewrite (~14K)</li>
+          <li><span class="bullet">+</span> <strong>3-path repair pipeline</strong> — cache hit (0 tokens) → minimal-patch (~1.1K) → full rewrite (~14K)</li>
           <li><span class="bullet">+</span> Up to <strong>20 plans</strong> in fleet</li>
-          <li><span class="bullet">+</span> Per-tap <code>fingerprint_equivalent</code> CEL — 40% false-positive reduction (PoC-measured)</li>
-          <li><span class="bullet">+</span> Heal history + drift report archive</li>
-          <li><span class="bullet">+</span> 100% local — heal runs on your machine</li>
+          <li><span class="bullet">+</span> Per-tap <code>snapshot_equivalent</code> CEL — 40% false-positive reduction (PoC-measured)</li>
+          <li><span class="bullet">+</span> Repair history + drift report archive</li>
+          <li><span class="bullet">+</span> 100% local — repair runs on your machine</li>
         </ul>
-        <a href="https://www.creem.io/payment/prod_79SU00FKJvcgEdPqYst2mQ?utm_source=taprun.dev&utm_campaign=repair" class="price-btn price-btn--gold">Get Repair</a>
+        <a href="https://www.creem.io/payment/{{ site.data.cli.tiers[2].creem_id }}?utm_source=taprun.dev&utm_campaign=repair" class="price-btn price-btn--gold">Get Repair</a>
       </div>
 
     </div>
@@ -3577,7 +3582,7 @@ test(<span class="s">"login"</span>, <span class="k">async</span> ({ page }) =&g
     </div>
 
     <p class="pricing-proof reveal">
-      <code>tap-v2 / @taprun/spec 1.0</code><span class="proof-sep">·</span>4 npm packages live<span class="proof-sep">·</span>local execution<span class="proof-sep">·</span><code>$0</code>/run on free tier
+      <code>tap CLI / @taprun/spec 1.0</code><span class="proof-sep">·</span>5 npm packages live<span class="proof-sep">·</span>local execution<span class="proof-sep">·</span><code>$0</code>/run on free tier
     </p>
   </div>
 </section>
@@ -3596,7 +3601,7 @@ test(<span class="s">"login"</span>, <span class="k">async</span> ({ page }) =&g
       </details>
       <details class="faq-item">
         <summary>What happens when the site changes?</summary>
-        <div class="faq-answer">Run <code>tap-v2 doctor</code>. The verdict is one of four — <code>equivalent · drifted · baseline-set · unreachable</code> — derived from a per-tap CEL <code>fingerprint_equivalent</code> predicate. You declare what counts as drift; doctor never guesses. On the Repair tier, <code>tap-v2 fix</code> proposes an AI-written patch; refresh rebaselines after human approval.</div>
+        <div class="faq-answer">Run <code>tap verify &lt;site&gt;/&lt;name&gt;</code>. The verdict is one of four — <code>equivalent · drifted · first_snapshot · unreachable</code> — derived from a per-tap CEL <code>snapshot_equivalent</code> predicate. You declare what counts as drift; verify never guesses. On the Repair tier, re-running <code>tap capture</code> against the same site/name proposes an AI-written patch; the next <code>verify</code> rebaselines after human approval.</div>
       </details>
       <details class="faq-item">
         <summary>Is my data safe?</summary>
@@ -3752,15 +3757,15 @@ if (navToggle && navLinks) {
 
 // ===== Terminal animation (scroll-triggered, one-time, char-by-char for commands) =====
 //
-// Hero demo: `tap doctor` — the health check dashboard. Shows new visitors
-// what an active Taprun user sees when running doctor on their fleet: healthy
-// taps pass, broken taps get caught with precise diagnostics (fingerprint
-// diff, health contract violations with range/pattern). This is Taprun's #1
+// Hero demo: `tap verify` — the snapshot equivalence dashboard. Shows new
+// visitors what an active Taprun user sees when verifying their fleet: healthy
+// taps pass, broken taps get caught with precise diagnostics (snapshot diff,
+// health contract violations with range/pattern). This is Taprun's #1
 // differentiator: silent failure detection that no other tool provides.
 (function() {
   // type: 'type' = char-by-char typing, 'print' = instant line appear
   var lines = [
-    { type: 'type',  text: '$ tap-v2 doctor', delay: 0, speed: 50 },
+    { type: 'type',  text: '$ tap verify --all', delay: 0, speed: 50 },
     { type: 'print', html: '&nbsp;', delay: 700 },
     { type: 'print', html: '  <span class="cmd">Health check</span>              <span class="muted">47 taps in fleet</span>', delay: 800 },
     { type: 'print', html: '&nbsp;', delay: 900 },
@@ -3769,14 +3774,14 @@ if (navToggle && navLinks) {
     { type: 'print', html: '  <span style="color:#6ee7b7">\u2713</span> reddit/search        <span class="muted">25 rows</span>   <span style="color:#6ee7b7">ok</span>     <span class="muted">1.2s</span>', delay: 1400 },
     { type: 'print', html: '  <span style="color:#f87171">\u2717</span> ecommerce/products   <span class="muted"> 0 rows</span>   <span style="color:#f87171">drifted</span> <span class="muted">2.1s</span>', delay: 1600 },
     { type: 'print', html: '    <span style="color:#f87171">range:</span> <span class="muted">"price" value 0.99 outside [1, 50000] in 3 rows</span>', delay: 1900 },
-    { type: 'print', html: '    <span style="color:#fbbf24">\u26A0</span> <span class="muted">fingerprint: semantic_hash changed on .product-card</span>', delay: 2100 },
+    { type: 'print', html: '    <span style="color:#fbbf24">\u26A0</span> <span class="muted">snapshot: semantic_hash changed on .product-card</span>', delay: 2100 },
     { type: 'print', html: '  <span style="color:#6ee7b7">\u2713</span> arxiv/search         <span class="muted">15 rows</span>   <span style="color:#6ee7b7">ok</span>     <span class="muted">1.8s</span>', delay: 2300 },
     { type: 'print', html: '  <span class="muted">... 42 more passed</span>', delay: 2500 },
     { type: 'print', html: '&nbsp;', delay: 2700 },
     { type: 'print', html: '  <span class="table-border">\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500</span>', delay: 2800 },
     { type: 'print', html: '  <span style="color:#6ee7b7">46 equivalent</span>  <span style="color:#f87171">1 drifted</span>  <span class="muted">0 unreachable</span>      <span class="muted">12.4s</span>', delay: 3000 },
     { type: 'print', html: '&nbsp;', delay: 3200 },
-    { type: 'print', html: '  <span class="muted">Run</span> <span class="cmd">tap-v2 fix ecommerce/products</span> <span class="muted">to escalate through cache → minimal-patch → rewrite</span>', delay: 3400 }
+    { type: 'print', html: '  <span class="muted">Run</span> <span class="cmd">tap capture &lt;url&gt; ecommerce/products</span> <span class="muted">to escalate through cache → minimal-patch → rewrite</span>', delay: 3400 }
   ];
 
   var terminalEl = document.getElementById('terminal-output');

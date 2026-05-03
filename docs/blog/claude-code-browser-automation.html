@@ -105,7 +105,7 @@ hr { border: none; border-top: 1px solid rgba(20,17,12,0.15); margin: 48px 0; }
 <tr><td><strong>Login sessions</strong></td><td>Yes &mdash; reuses your real cookies</td><td>No &mdash; logs out every run</td><td>Yes via Browserbase Sessions</td></tr>
 <tr><td><strong>Credentials leave your machine?</strong></td><td>Never (architecturally)</td><td>Never (no auth at all)</td><td>Yes &mdash; cookies cross to Browserbase cloud</td></tr>
 <tr><td><strong>Token cost per run</strong></td><td>Zero (compiled <code>.tap.json</code> plans)</td><td>Per-step LLM call</td><td>Per-step LLM call (cloud-side)</td></tr>
-<tr><td><strong>Drift detection</strong></td><td>Built-in &mdash; <code>tap doctor</code></td><td>Manual</td><td>Manual</td></tr>
+<tr><td><strong>Drift detection</strong></td><td>Built-in &mdash; <code>tap verify</code></td><td>Manual</td><td>Manual</td></tr>
 <tr><td><strong>Pricing</strong></td><td>Free; $19/mo for AI compile, $49/mo for self-heal</td><td>Free</td><td>Browserbase usage-based</td></tr>
 <tr><td><strong>Best for</strong></td><td>Logged-in tasks, repeat workflows, deterministic pipelines</td><td>Public sites, one-shot scrapes</td><td>Cloud-first orchestration with budget</td></tr>
 </tbody>
@@ -163,10 +163,10 @@ hr { border: none; border-top: 1px solid rgba(20,17,12,0.15); margin: 48px 0; }
 <div class="cta">
 <h3>Install</h3>
 <pre>brew install LeonTing1010/tap/tap
-tap mcp connect    # registers Tap with your Claude Code config</pre>
+tap mcp stdio      # point your Claude Code mcpServers config at this command</pre>
 </div>
 
-<p>The first <code>tap mcp connect</code> opens a Chrome extension prompt. Approve it. Tap is now an MCP server in your Claude Code session, with 31 tools covering nav, click, fetch, extract, and a forge pipeline that compiles new automations from natural language.</p>
+<p>Once registered, Tap is an MCP server in your Claude Code session with 3 meta verbs (<code>capture</code> / <code>verify</code> / <code>mark</code>) plus auto-projected per-plan tools (<code>&lt;site&gt;.&lt;name&gt;</code>) for every saved tap. AI participates only at <code>capture</code> time.</p>
 
 <p>From there: ask Claude Code to do something on a logged-in site. It'll use Tap as the runtime. The first run is interactive; the second run replays the compiled <code>.tap.json</code> plan at zero LLM tokens.</p>
 

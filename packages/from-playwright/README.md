@@ -6,7 +6,7 @@
 npm install @taprun/from-playwright @taprun/spec
 ```
 
-Take any Playwright `.ts/.js` script, get back a v2 `Plan` that `tap doctor` and `tap heal` understand. Reuse the script you already have; add monitoring + self-healing on top.
+Take any Playwright `.ts/.js` script, get back a v2 `Plan` that `tap verify` and `tap capture` (heal-via-recapture) understand. Reuse the script you already have; add drift detection + repair on top.
 
 ## v1.0 — v2 schema
 

@@ -131,29 +131,30 @@ hr { border: none; border-top: 1px solid rgba(20,17,12,0.15); margin: 48px 0; }
 <h2>The Two-Layer Model</h2>
 
 <pre><span class="comment">Layer 1: MCP (Authoring)</span>
-<span class="flag">forge.inspect</span>    <span class="comment">→ AI analyzes the site</span>
-<span class="flag">forge.verify</span>     <span class="comment">→ AI tests the program</span>
-<span class="flag">forge.save</span>       <span class="comment">→ program saved to disk</span>
+<span class="flag">capture</span>     <span class="comment">→ AI inspects the site, picks the strongest structural address,</span>
+            <span class="comment">  emits a bare v2 Plan. With site+name, persisted to disk.</span>
+<span class="flag">verify</span>      <span class="comment">→ snapshot equivalence check; 4-arm verdict.</span>
 <span class="comment">
-AI participates. Tokens consumed. One-time cost.
+AI participates during capture. Tokens consumed. One-time cost.
 
 ─────────────────────────────────────────────</span>
 
-<span class="comment">Layer 2: CLI (Execution)</span>
-<span class="cmd">tap.run</span>          <span class="comment">→ program executes</span>
+<span class="comment">Layer 2: Execution</span>
+<span class="cmd">&lt;site&gt;.&lt;name&gt;</span>   <span class="comment">→ saved tap auto-projects as MCP tool; runs deterministically</span>
+<span class="cmd">tap &lt;site&gt;/&lt;name&gt;</span>  <span class="comment">→ same plan, run from CLI</span>
 <span class="comment">
 Zero AI. Zero tokens. Deterministic. Forever.</span></pre>
 
-<p>MCP is the authoring layer. It's where AI discovers what the site looks like, what API endpoints are available, which selectors match the data, and how to structure the extraction. This is a one-time process &mdash; forge &mdash; that produces a <code>.tap.js</code> file.</p>
+<p>MCP is the authoring layer. It's where AI inspects what the site looks like, what API endpoints are available, which structural address (JSON-LD / RSS / OpenAPI / OpenGraph / HTML list) carries the answer, and how to structure the extraction. This is a one-time process &mdash; <code>capture</code> &mdash; that produces a <code>.plan.json</code> file.</p>
 
-<p>After that, <code>tap.run</code> executes the program directly. No MCP. No schema injection. No token overhead. The program is JavaScript. It runs in less than a second.</p>
+<p>After that, the saved tap auto-projects as the MCP tool <code>&lt;site&gt;.&lt;name&gt;</code> and replays at zero AI tokens. No re-inspection. No schema injection on every call. No token overhead. The plan is bare JSON. It runs in less than a second.</p>
 
 <h2>The Numbers</h2>
 
 <p>raphasouthall measured MCP overhead precisely for a 21-tool server:</p>
 
 <table>
-<tr><th></th><th>MCP</th><th>CLI / tap.run</th></tr>
+<tr><th></th><th>MCP capture</th><th>Saved-tap replay</th></tr>
 <tr><td>Upfront cost</td><td>~1,300 tokens (schema injection)</td><td>0</td></tr>
 <tr><td>Per-call cost</td><td>~800 tokens</td><td>~750 tokens</td></tr>
 <tr><td>After 10 calls</td><td>~880 tokens/call (amortized)</td><td>750 tokens/call</td></tr>
@@ -163,23 +164,16 @@ Zero AI. Zero tokens. Deterministic. Forever.</span></pre>
 
 <p>Tap's architecture makes this explicit: <strong>pay the MCP overhead once during forge, then run at zero overhead forever.</strong></p>
 
-<h2>How Tap's 40 MCP Tools Don't Blow Up Your Context</h2>
+<h2>How Tap's MCP Surface Stays Small</h2>
 
-<p>The obvious concern: Tap ships 40 MCP tools. With 21 tools costing ~1,300 tokens of schema, 40 tools should cost ~2,500+. That's over 1% of a 200k context window before you even ask a question.</p>
+<p>Tap exposes a deliberately small MCP surface: <strong>3 meta verbs</strong> (<code>capture</code> / <code>verify</code> / <code>mark</code>) plus <strong>N saved-tap projections</strong> (one MCP tool per saved <code>&lt;site&gt;/&lt;name&gt;.plan.json</code>). The meta verbs cost a fixed ~600 tokens of schema; saved-tap projections only list the taps you've authored.</p>
 
-<p>Tap uses <strong>deferred tool loading</strong>. Only 12 core tools load at session start (~600 tokens). The other 28 &mdash; forge, doctor, fix, trace, watch, explain &mdash; load on demand, only when the agent actually needs them.</p>
+<pre><span class="comment"># Meta verbs (always available, ~600 tokens schema)</span>
+<span class="output">capture</span>   <span class="output">verify</span>   <span class="output">mark</span>
 
-<pre><span class="comment"># What loads at session start (Tier 1 — always available)</span>
-<span class="output">tap.list</span>   <span class="output">tap.run</span>    <span class="output">tap.doctor</span>   <span class="output">tap.nav</span>
-<span class="output">tap.click</span>  <span class="output">tap.type</span>   <span class="output">tap.eval</span>     <span class="output">tap.find</span>
-<span class="output">tap.screenshot</span>  <span class="output">tap.runtime</span>  <span class="output">tap.pressKey</span>  <span class="output">tap.upload</span>
-
-<span class="comment"># What loads on demand (Tier 2 — disclosed via hints)</span>
-<span class="flag">tap.fix</span>    <span class="flag">tap.explain</span>   <span class="flag">tap.trace</span>    <span class="flag">tap.watch</span>
-<span class="flag">tap.refresh</span>   <span class="flag">tap.cookies</span>   <span class="flag">tap.wait</span>   <span class="flag">...</span>
-
-<span class="comment"># Forge tools — only load during forge sessions</span>
-<span class="flag">forge.inspect</span>   <span class="flag">forge.draft</span>   <span class="flag">forge.verify</span>   <span class="flag">forge.save</span></pre>
+<span class="comment"># Per-tap projections (one entry per saved plan)</span>
+<span class="flag">github.trending</span>     <span class="flag">hackernews.hot</span>     <span class="flag">arxiv.search</span>
+<span class="flag">reddit.hot</span>          <span class="flag">douban.top250</span>      <span class="flag">...</span></pre>
 
 <p>This is the same pattern the community arrived at independently:</p>
 

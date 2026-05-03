@@ -22,7 +22,7 @@ Annotation envelope, 24-op union, op:exec body). v2 ships:
 - **State-machine enums** — `Verdict` (4 arms) and `IntentState` (5 arms).
 - **CEL expressions** — `CelExpr` replaces JSONata for predicates.
 
-Migrate via the `tap-v2 migrate-legacy` CLI. Lockfiles on `^0.4.x`
+Migrate via the `tap migrate scan` CLI. Lockfiles on `^0.4.x`
 continue to resolve; new installs get v1.0.
 
 Full design: [ADR 2026-05-04-ecosystem-v2-launch](https://github.com/LeonTing1010/tap/blob/main/docs/adr/2026-05-04-ecosystem-v2-launch.md).

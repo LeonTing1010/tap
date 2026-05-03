@@ -126,15 +126,15 @@ hr { border: none; border-top: 1px solid rgba(20,17,12,0.15); margin: 48px 0; }
 
 <h2>Tap: The Compiler Model</h2>
 
-<p>Tap takes a different approach. AI inspects the website once, then compiles what it learns into a <code>.tap.js</code> program. That program runs forever — no AI, no tokens, no variance.</p>
+<p>Tap takes a different approach. AI inspects the website once, then compiles what it learns into a <code>.plan.json</code> program. That program runs forever — no AI, no tokens, no variance.</p>
 
 <pre><span class="comment"># First time: AI inspects and compiles (~5 min, one-time cost)</span>
-<span class="cmd">$ tap forge</span> <span class="flag">https://news.ycombinator.com</span>
-<span class="output">✓ Tier 0 compiled — no AI needed (RSS feed detected)</span>
-<span class="output">✓ Saved: hackernews/hot.tap.js</span>
+<span class="cmd">$ tap capture</span> <span class="flag">https://news.ycombinator.com hackernews/hot --intent "top stories"</span>
+<span class="output">✓ Deterministic template hit — no AI needed (RSS feed detected)</span>
+<span class="output">✓ Saved: ~/.tap/plans/hackernews/hot.plan.json</span>
 
 <span class="comment"># Every time after: instant, deterministic, $0</span>
-<span class="cmd">$ tap hackernews hot</span>
+<span class="cmd">$ tap hackernews/hot</span>
 <span class="output">1. Show HN: I built a...     342 points  |  128 comments
 2. Why X is better than Y    287 points  |   94 comments
 ...</span></pre>
@@ -148,11 +148,11 @@ hr { border: none; border-top: 1px solid rgba(20,17,12,0.15); margin: 48px 0; }
 <tr><td><strong>AI cost per run</strong></td><td>$0.50–$2.00</td><td class="highlight-row">$0 (after first compile)</td></tr>
 <tr><td><strong>Reliability</strong></td><td>60–95% (varies per run)</td><td class="highlight-row">100% deterministic</td></tr>
 <tr><td><strong>Speed</strong></td><td>12 min per task (M3 Max)</td><td class="highlight-row">&lt;1s per run</td></tr>
-<tr><td><strong>Breakage detection</strong></td><td>None (silent empty arrays)</td><td class="highlight-row">Doctor + fingerprint diff</td></tr>
-<tr><td><strong>Self-healing</strong></td><td>No</td><td class="highlight-row">Doctor diagnostics + AI heal</td></tr>
+<tr><td><strong>Breakage detection</strong></td><td>None (silent empty arrays)</td><td class="highlight-row">tap verify + per-tap CEL snapshot_equivalent</td></tr>
+<tr><td><strong>Self-repair</strong></td><td>No</td><td class="highlight-row">Re-run capture against same site/name → AI patch</td></tr>
 <tr><td><strong>Output format</strong></td><td>Variable (AI-generated)</td><td class="highlight-row">Structured (same schema every time)</td></tr>
 <tr><td><strong>Offline capable</strong></td><td>No</td><td class="highlight-row">Yes (zero AI at runtime)</td></tr>
-<tr><td><strong>MCP native</strong></td><td>No</td><td class="highlight-row">Yes (40+ MCP tools)</td></tr>
+<tr><td><strong>MCP native</strong></td><td>No</td><td class="highlight-row">Yes (3 meta verbs + per-tap auto-projection)</td></tr>
 </table>
 
 <h2>When Browser Use Is the Right Tool</h2>
@@ -168,12 +168,12 @@ hr { border: none; border-top: 1px solid rgba(20,17,12,0.15); margin: 48px 0; }
 <ol>
 <li><strong>Install Tap</strong> — <code>npx -y @taprun/cli --version</code> (zero install)</li>
 <li><strong>Identify your recurring tasks</strong> — any Browser Use workflow you run more than once</li>
-<li><strong>Forge a tap</strong> — <code>tap forge &lt;url&gt;</code> for API/RSS sites (no AI needed), or <code>tap forge "description"</code> with BYOK</li>
-<li><strong>Verify and save</strong> — Tap runs the program live, scores the output, saves with fingerprint</li>
-<li><strong>Run forever</strong> — <code>tap site name</code> anytime, $0 per run</li>
+<li><strong>Capture a tap</strong> — <code>tap capture &lt;url&gt; &lt;site&gt;/&lt;name&gt; --intent "..."</code>; deterministic templates handle RSS / JSON-LD / OpenAPI / OpenGraph for free, AI fills the long tail (BYOK)</li>
+<li><strong>Verify and save</strong> — Tap lints the plan, persists to <code>~/.tap/plans/&lt;site&gt;/&lt;name&gt;.plan.json</code>, and writes the first Snapshot on next <code>tap verify</code></li>
+<li><strong>Run forever</strong> — <code>tap &lt;site&gt;/&lt;name&gt;</code> anytime, $0 per run</li>
 </ol>
 
-<p>140+ community skills are ready to run with zero forging needed — GitHub trending, Reddit front page, Hacker News, arXiv search, and more.</p>
+<p>70+ community taps are ready to run with zero capture needed — GitHub trending, Reddit front page, Hacker News, arXiv search, and more.</p>
 
 <h2>Cost Reality Check</h2>
 
@@ -193,8 +193,8 @@ hr { border: none; border-top: 1px solid rgba(20,17,12,0.15); margin: 48px 0; }
 <div class="cta">
 <h3>Try it free</h3>
 <pre><span class="cmd">$ npx -y @taprun/cli --version</span>
-<span class="cmd">$ tap forge</span> <span class="flag">https://news.ycombinator.com</span>  <span class="comment"># Tier 0 — no AI needed</span>
-<span class="cmd">$ tap hackernews hot</span>              <span class="comment"># $0. Forever.</span></pre>
+<span class="cmd">$ tap capture</span> <span class="flag">https://news.ycombinator.com hackernews/hot --intent "top stories"</span>  <span class="comment"># deterministic template hits</span>
+<span class="cmd">$ tap hackernews/hot</span>              <span class="comment"># $0. Forever.</span></pre>
 </div>
 
 </div>

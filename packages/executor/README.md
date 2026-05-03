@@ -91,8 +91,8 @@ await runPipe(pipeDefinition, pipeArgs, myRun);
 
 ## What's NOT in the box (and why)
 
-- **Forge pipeline** (`forge.inspect`, `forge.verify`, `forge.save`) — that's Tap's compilation layer, not the engine. Stays in `tap-core`.
-- **Doctor / heal / quality scoring** — product features, not engine primitives.
+- **`capture` meta verb** (forge inspect + draft + lint + persist) — that's Tap's compilation layer, not the engine. Stays in `tap-core`.
+- **`verify` / repair / quality scoring** — product features, not engine primitives.
 - **Daemon / HTTP bridge** — runtime distribution problem, separate concern.
 - **Chrome extension runtime** — lives in the public [tap](https://github.com/LeonTing1010/tap) repo.
 

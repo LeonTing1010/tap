@@ -1,3 +1,7 @@
+---
+# Empty frontmatter opts this file into Jekyll Liquid processing without
+# applying a layout. Required so {% include %} and {{ site.data.cli.* }} work.
+---
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -104,30 +108,16 @@ hr { border: none; border-top: 1px solid rgba(20,17,12,0.15); margin: 48px 0; }
 
 <p>If you already have Tap installed, skip to your host below. Otherwise, install first:</p>
 
-<pre><span class="cmd">curl -fsSL https://taprun.dev/install.sh | bash</span></pre>
+<pre><span class="cmd">{{ site.data.cli.install.curl }}</span></pre>
 
-<h2>One command for all five hosts</h2>
+<h2>The MCP server entrypoint</h2>
 
-<p>Tap's <code>mcp connect</code> command auto-detects every MCP host installed on your machine and writes the correct config for each one. For most users, this is all you need:</p>
+<p>Tap exposes its MCP surface via the single <code>{{ site.data.cli.mcp.stdio }}</code> entrypoint. Every supported host points its <code>mcpServers</code> map at the same command — copy the config block below into the relevant file for your host, then restart the host.</p>
 
-<pre><span class="cmd">tap mcp connect</span>
-<span class="output">
-✓ Claude Code    registered    ~/.claude.json
-✓ Cursor         registered    ~/.cursor/mcp.json
-✓ Cline          registered    ~/Library/Application Support/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json
-✓ Windsurf       skipped       (not installed)
-✓ VS Code        skipped       (not installed)
-</span></pre>
+<pre><span class="cmd">{{ site.data.cli.mcp.stdio }}</span>      <span class="comment"># default; pipe stdin↔stdout to your MCP host</span>
+<span class="cmd">{{ site.data.cli.mcp.http }}</span>       <span class="comment"># streamable-HTTP transport on {{ site.data.cli.mcp.default_bind }}:{{ site.data.cli.mcp.default_port }} (bearer auth)</span></pre>
 
-<p>Done — restart your host and Tap is available as an MCP tool.</p>
-
-<p>If you want to be explicit, or auto-detect gets it wrong, target a single host:</p>
-
-<pre><span class="cmd">tap mcp connect claude-code</span>
-<span class="cmd">tap mcp connect cursor</span>
-<span class="cmd">tap mcp connect cline</span>
-<span class="cmd">tap mcp connect windsurf</span>
-<span class="cmd">tap mcp connect vscode</span></pre>
+<p>The host config tables below show exactly which file to edit per MCP host.</p>
 
 <h2>What actually gets written</h2>
 
@@ -140,7 +130,7 @@ hr { border: none; border-top: 1px solid rgba(20,17,12,0.15); margin: 48px 0; }
   <span class="flag">"mcpServers"</span>: {
     <span class="flag">"tap"</span>: {
       <span class="flag">"command"</span>: <span class="output">"npx"</span>,
-      <span class="flag">"args"</span>: [<span class="output">"-y"</span>, <span class="output">"@taprun/cli"</span>, <span class="output">"mcp"</span>, <span class="output">"start"</span>]
+      <span class="flag">"args"</span>: [<span class="output">"-y"</span>, <span class="output">"@taprun/cli"</span>, <span class="output">"mcp"</span>, <span class="output">"stdio"</span>]
     }
   }
 }</pre>
@@ -178,7 +168,7 @@ hr { border: none; border-top: 1px solid rgba(20,17,12,0.15); margin: 48px 0; }
     <span class="flag">"tap"</span>: {
       <span class="flag">"type"</span>: <span class="output">"stdio"</span>,
       <span class="flag">"command"</span>: <span class="output">"npx"</span>,
-      <span class="flag">"args"</span>: [<span class="output">"-y"</span>, <span class="output">"@taprun/cli"</span>, <span class="output">"mcp"</span>, <span class="output">"start"</span>]
+      <span class="flag">"args"</span>: [<span class="output">"-y"</span>, <span class="output">"@taprun/cli"</span>, <span class="output">"mcp"</span>, <span class="output">"stdio"</span>]
     }
   }
 }</pre>
@@ -188,21 +178,16 @@ hr { border: none; border-top: 1px solid rgba(20,17,12,0.15); margin: 48px 0; }
 
 <h2>Verifying the registration worked</h2>
 
-<p>After connecting, run:</p>
+<p>After editing the config and restarting the host, ask your agent to call the <code>capture</code> meta tool with a preview-only argument:</p>
 
-<pre><span class="cmd">tap mcp doctor</span>
-<span class="output">
-✓ Claude Code    registered &amp; handshake ok    tap v0.12.3
-✓ Cursor         registered &amp; handshake ok    tap v0.12.3
-✓ Cline          registered but host not open   (start Cline to verify)
-</span></pre>
+<pre><span class="cmd">capture { url: "https://news.ycombinator.com" }</span></pre>
 
-<p>Doctor does a real JSON-RPC <code>initialize</code> round-trip against each registered server, so a green check means "Claude/Cursor/Cline can actually invoke tap", not just "a config file exists". Silent config-present-but-server-broken is one of the most confusing MCP failures; doctor rules it out.</p>
+<p>If it returns a <code>ToolResult</code> with <code>inspection.source_class</code> populated, the host can talk to Tap end-to-end. Silent config-present-but-server-broken is one of the most confusing MCP failures; this single round-trip rules it out.</p>
 
 <h2>Troubleshooting</h2>
 
-<h3>"Host not detected"</h3>
-<p>Tap's detection checks for the host's config dir, not whether the host is running. If you've installed Claude Code / Cursor / etc. but never opened it, the config dir may not exist yet. Open the host once, then re-run <code>tap mcp connect</code>.</p>
+<h3>"Host doesn't load the config file"</h3>
+<p>Make sure the host's config directory actually exists. If you've installed Claude Code / Cursor / etc. but never opened it, the config dir may not exist yet. Open the host once, create the file, then restart.</p>
 
 <h3>"Registered but host doesn't see Tap"</h3>
 <p>Most hosts need a restart to pick up MCP config changes. Quit the host fully (Cmd+Q on macOS, not just close-window) and relaunch. VS Code specifically: the <code>mcp.json</code> file is read on workspace open, so reload your window.</p>
@@ -227,13 +212,12 @@ hr { border: none; border-top: 1px solid rgba(20,17,12,0.15); margin: 48px 0; }
 
 <blockquote><p>"Use tap to forge a program that pulls my Shopify unfulfilled orders and returns them as a table."</p></blockquote>
 
-<p>Your host will call <code>forge.inspect</code> on shopify.com, walk through the structural layers, and compile a deterministic program you can run forever. The program lives at <code>~/.tap/taps/shopify/unfulfilled-orders.tap.json</code> — inspectable, diffable, yours.</p>
+<p>Your host will call the <code>capture</code> meta verb with <code>{ url, intent, site, name }</code>, walk through the structural layers, and compile a deterministic program you can run forever. The program lives at <code>~/.tap/plans/shopify/unfulfilled-orders.plan.json</code> — inspectable, diffable, yours.</p>
 
 <div class="cta">
 <h3>Start here</h3>
 <pre><span class="cmd">curl -fsSL https://taprun.dev/install.sh | bash</span>
-<span class="cmd">tap mcp connect</span>
-<span class="cmd">tap bridge start</span>       <span class="comment"># link Tap to your real Chrome</span></pre>
+<span class="cmd">tap mcp stdio</span>           <span class="comment"># point your MCP host at this command</span></pre>
 </div>
 
 <hr>

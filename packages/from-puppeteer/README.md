@@ -7,7 +7,7 @@ npm install @taprun/from-puppeteer @taprun/spec
 ```
 
 Take any Puppeteer `.ts/.js` script, get back a v2 `Plan` object that
-`tap-v2 doctor` and `tap-v2 run` understand.
+`tap verify` and `tap <site>/<name>` understand.
 
 ## Status
 
@@ -40,7 +40,7 @@ focus first.
 **mandatory `returns.type`** declaration. The adapter emits a TODO
 placeholder — you MUST paste the real function body and refine
 `returns.type` (string / number / boolean / object / array) before the
-plan will pass `tap-v2 lint`.
+plan will pass `tap`'s save-time lint.
 
 ## Read vs Write variant
 

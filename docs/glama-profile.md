@@ -54,33 +54,30 @@ same result every call.
 
 Works with Claude Code, Cursor, Cline, Windsurf, and any MCP host.
 Runs in the user's real Chrome (login sessions available) or headless
-Playwright. 140+ pre-built skills across 68+ sites (Reddit, GitHub,
-Hacker News, LinkedIn, Twitter, YouTube, Producthunt, and more) — plus
-forge your own from any URL in seconds.
+Playwright. 70+ pre-built taps via tap-skills — plus forge your own
+from any URL in seconds.
 
 What makes Tap different from runtime-AI browsers (Claude for Chrome,
 Atlas, browser-use): Tap separates authoring from execution. The agent
-pays tokens once to forge; production runs are pure code. Health
-contracts and structural fingerprints catch silent drift the moment a
+pays tokens once to capture; production runs are pure code. Per-tap
+CEL `snapshot_equivalent` predicates catch silent drift the moment a
 site changes — not three days later when your pipeline is already
 pumping garbage into a database.
 
-Eight core tools with progressive disclosure:
-  • tap.list       — discover available skills
-  • tap.run        — execute a skill (zero-AI, deterministic)
-  • tap.doctor     — health check + drift detection
-  • tap.fix        — diagnose and repair a broken skill
-  • tap.runtime    — switch Chrome ↔ headless
-  • forge.inspect  — analyze a page (framework, API, SSR, auth, selectors)
-  • forge.draft    — load a plan in memory and verify live
-  • forge.save     — persist the skill to disk and git
+Three meta verbs + N saved-tap projections:
+  • capture           — create a tap from URL × intent
+  • verify            — read-only substrate check; 4-arm verdict
+                        (equivalent / drifted / first_snapshot / unreachable)
+  • mark              — resolve uncertain intent → committed / aborted
+  • <site>.<name>     — every saved tap auto-projects as an MCP tool
 
-Local-first architecture: skills live in ~/.tap/, the binary is a single
-zero-dependency Deno compile, and nothing leaves your machine except
-license validation. Free tier covers tap.list / tap.run / tap.doctor
-with unlimited use.
+Local-first architecture: taps live in ~/.tap/plans/, the binary is a
+single zero-dependency Deno compile, and nothing leaves your machine
+except license validation. Free tier covers all meta verbs and
+saved-tap execution; pricing tiers cap saved-plan count (3 / 5 / 20)
+via core/auth.ts:gateCaptureSave.
 
-Install:  npx -y @taprun/cli mcp start
+Install:  npx -y @taprun/cli mcp stdio
 Homepage: https://taprun.dev
 ```
 
@@ -172,8 +169,8 @@ npx -y @taprun/cli mcp connect
 - **Real Chrome or headless.** Logged-in sessions work out of the box.
 - **Drift detection.** Cross-validates JSON-LD / API / DOM so "wrong node,
   right shape" failures don't pass silently.
-- **140+ pre-built skills** across 68+ sites. Or forge your own from any URL.
-- **Local-first.** Skills live on your machine. No cloud sync, no data leaks.
+- **70+ pre-built taps via tap-skills.** Or forge your own from any URL.
+- **Local-first.** Taps live on your machine. No cloud sync, no data leaks.
 
 ### Compatible MCP hosts
 
@@ -183,7 +180,7 @@ Claude Code · Cursor · Cline · Windsurf · Continue · any stdio MCP client.
 
 - Homepage: https://taprun.dev
 - Blog / deep dives: https://taprun.dev/blog
-- 140+ community skills: https://github.com/LeonTing1010/tap-skills
+- 70+ community taps: https://github.com/LeonTing1010/tap-skills
 - Chrome extension: https://chromewebstore.google.com/detail/tap/llcidejeoobdegbkolbjhfoeckphldce
 ```
 
@@ -195,16 +192,12 @@ These are the current canonical descriptions in `core/src/mcp.ts` —
 mirror them on Glama so the profile shows the same surface the agent
 sees. Keep them ≤160 chars each for Glama display truncation.
 
-| Tool           | Description (Glama-tuned) |
-|----------------|---------------------------|
-| `tap.list`     | Discover skills. No args → grouped summary. `{query}` → ranked search. `{site,name}` → full schema. |
-| `tap.run`      | Run a compiled skill. Zero AI, deterministic, ~100ms. Pass `{fresh:true}` to bypass the 5-min cache. |
-| `tap.doctor`   | Health check. Runs examples, diffs fingerprint, returns verdict: healthy / broken / stale / layer-mismatch. |
-| `tap.fix`      | Diagnose a broken skill: current DOM vs expected selectors, auth wall detection, redirect analysis, patch proposal. |
-| `tap.runtime`  | Switch between `chrome` (real browser, login sessions) and `headless` (Playwright, fast, no login). |
-| `forge.inspect`| Analyze any URL: framework, SSR state, API traffic, auth, a11y tree, anti-scraping mechanisms, extraction strategies. |
-| `forge.draft`  | Load a skill plan in memory and optionally verify it live against a URL. Returns score + rows. |
-| `forge.save`   | Persist the skill to `~/.tap/taps/` and auto-commit to git. Then `tap.run` executes it forever. |
+| Tool             | Description (Glama-tuned) |
+|------------------|---------------------------|
+| `capture`        | Create a tap from URL × intent. With site+name, persists to `~/.tap/plans/`. Re-call to heal drifted. |
+| `verify`         | Read-only substrate check. 4-arm verdict: equivalent / drifted / first_snapshot / unreachable. |
+| `mark`           | Resolve an `intent_uncertain` record → committed or aborted. Use after observing the side effect. |
+| `<site>.<name>`  | Every saved tap auto-projects as an MCP tool (e.g. `github.trending`). Args follow the plan's schema. |
 
 ---
 
@@ -213,8 +206,8 @@ sees. Keep them ≤160 chars each for Glama display truncation.
 Upload, in this order:
 
 1. `docs/social-preview.png` — brand card
-2. A terminal screenshot showing `tap doctor` flagging a drifted skill (generate via any broken demo skill)
-3. A Claude Code conversation using `tap.run github/trending` (real screenshot from `~/Documents/tap/extension/showcase/`)
+2. A terminal screenshot showing `tap verify` flagging a drifted tap (generate via any broken demo tap)
+3. A Claude Code conversation using the `github.trending` saved-tap projection (real screenshot from `~/Documents/tap/extension/showcase/`)
 
 Missing screenshots are the #1 ranking penalty on Glama — add at least 2.
 
@@ -229,5 +222,5 @@ Missing screenshots are the #1 ranking penalty on Glama — add at least 2.
 - [ ] Tags include `browser-automation`, `web-scraping`, `playwright`, `mcp-server`
 - [ ] No "open-source", "OSS", "FOSS", or "self-healing" anywhere (per CLAUDE.md rules)
 - [ ] Links resolve: taprun.dev, /blog, tap-skills repo, Chrome Web Store listing
-- [ ] Install command copies cleanly: `npx -y @taprun/cli mcp start`
+- [ ] Install command copies cleanly: `npx -y @taprun/cli mcp stdio`
 ```

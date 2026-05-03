@@ -150,14 +150,14 @@ hr { border: none; border-top: 1px solid rgba(20,17,12,0.15); margin: 48px 0; }
 <p>What if AI only ran <strong>once</strong> &mdash; at authoring time?</p>
 
 <pre><span class="comment"># Step 1: AI writes a deterministic program (one-time cost)</span>
-<span class="cmd">$</span> tap forge <span class="flag">"scrape Hacker News top stories"</span>
+<span class="cmd">$</span> tap capture <span class="flag">https://news.ycombinator.com hackernews/hot --intent "top stories"</span>
 <span class="output">&#9737; Inspecting https://news.ycombinator.com...</span>
-<span class="output">&#9737; AI writing program...</span>
-<span class="output">&#10004; Verified: 30 rows, score=1.0</span>
-<span class="output">&#10004; Saved: hackernews/hot.tap.js</span>
+<span class="output">&#9737; Deterministic template hit (RSS / JSON-LD)</span>
+<span class="output">&#10004; Lint passed</span>
+<span class="output">&#10004; Saved: ~/.tap/plans/hackernews/hot.plan.json</span>
 
 <span class="comment"># Step 2: Run forever. No AI. $0.</span>
-<span class="cmd">$</span> tap hackernews hot
+<span class="cmd">$</span> tap hackernews/hot
 <span class="output">30 rows (245ms) Cost: $0.00</span></pre>
 
 <p>The math flips completely:</p>
@@ -178,24 +178,25 @@ hr { border: none; border-top: 1px solid rgba(20,17,12,0.15); margin: 48px 0; }
 
 <p>True. But the solution isn't "re-run AI every time." It's <a href="your-scraper-is-broken.html">health contracts that detect breakage</a>, plus AI that fixes the program <em>only when needed</em>:</p>
 
-<pre><span class="comment"># Daily health check (no AI)</span>
-<span class="cmd">$</span> tap doctor
-<span class="output">hackernews/hot  &#10004; ok    30 rows</span>
-<span class="output">github/trending &#10004; ok    25 rows</span>
+<pre><span class="comment"># Daily snapshot equivalence check (no AI)</span>
+<span class="cmd">$</span> tap verify hackernews/hot
+<span class="output">verdict: equivalent    30 rows</span>
+<span class="cmd">$</span> tap verify github/trending
+<span class="output">verdict: equivalent    25 rows</span>
 
-<span class="comment"># Site changed? Auto-heal (AI runs once to fix)</span>
-<span class="cmd">$</span> tap doctor <span class="flag">--auto</span></pre>
+<span class="comment"># Site changed (verdict: drifted)? Re-capture against the same site/name</span>
+<span class="cmd">$</span> tap capture <span class="flag">https://news.ycombinator.com hackernews/hot</span></pre>
 
 <p>99% of runs need zero AI. You only pay for intelligence when the world changes.</p>
 
-<h2>195+ Programs, Ready to Run</h2>
+<h2>70+ Taps, Ready to Run</h2>
 
-<p>You don't even need to forge. 195+ community programs are included &mdash; Hacker News, GitHub, Reddit, BBC, ESPN, npm, and <a href="https://github.com/LeonTing1010/tap-skills">dozens more</a>.</p>
+<p>You don't even need to capture from scratch. 70+ community taps are available &mdash; Hacker News, GitHub, Reddit, BBC, ESPN, npm, and <a href="https://github.com/LeonTing1010/tap-skills">more</a>.</p>
 
-<pre><span class="cmd">$</span> tap update          <span class="comment"># install community programs</span>
-<span class="cmd">$</span> tap hackernews hot  <span class="comment"># run immediately, $0</span>
-<span class="cmd">$</span> tap github trending <span class="comment"># another one, $0</span>
-<span class="cmd">$</span> tap list            <span class="comment"># see all 195+</span></pre>
+<pre><span class="cmd">$</span> git clone https://github.com/LeonTing1010/tap-skills ~/.tap/skills  <span class="comment"># install community taps</span>
+<span class="cmd">$</span> tap hackernews/hot   <span class="comment"># run immediately, $0</span>
+<span class="cmd">$</span> tap github/trending  <span class="comment"># another one, $0</span>
+<span class="cmd">$</span> tap list             <span class="comment"># see everything available</span></pre>
 
 <hr>
 

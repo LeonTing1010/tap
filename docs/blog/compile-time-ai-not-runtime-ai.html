@@ -149,11 +149,11 @@ hr { border: none; border-top: 1px solid rgba(20,17,12,0.15); margin: 48px 0; }
 
 <h2>This is the architecture Tap is built on</h2>
 
-<p>Tap's plan format is a <a href="/spec/plan-v1/">closed 24-op union</a>. The full vocabulary is fixed; a plan cannot, at execution time, introduce an op the runtime doesn't know. The plan runtime is mechanically prevented from loading new code paths &mdash; a static guard rejects <code>new Worker</code>, <code>new Function</code>, <code>eval</code>, and dynamic <code>.js</code> imports inside the plan-runtime module. The model that wrote the plan cannot influence what runs.</p>
+<p>Tap's plan format is a <a href="/spec/plan-v1/">closed 11-op union</a>. The full vocabulary is fixed; a plan cannot, at execution time, introduce an op the runtime doesn't know. The plan runtime is mechanically prevented from loading new code paths &mdash; a static guard rejects <code>new Worker</code>, <code>new Function</code>, <code>eval</code>, and dynamic <code>.js</code> imports inside the plan-runtime module. The model that wrote the plan cannot influence what runs.</p>
 
-<p>Intent is declared on the envelope. <code>intent: "read"</code> taps run under <code>tap doctor</code> automatically and on every drift event. <code>intent: "write"</code> taps are explicitly skipped from automation paths and require an opt-in flag to execute. A read tap cannot quietly become a write tap; that's a different envelope, signed differently, requiring a different review.</p>
+<p>Read and write are unrepresentable as the wrong shape. The Plan TypeScript type is a discriminated union: the read variant has <code>act?: never; key?: never</code>; the write variant requires both. A read tap cannot quietly become a write tap; that's a different shape, fails compile, fails lint.</p>
 
-<p>And drift detection runs <em>before</em> data flows. <code>tap doctor</code> independently fetches the authoritative source (RSS, Schema.org JSON-LD, declared APIs) and compares against the plan's structural fingerprint. If the fingerprint stops matching, the plan is marked <code>broken</code> or <code>stale</code> and stops returning data, instead of returning wrong data. The verification arm sees what the plan was supposed to read, not what an LLM thinks the page now says.</p>
+<p>And drift detection runs <em>before</em> data flows. <code>tap verify</code> takes a Snapshot and applies the per-tap CEL <code>snapshot_equivalent</code> predicate against the prior baseline. If the predicate returns false, the verdict is <code>drifted</code> and the plan stops returning data, instead of returning wrong data. The verification arm sees what the plan was supposed to read, not what an LLM thinks the page now says.</p>
 
 <h2>What this architecture cannot prevent</h2>
 
@@ -175,7 +175,7 @@ hr { border: none; border-top: 1px solid rgba(20,17,12,0.15); margin: 48px 0; }
 
 <p>If your starting question is <em>&ldquo;what's the smallest deterministic program that does this task, and where does the AI need to participate?&rdquo;</em>, you usually find the answer is <em>once, at the beginning, supervised</em>. Then the program runs without the model, and the model isn't around to pick the wrong tool.</p>
 
-<p>The cost is that you have to define the op space ahead of time. Tap's bet is that for browser automation specifically, 24 ops is enough &mdash; we've shipped <a href="/taps/">200+ programs</a> against that vocabulary, and the ones that need a 25th are rare enough to handle as a governance event, not as runtime improvisation.</p>
+<p>The cost is that you have to define the op space ahead of time. Tap's bet is that for browser automation specifically, 11 ops is enough &mdash; the closed v2 union (7 substrate ops + 3 control flow + 1 typed-eval escape) covers the patterns we've shipped against, and a 12th op would be a governance event, not runtime improvisation.</p>
 
 <h2>The ask</h2>
 
@@ -186,9 +186,9 @@ hr { border: none; border-top: 1px solid rgba(20,17,12,0.15); margin: 48px 0; }
 <div class="cta">
 <h3>Try compile-time AI for browser work:</h3>
 <pre><span class="cmd">npm install -g @taprun/cli@latest</span>
-<span class="comment"># forge a program once, run forever:</span>
-<span class="cmd">tap forge https://your-site.com</span>
-<span class="cmd">tap run your-site/your-task</span></pre>
+<span class="comment"># capture a Plan once, run forever:</span>
+<span class="cmd">tap capture https://your-site.com your-site/your-task --intent "..."</span>
+<span class="cmd">tap your-site/your-task</span></pre>
 </div>
 
 </div>

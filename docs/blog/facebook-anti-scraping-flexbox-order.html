@@ -31,7 +31,7 @@
 <meta name="twitter:title" content="Facebook Scrambles Author Names, Not Post Bodies">
 <meta name="twitter:description" content="Facebook's anti-scraping is 90% bluff. Here's the diagnostic that proves it.">
 <meta name="twitter:image" content="https://taprun.dev/social-preview.png">
-<meta name="keywords" content="facebook scraping, flexbox order anti-scraping, DOM text scrambling, textContent garbage, custom font scraping defense, scraper diagnostic, tap forge">
+<meta name="keywords" content="facebook scraping, flexbox order anti-scraping, DOM text scrambling, textContent garbage, custom font scraping defense, scraper diagnostic, tap capture">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -220,8 +220,7 @@ fb_74ig3q     Snowie.Ai     https://facebook.com/SnowieAi         In 24 months e
 <div class="cta">
   <h3>Run the tap</h3>
   <pre><code><span class="cmd">curl -fsSL https://taprun.dev/install | sh
-tap mcp connect
-tap runtime chrome
+tap mcp stdio
 tap facebook/keyword-search keyword="AI automation" limit=5</span></code></pre>
   <p style="margin-top: 16px; margin-bottom: 0;">Reference + source: <a href="/taps/facebook/keyword-search.html">/taps/facebook/keyword-search</a>.</p>
 </div>

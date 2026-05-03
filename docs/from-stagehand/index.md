@@ -25,7 +25,7 @@ npm install @taprun/from-playwright@^1 @taprun/spec@^1
 npx from-playwright path/to/your/stagehand-script.ts > out.plan.json
 ```
 
-For the natural-language `stagehand.act()` / `.extract()` parts, the recommended path is to re-forge against the live page using `tap-v2 forge.draft` — most sites that work via NL also expose JSON-LD or a public API, so the AI compile usually finds a deterministic source. See the [Migration guide](/migration-guide/).
+For the natural-language `stagehand.act()` / `.extract()` parts, the recommended path is to re-capture against the live page using `tap capture <url> <site>/<name> --intent "..."` — most sites that work via NL also expose JSON-LD or a public API, so the AI compile usually finds a deterministic source. See the [Migration guide](/migration-guide/).
 
 ## Existing v0.x consumers
 

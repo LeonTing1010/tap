@@ -58,7 +58,7 @@ That single architectural axis — *where do logged-in cookies live during autom
 | **Plan representation** | TypeScript code: `act()`, `extract()`, `observe()` calls embedded in your `.ts` | Bare v2 Plan — 11-op closed union, pure data, no JS in the runtime path |
 | **AI in runtime?** | Yes — every `act()` calls an LLM to choose the next action (with caching) | No — LLM only at compile/`forge` time. Runtime is pure code. |
 | **Cookie / session storage** | Browserbase stores them (encrypted at rest, but they cross a boundary) | Local browser only — never serialized, never transmitted |
-| **What "self-healing" means** | LLM re-decides on retry when an `act()` fails | Structural fingerprint catches drift; `heal` re-compiles the broken op |
+| **What "self-repair" means** | LLM re-decides on retry when an `act()` fails | Per-tap CEL `snapshot_equivalent` catches drift; re-running `capture` against the same site/name re-compiles the broken op |
 | **Plan portability** | Locked to Stagehand SDK + Browserbase runtime | `.tap.json` runs on any Tap-compatible runtime (CLI, Chrome ext, future Playwright runtime) |
 | **Audit trail** | Read TypeScript source + LLM black box | `grep` `.tap.json` — every op is a row |
 | **License of the plan format** | Stagehand SDK is MIT but the format is whatever your TS code does | `tap-v1` namespace ([taprun.dev/ns/tap-v1](https://taprun.dev/ns/tap-v1/)), JSON Schema 2020-12, [@taprun/spec](https://www.npmjs.com/package/@taprun/spec) MIT |
@@ -93,7 +93,7 @@ That single architectural axis — *where do logged-in cookies live during autom
 
 3. **Zero LLM tokens at runtime.** A compiled `.tap.json` replays at $0 LLM cost, deterministically, every time. Stagehand's caching reduces but doesn't eliminate runtime LLM calls — every uncached path is a fresh inference.
 
-4. **Drift-aware doctor.** Tap's `doctor` independently fetches an authoritative source (JSON-LD / OpenAPI / sitemap / RSS) and cross-validates the scraped output against it. Stagehand's "self-healing" re-runs the LLM; Tap's `doctor` notices that a `name` extraction now matches schema.org's `Product` type 0% of the time.
+4. **Drift-aware verify.** Tap's `verify` independently fetches an authoritative source (JSON-LD / OpenAPI / sitemap / RSS) and cross-validates the scraped output against it. Stagehand's "self-healing" re-runs the LLM; Tap's `verify` notices that a `name` extraction now matches schema.org's `Product` type 0% of the time.
 
 5. **Bring-your-own-script via adapters.** Tap's [from-playwright](https://www.npmjs.com/package/@taprun/from-playwright), [from-puppeteer](https://www.npmjs.com/package/@taprun/from-puppeteer), and [from-stagehand](https://www.npmjs.com/package/@taprun/from-stagehand) packages convert existing source into `.tap.json`. You don't have to rewrite to start using Tap; Stagehand requires migration to its SDK.
 
@@ -132,9 +132,9 @@ if (!v.pass) throw new Error(JSON.stringify(v.failures));
 await writeFile("github/browserbase-search.tap.json", JSON.stringify(plan, null, 2));
 ```
 
-> **Note:** `from-stagehand` is **deprecated as of v2.** Stagehand requires Browserbase (cloud-coupled), which contradicts the local-first stance. The recommended path is `@taprun/from-playwright` against the deterministic page-level calls in your Stagehand script (Stagehand wraps Playwright anyway), then re-forge the natural-language portions via `tap-v2 forge.draft`. See the [Migration guide](/migration-guide/).
+> **Note:** `from-stagehand` is **deprecated as of v2.** Stagehand requires Browserbase (cloud-coupled), which contradicts the local-first stance. The recommended path is `@taprun/from-playwright` against the deterministic page-level calls in your Stagehand script (Stagehand wraps Playwright anyway), then re-capture the natural-language portions via `tap capture <url> <site>/<name> --intent "..."`. See the [Migration guide](/migration-guide/).
 
-The result is a *partially* deterministic plan. Tap's `doctor` can verify the deterministic portions; the NL portions remain Stagehand's job. Most production Stagehand scripts have a deterministic backbone with NL embellishments — Tap converts the backbone, and you keep using Stagehand for the NL parts.
+The result is a *partially* deterministic plan. Tap's `verify` can check the deterministic portions; the NL portions remain Stagehand's job. Most production Stagehand scripts have a deterministic backbone with NL embellishments — Tap converts the backbone, and you keep using Stagehand for the NL parts.
 
 ---
 

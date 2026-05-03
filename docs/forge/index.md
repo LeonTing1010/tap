@@ -1,25 +1,25 @@
 ---
-title: "forge — capture-plane agent"
-description: "Stable IRI for the forge agent. forge.inspect + forge.draft turn a URL or natural-language description into a deterministic v2 Plan. Deterministic templates first, AI long-tail."
+title: "forge — capture-plane engine"
+description: "Stable IRI for the forge engine. The `capture` meta verb turns a URL × natural-language intent into a deterministic v2 Plan. Deterministic templates first, AI long-tail."
 permalink: /forge/
 layout: default
 ---
 
 # forge
 
-> Stable identifier (`SoftwareAgent.id`) for the **forge** agent. Forge is the headline tool of the **Capture** plane — one of Tap's three primitive planes (Capture / Replay / Verify). Plans produced by forge carry `compiled_by` metadata so consumers can distinguish forge output from hand-edits.
+> Stable identifier (`SoftwareAgent.id`) for the **forge** engine. Forge is the engine behind the `capture` meta verb — one of Tap's three primitive planes (Capture / Replay / Verify). Plans produced by forge carry `compiled_by` metadata so consumers can distinguish forge output from hand-edits.
 
-## What this agent does
+## What this engine does
 
-Forge is split into two MCP tools that share an inspect cache:
+Forge is exposed via the single `capture` meta verb (per the v2 surface vocabulary — three meta verbs: `capture` / `verify` / `mark`). Internally it runs three stages that share an inspect cache:
 
-1. **`forge.inspect <url>`** — pulls the live page's structural signal: JSON-LD, schema.org, Annotation/RDFa data, semantic HTML, network-layer JSON the page actually fetches, agents.json descriptors, OpenAPI references. Output is a normalised structural report; no plan is written.
+1. **Inspect** — pulls the live page's structural signal: JSON-LD, schema.org, Annotation/RDFa data, semantic HTML, network-layer JSON the page actually fetches, agents.json descriptors, OpenAPI references. Output is a normalised structural report; no plan is written.
 
-2. **`forge.draft`** — consumes the inspect report (or a natural-language description) and emits a bare v2 `Plan`. Two paths:
+2. **Draft** — consumes the inspect report (and any natural-language `intent`) and emits a bare v2 `Plan`. Two paths:
    - **Deterministic templates** (~80% of common shapes) — when a high-trust source carries the answer (RSS feed, JSON-LD, OpenAPI, agents.json, observed API endpoint), forge emits a template-derived Plan with no LLM tokens spent.
-   - **AI fallback** (long tail) — when no template fits, forge prompts an AI model with the structural signal as context and asks it to produce the `observe` (or `act`+`confirm`+`key`) array. The model writes Plan ops within the closed 11-op vocabulary, not arbitrary code.
+   - **AI fallback** (long tail) — when no template fits, forge prompts an AI model with the structural signal as context and asks it to produce the `observe` (or `act`+`confirm`+`key`) array. The model writes Plan ops within the closed 11-op vocabulary, not arbitrary code. Requires the **Capture** tier or higher (`core/auth.ts:gateAiForge`).
 
-3. **Lint gate** — forge runs the output through `lintPlan` before saving. Non-conformant outputs are rejected; the AI is reprompted up to N times. Saved plans land in `~/.tap/plans/<site>/<name>.plan.json`.
+3. **Lint gate** — forge runs the output through `lintPlan` before saving. Non-conformant outputs are rejected; the AI is reprompted up to N times. Saved plans land in `~/.tap/plans/<site>/<name>.plan.json`. The `core/auth.ts:gateCaptureSave` fleet-cap gate fires before persistence: re-saves of an existing `<site>/<name>` (overwrite / heal) are exempt; new entries count against the tier budget (3 / 5 / 20).
 
 ## Where it ships
 
@@ -74,6 +74,6 @@ The read variant has no `act` or `key` (TypeScript: `never`). The write variant 
 ## Related
 
 - [Plan format](/spec/plan-v1/) — bare `Plan` reference
-- [doctor](/doctor/) — 4-arm verdict on forge output
+- [verify](/doctor/) — 4-arm verdict on forge output
 - [Migration guide](/migration-guide/) — upgrading v1 envelopes to v2 Plans
 - Already have a script? Use the dedicated adapters: [`@taprun/from-playwright`](/from-playwright/) · [`@taprun/from-puppeteer`](/from-puppeteer/) · ([`@taprun/from-stagehand`](/from-stagehand/) is deprecated — see [migration guide](/migration-guide/))

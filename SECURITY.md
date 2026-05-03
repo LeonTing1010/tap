@@ -252,7 +252,7 @@ We're honest about what's not yet done:
 - Daemon binding to non-localhost addresses without explicit user consent
 - Update mechanism integrity (binary or skill update poisoning)
 - License validation bypass enabling tier escalation
-- Prompt injection in `forge.inspect` page content that causes AI to
+- Prompt injection in `capture` page-inspection content that causes AI to
   generate malicious tap code
 
 ### Out of scope

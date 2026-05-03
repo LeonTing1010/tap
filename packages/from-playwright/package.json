@@ -51,7 +51,7 @@
     "drift-detection",
     "tap",
     "taprun",
-    "tap-v2"
+    "tap-cli"
   ],
   "homepage": "https://taprun.dev/?utm_source=npm&utm_medium=package&utm_campaign=from-playwright",
   "repository": {

@@ -120,15 +120,15 @@ hr { border: none; border-top: 1px solid rgba(20,17,12,0.15); margin: 48px 0; }
 <p>Deterministic automation compiles AI understanding into a program <strong>once</strong>, then runs that program forever:</p>
 
 <pre><span class="comment"># Step 1: AI inspects the website (one-time)</span>
-<span class="cmd">$ tap forge</span> <span class="flag">https://github.com/trending</span>
-<span class="output">✓ Tier 0 compiled — API endpoint detected, no AI needed</span>
-<span class="output">✓ Verified: 25 rows, score 92/100</span>
-<span class="output">✓ Saved with fingerprint: github/trending.tap.js</span>
+<span class="cmd">$ tap capture</span> <span class="flag">https://github.com/trending github/trending --intent "trending repos"</span>
+<span class="output">✓ Deterministic template hit — API endpoint detected, no AI tokens</span>
+<span class="output">✓ Lint passed</span>
+<span class="output">✓ Saved: ~/.tap/plans/github/trending.plan.json</span>
 
 <span class="comment"># Step 2: Run forever, same result every time</span>
-<span class="cmd">$ tap github trending</span>          <span class="comment"># Day 1: 25 rows</span>
-<span class="cmd">$ tap github trending</span>          <span class="comment"># Day 2: 25 rows</span>
-<span class="cmd">$ tap github trending</span>          <span class="comment"># Day 365: 25 rows</span></pre>
+<span class="cmd">$ tap github/trending</span>          <span class="comment"># Day 1: 25 rows</span>
+<span class="cmd">$ tap github/trending</span>          <span class="comment"># Day 2: 25 rows</span>
+<span class="cmd">$ tap github/trending</span>          <span class="comment"># Day 365: 25 rows</span></pre>
 
 <p>Same input → same output. Every time. The program doesn't call the LLM. It doesn't reinterpret the page. It executes the same code path deterministically.</p>
 
@@ -141,7 +141,7 @@ hr { border: none; border-top: 1px solid rgba(20,17,12,0.15); margin: 48px 0; }
 <tr><td><strong>Interpreter</strong></td><td>Python, Ruby</td><td>Browser Use, Stagehand</td></tr>
 <tr><td><strong>Compiler</strong></td><td>GCC, rustc</td><td>Tap</td></tr>
 <tr><td><strong>Source</strong></td><td>Python source code</td><td>Website at a point in time</td></tr>
-<tr><td><strong>Output</strong></td><td>Machine code (fast, deterministic)</td><td>.tap.js program (fast, deterministic)</td></tr>
+<tr><td><strong>Output</strong></td><td>Machine code (fast, deterministic)</td><td>.plan.json bare Plan (fast, deterministic)</td></tr>
 <tr><td><strong>Runtime cost</strong></td><td>$0 per execution</td><td>$0 per execution</td></tr>
 </table>
 
@@ -154,14 +154,14 @@ hr { border: none; border-top: 1px solid rgba(20,17,12,0.15); margin: 48px 0; }
 <p>When a website changes:</p>
 
 <ol>
-<li><strong>Doctor detects it</strong> — fingerprint diff shows exactly what changed (which selector disappeared, which API schema shifted)</li>
-<li><strong>AI fixes it</strong> — <code>tap doctor --auto</code> packages diagnostics; your AI reads them and patches the tap</li>
-<li><strong>Back to running</strong> — the fixed program runs deterministically again</li>
+<li><strong>Verify detects it</strong> — <code>tap verify &lt;site&gt;/&lt;name&gt;</code> returns <code>verdict: drifted</code>; the per-tap CEL <code>snapshot_equivalent</code> predicate names exactly what stopped matching</li>
+<li><strong>AI patches it</strong> — re-running <code>tap capture &lt;url&gt; &lt;site&gt;/&lt;name&gt;</code> against the same site+name overwrites the plan; the next <code>verify</code> rebaselines after human review</li>
+<li><strong>Back to running</strong> — the fixed plan runs deterministically again</li>
 </ol>
 
 <p>Compare this to AI browser agents: they <em>appear</em> to handle changes because they re-interpret the page each time. But they handle changes inconsistently — sometimes correctly, sometimes not, with no way to tell which.</p>
 
-<p>Deterministic programs either work or they don't — and <code>tap doctor</code> tells you which. <a href="your-scraper-is-broken.html">Non-deterministic agents silently fail</a> for days before anyone notices.</p>
+<p>Deterministic plans either work or they don't — and <code>tap verify</code> tells you which. <a href="your-scraper-is-broken.html">Non-deterministic agents silently fail</a> for days before anyone notices.</p>
 
 <h2>When You Still Need AI at Runtime</h2>
 
@@ -191,8 +191,8 @@ hr { border: none; border-top: 1px solid rgba(20,17,12,0.15); margin: 48px 0; }
 <div class="cta">
 <h3>Start compiling your automations</h3>
 <pre><span class="cmd">$ npx -y @taprun/cli --version</span>
-<span class="cmd">$ tap forge</span> <span class="flag">https://github.com/trending</span>  <span class="comment"># Compile once</span>
-<span class="cmd">$ tap github trending</span>            <span class="comment"># Run forever at $0</span></pre>
+<span class="cmd">$ tap capture</span> <span class="flag">https://github.com/trending github/trending --intent "trending repos"</span>  <span class="comment"># Compile once</span>
+<span class="cmd">$ tap github/trending</span>            <span class="comment"># Run forever at $0</span></pre>
 </div>
 
 </div>

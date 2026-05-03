@@ -127,14 +127,15 @@ td { color: #3B332A; }
 
 <p><strong>Principle:</strong> Lead with the maintenance problem, not the creation problem. Everyone can build a scraper. Nobody can keep it running.</p>
 
-<p><strong>Solution:</strong> Health contracts. Every program defines what "working" means: minimum rows, required fields. <code>tap doctor</code> checks all programs in one command. When something breaks, you know in seconds &mdash; not weeks.</p>
+<p><strong>Solution:</strong> Per-tap CEL <code>snapshot_equivalent</code> predicates. Every plan declares what "the same answer" looks like: minimum rows, required fields, value bounds. <code>tap verify</code> checks one tap's substrate state against the prior Snapshot in one command. When something drifts, the 4-arm verdict (equivalent / drifted / first_snapshot / unreachable) tells you in seconds &mdash; not weeks.</p>
 
-<pre>health: { min_rows: 5, non_empty: ["title", "url"] }
+<pre>"snapshot_equivalent": "size($.raw.items) &gt;= 5 && all($.raw.items, item, has(item.title) && has(item.url))"
 
-$ tap doctor
-hackernews/hot    &#10004; ok     30 rows
-reddit/hot        &#10008; fail   0 rows &mdash; selector changed
-  &#8627; auto-healing...</pre>
+$ tap verify hackernews/hot
+verdict: equivalent    30 rows
+$ tap verify reddit/hot
+verdict: drifted       0 rows &mdash; predicate returned false
+  &#8627; recover via: tap capture &lt;url&gt; reddit/hot</pre>
 
 <h3><span class="insight-num">#2</span> Cost anxiety is real and specific</h3>
 

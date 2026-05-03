@@ -1,0 +1,25 @@
+{%- comment -%}
+tier-table.html — the canonical pricing-tier table.
+
+Reads from _data/cli.yml `tiers` array. Edit cli.yml to change cap / price /
+display name; this template stays put. The table renders as plain HTML, no
+CSS dependencies — drop into any page.
+
+Usage:
+    {% include tier-table.html %}
+{%- endcomment -%}
+<table class="tier-table">
+  <thead>
+    <tr><th>Tier</th><th>Price</th><th>Plan-fleet cap</th></tr>
+  </thead>
+  <tbody>
+  {%- for t in site.data.cli.tiers %}
+    <tr>
+      <td><strong>{{ t.display }}</strong> <code>({{ t.internal }})</code></td>
+      <td>{% if t.price_usd == 0 %}Free{% else %}${{ t.price_usd }}/mo{% endif %}</td>
+      <td>up to {{ t.cap }} saved plans</td>
+    </tr>
+  {%- endfor %}
+  </tbody>
+</table>
+<p class="tier-fineprint"><small>Caps enforced by <code>core/auth.ts:gateCaptureSave</code>. Re-saving an existing site+name (overwrite / heal) does NOT consume budget. Multi-seat / on-prem / SOC2 / HIPAA buyers — <a href="mailto:hello@taprun.dev?subject=Taprun%20Team%20%2F%20Compliance">contact sales</a>.</small></p>

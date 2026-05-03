@@ -11,7 +11,7 @@
 <p align="center">
   <a href="https://taprun.dev/?utm_source=readme&utm_medium=docs&utm_campaign=homepage"><b>Homepage</b></a> &nbsp;|&nbsp;
   <a href="https://taprun.dev/blog/?utm_source=readme&utm_medium=docs&utm_campaign=blog"><b>Blog</b></a> &nbsp;|&nbsp;
-  <a href="https://github.com/LeonTing1010/tap-skills"><b>140+ Skills</b></a> &nbsp;|&nbsp;
+  <a href="https://github.com/LeonTing1010/tap-skills"><b>70+ Skills</b></a> &nbsp;|&nbsp;
   <a href="README.zh-CN.md"><b>中文</b></a>
 </p>
 
@@ -23,20 +23,42 @@
   <a href="https://chromewebstore.google.com/detail/tap/llcidejeoobdegbkolbjhfoeckphldce"><img src="https://img.shields.io/chrome-web-store/v/llcidejeoobdegbkolbjhfoeckphldce?style=flat-square&label=Chrome%20Web%20Store" alt="Chrome Web Store"></a>
 </p>
 
+<p align="center">
+  <a href="docs/assets/demo-hn-forge.mp4">
+    <img src="docs/assets/demo-hn-forge-thumb.jpg" width="720" alt="Taprun forge + replay demo — click to play">
+  </a>
+  <br>
+  <sub><i>30-second demo: <code>tap capture</code> inspects Hacker News, emits a deterministic plan, replays at $0 — click to play.</i></sub>
+</p>
+
 ---
 
-**Taprun is local-first browser automation that runs in your browser, not someone else's cloud.** Point it at any site; your agent inspects the page once, compiles a deterministic program, and replays it forever — zero AI tokens at runtime, same result every call. Your cookies and login sessions never leave your machine — by architecture, not policy. Works with Claude Code, Cursor, Cline, Windsurf, and any MCP host. Runs in real Chrome (login sessions) or headless Playwright. Health contracts catch silent failures. Structural state diffs tell you exactly what changed. `tap doctor` detects breakage before your data goes stale — not three days later.
+**Local-first browser automation. Compile once, run forever at zero LLM tokens.**
+
+Point Taprun at any site. Your AI agent inspects the page once and emits a deterministic `.plan.json` program. Replay it forever — same result every call, $0 in tokens. Cookies and login sessions stay in your real Chrome — by architecture, not policy. `tap verify` catches breakage before your data goes stale.
+
+Works with Claude Code, Cursor, Cline, Windsurf, and any MCP host. 70+ pre-built taps, or forge your own from any URL.
 
 ```
-Forge:    AI inspects the site → compiles a .tap.js program       (one-time cost)
-Run:      The program executes instantly, same result every time   ($0, zero AI)
-Monitor:  tap doctor checks health contracts + structural state diffs  (catches breakage)
-Heal:     AI reads diagnostics and patches the program            (only when needed)
+Capture: AI inspects the site → compiles a .plan.json program     (one-time cost)
+Run:     The program executes instantly, same result every time   ($0, zero AI)
+Verify:  tap verify checks the snapshot equivalence predicate     (catches drift)
+Repair:  re-run capture against the same site/name; the next      (only when needed)
+         verify rebaselines after human review
 ```
 
-**MCP is the authoring layer. `tap.run` is the execution layer.** AI participates during forge (one-time). Execution is pure code — zero tokens, deterministic output. 140+ pre-built skills across 68+ sites — Reddit, GitHub, Hacker News, LinkedIn, Twitter, YouTube, Producthunt, and more — or forge your own from any URL. One binary, zero dependencies.
+## How Taprun Compares
 
-**Use cases:** AI agent browser automation · scheduled web scraping · structured data extraction · content monitoring · login-required site automation · multi-site data pipelines · reliability monitoring for long-running agents.
+|  | Taprun | AI Browser Agents | Traditional Scrapers |
+|--|-----|-------------------|---------------------|
+| **AI cost per run** | $0 (compile once) | Tokens every run | Free |
+| **Accuracy** | Deterministic | Varies per run | Deterministic |
+| **Silent failure detection** | Per-tap CEL `snapshot_equivalent` predicate + 4-arm verdict | None | None |
+| **Breakage diagnostics** | `tap verify` — exact diff of what changed | None | Manual spot checks |
+| **Detection risk** | Low (real browser sessions) | High | High |
+| **Runtimes** | 2 (Chrome extension + Playwright) | 1 | 1 |
+| **Code inspectable** | .plan.json — bare JSON, 11-op closed vocabulary, git diff | Black box / ephemeral | Fragile scripts |
+| **MCP native** | Yes (authoring layer only — execution is zero tokens) | No | No |
 
 ## Get Started
 
@@ -68,13 +90,14 @@ curl -fsSL https://taprun.dev/install.sh | sh
 Works with Claude Code, Cursor, Windsurf, or any MCP-compatible agent — no extension needed:
 
 ```json
-{ "mcpServers": { "tap": { "command": "npx", "args": ["-y", "@taprun/cli", "mcp", "start"] } } }
+{ "mcpServers": { "tap": { "command": "npx", "args": ["-y", "@taprun/cli", "mcp", "stdio"] } } }
 ```
 
-Or auto-configure all installed agents:
+Or run the server directly:
 
 ```bash
-tap mcp connect
+tap mcp stdio    # default; pipe to your MCP host
+tap mcp http     # streamable-HTTP on 127.0.0.1:7891 (bearer auth)
 ```
 
 ### 3. Go
@@ -92,7 +115,7 @@ Or just ask your AI agent:
 You:   What's trending on GitHub today?
 Agent: Here are today's top repos — React compiler hit 734 stars...
 
-You:   Forge a tap for Douban top 250 movies
+You:   Capture a tap for Douban top 250 movies
 Agent: Done. Run `tap douban/top250` anytime — $0 per run.
 ```
 
@@ -102,26 +125,15 @@ Most taps work without login. For sites that need your session (Xiaohongshu, Zhi
 
 ### Optional: Embed in your agent code (TypeScript / Python)
 
-Skip MCP — call Tap directly from your own loop:
+Skip MCP — call the `tap` binary from your own loop:
 
-```ts
-import { run, doctor, forge } from "@taprun/sdk";
-const rows = await run("hackernews/top");
+```bash
+tap hackernews/top --args '{}'    # JSON-on-stdout, exit 0 on success
+tap verify hackernews/top         # 4-arm verdict (equivalent / drifted / first_snapshot / unreachable)
+tap capture <url> hackernews/top --intent "front-page top stories"
 ```
 
-```python
-from taprun import run, doctor, forge
-rows = run("hackernews/top")
-```
-
-Compile from a [browser-use](https://github.com/browser-use/browser-use) trajectory at zero LLM tokens:
-
-```python
-from taprun import forge
-forge(trajectory=agent.history, site="example", name="dashboard")
-```
-
-Packages: [`@taprun/sdk`](https://www.npmjs.com/package/@taprun/sdk) (npm) · [`taprun`](https://pypi.org/project/taprun/) (PyPI).
+The CLI emits `ToolResult<T>` envelopes as JSON — same shape the MCP surface returns — so any language with a subprocess library can drive it. See `tap --help` for the full verb list.
 
 ### Have an existing Playwright / Puppeteer / Stagehand script?
 
@@ -140,7 +152,7 @@ npx create-tap-script github/trending https://github.com/trending
 |---|---|---|
 | [`@taprun/from-playwright`](https://www.npmjs.com/package/@taprun/from-playwright) | `.ts/.js` Playwright tests | 8 page.* APIs (goto/click/fill/type/press/waitForSelector/waitForTimeout/screenshot) |
 | [`@taprun/from-puppeteer`](https://www.npmjs.com/package/@taprun/from-puppeteer) | `.ts/.js` Puppeteer scripts | 7 page.* APIs + page.keyboard.press |
-| [`@taprun/from-stagehand`](https://www.npmjs.com/package/@taprun/from-stagehand) | `.ts/.js` Stagehand scripts | Hybrid: deterministic page.* mapped to plan ops; NL `act/extract/observe` flagged `allowUnverifiable` for honest doctor verdicts |
+| [`@taprun/from-stagehand`](https://www.npmjs.com/package/@taprun/from-stagehand) | `.ts/.js` Stagehand scripts | Hybrid: deterministic page.* mapped to plan ops; NL `act/extract/observe` flagged for honest verify verdicts |
 | [`create-tap-script`](https://www.npmjs.com/package/create-tap-script) | (none — scaffolder) | Generates a starter `.tap.json` envelope from `<site>/<name> <url>` |
 
 The format itself is documented at [`@taprun/spec`](https://www.npmjs.com/package/@taprun/spec) (TypeScript types + W3C Annotation MUST-validator + JSON Schema 2020-12 + 10-fixture conformance suite). Plan-v1 reference: [taprun.dev/spec/plan-v1](https://taprun.dev/spec/plan-v1/). Source for all five packages: [`packages/`](packages/).
@@ -165,7 +177,7 @@ tap zhihu/publish --title "My Article" --content "..."
 **Watch** — Monitor changes
 
 ```bash
-tap watch github/trending --every 5m
+tap verify github/trending        # spot drift; schedule via cron / launchd
 ```
 
 **Compose** — Chain like Unix pipes
@@ -177,8 +189,8 @@ tap github/trending | tap filter --field stars --gt 500 | tap table
 **Forge** — Create new automations with AI
 
 ```bash
-tap forge "get Hacker News top stories"           # BYOK Claude / GPT
-tap forge https://news.ycombinator.com            # API detected — compiled without AI
+tap capture https://news.ycombinator.com hackernews/hot --intent "top stories"   # API detected — compiled without AI
+tap capture https://example.com mysite/home --intent "..."                       # BYOK Claude / GPT for the long tail
 ```
 
 Bring your own model — works with Claude, OpenAI, DeepSeek, or any
@@ -189,26 +201,26 @@ fully offline forge:
 tap config set ai.baseUrl http://localhost:11434/v1
 tap config set ai.key ollama
 tap config set ai.model llama3.1
-tap forge "scrape arxiv recent papers"            # 0 bytes leave your machine
+tap capture https://arxiv.org/list/cs.AI/recent arxiv/recent --intent "recent papers"  # 0 bytes leave your machine
 ```
 
 ## How It Works
 
 ```
-                        ┌─ Chrome      (your real browser sessions)
-You → AI → Taprun ──────┤─ Playwright  (headless, server, CI/CD)
-     compile            └─ macOS       (native desktop apps)
+                        ┌─ Chrome extension  (your real browser sessions)
+You → AI → Taprun ──────┤
+     capture            └─ Playwright        (headless, server, CI/CD)
 ```
 
-1. **You describe** what you want (natural language or URL)
-2. **AI compiles** it into a `.tap.js` program — plain JavaScript, version-controlled
-3. **Taprun runs** the program on any of three runtimes — forever, at $0
+1. **You describe** what you want (URL × natural-language intent)
+2. **AI compiles** it into a `.plan.json` program — bare JSON, 11-op closed vocabulary, version-controlled
+3. **Taprun runs** the program on either runtime — forever, at $0
 
-Every successful compilation makes the next one faster. 140+ community skills mean your agent already knows 68+ websites.
+Every successful compilation makes the next one faster. 70+ community taps mean your agent already knows the common patterns.
 
 ## Community Skills
 
-**[tap-skills](https://github.com/LeonTing1010/tap-skills)** — 140+ skills, open source.
+**[tap-skills](https://github.com/LeonTing1010/tap-skills)** — 70+ taps, open source.
 
 | Category | Examples |
 |----------|---------|
@@ -219,23 +231,10 @@ Every successful compilation makes the next one faster. 140+ community skills me
 | **Monitor** | Price tracking, stock data, competitor analysis |
 
 ```bash
-tap doctor    # Health check — catches silent failures before your data goes stale
-tap update    # Install / update all skills
-tap list      # See everything available
+tap verify <site>/<name>   # Snapshot equivalence — catches silent failures before your data goes stale
+tap list                   # See everything available
+tap show <site>/<name>     # Print the saved tap's plan as JSON
 ```
-
-## How Taprun Compares
-
-|  | Taprun | AI Browser Agents | Traditional Scrapers |
-|--|-----|-------------------|---------------------|
-| **AI cost per run** | $0 (compile once) | Tokens every run | Free |
-| **Accuracy** | Deterministic | Varies per run | Deterministic |
-| **Silent failure detection** | Health contracts + structural state diff | None | None |
-| **Breakage diagnostics** | `tap doctor` — exact diff of what changed | None | Manual spot checks |
-| **Detection risk** | Low (real browser sessions) | High | High |
-| **Runtimes** | 3 (Chrome + Playwright + macOS) | 1 | 1 |
-| **Code inspectable** | .tap.js — git diff, debug, version | Black box / ephemeral | Fragile scripts |
-| **MCP native** | Yes (authoring layer only — execution is zero tokens) | No | No |
 
 ## Local-first by architecture
 
@@ -265,12 +264,12 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ## Roadmap
 
-- [x] 140+ community skills across 68+ sites
+- [x] 70+ community taps across 68+ sites
 - [x] 3 runtimes — Chrome, Playwright, macOS
 - [x] Unix pipes — `tap A | tap B`
 - [x] Watch mode — monitor changes over time
 - [x] Doctor — health contracts, fingerprint diffs, automatic diagnostics for broken taps
-- [x] One-command setup — `tap mcp connect` configures all AI agents
+- [x] Single-command MCP server — `tap mcp stdio` (or `tap mcp http`) for any MCP host
 - [ ] Android runtime
 - [ ] iOS runtime
 - [ ] Concurrency control — deterministic coordination for M agents operating shared accounts in parallel

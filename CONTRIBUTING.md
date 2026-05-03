@@ -2,21 +2,20 @@
 
 Tap welcomes contributions at every level. Here are the main paths.
 
-## Path 1: Forge a New Tap (Easiest)
+## Path 1: Capture a New Tap (Easiest)
 
-A tap is a single `.tap.js` file. No build step needed.
+A tap is a single `.plan.json` file. No build step needed.
 
 ### With AI (recommended)
 
-If you have the Tap MCP server connected:
+If you have the Tap MCP server connected, ask your agent to call `capture`:
 
 ```
-> forge.inspect https://example.com
-> forge.verify https://example.com "your extraction expression"
-> forge.save example hot
+> capture { url: "https://example.com", site: "example", name: "hot", intent: "list trending items" }
+> verify { site: "example", name: "hot" }
 ```
 
-Done. The AI handles framework detection, API discovery, and code generation.
+Done. The agent picks the strongest structural address (JSON API / RSS / JSON-LD / OpenGraph / HTML list) and emits a bare v2 Plan; `verify` writes the first Snapshot.
 
 ### Manually
 

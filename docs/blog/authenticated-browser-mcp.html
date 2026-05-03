@@ -206,13 +206,12 @@ hr { border: none; border-top: 1px solid rgba(20,17,12,0.15); margin: 48px 0; }
 <div class="cta">
 <h3>Install (60 seconds)</h3>
 <pre><span class="cmd">curl -fsSL https://taprun.dev/install.sh | bash</span>
-<span class="cmd">tap mcp connect claude</span>  <span class="comment"># or: cursor, cline, continue</span>
-<span class="cmd">tap bridge start</span>        <span class="comment"># links your real Chrome</span></pre>
+<span class="cmd">tap mcp stdio</span>            <span class="comment"># point your MCP host (Claude Code / Cursor / Cline / Continue) at this command</span></pre>
 </div>
 
-<p>Then ask Claude Code to do one of the auth-walled tasks above. Tap forges a program using your logged-in session. The program is yours — inspectable at <code>~/.tap/taps/</code>, re-runnable at zero AI cost, self-diagnosing when the site changes.</p>
+<p>Then ask Claude Code to call <code>capture</code> on one of the auth-walled tasks above. Tap inspects using your logged-in session and emits a deterministic Plan. The plan is yours — inspectable at <code>~/.tap/plans/&lt;site&gt;/&lt;name&gt;.plan.json</code>, re-runnable at zero AI cost, drift-detected by <code>tap verify</code> when the site changes.</p>
 
-<p>Free tier is substantial: 65+ community-built taps on 40+ sites, full doctor, full Tier 0 forge, watch, MCP read ops. Paid tiers unlock AI-powered forge ($9/mo) and auto-heal + scheduling ($29/mo).</p>
+<p>Free tier is substantial: 70+ community-built taps, full <code>verify</code>, deterministic-template <code>capture</code>, MCP read ops. Paid tiers unlock AI-assisted <code>capture</code> for the long tail (<strong>Capture</strong> $19/mo, up to 5 saved plans) and the 3-path repair pipeline (<strong>Repair</strong> $49/mo, up to 20 saved plans).</p>
 
 <p>If Claude Code keeps hitting login walls for you, that wall is not going away — the cloud MCP tools are architecturally on the wrong side of it. Tap is on your side.</p>
 

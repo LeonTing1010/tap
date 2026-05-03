@@ -1,0 +1,107 @@
+# _data/cli.yml — single source of truth for Tap CLI vocabulary on taprun.dev.
+#
+# WHY THIS FILE EXISTS
+# --------------------
+# Pre-v2, every blog post and doc page hard-coded CLI commands as inline
+# `<code>` blocks. When the v1→v2 surface rewrite landed (2026-05-04), we
+# had to hand-edit ~25 files to change `tap-v2 doctor` → `tap verify`,
+# `forge.inspect/draft/save` → `capture`, `tap mcp connect` → `tap mcp stdio`,
+# and so on. That wasn't going to scale to v3.
+#
+# Now: every load-bearing CLI reference reads from this file via Liquid
+# (`{{ site.data.cli.verbs.verify }}`) or via an `{% include %}`. Updating
+# vocabulary is a single PR that touches one file.
+#
+# WHEN TO EDIT
+# ------------
+# - CLI binary name changes (e.g. `tap` → `tapd`)
+# - A meta verb is renamed, added, or removed
+# - Pricing tier names / amounts / plan-fleet caps change
+# - The Creem product IDs rotate
+# - The community-tap count crosses a round number worth advertising
+#
+# AFTER EDITING
+# -------------
+# Run `bundle exec jekyll build` (or just push — GitHub Pages rebuilds).
+# `_data/` changes propagate to every page that reads them, no per-file edits.
+#
+# DRIFT GUARDS (TODO)
+# -------------------
+# tier_caps below MUST match `core/auth.ts:PLAN_LIMIT`. The Creem product
+# IDs MUST match `core/auth.ts:CREEM_TIER_MAP`. There is currently no
+# automated drift check between this file and the engine — when one moves,
+# update the other in the same PR.
+
+# ─── Binary + invocation ────────────────────────────────────────────────
+binary: tap
+binary_pkg: "@taprun/cli"
+
+# ─── Meta verbs (3 — the entire v2 surface) ─────────────────────────────
+verbs:
+  capture:
+    name: "capture"
+    cli: "tap capture"
+    desc: "Create a tap from a URL × intent. Auto-detects JSON APIs / RSS / JSON-LD / OpenGraph / generic HTML lists. With site+name, persists to ~/.tap/plans/. Re-call to heal drifted."
+    one_liner: "Compile a URL × intent into a deterministic Plan."
+  verify:
+    name: "verify"
+    cli: "tap verify"
+    desc: "Read-only substrate check. 4-arm verdict ∈ {equivalent, drifted, first_snapshot, unreachable} via per-tap CEL snapshot_equivalent predicate. Does NOT execute act phase."
+    one_liner: "Snapshot-equivalence drift detection."
+  mark:
+    name: "mark"
+    cli: "tap mark"
+    desc: "Resolve an intent_uncertain record → committed | aborted. Use after observing the actual side-effect status."
+    one_liner: "Close out an uncertain intent."
+
+# ─── Verdict enum (4-arm closed) ────────────────────────────────────────
+verdicts:
+  - { name: equivalent,    desc: "predicate returned true; today's snapshot matches the baseline" }
+  - { name: drifted,       desc: "predicate returned false; substrate state changed in a way the predicate cares about" }
+  - { name: first_snapshot, desc: "first run on this tap; baseline established, no comparison possible" }
+  - { name: unreachable,   desc: "substrate could not produce a snapshot (network error, page gone, runtime mismatch)" }
+
+# ─── Closed 11-op union ─────────────────────────────────────────────────
+op_count: 11
+ops:
+  substrate: ["fetch", "nav", "wait", "input", "extract", "cookies", "tap"]   # 7 routed via peers
+  control: ["if", "foreach", "parallel"]                                       # 3 engine-inline
+  escape: ["eval"]                                                              # 1 typed-eval
+
+# ─── MCP transport invocation ────────────────────────────────────────────
+mcp:
+  stdio: "tap mcp stdio"
+  http: "tap mcp http"
+  default_port: 7891
+  default_bind: "127.0.0.1"
+
+# ─── Install ─────────────────────────────────────────────────────────────
+install:
+  npx: "npx -y @taprun/cli --version"
+  curl: "curl -fsSL https://taprun.dev/install.sh | sh"
+  brew: "brew install LeonTing1010/tap/tap"
+  mcp_config_json: |
+    { "mcpServers": { "tap": { "command": "npx", "args": ["-y", "@taprun/cli", "mcp", "stdio"] } } }
+
+# ─── Pricing tiers ───────────────────────────────────────────────────────
+# `internal` is the Tier name in core/auth.ts; `display` is what users see.
+# `cap` is the saved-plan fleet limit enforced by gateCaptureSave.
+tiers:
+  - { internal: free,   display: "Spec & Run", price_usd: 0,  cap: 3,  creem_id: ""                          }
+  - { internal: hacker, display: "Capture",    price_usd: 19, cap: 5,  creem_id: "prod_2ueXfXelMdowyjKmHlSxBk" }
+  - { internal: pro,    display: "Repair",     price_usd: 49, cap: 20, creem_id: "prod_79SU00FKJvcgEdPqYst2mQ" }
+
+upgrade_url: "https://taprun.dev/#pricing"
+
+# ─── Inventory counts (round, advertise-friendly) ────────────────────────
+counts:
+  community_taps: 70                  # tap-skills repo; round-down from current 72 to give breathing room
+  npm_packages: 5                     # @taprun/{spec, from-playwright, from-puppeteer, from-stagehand, create-tap-script}
+
+# ─── Storage layout (for "where do plans live?" questions) ──────────────
+storage:
+  plans:    "~/.tap/plans/<site>/<name>.plan.json"
+  intents:  "~/.tap/intents/"
+  snapshots: "~/.tap/snapshots/"
+  secrets:  "~/.tap/secrets"
+  license:  "~/.tap/license"

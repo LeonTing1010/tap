@@ -19,7 +19,7 @@ Replay solves A2 (LLMs are probabilistic) by separating compile-time AI use from
 |---|---|
 | `plan-runtime` | the op-handler dispatcher (INV-P3 pure: no `new Worker`, no `new Function`, no bare `eval`, no dynamic import) |
 | `plan-dispatch` | the `tapToPlanHandle` adapter + the bounded `exec` op bridge |
-| `plan-lint` | static lint at save / forge.draft / resolvePlan time |
+| `plan-lint` | static lint at save / capture / resolvePlan time |
 | Op handlers | one per op-name; the closed [11-op v2 union](/spec/plan-v1/) (7 substrate · 3 control flow · 1 typed-eval) |
 
 ## The closed-op invariant

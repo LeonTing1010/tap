@@ -42,7 +42,7 @@ Agents discover structured data through existing web standards, in priority orde
 3. **Link header/tag** — `<link rel="describedby" type="application/ld+json" href="/agents.json">` in HTML or HTTP `Link` header.
 4. **Sitemap reference** — `<url><loc>/.well-known/agents.json</loc></url>` in sitemap.xml.
 
-If none found, fall back to page inspection (forge.inspect).
+If none found, fall back to page inspection (the `capture` meta verb).
 
 ## Specification
 
@@ -282,13 +282,12 @@ The transition is incremental: websites keep their existing JSON-LD, add `potent
 ### For Tap
 
 ```bash
-# Forge automatically consumes agents.json during inspect
-tap forge "get trending stories from hackernews"
-# → forge.inspect finds agents.json → uses ReadAction endpoint directly
+# capture automatically consumes agents.json during inspection
+tap capture https://news.ycombinator.com hackernews/hot --intent "trending stories"
+# → capture finds agents.json → uses ReadAction endpoint directly
 
-# After forging, generate agents.json for the site
-tap forge --emit-schema github/trending
-# → outputs Schema.org JSON-LD that the site owner can publish
+# After capturing, you can author an agents.json file for the site
+# (Schema.org JSON-LD that the site owner can publish — see Examples §)
 ```
 
 ## FAQ
