@@ -79,4 +79,4 @@ tap watch github/trending --every 5m      # follow changes over time
 
 ## Contact
 
-leon@taprun.dev
+hello@taprun.dev

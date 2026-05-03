@@ -51,6 +51,6 @@
     "automation_allowed": true,
     "rate_limit": "60 req/min",
     "requires_attribution": false,
-    "contact": "leon@taprun.dev"
+    "contact": "hello@taprun.dev"
   }
 }
