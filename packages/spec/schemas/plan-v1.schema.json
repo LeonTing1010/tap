@@ -64,7 +64,7 @@
   "$defs": {
     "OpName": {
       "type": "string",
-      "description": "Closed union of plan ops. Adding a new op requires editing core/compose/plan.ts AND this enum (drift-guarded).",
+      "description": "Closed union of plan ops. Adding a new op requires a spec amendment and a corresponding update to this enum (drift-guarded against the upstream type definition).",
       "enum": [
         "fetch",
         "nav",

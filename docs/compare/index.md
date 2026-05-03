@@ -30,7 +30,7 @@ ASCII sketch of what the rendered SVG should show:
                             ▼
            ┌────────────────────────────────────┐
            │           PROGRAM FORMAT           │   ← Tap lives here
-           │   .tap.json (24-op closed union)   │
+           │   bare Plan (11-op closed union)   │
            └─────┬─────────┬─────────┬──────────┘
                  │         │         │
                  ▼         ▼         ▼
@@ -65,7 +65,7 @@ Each section reuses the ⟨Their layer · Tap layer · Where they don't overlap 
 
 #### vs Libretto
 
-> Libretto and Tap both compile-once with LLMs. Libretto emits Playwright JS; Tap emits a closed 24-op JSON plan that doctor statically verifies against Layer 1 sources.
+> Libretto and Tap both compile-once with LLMs. Libretto emits Playwright JS; Tap emits a closed 11-op bare Plan that doctor statically verifies against Layer 1 sources.
 >
 > *Where they don't overlap*: Libretto's output is unbounded JS; Tap's output is a closed-union JSON document `doctor` can statically verify. *Where they compose*: Libretto's compile step could emit `.tap.json` instead of Playwright scripts — same compile-once frame, narrower output, free static verifiability.
 >
@@ -134,7 +134,7 @@ This draft is markdown for review. Render path when published:
    - `<title>Tap vs Libretto vs Browserbase vs Steel vs Playwright — compile-time browser automation</title>`
    - `<meta description>` covers all 5 projects + comparison frame in 155 chars
    - Schema.org `ComparisonTable` JSON-LD for structured-data crawlers
-5. **UTM tagging on outbound links** per `feedback_always_utm_external_shares.md` — internal `/blog/` and `/ns/` links untagged; competitor homepage links tagged `utm_source=taprun-compare`
+5. **UTM tagging on outbound links** — internal `/blog/` and `/ns/` links untagged; competitor homepage links tagged `utm_source=taprun-compare`
 6. **GA4 event**: `compare_page_view` on load + `compare_section_visible` on scroll into each per-project block (helps decide which competitor's section drives most attention)
 
 ## Non-implementation considerations
@@ -143,21 +143,3 @@ This draft is markdown for review. Render path when published:
 - **Risk: looking small/needy**. A small project publishing comparisons against bigger projects can read as desperate. Mitigation: lead with architecture diagram (assertion of equal-scope discussion), not feature checklist.
 - **Updating cadence**: competitive landscape moves; commit to quarterly review. Add `<!-- last-reviewed: YYYY-MM-DD -->` HTML comment.
 
-## Cross-references
-
-- Source positioning content: `core/docs/positioning-matrix.md`
-- Strategy frame: `core/docs/playbook-2026-04-26.md` § Week 2
-- Plan format reference (linked from page footer): `core/docs/plan-format-v1-draft.md`
-- HN/Reddit user-voice anchors that justify the "compile once" framing: `core/docs/strategy-2026-04-22.md` §1
-- UTM rules: `~/.claude/projects/-Users-leo-Projects-tap/memory/feedback_always_utm_external_shares.md`
-
-## What needs explicit confirmation before publication
-
-- [ ] Architecture diagram SVG rendered (hand-or-Figma, ~1 hour)
-- [ ] HTML page structure built from `public/blog/` template
-- [ ] All 5 competitor links + their respective screenshots reviewed
-- [ ] "Honest weakness" sentences fact-checked (star counts, funding amounts)
-- [ ] `taprun.dev/spec/plan-v1/` exists (footer link target — currently doesn't, see issue #47)
-- [ ] User explicitly approves: "publish this page now"
-
-Until all six checkboxes hit, this draft stays internal.

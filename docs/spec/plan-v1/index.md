@@ -111,7 +111,7 @@ Opt-in flag for plans containing `eval` or `exec` ops (which V cannot statically
 
 ## 3. Op closed union
 
-24 ops total. The full union is `OP_NAMES` in `core/compose/plan.ts`. Adding an op requires an ADR (`core/docs/adr/<date>-add-<op>.md`) and a corresponding bump in `PLAN_OP_CEILING` constraint test.
+24 ops total. The full union is exported as `OP_NAMES` from `@taprun/spec` and mirrored in this document. Adding an op requires a spec amendment, a `PLAN_OP_CEILING` constraint bump in the upstream reference implementation, and a minor version bump here.
 
 ### 3.1 Op categories
 
@@ -147,7 +147,7 @@ For external verifiers (governance layers, V, static analyzers). When an op's cl
 
 ### 3.3 Op shape stability
 
-Each op shape (`FetchOp`, `NavOp`, etc.) is a TypeScript interface in `core/compose/plan.ts`. Field additions are non-breaking. Field removals or type changes require major version bump.
+Each op shape (`FetchOp`, `NavOp`, etc.) is a TypeScript interface exported by `@taprun/spec`. Field additions are non-breaking. Field removals or type changes require major version bump.
 
 The `OP_NAMES` constant is the canonical authoritative list:
 
@@ -206,7 +206,7 @@ Tap does not endorse any specific auth layer; the plan format intentionally does
 
 Three independent verification layers, all readable from a v1 plan without execution:
 
-1. **Plan lint** (`core/compose/plan-lint.ts`) — static checks: closed-union conformance, JSONata syntax, `allowUnverifiable` discipline, intent vs op-set consistency.
+1. **Plan lint** — static checks: closed-union conformance, JSONata syntax, `allowUnverifiable` discipline, intent vs op-set consistency. Implemented in the upstream Tap reference implementation; the rule set is documented per-field in this spec.
 2. **Health contract** (`body.health`) — minimal post-execution shape: `min_rows`, `non_empty: string[]`. Verifies result shape, not semantics.
 3. **Authoritative spec** (`body.authoritative`) — semantic cross-validation against an external source-of-truth endpoint. Closes the gap where shape passes but values are wrong.
 
@@ -223,11 +223,9 @@ External tooling can statically read all three from the JSON without running the
 
 ## 8. References
 
-- Source of truth: `core/compose/plan.ts`
-- Plan-only ADR: `core/docs/adr/2026-04-plan-only.md`
-- Op governance rules: `core/CLAUDE.md` § Plan-Only Runtime
-- Verifier specification: `core/docs/adr/2026-04-25-tap-reconstruction.md` (V primitive)
-- Annotation context (taprun.dev/ns/tap-v1/): in W3C JSON-LD context format, served at the namespace URI
+- TypeScript types and JSON Schema: [`@taprun/spec`](https://www.npmjs.com/package/@taprun/spec) on npm
+- Annotation context: served as W3C JSON-LD at <https://taprun.dev/ns/tap-v1/>
+- Plan-only design rationale and verifier specification: this document is the public surface; the upstream design notes live in the proprietary engine repository
 
 ## 9. Resolved decisions for v1.0
 
@@ -243,7 +241,7 @@ Six questions resolved 2026-04-26. Commitments below ship with v1.0 publication.
 
 **Decision**: forge MUST refuse to save a plan containing `eval` or `exec` ops without explicit `allowUnverifiable: true`.
 
-**Status**: Already enforced. `core/compose/plan-lint.ts:78` performs this exact check. v1.0 documents the existing behavior; no implementation work needed. The error message gives integrators two options: (1) replace with verifiable ops, or (2) explicitly opt in to unverifiability.
+**Status**: Already enforced by plan-lint in the upstream reference implementation. v1.0 documents the existing behavior; no implementation work needed. The error message gives integrators two options: (1) replace with verifiable ops, or (2) explicitly opt in to unverifiability.
 
 ### Q3 — `tap` op intent inheritance
 
@@ -259,7 +257,7 @@ Six questions resolved 2026-04-26. Commitments below ship with v1.0 publication.
 
 ### Q5 — Schema artifact format
 
-**Decision**: generate JSON Schema from `core/compose/plan.ts` TypeScript types via `ts-json-schema-generator` as a release-time CI step. Publish at `taprun.dev/spec/plan-v1/schema.json`. Hand-edit fallback only for cases the generator misses (JSONata-string types, discriminated-union conditionals).
+**Decision**: generate JSON Schema from the upstream TypeScript types via `ts-json-schema-generator` as a release-time CI step. Publish at `taprun.dev/spec/plan-v1/schema.json`. Hand-edit fallback only for cases the generator misses (JSONata-string types, discriminated-union conditionals).
 
 **Rationale**: TypeBox would require rewriting `plan.ts` in TypeBox syntax; hand-writing schemas drifts from the source of truth. Auto-generation keeps schema and source in lockstep at the cost of one CI step. Integrators get a citable schema URL; Tap maintainers don't carry a duplicate definition.
 

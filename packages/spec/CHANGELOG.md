@@ -13,7 +13,7 @@
 
 Initial release as a publishable surface. Three independent layers shipped together:
 
-- **TypeScript types** vendored byte-equivalent from private `tap-core/core/compose/{plan,annotation,annotation_validator}.ts`. Drift-guarded by `core/src/test/spec_extraction_test.ts`.
+- **TypeScript types** vendored byte-equivalent from the upstream Tap reference implementation. Drift-guarded by an extraction test in the upstream repo.
   - `ExecutionPlan`, `TapAnnotation`, `OP_NAMES` (24-member closed union), all op interfaces, `HealthContract`, `AuthoritativeSpec` (3 source variants), `ArgSpec`.
 - **W3C Annotation validator** — `validateAnnotation(value)`. Zero runtime dependencies. Implements MUST-level checks from W3C 2017 Recommendation §3.1, §3.3.5, §4.
 - **JSON Schema 2020-12** at `schemas/plan-v1.schema.json` (also exported via `@taprun/spec/schema`). Drift-guarded against `OP_NAMES`.
@@ -21,5 +21,5 @@ Initial release as a publishable surface. Three independent layers shipped toget
 
 Versioning commitment from this point:
 - `0.x` is pre-1.0; field additions allowed, removals require minor bump
-- Op-union additions require an ADR in private tap-core docs and minor bump
+- Op-union additions require a spec amendment in the upstream reference implementation and a minor bump here
 - Format reference doc lives at <https://taprun.dev/spec/plan-v1/>

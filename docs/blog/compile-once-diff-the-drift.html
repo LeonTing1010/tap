@@ -221,13 +221,13 @@ hr { border: none; border-top: 1px solid rgba(20,17,12,0.15); margin: 48px 0; }
 
 <ul>
 <li><strong>Phase 1 scale.</strong> 2 taps &times; 2 mutations &times; 3 arms &times; N=5 = 60 runs. Variance, per-mutation difficulty curve, cross-model comparison.</li>
-<li><strong>Arm B real measurement.</strong> Instrument <code>forge-agent.ts</code> to emit token usage, run <code>tap fix</code> end-to-end against the broken tap, compare to the minimal simulation above.</li>
+<li><strong>Arm B real measurement.</strong> Instrument the heal pipeline to emit token usage, run <code>tap fix</code> end-to-end against the broken tap, compare to the minimal simulation above.</li>
 <li><strong>Arm C productionization.</strong> The hypothetical router here is a prompt-engineering prototype. Real implementation needs V integration into the heal path, baseline fallback routes (the "multiple equivalent selectors per field" idea), and a repair cache so subsequent queries really are 0 tokens.</li>
 </ul>
 
 <h2>Reproduce it</h2>
 
-<p>Everything is in the Tap repo, under <code>core/experiments/</code>:</p>
+<p>The reproducibility kit is open under Apache-2.0 in the public <a href="https://github.com/LeonTing1010/tap-skills"><code>tap-skills</code></a> repo, under <code>experiments/</code>:</p>
 
 <ul>
 <li>Verifier substrate: <code>w0-verifier/</code> &mdash; 3 pilot taps calibrated at FPR=0, FNR=0 over 390 samples</li>

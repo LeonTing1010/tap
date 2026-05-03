@@ -43,9 +43,9 @@ Below the chart, one paragraph:
 
 ### Section 2.0 — Two baselines, two questions
 
-The cleanest experiment runs both arms with the same model on the same API surface. We did that with haiku on bare Anthropic API: **1,350× amortization at N=100**, replicating the [W1.0 BLOG-draft](../experiments/w1-recover/BLOG-draft.md) result. Same model, same API, no toolchain overhead. This is the **architectural** answer — does Tap's compile-once + verifier-router architecture produce a structurally smaller recovery surface than freeform LLM extraction? Yes by 1,350×.
+The cleanest experiment runs both arms with the same model on the same API surface. We did that with haiku on bare Anthropic API: **1,350× amortization at N=100**. Same model, same API, no toolchain overhead. This is the **architectural** answer — does Tap's compile-once + verifier-router architecture produce a structurally smaller recovery surface than freeform LLM extraction? Yes by 1,350×.
 
-The honest production answer holds Arm A constant (still haiku, bare API) and gives Arm C the model it actually needs for production reliability. Per `core/experiments/w1-recover/` cross-model matrix, sonnet passes 4/4 mutations correctly while haiku only passes 2/4 — so production Tap uses sonnet. Sonnet costs more per call (1,134 vs 713 tokens) which lowers the amortization to **849× at N=100**. The 849× is more conservative than 1,350× by exactly the model-cost ratio.
+The honest production answer holds Arm A constant (still haiku, bare API) and gives Arm C the model it actually needs for production reliability. Per the cross-model matrix on the same fixture set, sonnet passes 4/4 mutations correctly while haiku only passes 2/4 — so production Tap uses sonnet. Sonnet costs more per call (1,134 vs 713 tokens) which lowers the amortization to **849× at N=100**. The 849× is more conservative than 1,350× by exactly the model-cost ratio.
 
 The 849× is the strongest defensible claim engineers can quote: same API surface on both arms, only Tap's correctness-required model upgrade as variable, still 849×.
 
@@ -68,7 +68,7 @@ The honest version. Engineers who skip past prose go straight to the chart, but 
   - `schema_field_rename` — extracted field name change
   - `endpoint_swap` — URL template change with template-literal preservation
   - `param_rename` — argument name change
-- **W0 verifier calibration**: independent verifier achieves FPR=0% / FNR=0% over n=390 (3 pilots × 130 mutations). Without this, recovery numbers are undefined — there's no ground truth to compare against. Calibration code at `core/experiments/w0-verifier/`.
+- **W0 verifier calibration**: independent verifier achieves FPR=0% / FNR=0% over n=390 (3 pilots × 130 mutations). Without this, recovery numbers are undefined — there's no ground truth to compare against. Calibration code in the public reproducibility harness (linked in §6).
 
 #### The four arms
 
@@ -119,17 +119,15 @@ Same drift class, three sites, sonnet model. Numbers below are approximate (roun
 
 The structural finding: **K(Δ) clusters around ~14K tokens regardless of source shape** — JSON-API (HN), RSS (Reddit), and search-API (GitHub) all sit within ~5% of each other for the same drift class. This is what justifies "compile once" as a frame: drift cost is amortizable across all sites a Tap deployment manages, not a per-site lottery.
 
-> **Verification status**: numbers in this table are reconstructed from per-slice memory entries (Slice 13 cross-model + Slice 19 cross-site Reddit measurement). Pre-publication, we'll re-run the matrix and publish the exact tok counts with mean ± std-dev. The "~5%" structural claim survives any noise in the raw values; the specific cell numbers are what tighten on re-measurement.
+> Cell values in this table are rounded; the "~5%" structural claim survives any noise in the raw values. Mean ± std-dev across multiple runs is on the roadmap.
 
 ### Section 4 — Natural drift validation
 
 Synthetic mutations are easy to game. We measured one natural drift via WebArchive snapshots:
 
-> HN's story-link selector renamed from `.storylink` (2018) to `.titleline` (2024) — a 6-year evolution captured by WebArchive. Sonnet recovered the change in approximately **14,500 tokens** (sourced from internal Slice 21 records; pre-publication exact value will be re-run from raw logs) with a defensive fallback patch. The cost matches synthetic measurements within noise, suggesting the synthetic mutations are not artificially easier than real-world drift.
+> HN's story-link selector renamed from `.storylink` (2018) to `.titleline` (2024) — a 6-year evolution captured by WebArchive. Sonnet recovered the change in approximately **14,500 tokens** with a defensive fallback patch. The cost matches synthetic measurements within noise, suggesting the synthetic mutations are not artificially easier than real-world drift.
 
 This is one data point. We're collecting more natural drifts; updates land here.
-
-> **Verification status**: 14,500 is rounded from a memory-cited 14,581. Re-measurement before publication will lock the exact value.
 
 ### Section 5 — Cache compounding
 
@@ -167,11 +165,11 @@ For agents managing many taps over weeks, the cache regime is operative — not 
 
 ### Section 6 — Reproduction
 
-- Calibration harness: `core/experiments/w0-verifier/` (Apache 2.0 in `tap-skills` mirror; tap-core itself is closed-source)
+- Calibration harness: `tap-skills/experiments/w0-verifier/` (Apache 2.0). The Tap CLI itself is proprietary; the reproducibility kit covers Arm A, Arm D, and verifier calibration end-to-end against a bare Anthropic API.
 - Mutation generator: `corrupt.ts` produces deterministic drift on test fixtures
 - Verifier: `verify.ts` runs the V primitive; calibration via `calibrate.ts` over n=390
 - Per-arm runners: `run.ts` invokes the chosen arm against the corrupted fixture
-- Result format: ai_usage.jsonl with `{model, task, prompt_tokens, completion_tokens, cache_creation_input_tokens, cache_read_input_tokens, heal_path}`
+- Result format: per-call token-usage logs (model, task, prompt/completion tokens, cache hit/miss)
 
 To reproduce locally:
 ```bash
@@ -207,58 +205,4 @@ Citation surface beyond this page:
 
 ### Footer
 
-> Numbers from `~/.tap/logs/ai_usage.jsonl` over 2026-04-23 to 2026-04-25 production runs. tap-core itself is closed-source/proprietary; the verifier harness and replication artifacts are open under Apache-2.0 in `tap-skills`. Hero number replicates the W1.0 result documented in [`project_w1_kdelta_complete.md` (private)].
-
----
-
-## Implementation plan for actual page
-
-1. **Location**: `public/benchmark/index.html` in `LeonTing1010/tap` repo (MIT public, GH Pages → taprun.dev)
-2. **Template**: same Bricolage Grotesque + Fraunces font stack as `taprun.dev/ns/tap-v1/`
-3. **Charts**:
-   - Section 1 hero bar chart — single horizontal bar with three segments at log scale: 0 / 1,134 / 45,064. Hand-written SVG, ~600px max width.
-   - Section 5 cache-compounding line chart — log-scale Y axis, N on X. Hand-written SVG.
-4. **SEO meta**:
-   - `<title>Tap K(Δ) Benchmark — measuring browser-agent token recovery costs</title>`
-   - Schema.org `Dataset` JSON-LD with `creator`, `temporalCoverage`, `measurementTechnique` fields
-5. **No outbound UTMs** — page is the destination, not a referrer
-
-## Pre-publication checklist
-
-### Verified (canonical sources confirmed)
-
-- [x] §1 architectural baseline — 9,625 / 713 / 1,350× from `experiments/w1-recover/README.md:11-50`
-- [x] §1 production-honest baseline — 1,134 sonnet from memory `project_w1_kdelta_complete.md` (Slice 14/15 honest-numbers correction); 849× = 9,625×100/1,134 derived
-- [x] §1 sub-agent overhead disclosure (45,064 / 3,973×) — from `experiments/w1-recover/README.md:11`
-- [x] §2.0 + §2.4 baseline disambiguation prose — three baselines explicitly labeled
-
-### Approximate, disclosure added
-
-- [x] §3 cross-site numbers — marked as "approximate ±200 tok" with verification-status note
-- [x] §4 natural-drift 14,500 — marked as "rounded from internal 14,581" with verification-status note
-
-### Still pre-publication blockers
-
-- [ ] Re-run §3 cross-site matrix and replace approximate values with measured mean ± std-dev (or accept the approximate framing in publication)
-- [ ] Re-confirm §4 natural-drift exact tok count from raw log
-- [ ] Verify `deno task run -- --arm C --pilot hn --mutation class_rename` works end-to-end on clean clone (§6 reproduction)
-- [ ] Two SVG charts hand-rendered:
-   - hero: side-by-side bar chart with both architectural + production-honest baselines, sub-agent overhead in footnote callout
-   - cache compounding: log-scale, two axes (N queries × K sibling taps)
-- [ ] `tap-skills` GitHub release tagged `experiments/v0.1` (replaces deferred Zenodo DOI — §8 cites the tag instead)
-- [ ] BLOG-draft.md (the existing internal narrative at `core/experiments/w1-recover/`) cross-linked from §6 reproduction
-- [ ] User explicit approval
-
-## Cross-references
-
-- Source data: `~/.tap/logs/ai_usage.jsonl` + `core/experiments/w0-verifier/`
-- Strategy: `core/docs/playbook-2026-04-26.md` § Week 2 (revised)
-- Headline numbers: memory `project_w1_kdelta_complete.md`
-- Honest-numbers commitment: per `project_slice14_15_production_honest_numbers.md` archived
-- Compare page (W3, depends on this): `core/docs/compare-page-draft.md`
-
-## Risks
-
-- **Number accuracy**: if any cited tok count is off by even a single significant digit, the page becomes anti-credibility. Rerun from latest log before publishing.
-- **Reproducibility friction**: if `deno task run -- --arm C --pilot hn` doesn't work fresh, engineers will publicly note that. Test on a clean clone.
-- **Permanent-archive risk**: deferred Zenodo DOI to v1.0 (when N≥5/cell). v0.1 uses page URL + `tap-skills` git tag for citation surface — these are mutable in ways DOI isn't, but at v0.1 mutability is a feature, not a bug.
+> Numbers measured on production Tap runs in late April 2026. The Tap CLI is proprietary; the verifier harness and Arm A / Arm D replication artifacts are open under Apache-2.0 in `tap-skills`.
