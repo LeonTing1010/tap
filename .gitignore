@@ -24,3 +24,4 @@ scripts/gsc-insights.ts
 scripts/add_ga.sh
 scripts/add_ga_to_all.py
 scripts/get_refresh_token.py
+scripts/weekly-digest.ts
