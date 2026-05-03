@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Tap",
-  "version": "0.15.3",
+  "version": "0.15.4",
   "description": "AI browser automation runtime. Programs beat prompts — deterministic replay at zero AI cost.",
   "icons": {
     "16": "icons/icon16.png",
