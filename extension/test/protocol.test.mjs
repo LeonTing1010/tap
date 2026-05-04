@@ -252,6 +252,50 @@ test('WebSocket message handler strips tap. prefix for compatibility', () => {
     'WebSocket handler must strip tap. prefix from incoming method names for backward compatibility')
 })
 
+// ═══════════════════════════════════════════════════════════
+// Rule 8: tap-protocol fields must not leak into RequestInit
+// Why: F5 (2026-05-04) — case 'fetch' destructures params then
+// Object.assign(init, rest). Tap protocol fields (`credentials`,
+// `save`) are NOT fetch RequestInit values; if they propagate
+// through `...rest` they corrupt the fetch init dict. Chrome
+// rejects `credentials: 'page-session'` with TypeError on the
+// invalid enum, and the op fails before the request goes out.
+// Regression form: removing the destructure exclusion re-introduces
+// the bug. Static guard locks the contract.
+// ═══════════════════════════════════════════════════════════
+
+console.log('\n  -- Rule 8: case fetch — tap-protocol fields stripped from RequestInit --\n')
+
+{
+  const fetchCaseStart = BG_SRC.indexOf("case 'fetch'")
+  assert(fetchCaseStart !== -1, "case 'fetch' must exist in handleMethod")
+  const after = BG_SRC.substring(fetchCaseStart + 12)
+  const nextCase = after.search(/\n\s+case\s+'/)
+  const fetchCaseBody = nextCase === -1 ? after : after.substring(0, nextCase)
+
+  test("destructures `credentials` to keep it out of fetch RequestInit", () => {
+    const stripped = /credentials\s*[,:}]/.test(fetchCaseBody)
+    assert(stripped,
+      "case 'fetch' must destructure `credentials` (tap-protocol field, not a RequestInit value — Chrome throws TypeError on `credentials: 'page-session'`)")
+  })
+
+  test("destructures `save` to keep it out of fetch RequestInit", () => {
+    const stripped = /\bsave\s*[,:}]/.test(fetchCaseBody)
+    assert(stripped,
+      "case 'fetch' must destructure `save` (tap-protocol scope-binding field, not a RequestInit value)")
+  })
+
+  test("Object.assign(init, rest) is preceded by destructuring that excludes tap-protocol fields", () => {
+    const assignIdx = fetchCaseBody.indexOf('Object.assign(init')
+    assert(assignIdx !== -1, "case 'fetch' must use Object.assign(init, rest) for forward-compat fetch options")
+    const beforeAssign = fetchCaseBody.substring(0, assignIdx)
+    assert(/credentials\s*[,:}]/.test(beforeAssign),
+      "credentials must be destructured BEFORE Object.assign(init, rest)")
+    assert(/\bsave\s*[,:}]/.test(beforeAssign),
+      "save must be destructured BEFORE Object.assign(init, rest)")
+  })
+}
+
 // --- Summary ---
 console.log(`\n${passed + failed} constraints, ${passed} passed, ${failed} failed\n`)
 process.exit(failed > 0 ? 1 : 0)

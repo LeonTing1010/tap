@@ -204,9 +204,13 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
     tabId = tabs[0]?.id || null
   }
 
-  // Methods that can work without a tab
+  // Methods that can work without a tab.
+  // 'fetch' added 2026-05-04 (Framework v2.4 §二十 L2.5): SW-context fetch
+  // with credentials:'include' uses Chrome's cookie jar directly — no tab
+  // context needed. Same-origin enforcement is upstream (engine lint S1).
   const noTabNeeded = ['nav', 'tab.new', 'tab.list', 'tab.close', 'capabilities', 'reload',
-                       'session.create', 'session.destroy', 'session.info']
+                       'session.create', 'session.destroy', 'session.info',
+                       'fetch']
   if (!tabId && !noTabNeeded.includes(method)) {
     throw new Error('No active tab. Call nav first or use session.create.')
   }
@@ -546,11 +550,89 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       return {}
 
     case 'fetch': {
-      const { url, ...opts } = params
-      return await execFunc(tabId, async (u, o) => {
-        const res = await fetch(u, { credentials: 'include', ...o })
-        return res.json()
-      }, url, opts)
+      // SW-direct fetch (Framework v2.4 §二十 Level 2.5, 2026-05-04, F5 fix):
+      // No more execFunc(tabId, ...) — Chrome MV3 SW with credentials:'include'
+      // and host_permissions:<all_urls> uses the same cookie jar as page
+      // contexts (incl. HttpOnly login cookies via the network layer).
+      // Same-origin enforcement is upstream by engine lint (S1 rule).
+      //
+      // Deletion vs prior version:
+      //   - Removed execFunc wrap (saves a chrome.scripting.executeScript hop)
+      //   - Removed tabId requirement (added 'fetch' to noTabNeeded above)
+      //   - Removed page-context indirection (was for cookie sharing — SW
+      //     fetch shares the same network-layer cookie jar)
+      //
+      // Bug #4 envelope semantics preserved (HTTP error + parse error → throw
+      // structured JSON-stringified detail; network error → throw with message).
+      // F5 fix 2026-05-04: `credentials` is a tap-protocol field ('page-session'
+      // | 'deno-host' — routes to engine vs extension peer); it's NOT a fetch
+      // RequestInit value. Strip it so it doesn't propagate through `...rest`
+      // into the fetch init dict (Chrome rejects unknown enum → TypeError →
+      // op:fetch fails before the request goes out). SW-context fetch with
+      // host_permissions:<all_urls> always uses Chrome's cookie jar via
+      // credentials:'include', regardless of the tap-protocol value.
+      // `save` likewise is a tap-protocol field (engine-side scope binding).
+      const {
+        url, format, headers, body,
+        method: httpMethod,
+        tabId: _ignoredTabId,
+        _sessionId: _ignoredSession,
+        credentials: _tapCredentials,
+        save: _tapSave,
+        ...rest
+      } = params
+      const init = {
+        credentials: 'include',
+        method: httpMethod || 'GET',
+      }
+      if (headers) init.headers = headers
+      if (body !== undefined) {
+        init.body = typeof body === 'string' ? body : JSON.stringify(body)
+        init.headers = init.headers || {}
+        if (!init.headers['content-type'] && !init.headers['Content-Type']) {
+          init.headers['content-type'] = 'application/json'
+        }
+      }
+      // Preserve any extra fetch options that aren't tap fields (kept for
+      // forward-compat — currently empty rest).
+      Object.assign(init, rest)
+
+      let res
+      try {
+        res = await fetch(url, init)
+      } catch (e) {
+        throw new Error('op:fetch failed: ' + JSON.stringify({
+          kind: 'network_error',
+          message: String(e?.message || e),
+          url,
+        }))
+      }
+      const ct = res.headers.get('content-type') || ''
+      if (!res.ok) {
+        const text = await res.text().catch(() => '')
+        throw new Error('op:fetch failed: ' + JSON.stringify({
+          kind: 'http_error',
+          status: res.status, statusText: res.statusText,
+          url: res.url, contentType: ct,
+          body: text.slice(0, 16384),
+        }))
+      }
+      const fmt = format || 'json'
+      if (fmt === 'text') return await res.text()
+      if (fmt === 'arrayBuffer') {
+        const ab = await res.arrayBuffer()
+        return Array.from(new Uint8Array(ab))
+      }
+      // Default JSON: read text first so a parse failure can surface body.
+      const text = await res.text()
+      try { return JSON.parse(text) }
+      catch (_e) {
+        throw new Error('op:fetch failed: ' + JSON.stringify({
+          kind: 'parse_error', parser: 'json',
+          status: res.status, url: res.url, contentType: ct,
+          body: text.slice(0, 16384),
+        }))
+      }
     }
 
     case 'find': {
@@ -1129,19 +1211,25 @@ chrome.alarms.onAlarm.addListener(() => {
 async function handleAndReport(id, method, params) {
   let response
   try {
+    console.log('[tap-debug] handleAndReport calling handleMethod(', method, ', tabId=', params.tabId, ', _sessionId=', params._sessionId, ')')
     const result = await handleMethod(method, params, null, { fromDaemon: true })
+    console.log('[tap-debug] handleMethod returned for', method, 'result-type=', typeof result, 'len=', typeof result === 'string' ? result.length : '?')
     response = { id, result }
   } catch (error) {
     const msg = error.message || ''
+    console.log('[tap-debug] handleMethod threw for', method, ':', msg)
     response = { id, error: { code: -32000, message: msg } }
   }
   try {
-    await fetch(`${DAEMON_URL}/result`, {
+    const r = await fetch(`${DAEMON_URL}/result`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(response),
     })
-  } catch { /* daemon gone — next poll will reconnect */ }
+    console.log('[tap-debug] /result POST status=', r.status, 'for id=', id.slice(0, 8))
+  } catch (e) {
+    console.log('[tap-debug] /result POST FAILED for id=', id.slice(0, 8), ':', e?.message || e)
+  }
 }
 
 function startPoll() {
@@ -1189,10 +1277,32 @@ async function pollLoop() {
       // Process commands concurrently — don't block the poll loop.
       // If we await handleMethod here, there's no active fetch during
       // command execution, and Chrome kills the service worker.
+      //
+      // Wire shape (Framework v2.4 §二十 Level 2.5, 2026-05-04, F5 fix):
+      // commands carry the full op envelope under `op` instead of legacy
+      // `{method, params}` JSON-RPC framing. We adapt at the wire layer
+      // (extract method = op.op, params = remaining op fields) so the
+      // existing handleMethod switch keeps working unchanged for legacy
+      // chrome.runtime.onMessage callers (popup / content scripts).
       for (const cmd of commands) {
-        const { id, method: rawMethod, params, sessionId } = cmd
-        const method = rawMethod?.replace?.('tap.', '') || rawMethod
-        const resolvedParams = { ...(params || {}) }
+        // [tap-debug L2.5] trace
+        console.log('[tap-debug] received cmd:', JSON.stringify(cmd).slice(0, 300))
+        // Op-native wire (L2.5) OR legacy {method, params} wire (older daemons).
+        // Detect by presence of `cmd.op` (object) vs `cmd.method` (string).
+        let method, paramsBag
+        if (cmd.op && typeof cmd.op === 'object') {
+          // L2.5 op-native: {id, op:{op:'fetch', url, ...}, sessionId?}
+          const { op: opName, ...rest } = cmd.op
+          method = String(opName).replace(/^tap\./, '')
+          paramsBag = rest
+        } else {
+          // Legacy: {id, method, params, sessionId?}
+          method = (cmd.method || '').replace(/^tap\./, '')
+          paramsBag = cmd.params || {}
+        }
+        console.log('[tap-debug] dispatching method=', method, 'paramsBag.url=', paramsBag.url)
+        const resolvedParams = { ...paramsBag }
+        const { id, sessionId } = cmd
         // Resolve sessionId to tabId. Always pass _sessionId through so nav can
         // auto-heal when the session's tab was closed behind our back (user
         // close / Chrome replace / SW missed the onRemoved event): nav creates
