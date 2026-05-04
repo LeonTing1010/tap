@@ -19,12 +19,11 @@
       "min_rows": 3,
       "non_empty": [
         "caption"
-      ],
-      "requires_auth": true
+      ]
     }
   },
   "seeAlso": [
-    "https://github.com/LeonTing1010/tap-skills/blob/main/community/instagram/explore.tap.js",
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/instagram/explore.tap.json",
     "https://taprun.dev/taps/instagram/explore.html"
   ]
 }

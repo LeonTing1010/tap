@@ -36,7 +36,7 @@
     }
   },
   "seeAlso": [
-    "https://github.com/LeonTing1010/tap-skills/blob/main/showcase/hackernews/submit.tap.js",
+    "https://github.com/LeonTing1010/tap-skills/blob/main/showcase/hackernews/submit.tap.json",
     "https://taprun.dev/taps/hackernews/submit.html"
   ]
 }

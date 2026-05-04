@@ -12,18 +12,19 @@
     "site": "lobsters",
     "name": "hot",
     "intent": "read",
-    "description": "Lobsters hot posts",
+    "description": "Lobsters hot stories - Frontpage stories from Lobsters tech community, extracted via RSS feed",
     "columns": [],
     "args": {},
     "health": {
       "min_rows": 5,
       "non_empty": [
-        "title"
+        "title",
+        "link"
       ]
     }
   },
   "seeAlso": [
-    "https://github.com/LeonTing1010/tap-skills/blob/main/showcase/lobsters/hot.tap.js",
+    "https://github.com/LeonTing1010/tap-skills/blob/main/showcase/lobsters/hot.tap.json",
     "https://taprun.dev/taps/lobsters/hot.html"
   ]
 }

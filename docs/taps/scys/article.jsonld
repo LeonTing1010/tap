@@ -21,8 +21,7 @@
     "args": {
       "url": {
         "type": "string",
-        "description": "Article URL (optional, reads current page if omitted)",
-        "required": false
+        "description": "Article URL (optional, reads current page if omitted)"
       }
     },
     "health": {
@@ -33,7 +32,7 @@
     }
   },
   "seeAlso": [
-    "https://github.com/LeonTing1010/tap-skills/blob/main/community/scys/article.tap.js",
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/scys/article.tap.json",
     "https://taprun.dev/taps/scys/article.html"
   ]
 }

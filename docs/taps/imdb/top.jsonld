@@ -23,7 +23,7 @@
     }
   },
   "seeAlso": [
-    "https://github.com/LeonTing1010/tap-skills/blob/main/community/imdb/top.tap.js",
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/imdb/top.tap.json",
     "https://taprun.dev/taps/imdb/top.html"
   ]
 }

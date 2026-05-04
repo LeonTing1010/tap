@@ -39,7 +39,7 @@
     }
   },
   "seeAlso": [
-    "https://github.com/LeonTing1010/tap-skills/blob/main/community/github/create-issue.tap.js",
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/github/create-issue.tap.json",
     "https://taprun.dev/taps/github/create-issue.html"
   ]
 }

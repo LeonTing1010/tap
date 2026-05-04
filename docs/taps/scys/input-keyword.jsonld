@@ -20,8 +20,8 @@
     "args": {
       "keyword": {
         "type": "string",
-        "description": "Search keyword",
-        "required": true
+        "required": true,
+        "description": "Search keyword"
       }
     },
     "health": {
@@ -30,7 +30,7 @@
     }
   },
   "seeAlso": [
-    "https://github.com/LeonTing1010/tap-skills/blob/main/community/scys/input-keyword.tap.js",
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/scys/input-keyword.tap.json",
     "https://taprun.dev/taps/scys/input-keyword.html"
   ]
 }

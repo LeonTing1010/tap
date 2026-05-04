@@ -2,22 +2,41 @@
 layout: tap
 site_name: github
 tap_name: trending
-description: "GitHub Trending repositories"
+description: "GitHub repos created in the last N days with ≥ min_stars, filtered to AI/SaaS/devtool niches via topic+description keyword match. Supply-side signal for solo builder category emergence."
 intent: read
-columns: []
-args: []
+columns:
+  - slug
+  - description
+  - stars
+  - language
+  - topics
+  - created_at
+  - url
+args:
+  - name: days
+    type: int
+    default: 7
+    description: "Lookback window in days"
+  - name: min_stars
+    type: int
+    default: 5
+    description: "Minimum stars to include"
+  - name: per_page
+    type: int
+    default: 50
+    description: "Max results from API"
 args_json: |
-  {}
+  {"days":{"type":"int","default":7,"description":"Lookback window in days"},"min_stars":{"type":"int","default":5,"description":"Minimum stars to include"},"per_page":{"type":"int","default":50,"description":"Max results from API"}}
 health_json: |
-  {"min_rows":1,"non_empty":[]}
+  {"min_rows":1,"non_empty":["slug"]}
 example_args: ""
-source_url: https://github.com/LeonTing1010/tap-skills/blob/main/showcase/github/trending.tap.js
+source_url: https://github.com/LeonTing1010/tap-skills/blob/main/showcase/github/trending.tap.json
 license: MIT
 ---
 
 <section>
   <h2>What it does</h2>
-  <p>GitHub Trending repositories</p>
+  <p>GitHub repos created in the last N days with ≥ min_stars, filtered to AI/SaaS/devtool niches via topic+description keyword match. Supply-side signal for solo builder category emergence.</p>
 </section>
 
 <section>

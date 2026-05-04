@@ -27,7 +27,7 @@
     }
   },
   "seeAlso": [
-    "https://github.com/LeonTing1010/tap-skills/blob/main/community/reminders/pending.tap.js",
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/reminders/pending.tap.json",
     "https://taprun.dev/taps/reminders/pending.html"
   ]
 }

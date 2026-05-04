@@ -21,7 +21,7 @@
     }
   },
   "seeAlso": [
-    "https://github.com/LeonTing1010/tap-skills/blob/main/showcase/wikipedia/most-read.tap.js",
+    "https://github.com/LeonTing1010/tap-skills/blob/main/showcase/wikipedia/most-read.tap.json",
     "https://taprun.dev/taps/wikipedia/most-read.html"
   ]
 }

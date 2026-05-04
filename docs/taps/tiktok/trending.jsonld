@@ -19,12 +19,11 @@
       "min_rows": 3,
       "non_empty": [
         "author"
-      ],
-      "requires_auth": true
+      ]
     }
   },
   "seeAlso": [
-    "https://github.com/LeonTing1010/tap-skills/blob/main/community/tiktok/trending.tap.js",
+    "https://github.com/LeonTing1010/tap-skills/blob/main/community/tiktok/trending.tap.json",
     "https://taprun.dev/taps/tiktok/trending.html"
   ]
 }
