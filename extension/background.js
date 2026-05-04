@@ -1192,6 +1192,183 @@ chrome.action.onClicked.addListener(async () => {
   chrome.tabs.create({ url: 'https://taprun.dev/install?utm_source=chrome-ext&utm_medium=extension&utm_campaign=icon-click' })
   // Use startPoll (not pollLoop directly) so rehydrate always runs first.
   startPoll()
+  startWs()
+})
+
+// ─── WebSocket transport (ADR 2026-05-05-daemon-sw-via-websocket.md) ─
+//
+// Replaces the long-poll triplet (POST /poll, /result, /enqueue) with
+// a single bidirectional connection + JSON-RPC 2.0 envelope. Closes
+// Bug 1 (60s timeout race), Bug 2 (kind misclassification), Bug 3
+// (active-tab not auto-bound). Coexists with pollLoop during I7
+// migration; pollLoop runs in parallel until daemon's HTTP /poll is
+// retired.
+
+// JSON-RPC error code map (mirrors core/wire-codes.ts WIRE_CODE).
+// Drift caught by: `public/extension/test/wire_codes_test.mjs` (W4).
+const WIRE_CODE = {
+  missing_runtime_declaration: -32000,
+  peer_not_registered: -32001,
+  unsupported_op_for_peer: -32002,
+  peer_unreachable: -32003,
+  fetch_http: -32004,
+  fetch_parse: -32005,
+  navigation_blocked: -32006,
+  selector_not_found: -32007,
+  tab_closed: -32008,
+  csp_violation: -32009,
+  permission_denied: -32010,
+  secret_unresolved: -32011,
+  timeout: -32012,
+  wire_kind_unknown: -32013,
+}
+
+let ws = undefined
+let wsBackoff = 1000
+let wsHardClosed = false
+
+function startWs() {
+  if (wsHardClosed) return
+  if (ws && (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.OPEN)) return
+  try {
+    ws = new WebSocket(`${DAEMON_URL.replace(/^http/, 'ws')}/ws`)
+  } catch (e) {
+    console.log('[tap-ws] connect failed:', e?.message || e)
+    setTimeout(() => startWs(), wsBackoff)
+    wsBackoff = Math.min(wsBackoff * 2, 30000)
+    return
+  }
+  ws.onopen = () => {
+    console.log('[tap-ws] connected to daemon')
+    wsBackoff = 1000
+    setBadge(true)
+    // Bug 3 fix: push current active tab on connect so daemon's
+    // lastActiveTab cache is populated immediately (without waiting
+    // for a tab switch).
+    chrome.tabs.query({ active: true, lastFocusedWindow: true }).then((tabs) => {
+      const t = tabs[0]
+      if (!t) return
+      try {
+        ws.send(JSON.stringify({
+          jsonrpc: '2.0',
+          method: 'active_tab_changed',
+          params: { tabId: t.id, url: t.url },
+        }))
+      } catch { /* ws may have closed */ }
+    }).catch(() => { /* permission gap */ })
+  }
+  ws.onmessage = async (e) => {
+    let msg
+    try { msg = JSON.parse(e.data) } catch { return }
+    if (msg.jsonrpc !== '2.0') return
+    if (msg.id === undefined || msg.id === null || typeof msg.method !== 'string') return
+    // JSON-RPC request: {id, method:"dispatch", params:{op, sessionId?}}
+    if (msg.method !== 'dispatch') return
+    const params = msg.params || {}
+    const op = params.op || {}
+    const { op: opName, ...rest } = op
+    const method = String(opName).replace(/^tap\./, '')
+    const resolvedParams = { ...rest }
+    // Engine-side EvalOp uses `fn`; extension's handleMethod historically
+    // reads `params.expression`. Translate here so we don't have to fork
+    // the type. (Pre-existing mismatch — not introduced by Phase 5 WS.)
+    if (method === 'eval' && resolvedParams.fn !== undefined && resolvedParams.expression === undefined) {
+      resolvedParams.expression = `(${resolvedParams.fn})()`
+    }
+    if (params.sessionId) {
+      resolvedParams._sessionId = params.sessionId
+      if (sessions.has(params.sessionId)) {
+        resolvedParams.tabId = sessions.get(params.sessionId).tabId
+      }
+    }
+    // Bug 3 fix (ADR 2026-05-05): when no sessionId binding produces a
+    // tabId, fall back to the user's currently-active tab — daemon
+    // tracks this via active_tab_changed notifications. Only fires
+    // when (a) caller didn't bind a session AND (b) op didn't specify
+    // tabId AND (c) daemon has observed an active tab. The original
+    // "no auto-discover" guard prevented cross-session leakage; with
+    // explicit lastActiveTab from daemon the cross-session risk is
+    // bounded — daemon serves one user's Chrome at a time.
+    if (
+      resolvedParams.tabId === undefined &&
+      params.lastActiveTab && typeof params.lastActiveTab.tabId === 'number'
+    ) {
+      resolvedParams.tabId = params.lastActiveTab.tabId
+      resolvedParams._tabIdFromActiveTab = true
+    }
+    let response
+    try {
+      const result = await handleMethod(method, resolvedParams, null, { fromDaemon: true })
+      response = { jsonrpc: '2.0', id: msg.id, result }
+    } catch (error) {
+      const errMsg = (error && error.message) || String(error)
+      response = {
+        jsonrpc: '2.0',
+        id: msg.id,
+        error: {
+          code: classifyExtensionError(errMsg, method),
+          message: errMsg,
+        },
+      }
+    }
+    try { ws.send(JSON.stringify(response)) } catch { /* socket gone */ }
+  }
+  ws.onclose = (ev) => {
+    console.log('[tap-ws] closed:', ev.code, ev.reason)
+    ws = undefined
+    setBadge(false)
+    if (wsHardClosed) return
+    setTimeout(() => startWs(), wsBackoff)
+    wsBackoff = Math.min(wsBackoff * 2, 30000)
+  }
+  ws.onerror = () => { /* onclose follows */ }
+}
+
+// Classify extension-side error string into a JSON-RPC code via
+// WIRE_CODE. Covers the common cases the SW's handleMethod can throw;
+// unknown shapes default to peer_unreachable (back-compat).
+function classifyExtensionError(msg, _method) {
+  const s = String(msg || '').toLowerCase()
+  if (s.includes('http_error') || /\bstatus[:=]\s*[45]\d\d/.test(s)) {
+    return WIRE_CODE.fetch_http
+  }
+  if (s.includes('selector') && (s.includes('not found') || s.includes('not_found'))) {
+    return WIRE_CODE.selector_not_found
+  }
+  if (s.includes('navigation') && s.includes('block')) {
+    return WIRE_CODE.navigation_blocked
+  }
+  if (s.includes('tab') && (s.includes('closed') || s.includes('no longer'))) {
+    return WIRE_CODE.tab_closed
+  }
+  if (s.includes('timeout') || s.includes('timed out')) {
+    return WIRE_CODE.timeout
+  }
+  if (s.includes('csp') || s.includes('content security policy')) {
+    return WIRE_CODE.csp_violation
+  }
+  if (s.includes('permission')) {
+    return WIRE_CODE.permission_denied
+  }
+  return WIRE_CODE.peer_unreachable
+}
+
+// Bug 3 fix: forward active-tab changes as JSON-RPC notifications so
+// daemon caches lastActiveTab and auto-attaches sessionless ops.
+chrome.tabs.onActivated.addListener(async (info) => {
+  if (!ws || ws.readyState !== WebSocket.OPEN) return
+  let url
+  try {
+    const tab = await chrome.tabs.get(info.tabId)
+    url = tab && tab.url
+  } catch { /* tab gone */ }
+  try {
+    ws.send(JSON.stringify({
+      jsonrpc: '2.0',
+      method: 'active_tab_changed',
+      params: { tabId: info.tabId, url },
+    }))
+  } catch { /* socket gone */ }
 })
 
 // Keep-alive: MV3 kills service workers after ~30s idle.
@@ -1326,3 +1503,4 @@ async function pollLoop() {
 }
 
 startPoll()
+startWs()
