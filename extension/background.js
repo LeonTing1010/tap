@@ -60,7 +60,7 @@ async function persistSessions() {
 }
 
 // Kick off rehydrate at SW startup. Everything that reads `sessions` for
-// command routing (pollLoop) must await this before doing any work.
+// command routing (WS dispatch) must await this before doing any work.
 const rehydrateReady = rehydrateSessions()
 
 const debuggerSessions = new Map()
@@ -550,32 +550,23 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       return {}
 
     case 'fetch': {
-      // SW-direct fetch (Framework v2.4 §二十 Level 2.5, 2026-05-04, F5 fix):
-      // No more execFunc(tabId, ...) — Chrome MV3 SW with credentials:'include'
-      // and host_permissions:<all_urls> uses the same cookie jar as page
-      // contexts (incl. HttpOnly login cookies via the network layer).
-      // Same-origin enforcement is upstream by engine lint (S1 rule).
-      //
-      // Deletion vs prior version:
-      //   - Removed execFunc wrap (saves a chrome.scripting.executeScript hop)
-      //   - Removed tabId requirement (added 'fetch' to noTabNeeded above)
-      //   - Removed page-context indirection (was for cookie sharing — SW
-      //     fetch shares the same network-layer cookie jar)
-      //
-      // Bug #4 envelope semantics preserved (HTTP error + parse error → throw
-      // structured JSON-stringified detail; network error → throw with message).
-      // F5 fix 2026-05-04: `credentials` is a tap-protocol field ('page-session'
-      // | 'deno-host' — routes to engine vs extension peer); it's NOT a fetch
-      // RequestInit value. Strip it so it doesn't propagate through `...rest`
-      // into the fetch init dict (Chrome rejects unknown enum → TypeError →
-      // op:fetch fails before the request goes out). SW-context fetch with
-      // host_permissions:<all_urls> always uses Chrome's cookie jar via
-      // credentials:'include', regardless of the tap-protocol value.
-      // `save` likewise is a tap-protocol field (engine-side scope binding).
+      // Two paths:
+      //   credentials="page-session"  → page-context fetch via
+      //     chrome.scripting.executeScript({world:'MAIN'}). Uses the
+      //     page's REAL TLS fingerprint, defeating Cloudflare /
+      //     similar fingerprint-based bot detection. Honors the
+      //     `credentials:"page-session"` semantic literally instead of
+      //     the prior shortcut (SW fetch with cookies — same cookie
+      //     jar, but DIFFERENT TLS fingerprint, so CF would 403).
+      //     Discovered via yfsp.tv 2026-05-05; see commit message.
+      //   credentials="deno-host" or unset → SW-direct fetch. Faster
+      //     (saves the chrome.scripting hop) but visible-as-bot to
+      //     fingerprint-based gates. Authors who don't need bot
+      //     evasion should keep this path.
       const {
         url, format, headers, body,
         method: httpMethod,
-        tabId: _ignoredTabId,
+        tabId: explicitTabId,
         _sessionId: _ignoredSession,
         credentials: _tapCredentials,
         save: _tapSave,
@@ -593,10 +584,65 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
           init.headers['content-type'] = 'application/json'
         }
       }
-      // Preserve any extra fetch options that aren't tap fields (kept for
-      // forward-compat — currently empty rest).
       Object.assign(init, rest)
 
+      // ─── page-session path (CF-bypass via real TLS fingerprint) ───
+      if (_tapCredentials === 'page-session') {
+        if (!explicitTabId) {
+          throw new Error('op:fetch failed: ' + JSON.stringify({
+            kind: 'navigation_blocked',
+            message: 'page-session fetch needs an active tab — nav first, or daemon must have observed an active_tab_changed notification (lastActiveTab cache empty)',
+            url,
+          }))
+        }
+        const fmt = format || 'json'
+        let scriptResult
+        try {
+          [scriptResult] = await chrome.scripting.executeScript({
+            target: { tabId: explicitTabId },
+            world: 'MAIN',
+            func: async (url, init, fmt) => {
+              try {
+                const res = await fetch(url, init)
+                const ct = res.headers.get('content-type') || ''
+                if (!res.ok) {
+                  const text = await res.text().catch(() => '')
+                  return { __ok: false, kind: 'http_error', status: res.status, statusText: res.statusText, url: res.url, contentType: ct, body: text.slice(0, 16384) }
+                }
+                if (fmt === 'text') return { __ok: true, value: await res.text() }
+                if (fmt === 'arrayBuffer') { const ab = await res.arrayBuffer(); return { __ok: true, value: Array.from(new Uint8Array(ab)) } }
+                const text = await res.text()
+                try { return { __ok: true, value: JSON.parse(text) } }
+                catch (_e) { return { __ok: false, kind: 'parse_error', url: res.url, body: text.slice(0, 16384) } }
+              } catch (e) {
+                return { __ok: false, kind: 'network_error', message: String(e && e.message || e), url }
+              }
+            },
+            args: [url, init, fmt]
+          })
+        } catch (e) {
+          // chrome.scripting itself failed (tab gone, missing permissions, restricted URL).
+          throw new Error('op:fetch failed: ' + JSON.stringify({
+            kind: 'tab_closed',
+            message: String(e && e.message || e),
+            url, tabId: explicitTabId,
+          }))
+        }
+        const r = scriptResult && scriptResult.result
+        if (!r) {
+          throw new Error('op:fetch failed: ' + JSON.stringify({
+            kind: 'tab_closed',
+            message: 'chrome.scripting returned no result (page navigated mid-fetch?)',
+            url, tabId: explicitTabId,
+          }))
+        }
+        if (!r.__ok) {
+          throw new Error('op:fetch failed: ' + JSON.stringify(r))
+        }
+        return r.value
+      }
+
+      // ─── SW-direct path (deno-host / no fingerprint requirement) ──
       let res
       try {
         res = await fetch(url, init)
@@ -1190,19 +1236,16 @@ chrome.action.onClicked.addListener(async () => {
   if (connected) return
   // Disconnected — open install guide so user knows what to do
   chrome.tabs.create({ url: 'https://taprun.dev/install?utm_source=chrome-ext&utm_medium=extension&utm_campaign=icon-click' })
-  // Use startPoll (not pollLoop directly) so rehydrate always runs first.
-  startPoll()
   startWs()
 })
 
 // ─── WebSocket transport (ADR 2026-05-05-daemon-sw-via-websocket.md) ─
 //
-// Replaces the long-poll triplet (POST /poll, /result, /enqueue) with
-// a single bidirectional connection + JSON-RPC 2.0 envelope. Closes
-// Bug 1 (60s timeout race), Bug 2 (kind misclassification), Bug 3
-// (active-tab not auto-bound). Coexists with pollLoop during I7
-// migration; pollLoop runs in parallel until daemon's HTTP /poll is
-// retired.
+// The only daemon ↔ SW transport. Replaces the legacy /poll + /result
+// triplet (deleted I7 2026-05-05). JSON-RPC 2.0 envelope; closes Bug 1
+// (60s timeout race), Bug 2 (kind misclassification), Bug 3 (active-tab
+// not auto-bound). chrome.alarms at 1min cadence is the only fallback
+// — wakes the SW if it died, which retries WS connect.
 
 // JSON-RPC error code map (mirrors core/wire-codes.ts WIRE_CODE).
 // Drift caught by: `public/extension/test/wire_codes_test.mjs` (W4).
@@ -1371,136 +1414,17 @@ chrome.tabs.onActivated.addListener(async (info) => {
   } catch { /* socket gone */ }
 })
 
-// Keep-alive: MV3 kills service workers after ~30s idle.
-// chrome.alarms wakes us every 1min (Chrome minimum) to restart pollLoop.
-let polling = false
+// Keep-alive: MV3 kills service workers after ~30s idle. chrome.alarms
+// at 1min (Chrome's minimum) wakes the SW so it can re-establish the
+// WebSocket if the prior connection was dropped. The alarm itself does
+// not keep the SW alive between fires — only the WS does (Chrome
+// permits SW with active WS to extend lifetime).
 chrome.alarms.create('keepalive', { periodInMinutes: 1 })
 chrome.alarms.onAlarm.addListener(() => {
-  if (!polling) {
-    console.log('[tap] alarm woke service worker — restarting pollLoop')
-    startPoll()
+  if (!ws || ws.readyState === WebSocket.CLOSED) {
+    console.log('[tap] alarm woke SW — re-attempting WebSocket connection')
+    startWs()
   }
 })
 
-// Handle a command from daemon and send result back — runs concurrently with poll loop.
-// fromDaemon=true: commands use explicit tabId (or sessionId→tabId), no auto-discover.
-// This prevents cross-session tab leakage when multiple MCP sessions share the daemon.
-async function handleAndReport(id, method, params) {
-  let response
-  try {
-    console.log('[tap-debug] handleAndReport calling handleMethod(', method, ', tabId=', params.tabId, ', _sessionId=', params._sessionId, ')')
-    const result = await handleMethod(method, params, null, { fromDaemon: true })
-    console.log('[tap-debug] handleMethod returned for', method, 'result-type=', typeof result, 'len=', typeof result === 'string' ? result.length : '?')
-    response = { id, result }
-  } catch (error) {
-    const msg = error.message || ''
-    console.log('[tap-debug] handleMethod threw for', method, ':', msg)
-    response = { id, error: { code: -32000, message: msg } }
-  }
-  try {
-    const r = await fetch(`${DAEMON_URL}/result`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(response),
-    })
-    console.log('[tap-debug] /result POST status=', r.status, 'for id=', id.slice(0, 8))
-  } catch (e) {
-    console.log('[tap-debug] /result POST FAILED for id=', id.slice(0, 8), ':', e?.message || e)
-  }
-}
-
-function startPoll() {
-  if (polling) return
-  polling = true
-  // Wait for rehydrate before accepting commands — otherwise the poll loop
-  // would resolve sessionId→tabId against an empty Map right after SW wake,
-  // routing commands to nothing and throwing "No active tab".
-  rehydrateReady.finally(() => pollLoop())
-}
-
-async function pollLoop() {
-  console.log('[tap] long-poll loop started, daemon:', DAEMON_URL)
-  let backoff = 3000
-  while (true) {
-    let res
-    try {
-      // Long-poll: daemon holds connection until a command arrives (up to 20s)
-      // Explicit 25s timeout — prevents indefinite hang that kills service worker
-      res = await fetch(`${DAEMON_URL}/poll`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId: SESSION_ID }),
-        signal: AbortSignal.timeout(25000),
-      })
-    } catch (e) {
-      if (e?.name === 'TimeoutError') {
-        // AbortSignal timeout — daemon is alive but slow, just re-poll immediately
-        backoff = 3000
-        continue
-      }
-      // Daemon not running — badge + exponential backoff + retry (don't exit loop)
-      setBadge(false)
-      await new Promise(r => setTimeout(r, backoff))
-      backoff = Math.min(backoff * 2, 60000)
-      continue
-    }
-    backoff = 3000  // successful connection — reset backoff
-
-    try {
-      const body = await res.json()
-      const commands = body.commands || []
-      setBadge(true)
-
-      // Process commands concurrently — don't block the poll loop.
-      // If we await handleMethod here, there's no active fetch during
-      // command execution, and Chrome kills the service worker.
-      //
-      // Wire shape (Framework v2.4 §二十 Level 2.5, 2026-05-04, F5 fix):
-      // commands carry the full op envelope under `op` instead of legacy
-      // `{method, params}` JSON-RPC framing. We adapt at the wire layer
-      // (extract method = op.op, params = remaining op fields) so the
-      // existing handleMethod switch keeps working unchanged for legacy
-      // chrome.runtime.onMessage callers (popup / content scripts).
-      for (const cmd of commands) {
-        // [tap-debug L2.5] trace
-        console.log('[tap-debug] received cmd:', JSON.stringify(cmd).slice(0, 300))
-        // Op-native wire (L2.5) OR legacy {method, params} wire (older daemons).
-        // Detect by presence of `cmd.op` (object) vs `cmd.method` (string).
-        let method, paramsBag
-        if (cmd.op && typeof cmd.op === 'object') {
-          // L2.5 op-native: {id, op:{op:'fetch', url, ...}, sessionId?}
-          const { op: opName, ...rest } = cmd.op
-          method = String(opName).replace(/^tap\./, '')
-          paramsBag = rest
-        } else {
-          // Legacy: {id, method, params, sessionId?}
-          method = (cmd.method || '').replace(/^tap\./, '')
-          paramsBag = cmd.params || {}
-        }
-        console.log('[tap-debug] dispatching method=', method, 'paramsBag.url=', paramsBag.url)
-        const resolvedParams = { ...paramsBag }
-        const { id, sessionId } = cmd
-        // Resolve sessionId to tabId. Always pass _sessionId through so nav can
-        // auto-heal when the session's tab was closed behind our back (user
-        // close / Chrome replace / SW missed the onRemoved event): nav creates
-        // a fresh tab and rebinds it to the original sessionId. Without this,
-        // the next command hits "No active tab" forever.
-        if (sessionId) {
-          resolvedParams._sessionId = sessionId
-          if (sessions.has(sessionId)) {
-            resolvedParams.tabId = sessions.get(sessionId).tabId
-          }
-        }
-
-        // Fire-and-forget: handle + report result asynchronously
-        handleAndReport(id, method, resolvedParams)
-      }
-    } catch {
-      // Bad response — retry
-      await new Promise(r => setTimeout(r, 1000))
-    }
-  }
-}
-
-startPoll()
 startWs()
