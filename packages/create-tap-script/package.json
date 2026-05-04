@@ -7,7 +7,7 @@
   },
   "type": "module",
   "bin": {
-    "create-tap-script": "./dist/cli.js"
+    "create-tap-script": "dist/cli.js"
   },
   "files": [
     "dist/cli.js",
