@@ -1,0 +1,173 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 400" role="img" aria-label="Taprun: AI compiles a Hacker News tap once for $0.42, then replays it forever at $0">
+  <title>Taprun — compile once, replay at $0</title>
+  <desc>An AI agent compiles a Hacker News tap into a deterministic plan once, costing $0.42. Subsequent replays return the same data at zero AI cost.</desc>
+
+  <defs>
+    <style><![CDATA[
+      .bg { fill: #0a0a0f; }
+      .bg-light { fill: #f7f7fa; }
+      .bar { fill: #11111a; }
+      .bar-light { fill: #e8e8ee; }
+      .border { stroke: rgba(255,255,255,0.06); stroke-width: 1; fill: none; }
+      .border-light { stroke: rgba(20,17,12,0.08); stroke-width: 1; fill: none; }
+
+      text {
+        font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 14px;
+        fill: #e5e5ec;
+      }
+      .title { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-size: 12px; fill: #6e6e80; font-weight: 500; letter-spacing: 0.04em; }
+      .prompt { fill: #fbbf24; }
+      .cmd { fill: #e5e5ec; font-weight: 600; }
+      .arg { fill: #a5b4fc; }
+      .dim { fill: #a8a8b8; }
+      .muted { fill: #6e6e80; }
+      .check { fill: #34d399; font-weight: 700; }
+      .cost-paid { fill: #fbbf24; font-weight: 700; }
+      .cost-free { fill: #34d399; font-weight: 700; }
+      .label { fill: #6e6e80; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; }
+      .summary-num { fill: #fbbf24; font-weight: 700; font-size: 16px; }
+      .summary-label { fill: #a8a8b8; font-size: 12px; }
+
+      @media (prefers-color-scheme: light) {
+        .bg { fill: #f7f7fa; }
+        .bar { fill: #e8e8ee; }
+        .border { stroke: rgba(20,17,12,0.08); }
+        text { fill: #1a1a1f; }
+        .cmd { fill: #1a1a1f; }
+        .dim { fill: #4a4a55; }
+        .muted { fill: #8a8a95; }
+        .arg { fill: #4f46e5; }
+      }
+
+      /* Each line fades in at its own delay, holds for the bulk of the cycle,
+         then quickly fades back to 0 before the loop restarts. 14s cycle. */
+      .line { opacity: 0; }
+
+      @keyframes l1  { 0%,3% {opacity:0} 6%,93% {opacity:1} 97%,100% {opacity:0} }
+      @keyframes l2  { 0%,11% {opacity:0} 14%,93% {opacity:1} 97%,100% {opacity:0} }
+      @keyframes l3  { 0%,17% {opacity:0} 20%,93% {opacity:1} 97%,100% {opacity:0} }
+      @keyframes l4  { 0%,22% {opacity:0} 25%,93% {opacity:1} 97%,100% {opacity:0} }
+      @keyframes l5  { 0%,29% {opacity:0} 32%,93% {opacity:1} 97%,100% {opacity:0} }
+      @keyframes l6  { 0%,34% {opacity:0} 37%,93% {opacity:1} 97%,100% {opacity:0} }
+      @keyframes l7  { 0%,42% {opacity:0} 45%,93% {opacity:1} 97%,100% {opacity:0} }
+      @keyframes l8  { 0%,49% {opacity:0} 52%,93% {opacity:1} 97%,100% {opacity:0} }
+      @keyframes l9  { 0%,57% {opacity:0} 60%,93% {opacity:1} 97%,100% {opacity:0} }
+      @keyframes l10 { 0%,67% {opacity:0} 70%,93% {opacity:1} 97%,100% {opacity:0} }
+
+      .line-1  { animation: l1  14s linear infinite; }
+      .line-2  { animation: l2  14s linear infinite; }
+      .line-3  { animation: l3  14s linear infinite; }
+      .line-4  { animation: l4  14s linear infinite; }
+      .line-5  { animation: l5  14s linear infinite; }
+      .line-6  { animation: l6  14s linear infinite; }
+      .line-7  { animation: l7  14s linear infinite; }
+      .line-8  { animation: l8  14s linear infinite; }
+      .line-9  { animation: l9  14s linear infinite; }
+      .line-10 { animation: l10 14s linear infinite; }
+
+      @keyframes blink { 0%,50% {opacity:1} 50.01%,100% {opacity:0} }
+      .cursor { animation: blink 1s step-end infinite; fill: #fbbf24; }
+
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .spinner-path {
+        transform-origin: 0 0;
+        animation: spin 1s linear infinite;
+      }
+
+      /* Respect reduced-motion preference: hold final frame, no animation. */
+      @media (prefers-reduced-motion: reduce) {
+        .line, [class^="line-"] { opacity: 1 !important; animation: none !important; }
+        .cursor { animation: none; opacity: 0; }
+        .spinner-path { animation: none; }
+      }
+    ]]></style>
+  </defs>
+
+  <!-- Outer terminal frame -->
+  <rect class="bg" x="0" y="0" width="720" height="400" rx="10"/>
+  <rect class="border" x="0.5" y="0.5" width="719" height="399" rx="9.5"/>
+
+  <!-- Title bar -->
+  <rect class="bar" x="0" y="0" width="720" height="36" rx="10"/>
+  <rect class="bar" x="0" y="26" width="720" height="10"/>
+  <line x1="0" y1="36" x2="720" y2="36" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+
+  <!-- macOS-style window dots -->
+  <circle cx="20" cy="18" r="6" fill="#ef4444"/>
+  <circle cx="40" cy="18" r="6" fill="#fbbf24"/>
+  <circle cx="60" cy="18" r="6" fill="#22c55e"/>
+  <text class="title" x="360" y="22" text-anchor="middle">tap — compile once · replay forever</text>
+
+  <!-- Terminal body -->
+  <g font-size="13">
+
+    <!-- Phase 1: capture -->
+    <g class="line line-1" transform="translate(24 70)">
+      <text>
+        <tspan class="prompt">$ </tspan><tspan class="cmd">tap capture </tspan><tspan class="arg">https://news.ycombinator.com hackernews/hot</tspan>
+      </text>
+    </g>
+
+    <g class="line line-2" transform="translate(24 92)">
+      <text>
+        <tspan class="muted">  </tspan><tspan class="dim">→ inspecting page DOM, detecting API endpoints…</tspan>
+      </text>
+    </g>
+
+    <g class="line line-3" transform="translate(24 114)">
+      <text>
+        <tspan class="muted">  </tspan><tspan class="dim">→ compiling to 11-op plan…</tspan>
+      </text>
+    </g>
+
+    <g class="line line-4" transform="translate(24 136)">
+      <text>
+        <tspan class="check">  ✓ </tspan><tspan class="cmd">saved hackernews/hot </tspan><tspan class="muted">(11 ops, 1.4kb)</tspan><tspan class="cost-paid">          AI cost: $0.42</tspan>
+      </text>
+    </g>
+
+    <!-- Separator to phase 2 -->
+    <g class="line line-5" transform="translate(24 168)">
+      <text class="label">REPLAY — DETERMINISTIC, $0 PER RUN</text>
+      <line x1="245" y1="-4" x2="672" y2="-4" stroke="#2a2a33" stroke-width="1"/>
+    </g>
+
+    <!-- Phase 2: replays, all $0 -->
+    <g class="line line-6" transform="translate(24 196)">
+      <text>
+        <tspan class="prompt">$ </tspan><tspan class="cmd">tap hackernews/hot</tspan><tspan class="muted">                            </tspan>
+      </text>
+    </g>
+    <g class="line line-7" transform="translate(24 218)">
+      <text>
+        <tspan class="check">  ✓ </tspan><tspan class="dim">30 stories returned</tspan><tspan class="muted"> in 0.41s</tspan><tspan class="cost-free">                  $0</tspan>
+      </text>
+    </g>
+
+    <g class="line line-8" transform="translate(24 246)">
+      <text>
+        <tspan class="prompt">$ </tspan><tspan class="cmd">tap hackernews/hot</tspan><tspan class="muted">    </tspan><tspan class="muted">  # 1 hour later</tspan>
+      </text>
+    </g>
+    <g class="line line-9" transform="translate(24 268)">
+      <text>
+        <tspan class="check">  ✓ </tspan><tspan class="dim">30 stories returned</tspan><tspan class="muted"> in 0.39s</tspan><tspan class="cost-free">                  $0</tspan>
+      </text>
+    </g>
+
+    <g class="line line-10" transform="translate(24 296)">
+      <text>
+        <tspan class="muted">  ⋯ same plan, same shape, every run, forever.</tspan>
+      </text>
+    </g>
+  </g>
+
+  <!-- Cumulative summary footer -->
+  <g class="line line-10">
+    <line x1="24" y1="332" x2="696" y2="332" stroke="rgba(255,255,255,0.06)"/>
+    <text class="summary-label" x="24" y="358">cumulative AI cost after 1 capture + N runs:</text>
+    <text class="summary-num" x="540" y="358">$0.42</text>
+    <text class="summary-label" x="588" y="358">— flat. no growth.</text>
+  </g>
+</svg>

@@ -24,11 +24,7 @@
 </p>
 
 <p align="center">
-  <a href="docs/assets/demo-hn-forge.mp4">
-    <img src="docs/assets/demo-hn-forge-thumb.jpg" width="720" alt="Taprun forge + replay demo — click to play">
-  </a>
-  <br>
-  <sub><i>30-second demo: <code>tap capture</code> inspects Hacker News, emits a deterministic plan, replays at $0 — click to play.</i></sub>
+  <img src="docs/assets/hero.svg" width="720" alt="Taprun: AI compiles a Hacker News tap once for $0.42, then replays forever at $0 per run">
 </p>
 
 ---
@@ -265,7 +261,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 ## Roadmap
 
 - [x] 70+ community taps across 68+ sites
-- [x] 3 runtimes — Chrome, Playwright, macOS
+- [x] 2 runtimes — Chrome extension + Playwright (headless / CI)
 - [x] Unix pipes — `tap A | tap B`
 - [x] Watch mode — monitor changes over time
 - [x] Doctor — health contracts, fingerprint diffs, automatic diagnostics for broken taps

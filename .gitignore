@@ -26,6 +26,7 @@ scripts/add_ga_to_all.py
 scripts/get_refresh_token.py
 scripts/weekly-digest.ts
 
-# Large demo media (41MB+ — over GitHub's recommended file-size threshold;
-# ship via Git LFS or release attachments, not the main repo)
-docs/assets/demo-hn-forge.mov
+# Large demo media: superseded by docs/assets/hero.svg (8KB animated SVG).
+# Keep this stanza commented as a reminder — if you ever add screen recordings
+# again, ship them via Git LFS or release attachments, not the main repo.
+# docs/assets/*.mov
