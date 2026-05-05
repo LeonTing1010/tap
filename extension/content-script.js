@@ -6,10 +6,64 @@
 
 console.log('[tap-content] loaded on', location.hostname)
 
+// Track if we're connected to background
+let backgroundReady = false
+
+// Test connection to background script
+async function pingBackground() {
+  try {
+    const response = await chrome.runtime.sendMessage({ method: 'capabilities' })
+    if (response && response.runtime === 'extension') {
+      backgroundReady = true
+      console.log('[tap-content] background connected, version:', response.version)
+      return true
+    }
+  } catch (e) {
+    console.log('[tap-content] background not ready:', e?.message)
+    backgroundReady = false
+  }
+  return false
+}
+
+// Wait for background to be ready, then notify page
+async function init() {
+  // Try to ping background a few times
+  for (let i = 0; i < 5; i++) {
+    if (await pingBackground()) break
+    await new Promise(r => setTimeout(r, 500))
+  }
+
+  // Notify the page that Tap extension is ready
+  // Use DOMContentLoaded to ensure page scripts are ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', notifyPage)
+  } else {
+    notifyPage()
+  }
+}
+
+function notifyPage() {
+  try {
+    window.postMessage({
+      type: 'TAP_READY',
+      payload: {
+        version: chrome.runtime.getManifest().version,
+        backgroundReady
+      }
+    }, '*')
+    console.log('[tap-content] notified page, backgroundReady:', backgroundReady)
+  } catch (e) {
+    console.error('[tap-content] failed to notify page:', e)
+  }
+}
+
+// Start initialization
+init()
+
 // Listen for messages from the webpage
 window.addEventListener('message', async (e) => {
-  // Only accept messages from the same origin or taprun.dev
-  if (e.origin !== window.location.origin && !e.origin.includes('taprun.dev')) {
+  // Only accept messages from the same origin
+  if (e.origin !== window.location.origin) {
     return
   }
 
@@ -21,16 +75,23 @@ window.addEventListener('message', async (e) => {
   switch (type) {
     case 'TAP_PING':
       // Respond with extension status
+      const isReady = await pingBackground()
       window.postMessage({
         type: 'TAP_PONG',
         id,
-        payload: { connected: true, version: chrome.runtime.getManifest().version }
+        payload: {
+          connected: isReady,
+          version: chrome.runtime.getManifest().version
+        }
       }, '*')
       break
 
     case 'TAP_STAR_GITHUB':
       // Open GitHub and guide user to star
       try {
+        if (!backgroundReady) {
+          throw new Error('Tap extension background not ready. Please wait a moment and try again.')
+        }
         const result = await starGithubRepo(payload?.repo || 'LeonTing1010/tap')
         window.postMessage({
           type: 'TAP_STAR_RESULT',
@@ -49,6 +110,9 @@ window.addEventListener('message', async (e) => {
     case 'TAP_NAVIGATE':
       // Navigate to a URL in background tab
       try {
+        if (!backgroundReady) {
+          throw new Error('Tap extension not ready')
+        }
         const tab = await chrome.runtime.sendMessage({
           method: 'tab.new',
           params: { url: payload.url, active: false }
@@ -70,6 +134,9 @@ window.addEventListener('message', async (e) => {
     case 'TAP_CLICK':
       // Click an element in a specific tab
       try {
+        if (!backgroundReady) {
+          throw new Error('Tap extension not ready')
+        }
         const result = await chrome.runtime.sendMessage({
           method: 'click',
           params: { tabId: payload.tabId, target: payload.selector }
@@ -106,12 +173,13 @@ async function starGithubRepo(repo) {
     throw new Error('Failed to create tab')
   }
 
+  console.log('[tap-content] created tab:', tab.tabId)
+
   // Step 2: Wait for page load
   await new Promise(r => setTimeout(r, 3000))
 
-  // Step 3: Try to find and click the Star button
+  // Step 3: Try to find the Star button
   try {
-    // First, let's check if user is logged in by looking for the star button
     const result = await chrome.runtime.sendMessage({
       method: 'find',
       params: {
@@ -128,10 +196,11 @@ async function starGithubRepo(repo) {
       success: true,
       tabId: tab.tabId,
       url,
-      starButtons: result,
+      starButtons: result || [],
       message: 'GitHub opened. Click the ★ Star button to support us!'
     }
   } catch (err) {
+    console.log('[tap-content] find failed:', err)
     // Even if we can't find the button, the tab is open
     return {
       success: true,
@@ -142,9 +211,3 @@ async function starGithubRepo(repo) {
     }
   }
 }
-
-// Notify the page that Tap extension is ready
-window.postMessage({
-  type: 'TAP_READY',
-  payload: { version: chrome.runtime.getManifest().version }
-}, '*')
