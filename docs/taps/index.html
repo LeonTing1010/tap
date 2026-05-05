@@ -19,10 +19,10 @@
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>The Tap Library — Taprun</title>
-<meta name="description" content="Reference edition of every compiled browser program in the Taprun library. Each entry is a named, reproducible data extraction with a live doctor verdict.">
+<title>The Taprun Library — Taprun</title>
+<meta name="description" content="Reference edition of every compiled browser program in the Taprun Library. Each entry is a named, reproducible data extraction with a live doctor verdict.">
 <link rel="canonical" href="https://taprun.dev/taps/">
-<meta property="og:title" content="The Tap Library — Taprun">
+<meta property="og:title" content="The Taprun Library — Taprun">
 <meta property="og:description" content="Compiled browser programs as W3C Annotations. Each entry has a named site, stable args, and a live doctor verdict.">
 <meta property="og:url" content="https://taprun.dev/taps/">
 <meta property="og:type" content="website">
@@ -39,7 +39,7 @@
   "@context": ["http://www.w3.org/ns/anno.jsonld", "https://taprun.dev/ns/tap-v1"],
   "@type": "AnnotationCollection",
   "id": "https://taprun.dev/taps/",
-  "label": "Taprun tap library",
+  "label": "Taprun Library",
   "total": {{ tap_pages.size }},
   "items": [
     {% for tap in tap_pages %}"https://taprun.dev{{ tap.url }}"{% unless forloop.last %},{% endunless %}{% endfor %}
@@ -566,7 +566,7 @@ body::before {
 <header class="masthead-strip">
   <div class="row">
     <a href="/" class="brand">Taprun</a>
-    <span class="center">Reference Edition<span class="ornament-dot">◆</span>Tap Library<span class="ornament-dot">◆</span>Compiled Catalog</span>
+    <span class="center">Reference Edition<span class="ornament-dot">◆</span>Taprun Library<span class="ornament-dot">◆</span>Compiled Catalog</span>
     <a href="https://github.com/LeonTing1010/tap-skills" rel="noopener">source&nbsp;↗</a>
   </div>
 </header>
@@ -575,9 +575,9 @@ body::before {
   <div class="kicker">Volume 1 · MMXXVI · A Reference Edition</div>
   <h1>
     <span class="article">The</span>
-    Tap <em>Library</em>
+    Taprun <em>Library</em>
   </h1>
-  <p class="dek">Each entry is a compiled browser program — one-time AI authoring via <code>forge</code>, then deterministic execution at $0 per run. Source lives in <a href="https://github.com/LeonTing1010/tap-skills">tap-skills</a>; every entry here is also a machine-readable <a href="/ns/tap-v1/">W3C&nbsp;Annotation</a>.</p>
+  <p class="dek">Each entry is a compiled browser program — one-time AI authoring via <code>taprun forge</code>, then deterministic execution at $0 per run. Source lives in <a href="https://github.com/LeonTing1010/tap-skills">tap-skills</a>; every entry here is also a machine-readable <a href="/ns/tap-v1/">W3C&nbsp;Annotation</a>.</p>
   <div class="stats">
     <span><span class="num">{{ tap_pages.size }}</span>Entries</span>
     <span><span class="num">{{ sites.size }}</span>Sites</span>
@@ -629,7 +629,7 @@ body::before {
   <h2 class="cta-headline">Need one of these in production?</h2>
   <p class="cta-body">Every entry in this catalog runs locally with your own browser session. If you're building agents and want help wiring a specific source — or one that isn't here yet — book a fifteen-minute call.</p>
   <a class="cta-button" href="https://cal.com/data-d-b6kqb5/15min?utm_source=taprun.dev&utm_medium=taps_catalog&utm_campaign=cta_15min">Book 15 min →</a>
-  <p class="cta-fallback">or write <a href="mailto:hello@taprun.dev?subject=Tap%20catalog%20%E2%80%94%20question%20from%20%2Ftaps%2F">hello@taprun.dev</a></p>
+  <p class="cta-fallback">or write <a href="mailto:hello@taprun.dev?subject=Taprun%20catalog%20%E2%80%94%20question%20from%20%2Ftaps%2F">hello@taprun.dev</a></p>
 </aside>
 
 <div class="end-ornament">

@@ -7,12 +7,12 @@ robots: "index,follow"
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tap extension installed but disconnected — finish setup in 60 seconds</title>
-<meta name="description" content="The Tap Chrome extension is installed but can't reach a Tap runtime on this machine. Pick a path: connect your AI agent (Claude Code, Cursor, Windsurf) or run standalone. Two minutes either way.">
+<title>Taprun extension installed but disconnected — finish setup in 60 seconds</title>
+<meta name="description" content="The Taprun Chrome extension is installed but can't reach a Taprun runtime on this machine. Pick a path: connect your AI agent (Claude Code, Cursor, Windsurf) or run standalone. Two minutes either way.">
 <meta name="robots" content="index,follow">
 <link rel="canonical" href="https://taprun.dev/install">
-<meta property="og:title" content="Tap extension installed but disconnected — finish setup">
-<meta property="og:description" content="Two paths to connect: MCP host auto-config, or standalone npx. Verify with the badge: red ! → empty.">
+<meta property="og:title" content="Taprun extension installed but disconnected — finish setup">
+<meta property="og:description" content="Two paths to connect Taprun: MCP host auto-config, or standalone npx. Verify with the badge: red ! → empty.">
 <meta property="og:url" content="https://taprun.dev/install">
 <meta property="og:type" content="article">
 <meta property="og:image" content="https://taprun.dev/social-preview.png">
@@ -318,8 +318,8 @@ robots: "index,follow"
 
   <section class="hero">
     <div class="badge-status"><span class="dot"></span> Extension installed · runtime not reachable</div>
-    <h1>The Tap extension is installed.<br>Now <span class="hl">give it a runtime to talk to.</span></h1>
-    <p class="lede">The extension reuses your real browser session — that's the whole point. But it can't act alone: it needs the Tap CLI running on this machine, either spawned by your AI agent over MCP, or started directly in a terminal. Pick the path that matches how you work.</p>
+    <h1>The Taprun extension is installed.<br>Now <span class="hl">give it a runtime to talk to.</span></h1>
+    <p class="lede">The extension reuses your real browser session — that's the whole point. But it can't act alone: it needs the Taprun CLI running on this machine, either spawned by your AI agent over MCP, or started directly in a terminal. Pick the path that matches how you work.</p>
   </section>
 
   <section class="paths">
@@ -327,7 +327,7 @@ robots: "index,follow"
     <div class="path recommended">
       <h2>Connect your AI agent</h2>
       <div class="path-targets">Claude Code · Cursor · Windsurf · Codex · any MCP host</div>
-      <p>Auto-edit your MCP host config and restart it. The host spawns <code>tap mcp stdio</code> on demand — no daemon to babysit.</p>
+      <p>Auto-edit your MCP host config and restart it. The host spawns <code>taprun mcp stdio</code> on demand — no daemon to babysit.</p>
 <pre><span class="prompt">$ </span><span class="k">{{ site.data.cli.install.curl }}</span>
 <span class="prompt">$ </span><span class="k">tap mcp connect</span>           <span class="cmt"># auto-detects host, edits config</span></pre>
       <p style="font-size:12.5px; color: var(--text-muted); margin: 0;">Then restart your AI agent. The extension badge turns green within 2 seconds of the first MCP call.</p>
@@ -336,7 +336,7 @@ robots: "index,follow"
     <div class="path">
       <h2>Run standalone</h2>
       <div class="path-targets">no AI agent · just verify the extension works</div>
-      <p>Start the Tap MCP server directly. Useful to confirm the extension can reach a runtime before wiring up an agent.</p>
+      <p>Start the Taprun MCP server directly. Useful to confirm the extension can reach a runtime before wiring up an agent.</p>
 <pre><span class="prompt">$ </span><span class="k">{{ site.data.cli.install.curl }}</span>
 <span class="prompt">$ </span><span class="k">{{ site.data.cli.mcp.stdio }}</span>      <span class="cmt"># keep this terminal open</span></pre>
       <p style="font-size:12.5px; color: var(--text-muted); margin: 0;">macOS / Linux. Windows users: <a href="/install.sh">read the install script</a> or use <code>npx -y @taprun/cli</code>.</p>
@@ -347,8 +347,8 @@ robots: "index,follow"
   <section class="verify">
     <h2>Verify it worked</h2>
     <ol>
-      <li>Click the Tap icon in your Chrome toolbar. Hover for the tooltip.</li>
-      <li>Disconnected: <span class="badge-illustration red">! Tap — disconnected</span> &nbsp;·&nbsp; Connected: <span class="badge-illustration green">Tap — connected</span></li>
+      <li>Click the Taprun icon in your Chrome toolbar. Hover for the tooltip.</li>
+      <li>Disconnected: <span class="badge-illustration red">! Taprun — disconnected</span> &nbsp;·&nbsp; Connected: <span class="badge-illustration green">Taprun — connected</span></li>
       <li>If still red after 5 seconds, open the troubleshooting list below.</li>
     </ol>
   </section>
@@ -356,16 +356,16 @@ robots: "index,follow"
   <details class="troubleshoot">
     <summary>Still disconnected? Three things to check</summary>
     <ul>
-      <li><strong>Port 9333 in use</strong> — Tap's daemon listens on <code>127.0.0.1:9333</code>. Check with <code>lsof -i :9333</code>; if another process holds it, kill or reassign before restarting.</li>
+      <li><strong>Port 9333 in use</strong> — Taprun's daemon listens on <code>127.0.0.1:9333</code>. Check with <code>lsof -i :9333</code>; if another process holds it, kill or reassign before restarting.</li>
       <li><strong>MCP host not restarted</strong> — Claude Code / Cursor only re-read MCP config on launch. Quit fully (not just close the window) and reopen.</li>
-      <li><strong>Service worker asleep</strong> — Chrome MV3 puts background workers to sleep after ~30s idle. Click the extension icon once to wake it; the badge updates within a second of the daemon being reachable.</li>
+      <li><strong>Service worker asleep</strong> — Chrome MV3 puts background workers to sleep after ~30s idle. Click the Taprun extension icon once to wake it; the badge updates within a second of the daemon being reachable.</li>
     </ul>
   </details>
 
   <section class="heroes">
     <div class="heroes-head">
       <h2>Once connected, try these</h2>
-      <p>Login-required taps that the extension makes possible. Click any to see the tap definition and how to invoke it.</p>
+      <p>Login-required taps that the Taprun extension makes possible. Click any to see the tap definition and how to invoke it.</p>
     </div>
     <div class="hero-grid">
       <a class="hero-card" href="/taps/linkedin/post?utm_source=install&amp;utm_medium=hero-tap&amp;utm_campaign=disconnect-recovery">
@@ -392,7 +392,7 @@ robots: "index,follow"
 
   <section class="footer-cta">
     <h2>While you're here</h2>
-    <p>Tap is open source. The faster the engine ships, the more login-required sites the extension can drive.</p>
+    <p>Taprun is open source. The faster the engine ships, the more login-required sites the extension can drive.</p>
     <div class="cta-row">
       <a class="cta-btn primary" href="https://github.com/LeonTing1010/tap?utm_source=install&amp;utm_medium=cta&amp;utm_campaign=disconnect-recovery" rel="noopener">★ Star on GitHub</a>
       <a class="cta-btn" href="/blog/?utm_source=install&amp;utm_medium=cta&amp;utm_campaign=disconnect-recovery">Read the blog</a>

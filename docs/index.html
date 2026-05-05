@@ -22,17 +22,17 @@
     gtag('config', 'G-RH14PQ10QK');
   })();
 </script>
-<title>Tap — Browser automation that never leaves your machine.</title>
-<meta name="description" content="Your cookies should never leave your laptop. Cloud browser SDKs need your session in their database to function — Tap doesn't. AI compiles once, your real Chrome replays forever at zero tokens per run.">
-<meta property="og:title" content="Tap — Your cookies should never leave your laptop.">
-<meta property="og:description" content="Cloud SDKs ship your session to a stranger's server. Tap stays on your machine. 100 reruns: browser-use $4.20, Tap $0.003. Crossover at run #2.">
+<title>Taprun — Browser automation that never leaves your machine.</title>
+<meta name="description" content="Your cookies should never leave your laptop. Cloud browser SDKs need your session in their database to function — Taprun doesn't. AI compiles once, your real Chrome replays forever at zero tokens per run.">
+<meta property="og:title" content="Taprun — Your cookies should never leave your laptop.">
+<meta property="og:description" content="Cloud SDKs ship your session to a stranger's server. Taprun stays on your machine. 100 reruns: browser-use $4.20, Taprun $0.003. Crossover at run #2.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://taprun.dev/">
 <meta property="og:image" content="https://taprun.dev/social-preview.svg">
 <meta property="og:image:width" content="1280">
 <meta property="og:image:height" content="640">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Tap — Your cookies should never leave your laptop.">
+<meta name="twitter:title" content="Taprun — Your cookies should never leave your laptop.">
 <meta name="twitter:description" content="Browser automation that stays on your machine — because cloud SDKs architecturally can't. Compile once, replay forever, zero tokens per run.">
 <meta name="twitter:image" content="https://taprun.dev/social-preview.svg">
 <meta name="keywords" content="local-first browser automation, MCP, model context protocol, Chrome extension, Playwright alternative, deterministic automation, browser-use alternative, Stagehand alternative, Browserbase alternative, AI agent, web scraping, tap protocol, forge, verify, snapshot, JSON-LD, RSS, OpenAPI">
@@ -45,7 +45,7 @@
 {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
-  "name": "Tap",
+  "name": "Taprun",
   "description": "Browser automation that stays on your machine. AI compiles your task once into a 24-op deterministic plan; your real Chrome replays it forever at zero tokens per run. No credentials uploaded, no mid-run session failure, no hallucinated clicks. Cloud-first SDKs architecturally cannot match this — they need credentials in the cloud to function.",
   "url": "https://taprun.dev/",
   "downloadUrl": "https://github.com/LeonTing1010/tap/releases/latest",
@@ -81,7 +81,7 @@
       {"@type": "SiteNavigationElement", "name": "Why local-first", "description": "Why cloud browser SDKs architecturally cannot keep your credentials home", "url": "https://taprun.dev/#problem"},
       {"@type": "SiteNavigationElement", "name": "How it works", "description": "Capture once with AI, replay forever in your Chrome", "url": "https://taprun.dev/#how"},
       {"@type": "SiteNavigationElement", "name": "Receipts", "description": "100-rerun cost comparison vs cloud SDKs", "url": "https://taprun.dev/#receipts"},
-      {"@type": "SiteNavigationElement", "name": "Install", "description": "Install Tap in 2 minutes", "url": "https://taprun.dev/#install"},
+      {"@type": "SiteNavigationElement", "name": "Install", "description": "Install Taprun in 2 minutes", "url": "https://taprun.dev/#install"},
       {"@type": "SiteNavigationElement", "name": "Skills", "description": "Browse {{ site.data.cli.counts.community_taps }}+ ready-to-run taps", "url": "https://taprun.dev/taps/"},
       {"@type": "SiteNavigationElement", "name": "Blog", "description": "Read our blog", "url": "https://taprun.dev/blog/"},
       {"@type": "SiteNavigationElement", "name": "GitHub", "description": "View source on GitHub", "url": "https://github.com/LeonTing1010/tap"}
@@ -94,7 +94,7 @@
   "@context": "https://schema.org",
   "@type": "FAQPage",
   "mainEntity": [
-    {"@type": "Question", "name": "Why is local-first architectural, not just a feature?", "acceptedAnswer": {"@type": "Answer", "text": "Cloud-first SDKs (Browserbase, Apify, Stagehand) drive a browser they own — that means your cookies, auth tokens, and live session must sit in their infrastructure for the SDK to work at all. There is no technical workaround. Tap's Chrome extension reuses your real, already-logged-in browser, so credentials never cross a trust boundary."}},
+    {"@type": "Question", "name": "Why is local-first architectural, not just a feature?", "acceptedAnswer": {"@type": "Answer", "text": "Cloud-first SDKs (Browserbase, Apify, Stagehand) drive a browser they own — that means your cookies, auth tokens, and live session must sit in their infrastructure for the SDK to work at all. There is no technical workaround. Taprun's Chrome extension reuses your real, already-logged-in browser, so credentials never cross a trust boundary."}},
     {"@type": "Question", "name": "What does 'compile once' mean?", "acceptedAnswer": {"@type": "Answer", "text": "AI runs once at authoring time to capture a site's stable structural addresses (JSON-LD, OpenAPI, ARIA, RSS) — not to generate fragile CSS selectors. The compiled program is a 24-op deterministic plan that replays at zero tokens per run."}},
     {"@type": "Question", "name": "What happens when the site changes?", "acceptedAnswer": {"@type": "Answer", "text": "Run `{{ site.data.cli.verbs.verify.cli }} <site>/<name>`. The verdict is one of four — equivalent · drifted · first_snapshot · unreachable — derived from a per-tap CEL `snapshot_equivalent` predicate, so you decide what counts as drift. Re-running `{{ site.data.cli.verbs.capture.cli }}` against the same site/name overwrites the stored Plan and resets the baseline — that is the heal path."}},
     {"@type": "Question", "name": "Is my data safe?", "acceptedAnswer": {"@type": "Answer", "text": "Everything runs on your machine. Plans are structured data — a closed 24-op vocabulary, not arbitrary JavaScript. No runtime eval, no Worker, no cloud exfiltration, no telemetry. See SECURITY.md in the public repo."}}
@@ -1152,7 +1152,7 @@ footer {
 
 <nav class="nav">
   <div class="nav-inner">
-    <a href="#" class="brand"><span class="brand-mark"></span> tap</a>
+    <a href="#" class="brand"><span class="brand-mark"></span> Taprun</a>
     <div class="nav-links">
       <a href="#problem">Why local-first</a>
       <a href="#how">How it works</a>
@@ -1168,7 +1168,7 @@ footer {
 <header class="hero">
   <div class="container">
     <div class="hero-meta">
-      <span>Tap / browser automation / local-first</span>
+      <span>Taprun / browser automation / local-first</span>
       <span>● local · 0 tokens · v0.15.5</span>
       <span>Filed 2026-05-05</span>
     </div>
@@ -1176,7 +1176,7 @@ footer {
     <h1>Your <span class="accent">cookies</span> should never <span class="strike">leave your laptop</span>.</h1>
 
     <p class="hero-deck">
-      Cloud browser SDKs need your session in <em>their</em> database to function. Tap doesn't.
+      Cloud browser SDKs need your session in <em>their</em> database to function. Taprun doesn't.
       AI compiles your task once — your real Chrome replays it forever, on your machine, at zero tokens per run.
     </p>
 
@@ -1245,7 +1245,7 @@ footer {
             <span class="leak-where">→ token meter</span>
           </li>
           <li>
-            <span class="leak-vendor">Tap</span>
+            <span class="leak-vendor">Taprun</span>
             <span class="leak-what">nothing leaves your machine — extension reuses your live cookies</span>
             <span class="leak-where tap">→ stays on disk</span>
           </li>
@@ -1257,7 +1257,7 @@ footer {
         <p class="arch-quote">
           “To drive your authenticated browser from the cloud, your authentication has to be in the cloud. There is no <em>technical</em> way around it. Local-first isn't a feature — it's the only way to keep credentials home.”
         </p>
-        <div class="arch-attr">Tap design thesis<span class="doc">— addendum-B, 2026-04-27</span></div>
+        <div class="arch-attr">Taprun design thesis<span class="doc">— addendum-B, 2026-04-27</span></div>
       </aside>
     </div>
   </div>
@@ -1270,7 +1270,7 @@ footer {
     <div class="section-label reveal">The mechanism</div>
     <h2 class="reveal delay-1">Pay the AI to think <em>once</em>. Then never pay it again.</h2>
     <p class="section-deck reveal delay-2">
-      Tap compiles your task into a 24-op deterministic plan — a small JSON program AI never re-reads. Your Chrome replays it. The bill stops at compile time.
+      Taprun compiles your task into a 24-op deterministic plan — a small JSON program AI never re-reads. Your Chrome replays it. The bill stops at compile time.
     </p>
 
     <div class="how-grid reveal delay-3">
@@ -1341,7 +1341,7 @@ footer {
 
         <div class="receipt tap">
           <div class="receipt-head">
-            <h3>Tap (open source)</h3>
+            <h3>Taprun (open source)</h3>
             <div class="sub">Invoice · Run #1–#100</div>
           </div>
           <div class="receipt-row"><span>Compile (run #1, AI)</span><span class="qty">$0.003</span></div>
@@ -1359,7 +1359,7 @@ footer {
 
       <div class="reveal delay-4">
         <p class="receipts-takeaway">
-          Cloud SDKs price browser automation like a <em>subscription to a clicker</em>. Tap prices it like a <strong>compiler</strong> — pay at build time, ship a binary, run for free.
+          Cloud SDKs price browser automation like a <em>subscription to a clicker</em>. Taprun prices it like a <strong>compiler</strong> — pay at build time, ship a binary, run for free.
         </p>
         <div class="crossover">
           <div class="crossover-num">2</div>
@@ -1369,7 +1369,7 @@ footer {
           </div>
         </div>
         <p class="receipts-takeaway" style="margin-top:32px">
-          And on run #50 — when the site changes — your cloud-SDK selectors silently rot. Tap's <em>verify</em> arm flags it before your pipeline does.
+          And on run #50 — when the site changes — your cloud-SDK selectors silently rot. Taprun's <em>verify</em> arm flags it before your pipeline does.
         </p>
       </div>
     </div>
@@ -1446,7 +1446,7 @@ footer {
         </div>
         <div class="install-step">
           <h4>Connect MCP</h4>
-          <p>Point Claude Code, Cursor, or any MCP host at <code>tap mcp stdio</code>.<span class="small">Tap appears as 12 tools across 3 namespaces.</span></p>
+          <p>Point Claude Code, Cursor, or any MCP host at <code>taprun mcp stdio</code>.<span class="small">Taprun appears as 12 tools across 3 namespaces.</span></p>
         </div>
         <div class="install-step">
           <h4>Capture your first tap</h4>
@@ -1483,14 +1483,14 @@ footer {
     <h2 class="reveal delay-1">Stop renting your sessions to <em>someone else's cloud</em>.</h2>
     <div class="reveal delay-2" style="display:flex; gap:24px; flex-wrap:wrap; align-items:center">
       <a href="#install" class="btn-primary">
-        Install Tap <span class="arrow">→</span>
+        Install Taprun <span class="arrow">→</span>
       </a>
       <a href="https://github.com/LeonTing1010/tap" class="btn-ghost">
         Read the source ↗
       </a>
     </div>
     <p class="reveal delay-3" style="margin-top:80px; max-width:60ch; font-family:var(--font-display); font-style:italic; font-size:18px; color:var(--text-muted); line-height:1.6;">
-      Tap is MIT-licensed, written in TypeScript on Deno, ships as a single signed binary. The Chrome extension is open-source. No license server, no phone-home, no usage telemetry. Free during v0.x. Paid tiers deferred until a customer asks.
+      Taprun is MIT-licensed, written in TypeScript on Deno, ships as a single signed binary. The Chrome extension is open-source. No license server, no phone-home, no usage telemetry. Free during v0.x. Paid tiers deferred until a customer asks.
     </p>
   </div>
 </section>
@@ -1500,7 +1500,7 @@ footer {
     <div class="footer-grid">
       <div class="footer-col">
         <div class="brand" style="margin-bottom:16px">
-          <span class="brand-mark"></span> tap
+          <span class="brand-mark"></span> Taprun
         </div>
         <p class="footer-thesis">
           Compile once. Replay forever. Diff the drift. Browser automation that stays on your machine — because cloud SDKs architecturally can't.
