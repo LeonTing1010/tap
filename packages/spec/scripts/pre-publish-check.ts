@@ -39,6 +39,8 @@ const ALLOWED_FILES = new Set([
   "dist/types.d.ts",
   "dist/lint.js",
   "dist/lint.d.ts",
+  "dist/ns-vocabulary.js",
+  "dist/ns-vocabulary.d.ts",
   "dist/index.js",
   "dist/index.d.ts",
 ]);

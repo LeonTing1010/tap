@@ -1,5 +1,9 @@
 # @taprun/spec — Changelog
 
+## 1.1.0 — 2026-05-05
+
+- Land `TAP_V1_NS_TERMS` (and `TAP_V1_PLAN_TERMS` / `TAP_V1_ASSESSMENT_TERMS` / `TAP_V1_NS_IRI`) for real. The 0.3.2 entry below promised these but the source file (`src/ns-vocabulary.ts`) was never committed; the `packages.yml :: ns-cross-consumer-only` CI gate has been failing since because `m.TAP_V1_NS_TERMS` resolved to undefined. Now ships exactly the 13 terms documented in `docs/ns/tap-v1/{index.jsonld,README.md}`. CI gate green.
+
 ## 0.3.2 — 2026-04-26
 
 - Add `TAP_V1_NS_TERMS` (and `TAP_V1_PLAN_TERMS` / `TAP_V1_ASSESSMENT_TERMS` / `TAP_V1_NS_IRI`) — the exact cross-consumer protocol contract term set defined at https://taprun.dev/ns/tap-v1/. Source-of-truth for the namespace; downstream consumers (incl. the proprietary Tap CLI) can import these to keep emit sites aligned with the namespace doc.

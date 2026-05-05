@@ -68,3 +68,14 @@ export type {
 export {
   LINT_RULE_NAMES,
 } from "./lint.ts";
+
+export type {
+  TapV1Term,
+} from "./ns-vocabulary.ts";
+
+export {
+  TAP_V1_NS_IRI,
+  TAP_V1_NS_TERMS,
+  TAP_V1_PLAN_TERMS,
+  TAP_V1_ASSESSMENT_TERMS,
+} from "./ns-vocabulary.ts";
