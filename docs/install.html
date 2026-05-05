@@ -1,31 +1,432 @@
+---
+permalink: /install
+robots: "index,follow"
+---
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- Google tag (gtag.js) — production host only -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tap extension installed but disconnected — finish setup in 60 seconds</title>
+<meta name="description" content="The Tap Chrome extension is installed but can't reach a Tap runtime on this machine. Pick a path: connect your AI agent (Claude Code, Cursor, Windsurf) or run standalone. Two minutes either way.">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://taprun.dev/install">
+<meta property="og:title" content="Tap extension installed but disconnected — finish setup">
+<meta property="og:description" content="Two paths to connect: MCP host auto-config, or standalone npx. Verify with the badge: red ! → empty.">
+<meta property="og:url" content="https://taprun.dev/install">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://taprun.dev/social-preview.png">
+<meta name="twitter:card" content="summary_large_image">
+<!-- Analytics — production host only. Mirrors index.html. -->
 <script>
   (function() {
     if (location.hostname !== 'taprun.dev') return;
-    var s = document.createElement('script');
-    s.async = true;
-    s.src = 'https://www.googletagmanager.com/gtag/js?id=G-RH14PQ10QK';
-    document.head.appendChild(s);
+    var ga = document.createElement('script');
+    ga.async = true;
+    ga.src = 'https://www.googletagmanager.com/gtag/js?id=G-RH14PQ10QK';
+    document.head.appendChild(ga);
     window.dataLayer = window.dataLayer || [];
     window.gtag = function(){ dataLayer.push(arguments); };
     gtag('js', new Date());
     gtag('config', 'G-RH14PQ10QK');
+    var ah = document.createElement('script');
+    ah.async = true;
+    ah.src = 'https://analytics.ahrefs.com/analytics.js';
+    ah.setAttribute('data-key', 'G1wKuningnrw+t5LQJ+MPw');
+    document.head.appendChild(ah);
+    (function(c,l,a,r,i,t,y){
+      c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+      t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+      y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "wcmkaafekz");
   })();
 </script>
-<meta charset="UTF-8">
-<meta http-equiv="refresh" content="0; url=https://taprun.dev/#install">
-<meta name="robots" content="noindex,follow">
-<meta name="description" content="Redirecting to the Taprun install instructions on the home page.">
-<title>Redirecting to Install — Taprun</title>
-<link rel="canonical" href="https://taprun.dev/">
-<script>
-  window.location.href = "https://taprun.dev/#install";
-</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='105' cy='115' r='55' fill='%23FFFFFF'/%3E%3Ccircle cx='85' cy='70' r='45' fill='%23FFFFFF'/%3E%3Cellipse cx='75' cy='32' rx='15' ry='22' fill='%23EF4444'/%3E%3Cellipse cx='90' cy='30' rx='12' ry='20' fill='%23DC2626'/%3E%3Cellipse cx='103' cy='35' rx='10' ry='16' fill='%23B91C1C'/%3E%3Cpath d='M 55 68 L 8 75 L 55 85 Z' fill='%23FBBF24'/%3E%3Cpath d='M 55 85 L 8 75 L 12 82 Z' fill='%23D97706'/%3E%3Ccircle cx='70' cy='65' r='14' fill='%231F2937'/%3E%3Ccircle cx='66' cy='61' r='5' fill='%23FFFFFF'/%3E%3Ccircle cx='74' cy='68' r='2.5' fill='%23FFFFFF'/%3E%3Cellipse cx='50' cy='78' rx='8' ry='5' fill='%23FECACA' opacity='0.8'/%3E%3Cellipse cx='125' cy='115' rx='35' ry='30' fill='%23818CF8'/%3E%3Cellipse cx='125' cy='115' rx='25' ry='20' fill='%236366F1'/%3E%3Ccircle cx='95' cy='130' r='25' fill='%23F9FAFB'/%3E%3Cpath d='M 145 140 L 175 185 L 155 180 L 140 145 Z' fill='%23818CF8'/%3E%3Cpath d='M 150 145 L 180 190 L 162 185 L 148 150 Z' fill='%236366F1'/%3E%3C/svg%3E">
+
+<style>
+  :root {
+    --bg-deep: #0a0a0f;
+    --bg-surface: #11111a;
+    --bg-card: #1a1a26;
+    --white: #fafafa;
+    --text: #e5e5ec;
+    --text-dim: #a8a8b8;
+    --text-muted: #6e6e80;
+    --indigo: #6366f1;
+    --indigo-bright: #a5b4fc;
+    --gold: #fbbf24;
+    --green: #34d399;
+    --red: #ef4444;
+    --border: rgba(255,255,255,0.08);
+    --radius: 10px;
+    --radius-lg: 14px;
+    --font-heading: 'Bricolage Grotesque', system-ui, sans-serif;
+    --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg-deep);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--indigo-bright); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .container { max-width: 880px; margin: 0 auto; padding: 0 24px; }
+
+  header.topbar {
+    border-bottom: 1px solid var(--border);
+    padding: 16px 0;
+    background: rgba(10, 10, 15, 0.85);
+    backdrop-filter: blur(8px);
+    position: sticky; top: 0; z-index: 10;
+  }
+  .topbar-row { display: flex; justify-content: space-between; align-items: center; }
+  .brand { font-family: var(--font-heading); font-weight: 800; font-size: 20px; color: var(--white); letter-spacing: -0.02em; }
+  .brand a { color: inherit; text-decoration: none; }
+  .topnav a { color: var(--text-dim); margin-left: 18px; font-size: 14px; }
+  .topnav a:hover { color: var(--white); text-decoration: none; }
+
+  .hero { padding: 64px 0 32px; }
+  .badge-status {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 12px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 999px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--red);
+    margin-bottom: 20px;
+  }
+  .badge-status .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); }
+  h1 {
+    font-family: var(--font-heading);
+    font-weight: 800;
+    font-size: clamp(28px, 4vw, 40px);
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    color: var(--white);
+    margin: 0 0 16px;
+  }
+  h1 .hl { color: var(--gold); }
+  .lede { font-size: 17px; color: var(--text-dim); margin: 0 0 8px; max-width: 680px; }
+
+  .paths { display: grid; grid-template-columns: 1fr; gap: 20px; padding: 24px 0 8px; }
+  @media (min-width: 760px) { .paths { grid-template-columns: 1fr 1fr; } }
+  .path {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+  }
+  .path.recommended { border-color: rgba(99, 102, 241, 0.5); position: relative; }
+  .path.recommended::before {
+    content: 'Recommended';
+    position: absolute; top: -10px; left: 20px;
+    background: var(--indigo); color: var(--white);
+    font-family: var(--font-mono); font-size: 10px; font-weight: 600;
+    padding: 3px 8px; border-radius: 4px; letter-spacing: 0.04em;
+  }
+  .path h2 { font-family: var(--font-heading); font-weight: 700; font-size: 18px; color: var(--white); margin: 0 0 8px; letter-spacing: -0.01em; }
+  .path p { font-size: 14px; color: var(--text-dim); margin: 0 0 14px; }
+  .path-targets { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); margin: -4px 0 14px; letter-spacing: 0.02em; }
+
+  pre {
+    background: var(--bg-deep);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin: 0 0 12px;
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.55;
+  }
+  pre .prompt { color: var(--text-muted); user-select: none; }
+  pre .cmt { color: var(--text-muted); }
+  pre .k { color: var(--gold); }
+  pre .s { color: var(--green); }
+  :not(pre) > code {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    background: rgba(165, 180, 252, 0.08);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--indigo-bright);
+  }
+
+  /* click-to-copy hint (mirrors head-common.html so the global handler works the same here) */
+  pre { position: relative; }
+  pre::after {
+    content: 'click to copy';
+    position: absolute; top: 8px; right: 12px;
+    font: 11px/1 var(--font-mono);
+    color: rgba(255,255,255,0.3);
+    pointer-events: none;
+    transition: color 0.2s;
+    user-select: none;
+  }
+  pre:hover { cursor: pointer; }
+  pre:hover::after { color: rgba(255,255,255,0.7); }
+  pre.tap-copied::after { content: 'copied ✓'; color: var(--green); }
+  :not(pre) > code:hover { cursor: pointer; outline: 1px dashed rgba(165,180,252,0.45); outline-offset: 2px; }
+  code.tap-copied { outline: 1px solid var(--green) !important; }
+  code.tap-copied::after { content: ' ✓'; color: var(--green); }
+
+  .verify {
+    margin: 40px 0 24px;
+    padding: 24px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+  }
+  .verify h2 { font-family: var(--font-heading); font-weight: 700; font-size: 18px; color: var(--white); margin: 0 0 12px; letter-spacing: -0.01em; }
+  .verify ol { margin: 0; padding-left: 18px; color: var(--text); }
+  .verify li { margin-bottom: 10px; font-size: 14px; }
+  .verify li code { font-size: 12px; }
+  .badge-illustration {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: var(--font-mono); font-size: 12px;
+    padding: 2px 8px; border-radius: 4px;
+  }
+  .badge-illustration.red { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+  .badge-illustration.green { background: rgba(52,211,153,0.12); color: var(--green); border: 1px solid rgba(52,211,153,0.3); }
+
+  details.troubleshoot {
+    margin: 24px 0;
+    padding: 16px 20px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  details.troubleshoot summary {
+    cursor: pointer;
+    font-family: var(--font-heading);
+    font-weight: 600;
+    color: var(--white);
+    font-size: 15px;
+    list-style: none;
+  }
+  details.troubleshoot summary::-webkit-details-marker { display: none; }
+  details.troubleshoot summary::before { content: '▸ '; color: var(--text-muted); }
+  details.troubleshoot[open] summary::before { content: '▾ '; }
+  details.troubleshoot ul { color: var(--text-dim); font-size: 14px; padding-left: 20px; margin: 14px 0 0; }
+  details.troubleshoot li { margin-bottom: 8px; }
+
+  .heroes {
+    margin: 48px 0 24px;
+  }
+  .heroes-head {
+    text-align: left;
+    margin-bottom: 20px;
+  }
+  .heroes-head h2 {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 22px;
+    color: var(--white);
+    margin: 0 0 6px;
+    letter-spacing: -0.02em;
+  }
+  .heroes-head p {
+    font-size: 14px;
+    color: var(--text-dim);
+    margin: 0;
+  }
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  @media (min-width: 760px) { .hero-grid { grid-template-columns: repeat(3, 1fr); } }
+  .hero-card {
+    display: flex; flex-direction: column;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    transition: border-color 0.15s, transform 0.15s;
+    text-decoration: none;
+  }
+  .hero-card:hover { border-color: rgba(99, 102, 241, 0.4); transform: translateY(-1px); text-decoration: none; }
+  .hero-card .site { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); letter-spacing: 0.04em; }
+  .hero-card .name { font-family: var(--font-heading); font-weight: 700; color: var(--white); font-size: 17px; margin: 4px 0 8px; letter-spacing: -0.01em; }
+  .hero-card .desc { font-size: 13px; color: var(--text-dim); margin: 0; line-height: 1.5; flex: 1; }
+  .hero-card .arrow { color: var(--indigo-bright); font-family: var(--font-mono); font-size: 13px; margin-top: 12px; }
+
+  .footer-cta {
+    margin: 48px 0 32px;
+    padding: 28px 24px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    text-align: center;
+  }
+  .footer-cta h2 { font-family: var(--font-heading); font-weight: 700; color: var(--white); font-size: 18px; margin: 0 0 8px; }
+  .footer-cta p { color: var(--text-dim); margin: 0 0 18px; font-size: 14px; }
+  .cta-row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+  .cta-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 9px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 13px;
+    font-family: var(--font-mono);
+    text-decoration: none;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .cta-btn:hover { border-color: var(--indigo); background: var(--bg-card); text-decoration: none; }
+  .cta-btn.primary { background: var(--indigo); color: var(--white); border-color: var(--indigo); }
+  .cta-btn.primary:hover { background: #4f51d8; border-color: #4f51d8; }
+
+  footer.site-footer {
+    border-top: 1px solid var(--border);
+    padding: 24px 0 32px;
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+  footer.site-footer a { color: var(--text-dim); }
+  footer.site-footer .row { display: flex; flex-wrap: wrap; gap: 18px; justify-content: space-between; }
+</style>
 </head>
 <body>
-<p>Redirecting to <a href="https://taprun.dev/#install">https://taprun.dev/#install</a>...</p>
+
+<header class="topbar">
+  <div class="container topbar-row">
+    <div class="brand"><a href="/">Taprun</a></div>
+    <nav class="topnav">
+      <a href="/">Home</a>
+      <a href="/taps/">Taps</a>
+      <a href="/blog/">Blog</a>
+      <a href="https://github.com/LeonTing1010/tap" rel="noopener">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+
+  <section class="hero">
+    <div class="badge-status"><span class="dot"></span> Extension installed · runtime not reachable</div>
+    <h1>The Tap extension is installed.<br>Now <span class="hl">give it a runtime to talk to.</span></h1>
+    <p class="lede">The extension reuses your real browser session — that's the whole point. But it can't act alone: it needs the Tap CLI running on this machine, either spawned by your AI agent over MCP, or started directly in a terminal. Pick the path that matches how you work.</p>
+  </section>
+
+  <section class="paths">
+
+    <div class="path recommended">
+      <h2>Connect your AI agent</h2>
+      <div class="path-targets">Claude Code · Cursor · Windsurf · Codex · any MCP host</div>
+      <p>Auto-edit your MCP host config and restart it. The host spawns <code>tap mcp stdio</code> on demand — no daemon to babysit.</p>
+<pre><span class="prompt">$ </span><span class="k">{{ site.data.cli.install.curl }}</span>
+<span class="prompt">$ </span><span class="k">tap mcp connect</span>           <span class="cmt"># auto-detects host, edits config</span></pre>
+      <p style="font-size:12.5px; color: var(--text-muted); margin: 0;">Then restart your AI agent. The extension badge turns green within 2 seconds of the first MCP call.</p>
+    </div>
+
+    <div class="path">
+      <h2>Run standalone</h2>
+      <div class="path-targets">no AI agent · just verify the extension works</div>
+      <p>Start the Tap MCP server directly. Useful to confirm the extension can reach a runtime before wiring up an agent.</p>
+<pre><span class="prompt">$ </span><span class="k">{{ site.data.cli.install.curl }}</span>
+<span class="prompt">$ </span><span class="k">{{ site.data.cli.mcp.stdio }}</span>      <span class="cmt"># keep this terminal open</span></pre>
+      <p style="font-size:12.5px; color: var(--text-muted); margin: 0;">macOS / Linux. Windows users: <a href="/install.sh">read the install script</a> or use <code>npx -y @taprun/cli</code>.</p>
+    </div>
+
+  </section>
+
+  <section class="verify">
+    <h2>Verify it worked</h2>
+    <ol>
+      <li>Click the Tap icon in your Chrome toolbar. Hover for the tooltip.</li>
+      <li>Disconnected: <span class="badge-illustration red">! Tap — disconnected</span> &nbsp;·&nbsp; Connected: <span class="badge-illustration green">Tap — connected</span></li>
+      <li>If still red after 5 seconds, open the troubleshooting list below.</li>
+    </ol>
+  </section>
+
+  <details class="troubleshoot">
+    <summary>Still disconnected? Three things to check</summary>
+    <ul>
+      <li><strong>Port 9333 in use</strong> — Tap's daemon listens on <code>127.0.0.1:9333</code>. Check with <code>lsof -i :9333</code>; if another process holds it, kill or reassign before restarting.</li>
+      <li><strong>MCP host not restarted</strong> — Claude Code / Cursor only re-read MCP config on launch. Quit fully (not just close the window) and reopen.</li>
+      <li><strong>Service worker asleep</strong> — Chrome MV3 puts background workers to sleep after ~30s idle. Click the extension icon once to wake it; the badge updates within a second of the daemon being reachable.</li>
+    </ul>
+  </details>
+
+  <section class="heroes">
+    <div class="heroes-head">
+      <h2>Once connected, try these</h2>
+      <p>Login-required taps that the extension makes possible. Click any to see the tap definition and how to invoke it.</p>
+    </div>
+    <div class="hero-grid">
+      <a class="hero-card" href="/taps/linkedin/post?utm_source=install&amp;utm_medium=hero-tap&amp;utm_campaign=disconnect-recovery">
+        <div class="site">linkedin/post</div>
+        <div class="name">Post to LinkedIn</div>
+        <p class="desc">Compose and publish a post to your LinkedIn feed using your real session — no API key, no OAuth dance.</p>
+        <div class="arrow">View tap →</div>
+      </a>
+      <a class="hero-card" href="/taps/weibo/hot?utm_source=install&amp;utm_medium=hero-tap&amp;utm_campaign=disconnect-recovery">
+        <div class="site">weibo/hot</div>
+        <div class="name">Weibo trending</div>
+        <p class="desc">Pull Weibo's logged-in trending list. Public API blocks unauthenticated reads; the extension uses your cookies.</p>
+        <div class="arrow">View tap →</div>
+      </a>
+      <a class="hero-card" href="/taps/instagram/explore?utm_source=install&amp;utm_medium=hero-tap&amp;utm_campaign=disconnect-recovery">
+        <div class="site">instagram/explore</div>
+        <div class="name">Instagram explore</div>
+        <p class="desc">Read the Instagram explore feed in your authenticated session — what your account actually sees, not a public proxy.</p>
+        <div class="arrow">View tap →</div>
+      </a>
+    </div>
+    <p style="margin-top: 16px; font-size: 13px; color: var(--text-muted);">→ <a href="/taps/?utm_source=install&amp;utm_medium=cta&amp;utm_campaign=disconnect-recovery">Browse all 140+ taps</a></p>
+  </section>
+
+  <section class="footer-cta">
+    <h2>While you're here</h2>
+    <p>Tap is open source. The faster the engine ships, the more login-required sites the extension can drive.</p>
+    <div class="cta-row">
+      <a class="cta-btn primary" href="https://github.com/LeonTing1010/tap?utm_source=install&amp;utm_medium=cta&amp;utm_campaign=disconnect-recovery" rel="noopener">★ Star on GitHub</a>
+      <a class="cta-btn" href="/blog/?utm_source=install&amp;utm_medium=cta&amp;utm_campaign=disconnect-recovery">Read the blog</a>
+      <a class="cta-btn" href="/feed.xml">RSS</a>
+      <a class="cta-btn" href="/#install">Full onboarding</a>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="container row">
+    <span>© Taprun · local-first browser automation</span>
+    <span><a href="/privacy">Privacy</a> · <a href="https://github.com/LeonTing1010/tap" rel="noopener">GitHub</a></span>
+  </div>
+</footer>
+
+<!-- Click-to-copy: matches head-common.html behavior. No URL params are read or rendered anywhere on this page. -->
+<script>
+  document.addEventListener('click', function(e) {
+    if (!navigator.clipboard) return;
+    if (e.target.closest && e.target.closest('a')) return;
+    var pre = e.target.closest && e.target.closest('pre');
+    var target = pre || (e.target.closest && e.target.closest('code'));
+    if (!target) return;
+    var text = (target.innerText || target.textContent || '').replace(/^\s+|\s+$/g, '');
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(function() {
+      target.classList.add('tap-copied');
+      setTimeout(function() { target.classList.remove('tap-copied'); }, 1500);
+      if (window.gtag) window.gtag('event', 'code_copy', { snippet_chars: text.length, kind: pre ? 'block' : 'inline', page: 'install' });
+    }).catch(function() {});
+  });
+</script>
+
 </body>
 </html>
