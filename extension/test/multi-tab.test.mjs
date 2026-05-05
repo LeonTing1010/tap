@@ -185,12 +185,17 @@ test('handleMethod gates the active-tab fallback on !fromDaemon', () => {
     'active-tab fallback must be gated on !fromDaemon so daemon commands never silently retarget')
 })
 
-test('handleAndReport passes fromDaemon: true', () => {
-  const fnStart = BG_SRC.indexOf('async function handleAndReport(')
-  assert(fnStart !== -1, 'handleAndReport (daemon poll handler) must exist')
-  const fnBody = BG_SRC.substring(fnStart, fnStart + 500)
-  assert(fnBody.includes('fromDaemon: true') || fnBody.includes('fromDaemon:true'),
-    'handleAndReport must pass fromDaemon: true to handleMethod so daemon commands hit the gated path')
+test('daemon WebSocket dispatch passes fromDaemon: true', () => {
+  // Post-WS migration (commit adc8e67 — "delete pollLoop / startPoll /
+  // handleAndReport — WS only"), the daemon poll handler is gone. The
+  // daemon-fallback gate is now enforced inside ws.onmessage where it
+  // calls handleMethod with the daemon-origin flag set.
+  const wsStart = BG_SRC.indexOf('ws.onmessage')
+  assert(wsStart !== -1, 'ws.onmessage handler must exist (WS-only architecture)')
+  const wsSection = BG_SRC.substring(wsStart, wsStart + 4000)
+  const callsHandleMethod = /handleMethod\([^)]*\{\s*fromDaemon:\s*true\s*\}/.test(wsSection)
+  assert(callsHandleMethod,
+    'ws.onmessage must call handleMethod(..., { fromDaemon: true }) so daemon commands hit the gated path')
 })
 
 // --- Summary ---

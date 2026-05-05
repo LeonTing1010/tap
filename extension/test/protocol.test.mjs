@@ -248,7 +248,15 @@ test('no legacy Bridge.* prefix in any case statement', () => {
 
 test('WebSocket message handler strips tap. prefix for compatibility', () => {
   const wsSection = BG_SRC.substring(BG_SRC.indexOf('ws.onmessage') || 0)
-  assert(wsSection.includes('replace') && (wsSection.includes("'tap.'") || wsSection.includes('"tap."')),
+  // Accept either form of prefix-strip: a regex literal (/^tap\./, the
+  // current implementation — strictly better because it anchors to the
+  // start of the string) or a string literal ('tap.' / "tap."). Both
+  // satisfy the protocol contract; only the absence of any tap. strip
+  // is a regression.
+  const hasRegex = /\.replace\(\s*\/\^tap\\\.\//.test(wsSection)
+  const hasStringLiteral = wsSection.includes('replace') &&
+    (wsSection.includes("'tap.'") || wsSection.includes('"tap."'))
+  assert(hasRegex || hasStringLiteral,
     'WebSocket handler must strip tap. prefix from incoming method names for backward compatibility')
 })
 
