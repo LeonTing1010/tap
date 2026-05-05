@@ -35,9 +35,15 @@ jobs:
           fi
 
       - name: Package extension
+        # Exclude internal-only files: dotfiles, the test/ harness (Node-side
+        # tests, never executed in the extension runtime), the developer-facing
+        # TESTING.md, the CWS store-listing copy (description.txt is for the
+        # store, not the extension package), and the SVG icon source (manifest
+        # only references PNGs).
         run: |
           cd extension
-          zip -r ../tap-extension-${{ steps.version.outputs.version }}.zip . -x '.*'
+          zip -r ../tap-extension-${{ steps.version.outputs.version }}.zip . \
+            -x '.*' 'test/*' 'TESTING.md' 'description.txt' 'icons/icon.svg'
 
       - name: Create GitHub Release
         # softprops/action-gh-release needs a tag ref; on workflow_dispatch
