@@ -31,13 +31,6 @@
     "service_worker": "background.js",
     "type": "module"
   },
-  "content_scripts": [
-    {
-      "matches": ["https://taprun.dev/*", "https://*.taprun.dev/*"],
-      "js": ["content-script.js"],
-      "run_at": "document_start"
-    }
-  ],
   "externally_connectable": {
     "matches": ["<all_urls>"]
   },

@@ -1214,22 +1214,73 @@ footer {
 </header>
 
 <!-- ============== TAP DEMO ============== -->
-<section class="section" id="demo" style="background:linear-gradient(180deg, var(--ink) 0%, var(--ink-soft) 100%);border-top:1px solid var(--ink-rule);padding:48px 0;">
+<section class="section" id="demo" style="background:linear-gradient(180deg, var(--ink) 0%, var(--ink-soft) 100%);border-top:1px solid var(--ink-rule);padding:64px 0;">
   <div class="container">
-    <div class="demo-card" style="background:var(--ink-soft);border:1px solid var(--ink-rule);border-radius:8px;padding:32px;display:flex;align-items:center;justify-content:space-between;gap:32px;flex-wrap:wrap;">
-      <div style="flex:1;min-width:280px;">
-        <div style="font-family:var(--font-mono);font-size:11px;color:var(--signal);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">Live Demo</div>
-        <h3 style="font-family:var(--font-display);font-size:24px;color:var(--text);margin-bottom:8px;">See Tap in action</h3>
-        <p style="font-family:var(--font-body);font-size:15px;color:var(--text-dim);line-height:1.5;">
-          With the Tap extension installed, click below to open our GitHub repo in a background tab — demonstrating Tap's ability to automate your real browser without uploading credentials.
-        </p>
+    <div class="demo-header" style="text-align:center;margin-bottom:48px;">
+      <div style="font-family:var(--font-mono);font-size:11px;color:var(--signal);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:12px;">Interactive Demo</div>
+      <h2 style="font-family:var(--font-display);font-size:32px;color:var(--text);margin-bottom:12px;">See how Tap works</h2>
+      <p style="font-family:var(--font-body);font-size:16px;color:var(--text-dim);max-width:600px;margin:0 auto;line-height:1.6;">
+        Watch Tap automate your browser in real-time. Click the button to simulate opening GitHub and starring our repo — all locally, no credentials uploaded.
+      </p>
+    </div>
+
+    <div class="demo-stage" style="background:var(--ink-soft);border:1px solid var(--ink-rule);border-radius:12px;padding:40px;position:relative;overflow:hidden;">
+      <!-- Visualization Area -->
+      <div class="demo-viz" style="display:flex;align-items:center;justify-content:center;gap:60px;margin-bottom:40px;flex-wrap:wrap;">
+        
+        <!-- Your Machine -->
+        <div class="demo-node" id="demo-machine" style="text-align:center;opacity:0.5;transition:all 0.5s ease;">
+          <div style="width:80px;height:80px;background:var(--ink);border:2px solid var(--ink-rule);border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="var(--text)"><path d="M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z"/></svg>
+          </div>
+          <div style="font-family:var(--font-mono);font-size:12px;color:var(--text);font-weight:600;">Your Machine</div>
+          <div style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim);margin-top:4px;">Local Execution</div>
+        </div>
+
+        <!-- Connection Line -->
+        <div class="demo-connection" style="flex:1;max-width:200px;height:2px;background:var(--ink-rule);position:relative;opacity:0.3;transition:all 0.5s ease;">
+          <div class="demo-pulse" style="position:absolute;width:8px;height:8px;background:var(--signal);border-radius:50%;top:-3px;left:0;opacity:0;transition:opacity 0.3s;"></div>
+        </div>
+
+        <!-- Chrome Extension -->
+        <div class="demo-node" id="demo-extension" style="text-align:center;opacity:0.5;transition:all 0.5s ease;">
+          <div style="width:80px;height:80px;background:var(--ink);border:2px solid var(--ink-rule);border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="var(--text)"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+          </div>
+          <div style="font-family:var(--font-mono);font-size:12px;color:var(--text);font-weight:600;">Tap Extension</div>
+          <div style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim);margin-top:4px;">Your Real Browser</div>
+        </div>
+
+        <!-- Connection Line -->
+        <div class="demo-connection" style="flex:1;max-width:200px;height:2px;background:var(--ink-rule);position:relative;opacity:0.3;transition:all 0.5s ease;">
+          <div class="demo-pulse" style="position:absolute;width:8px;height:8px;background:var(--signal);border-radius:50%;top:-3px;left:0;opacity:0;transition:opacity 0.3s;"></div>
+        </div>
+
+        <!-- GitHub -->
+        <div class="demo-node" id="demo-github" style="text-align:center;opacity:0.5;transition:all 0.5s ease;">
+          <div style="width:80px;height:80px;background:var(--ink);border:2px solid var(--ink-rule);border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="var(--text)"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+          </div>
+          <div style="font-family:var(--font-mono);font-size:12px;color:var(--text);font-weight:600;">GitHub</div>
+          <div style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim);margin-top:4px;">Your Session</div>
+        </div>
       </div>
-      <div style="display:flex;flex-direction:column;gap:12px;align-items:flex-start;">
-        <button id="tap-star-btn" class="btn-primary" style="display:inline-flex;align-items:center;gap:10px;cursor:pointer;" onclick="tapStarDemo()">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-          <span id="tap-star-text">★ Star with Tap</span>
+
+      <!-- Log Output -->
+      <div class="demo-log" style="background:var(--ink);border:1px solid var(--ink-rule);border-radius:8px;padding:16px;font-family:var(--font-mono);font-size:12px;color:var(--text-dim);min-height:120px;max-height:180px;overflow-y:auto;margin-bottom:24px;">
+        <div style="color:var(--signal);margin-bottom:8px;">$ tap run github-star --dry-run</div>
+        <div id="demo-log-content" style="display:flex;flex-direction:gap:4px;"></div>
+      </div>
+
+      <!-- Action Button -->
+      <div style="text-align:center;">
+        <button id="demo-run-btn" class="btn-primary" style="display:inline-flex;align-items:center;gap:10px;cursor:pointer;font-size:16px;padding:14px 28px;" onclick="runTapDemo()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          <span id="demo-btn-text">Run Demo</span>
         </button>
-        <div id="tap-status" style="font-family:var(--font-mono);font-size:12px;color:var(--text-dim);display:none;"></div>
+        <div id="demo-hint" style="font-family:var(--font-mono);font-size:11px;color:var(--text-dim);margin-top:12px;opacity:0;transition:opacity 0.3s;">
+          Actually opens GitHub in a new tab — try it!
+        </div>
       </div>
     </div>
   </div>
@@ -1600,121 +1651,129 @@ function showStarToast(e) {
   }, 5000);
 }
 
-// ========== TAP DEMO: Star with Tap ==========
-let tapExtensionAvailable = false;
-let tapExtensionVersion = null;
+// ========== TAP DEMO: Interactive Simulation ==========
+let demoRunning = false;
 
-// Listen for messages from Tap extension
-window.addEventListener('message', (e) => {
-  if (e.origin !== window.location.origin) return;
-  
-  const { type, payload } = e.data || {};
-  
-  if (type === 'TAP_READY') {
-    tapExtensionAvailable = true;
-    tapExtensionVersion = payload?.version;
-    updateTapDemoUI();
-  } else if (type === 'TAP_STAR_RESULT') {
-    handleTapStarResult(payload);
-  } else if (type === 'TAP_PONG') {
-    tapExtensionAvailable = true;
-    tapExtensionVersion = payload?.version;
-    updateTapDemoUI();
-  }
-});
+async function runTapDemo() {
+  if (demoRunning) return;
+  demoRunning = true;
 
-// Ping extension on page load
-setTimeout(() => {
-  window.postMessage({ type: 'TAP_PING', id: Date.now() }, '*');
-}, 1000);
+  const btn = document.getElementById('demo-run-btn');
+  const btnText = document.getElementById('demo-btn-text');
+  const hint = document.getElementById('demo-hint');
+  const logContent = document.getElementById('demo-log-content');
 
-function updateTapDemoUI() {
-  const btn = document.getElementById('tap-star-btn');
-  const text = document.getElementById('tap-star-text');
-  const status = document.getElementById('tap-status');
-  
-  if (tapExtensionAvailable) {
-    btn.style.opacity = '1';
-    btn.style.cursor = 'pointer';
-    text.textContent = '★ Star with Tap';
-    status.style.display = 'block';
-    status.textContent = `Tap v${tapExtensionVersion} connected`;
-    status.style.color = 'var(--signal)';
-  } else {
-    btn.style.opacity = '0.6';
-    btn.style.cursor = 'not-allowed';
-    text.textContent = 'Install Tap to try';
-    status.style.display = 'block';
-    status.textContent = 'Extension not detected';
-    status.style.color = 'var(--text-dim)';
-  }
-}
-
-function tapStarDemo() {
-  if (!tapExtensionAvailable) {
-    // Scroll to install section
-    document.getElementById('install').scrollIntoView({ behavior: 'smooth' });
-    return;
-  }
-  
-  const btn = document.getElementById('tap-star-btn');
-  const text = document.getElementById('tap-star-text');
-  const status = document.getElementById('tap-status');
-  
-  // Update UI to show progress
+  // Reset UI
   btn.disabled = true;
-  text.textContent = 'Opening GitHub...';
-  status.textContent = 'Creating background tab...';
-  
-  // Send message to extension
-  window.postMessage({
-    type: 'TAP_STAR_GITHUB',
-    id: Date.now(),
-    payload: { repo: 'LeonTing1010/tap' }
-  }, '*');
+  btnText.textContent = 'Running...';
+  logContent.innerHTML = '';
+
+  // Helper to add log line
+  function log(text, color = 'var(--text-dim)') {
+    const line = document.createElement('div');
+    line.style.color = color;
+    line.style.marginBottom = '4px';
+    line.textContent = `> ${text}`;
+    logContent.appendChild(line);
+    logContent.scrollTop = logContent.scrollHeight;
+  }
+
+  // Step 1: Highlight Your Machine
+  document.getElementById('demo-machine').style.opacity = '1';
+  document.getElementById('demo-machine').querySelector('div').style.borderColor = 'var(--signal)';
+  log('Initializing Tap runtime...', 'var(--signal)');
+  await sleep(800);
+
+  // Step 2: Connection to Extension
+  const conn1 = document.querySelectorAll('.demo-connection')[0];
+  const pulse1 = conn1.querySelector('.demo-pulse');
+  conn1.style.opacity = '1';
+  pulse1.style.opacity = '1';
+  animatePulse(pulse1);
+  log('Connecting to Chrome Extension...');
+  await sleep(1000);
+
+  // Step 3: Highlight Extension
+  document.getElementById('demo-extension').style.opacity = '1';
+  document.getElementById('demo-extension').querySelector('div').style.borderColor = 'var(--signal)';
+  log('Extension ready. Your cookies stay local.');
+  await sleep(800);
+
+  // Step 4: Connection to GitHub
+  const conn2 = document.querySelectorAll('.demo-connection')[1];
+  const pulse2 = conn2.querySelector('.demo-pulse');
+  conn2.style.opacity = '1';
+  pulse2.style.opacity = '1';
+  animatePulse(pulse2);
+  log('Opening github.com/LeonTing1010/tap...');
+  await sleep(1000);
+
+  // Step 5: Highlight GitHub
+  document.getElementById('demo-github').style.opacity = '1';
+  document.getElementById('demo-github').querySelector('div').style.borderColor = 'var(--signal)';
+  log('✓ GitHub loaded in background tab', '#22c55e');
+  await sleep(600);
+
+  // Step 6: Find Star button
+  log('Locating Star button...');
+  await sleep(800);
+  log('✓ Found: button[aria-label="Star LeonTing1010/tap"]', '#22c55e');
+  await sleep(600);
+
+  // Step 7: Complete
+  log('');
+  log('Demo complete! In real usage, Tap would:');
+  log('  • Use your existing GitHub login');
+  log('  • Never upload cookies to any server');
+  log('  • Execute entirely on your machine');
+
+  // Actually open GitHub
+  setTimeout(() => {
+    window.open('https://github.com/LeonTing1010/tap', '_blank');
+    hint.style.opacity = '1';
+  }, 500);
+
+  // Reset
+  setTimeout(() => {
+    demoRunning = false;
+    btn.disabled = false;
+    btnText.textContent = 'Run Again';
+
+    // Reset visualization
+    setTimeout(() => {
+      document.querySelectorAll('.demo-node').forEach(n => {
+        n.style.opacity = '0.5';
+        n.querySelector('div').style.borderColor = 'var(--ink-rule)';
+      });
+      document.querySelectorAll('.demo-connection').forEach(c => {
+        c.style.opacity = '0.3';
+      });
+      document.querySelectorAll('.demo-pulse').forEach(p => {
+        p.style.opacity = '0';
+        p.style.animation = 'none';
+      });
+      hint.style.opacity = '0';
+    }, 3000);
+  }, 2000);
 }
 
-function handleTapStarResult(payload) {
-  const btn = document.getElementById('tap-star-btn');
-  const text = document.getElementById('tap-star-text');
-  const status = document.getElementById('tap-status');
-  
-  btn.disabled = false;
-  
-  if (payload.success) {
-    text.textContent = '✓ GitHub opened!';
-    status.textContent = 'Check the new tab → Click ★ Star!';
-    status.style.color = 'var(--signal)';
-    
-    // Show the toast too
-    const toast = document.getElementById('star-toast');
-    toast.style.opacity = '1';
-    toast.style.transform = 'translateY(0)';
-    toast.style.pointerEvents = 'auto';
-    
-    setTimeout(() => {
-      toast.style.opacity = '0';
-      toast.style.transform = 'translateY(20px)';
-      toast.style.pointerEvents = 'none';
-    }, 8000);
-    
-    // Reset button after delay
-    setTimeout(() => {
-      text.textContent = '★ Star with Tap';
-      status.textContent = `Tap v${tapExtensionVersion} connected`;
-    }, 5000);
-  } else {
-    text.textContent = '✗ Failed';
-    status.textContent = payload.error || 'Unknown error';
-    status.style.color = '#EF4444';
-    
-    setTimeout(() => {
-      text.textContent = '★ Star with Tap';
-      status.textContent = `Tap v${tapExtensionVersion} connected`;
-      status.style.color = 'var(--signal)';
-    }, 3000);
-  }
+function sleep(ms) {
+  return new Promise(r => setTimeout(r, ms));
 }
+
+function animatePulse(el) {
+  el.style.animation = 'pulse-move 1.5s ease-in-out infinite';
+}
+
+// Add keyframes for pulse animation
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes pulse-move {
+    0% { left: 0; opacity: 1; }
+    100% { left: 100%; opacity: 0; }
+  }
+`;
+document.head.appendChild(style);
 </script>
 
 </body>
