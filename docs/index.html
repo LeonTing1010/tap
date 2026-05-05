@@ -1217,10 +1217,10 @@ footer {
 <section class="section" id="demo" style="background:linear-gradient(180deg, var(--ink) 0%, var(--ink-soft) 100%);border-top:1px solid var(--ink-rule);padding:64px 0;">
   <div class="container">
     <div class="demo-header" style="text-align:center;margin-bottom:48px;">
-      <div style="font-family:var(--font-mono);font-size:11px;color:var(--signal);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:12px;">Live Terminal Demo</div>
-      <h2 style="font-family:var(--font-display);font-size:32px;color:var(--text);margin-bottom:12px;">See Tap execute in real-time</h2>
+      <div style="font-family:var(--font-mono);font-size:11px;color:var(--signal);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:12px;">Compile Once, Replay Forever</div>
+      <h2 style="font-family:var(--font-display);font-size:32px;color:var(--text);margin-bottom:12px;">One AI compile. Infinite replays. Zero tokens.</h2>
       <p style="font-family:var(--font-body);font-size:16px;color:var(--text-dim);max-width:600px;margin:0 auto;line-height:1.6;">
-        Watch every step as Tap opens GitHub using your local browser session.
+        Watch Tap execute a pre-compiled plan. Same result every time, at $0 per run.
       </p>
     </div>
 
@@ -1679,22 +1679,24 @@ function showStarToast(e) {
 let demoRunning = false;
 
 const terminalLines = [
-  { text: '[14:32:01] Plan loaded: 24 operations', color: 'var(--text-dim)', delay: 300 },
-  { text: '[14:32:01] Connecting to Chrome Extension...', color: 'var(--text-dim)', delay: 400 },
+  { text: '[14:32:01] ✓ Plan loaded: 24 operations (compiled once)', color: '#22C55E', delay: 400 },
+  { text: '[14:32:01] AI tokens used: 0 (already compiled)', color: 'var(--signal)', delay: 300 },
+  { text: '[14:32:01] Connecting to Chrome Extension...', color: 'var(--text-dim)', delay: 300 },
   { text: '[14:32:02] ✓ Extension ready (v0.15.5)', color: '#22C55E', delay: 200 },
-  { text: '[14:32:02] Opening new tab: github.com/LeonTing1010/tap', color: 'var(--text-dim)', delay: 500 },
+  { text: '[14:32:02] Opening new tab: github.com/LeonTing1010/tap', color: 'var(--text-dim)', delay: 400 },
   { text: '[14:32:03] ✓ Tab created (ID: 847)', color: '#22C55E', delay: 200 },
-  { text: '[14:32:03] Waiting for page load...', color: 'var(--text-dim)', delay: 600 },
+  { text: '[14:32:03] Waiting for page load...', color: 'var(--text-dim)', delay: 500 },
   { text: '[14:32:04] ✓ Page loaded (1.2s)', color: '#22C55E', delay: 200 },
   { text: '[14:32:04] Using your existing GitHub session', color: 'var(--signal)', delay: 300 },
   { text: '[14:32:04] Cookies: session=*** (local only)', color: 'var(--text-dim)', delay: 200 },
-  { text: '[14:32:04] Locating Star button...', color: 'var(--text-dim)', delay: 400 },
+  { text: '[14:32:04] Locating Star button...', color: 'var(--text-dim)', delay: 300 },
   { text: '[14:32:05] ✓ Found: button[aria-label="Star LeonTing1010/tap"]', color: '#22C55E', delay: 200 },
   { text: '', color: 'var(--text-dim)', delay: 100 },
-  { text: '────────────────────────────────────────', color: 'var(--ink-rule)', delay: 100 },
-  { text: '✓ SUCCESS: GitHub opened with your session', color: 'var(--signal)', delay: 200 },
-  { text: '  Cost: $0.00003 | Tokens: 0 | Cloud: None', color: 'var(--text-dim)', delay: 100 },
-  { text: '────────────────────────────────────────', color: 'var(--ink-rule)', delay: 100 },
+  { text: '════════════════════════════════════════', color: 'var(--signal)', delay: 100 },
+  { text: '✓ SUCCESS: Run #1 complete', color: 'var(--signal)', delay: 200 },
+  { text: '  This plan can replay 10,000× at $0 total', color: 'var(--text-dim)', delay: 100 },
+  { text: '  Cloud SDK cost for 10,000 runs: $420.00', color: '#EF4444', delay: 100 },
+  { text: '════════════════════════════════════════', color: 'var(--signal)', delay: 100 },
 ];
 
 async function runTapDemo() {
