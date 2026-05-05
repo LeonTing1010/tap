@@ -121,15 +121,15 @@ convert this read tap, add the \`act\` and \`key\` fields:
   "act": [
     {
       "op": "fetch",
-      "url": "https://api.${site}.example.com/{{ args.someArg }}",
+      "url": "https://api.${site}.example.com/{{$args.someArg}}",
       "method": "POST",
       "format": "json",
       "credentials": "page-session",
-      "body": { "example": "{{ args.someArg }}" },
+      "body": { "example": "{{$args.someArg}}" },
       "save": "$2"
     }
   ],
-  "key": "args.someArg",
+  "key": "'someArg:' & $args.someArg",
   "dedup_ttl_seconds": 86400,
   "return": "$2.body"
 }

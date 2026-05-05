@@ -83,7 +83,10 @@ test("buildStarterPlan (read) produces a v2 Plan with no envelope", async () => 
   assert.ok(Array.isArray(plan.observe));
   assert.equal(plan.observe[0].op, "fetch");
   assert.equal(plan.observe[0].credentials, "page-session");
-  assert.match(plan.observe[0].url, /\{\{ args\.someArg \}\}/);
+  // Canonical Tap v2 phase-1.x template syntax is JSONata: {{$args.X}}
+  // (no spaces, $ prefix denotes a context variable). CEL swap is
+  // forward-looking only — see core/CLAUDE.md "Plan Runtime (v2)".
+  assert.match(plan.observe[0].url, /\{\{\$args\.someArg\}\}/);
   // No v1 fields
   assert.equal(plan["@context"], undefined);
   assert.equal(plan.body, undefined);

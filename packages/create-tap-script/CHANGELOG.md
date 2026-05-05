@@ -1,5 +1,9 @@
 # create-tap-script — Changelog
 
+## 1.0.1 — 2026-05-05
+
+- Fix: scaffolded read→write conversion README emitted Mustache-style `{{ args.X }}` templates and a bare `key: "args.X"`. Tap v2 phase 1.x evaluates expressions with JSONata (`$args.X`, `&` for concat) per `core/CLAUDE.md` "Plan Runtime (v2)". Aligned `cli.ts` README block + `parse.test.mjs` to the canonical JSONata form already emitted by `create.ts buildStarterPlan`. Closes the workspace-test failure that started CI red on the v2 launch commit.
+
 ## 0.1.1 — 2026-04-26
 
 - README: add "Part of the Tap ecosystem" footer with UTM-tagged links to taprun.dev (homepage, Chrome extension, comparison page) plus cross-links to sibling JSR packages.
