@@ -11,6 +11,23 @@
 
 console.log('[tap] extension runtime ready')
 
+// --- MV3 SW keep-alive (ADR 2026-05-08-failure-detection-phase-2 §2C(i)) ---
+//
+// MV3 unloads the SW after ~30s idle, breaking the daemon's WebSocket and
+// surfacing as `peer_unreachable` to engine. classifyOpFailure routes that
+// to reconnect_extension, but the root cause is fixable here: chrome.alarms
+// fires even when the SW is unloaded, waking it up. Calling any chrome
+// API in the listener resets the SW idle timer.
+//
+// periodInMinutes 0.4 = 24s, comfortably under the 30s idle window.
+chrome.alarms.create('tap-keepalive', { periodInMinutes: 0.4 })
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === 'tap-keepalive') {
+    // No-op API call resets the idle timer. getPlatformInfo is cheapest.
+    chrome.runtime.getPlatformInfo(() => {})
+  }
+})
+
 // --- State ---
 
 // --- Session Manager ---
@@ -331,18 +348,16 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
         tabId = tab.id
       } else {
         const isInternal = current.url?.startsWith('chrome://') || current.url?.startsWith('data:')
-        if (isInternal && !fromDaemon) {
-          // Popup/content-script path: the user is actively looking at a
-          // chrome:// or data: tab — don't clobber it, open the target in a
-          // new tab instead. This is UX-preserving replacement.
+        if (isInternal) {
+          // ADR 2026-05-08-failure-detection-phase-2 §2C(ii):
+          // chrome:// or data:// active tab → open in background tab,
+          // never clobber. (Daemon path was previously exempted; the
+          // exemption caused tab_closed errors during dogfood.)
           const tab = await chrome.tabs.create({ url: params.url, active: false })
           tabId = tab.id
         } else {
-          // Daemon path (and regular-URL tabs): navigate in place via
-          // tabs.update. chrome://newtab/ is our own placeholder from
-          // session.create and can be navigated away from in place — the
-          // previous "create a replacement tab" branch leaked the original
-          // chrome://newtab/ on every session-based nav.
+          // Regular-URL tabs: navigate in place via tabs.update.
+          // chrome://newtab/ is handled by the isInternal branch above.
           await chrome.tabs.update(tabId, { url: params.url })
         }
       }
