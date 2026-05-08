@@ -370,6 +370,23 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
           // (§2C(iii)) → open new background tab, never clobber.
           const tab = await chrome.tabs.create({ url: params.url, active: false })
           tabId = tab.id
+          // §2C(iv) [2026-05-09 post-merge dogfood fix] — chrome.tabs.create
+          // with active:false does NOT trigger chrome.tabs.onActivated, so
+          // the existing active_tab_changed notification (line ~1430) never
+          // fires. Daemon's lastActiveTab cache stays pointing at the OLD
+          // active tab, and subsequent ops in the same plan (eval/extract)
+          // silently route to the wrong page. Manually emit the
+          // notification here so the cache catches up. Gated on fromDaemon
+          // so popup path (user-driven) doesn't override daemon cache.
+          if (fromDaemon && ws && ws.readyState === WebSocket.OPEN) {
+            try {
+              ws.send(JSON.stringify({
+                jsonrpc: '2.0',
+                method: 'active_tab_changed',
+                params: { tabId, url: params.url },
+              }))
+            } catch { /* socket gone */ }
+          }
         } else {
           // Same-origin SPA-style nav: cheap tabs.update.
           await chrome.tabs.update(tabId, { url: params.url })

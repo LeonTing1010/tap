@@ -203,6 +203,78 @@ test("origin mismatch branch opens new tab via chrome.tabs.create", () => {
 });
 
 // ═══════════════════════════════════════════════════════════
+// Rule (iv): cross-origin new tab must update daemon's lastActiveTab cache
+// Why: 2026-05-08 dogfood post-merge — after §2C(iii) opens a new bg tab
+// for cross-origin nav, subsequent ops in the same plan got routed to
+// the OLD active tab (silent data corruption again, just at a different
+// layer). Root cause: chrome.tabs.create({active:false}) doesn't trigger
+// chrome.tabs.onActivated, so the existing `active_tab_changed` listener
+// at line ~1430 never fires. Daemon's lastActiveTab cache stays stale.
+// Fix: after creating the new bg tab in the §2C(iii) cross-origin branch,
+// the extension must MANUALLY emit `active_tab_changed` to daemon so the
+// cache points at the new tab. Subsequent ops without explicit tabId/
+// sessionId then route correctly via the lastActiveTab fallback.
+// ═══════════════════════════════════════════════════════════
+
+console.log("\n  -- Rule (iv): cross-origin new tab notifies daemon --\n");
+
+test("cross-origin/isInternal nav branch sends active_tab_changed", () => {
+  // The branch that calls chrome.tabs.create for cross-origin or
+  // isInternal must, before returning, send active_tab_changed via ws
+  // with the new tab's id. Otherwise daemon-side lastActiveTab cache
+  // keeps pointing at the previous active tab, and subsequent ops
+  // (eval/extract/click) silently target the wrong page.
+  const navStart = BG_SRC.indexOf("case 'nav':");
+  const navBlock = BG_SRC.slice(navStart, navStart + 4000);
+  // Pattern: within or right after chrome.tabs.create call, must have
+  // an ws.send referencing 'active_tab_changed'.
+  // Looser proxy: after `chrome.tabs.create` (within ~600 chars) there
+  // must be `active_tab_changed` referenced.
+  const createMatches = [...navBlock.matchAll(/chrome\.tabs\.create/g)];
+  let foundAfterCreate = false;
+  for (const m of createMatches) {
+    const after = navBlock.slice(m.index, m.index + 800);
+    if (/active_tab_changed/.test(after)) {
+      foundAfterCreate = true;
+      break;
+    }
+  }
+  assert(
+    foundAfterCreate,
+    "After `chrome.tabs.create` in nav handler, must emit `active_tab_changed` " +
+      "to daemon so lastActiveTab cache updates. Otherwise subsequent ops " +
+      "in the same plan route to the OLD active tab (silent tab routing).",
+  );
+});
+
+test("active_tab_changed emit is gated on fromDaemon (popup path unaffected)", () => {
+  // The new emit must only fire when fromDaemon=true, so popup path
+  // (user-initiated) doesn't spuriously update daemon cache.
+  // Looser proxy: somewhere in the nav handler, an `if (fromDaemon ...)`
+  // guard exists with `active_tab_changed` in its body block (within
+  // ~500 chars after the if).
+  const navStart = BG_SRC.indexOf("case 'nav':");
+  const navBlock = BG_SRC.slice(navStart, navStart + 4000);
+  // Find any `if (fromDaemon ...)` whose body block (next ~500 chars)
+  // includes active_tab_changed.
+  const ifFromDaemonRe = /if\s*\(\s*fromDaemon[^)]*\)\s*\{/g;
+  let foundGated = false;
+  for (const m of navBlock.matchAll(ifFromDaemonRe)) {
+    const body = navBlock.slice(m.index, m.index + 600);
+    if (/active_tab_changed/.test(body)) {
+      foundGated = true;
+      break;
+    }
+  }
+  assert(
+    foundGated,
+    "active_tab_changed emit in nav handler must be inside an " +
+      "`if (fromDaemon ...)` guard (otherwise popup-driven navs would " +
+      "override daemon cache).",
+  );
+});
+
+// ═══════════════════════════════════════════════════════════
 
 console.log(`\n  ${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);
