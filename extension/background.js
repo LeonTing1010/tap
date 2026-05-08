@@ -348,16 +348,30 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
         tabId = tab.id
       } else {
         const isInternal = current.url?.startsWith('chrome://') || current.url?.startsWith('data:')
-        if (isInternal) {
-          // ADR 2026-05-08-failure-detection-phase-2 §2C(ii):
-          // chrome:// or data:// active tab → open in background tab,
-          // never clobber. (Daemon path was previously exempted; the
-          // exemption caused tab_closed errors during dogfood.)
+        // ADR 2026-05-08-failure-detection-phase-2 §2C(iii) — compute
+        // target vs current origin to decide tabs.update vs tabs.create.
+        // Cross-origin nav must NOT clobber an existing tab: the previous
+        // page may be in a redirect chain (e.g. CF auth) whose state
+        // would leak into the eval that follows. Same-origin SPA navs
+        // remain cheap (tabs.update).
+        let crossOrigin = false
+        try {
+          const target = new URL(params.url)
+          if (current.url) {
+            const currentParsed = new URL(current.url)
+            crossOrigin = target.origin !== currentParsed.origin
+          }
+        } catch {
+          // Malformed URL — treat as cross-origin (safer: open new tab)
+          crossOrigin = true
+        }
+        if (isInternal || crossOrigin) {
+          // chrome:// / data:// active tab (§2C(ii)) OR cross-origin nav
+          // (§2C(iii)) → open new background tab, never clobber.
           const tab = await chrome.tabs.create({ url: params.url, active: false })
           tabId = tab.id
         } else {
-          // Regular-URL tabs: navigate in place via tabs.update.
-          // chrome://newtab/ is handled by the isInternal branch above.
+          // Same-origin SPA-style nav: cheap tabs.update.
           await chrome.tabs.update(tabId, { url: params.url })
         }
       }

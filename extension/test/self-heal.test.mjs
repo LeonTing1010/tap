@@ -114,17 +114,91 @@ test("no `&& !fromDaemon` exemption in isInternal nav guard", () => {
 });
 
 test("isInternal guard exists and opens new tab", () => {
-  // Positive form: must be the strict `if (isInternal) { ... chrome.tabs.create ... }` shape.
-  // Search for `if (isInternal)` followed by chrome.tabs.create within ~300 chars.
-  const idx = BG_SRC.search(/if\s*\(\s*isInternal\s*\)/);
+  // The guard may be `if (isInternal)` or `if (isInternal || <other>)`.
+  // What matters: isInternal participates in a guard whose body opens
+  // a new background tab via chrome.tabs.create.
+  const idx = BG_SRC.search(/if\s*\(\s*isInternal[\s|)]/);
   assert(
     idx !== -1,
-    "Must contain `if (isInternal)` guard (without && !fromDaemon)",
+    "Must contain `if (isInternal ...)` guard (with isInternal as first condition)",
   );
-  const block = BG_SRC.slice(idx, idx + 400);
+  const block = BG_SRC.slice(idx, idx + 600);
   assert(
     /chrome\.tabs\.create/.test(block),
-    "isInternal branch must call chrome.tabs.create to open a new tab",
+    "isInternal-branch must call chrome.tabs.create to open a new tab",
+  );
+});
+
+// ═══════════════════════════════════════════════════════════
+// Rule (iii): origin-mismatch nav → new background tab
+// Why: 2026-05-08 dogfood — Cloudflare nav redirected through CF
+// auth chain, leaving tab on dash.cloudflare.com/two-factor. Next
+// nav (juejin.cn/search) called `chrome.tabs.update(tabId, { url })`
+// to navigate same tab, but the eval ran on cloudflare login page —
+// silent data corruption. Same applies to parallel batch calls
+// sharing a tab. Fix: when daemon-driven nav target origin differs
+// from current tab origin, open a new background tab instead of
+// clobbering. Same-origin navs continue to use tabs.update (cheap).
+// ═══════════════════════════════════════════════════════════
+
+console.log("\n  -- Rule (iii): origin-mismatch nav → new background tab --\n");
+
+test("nav handler computes target origin", () => {
+  // Source-text proxy: must call new URL(...) on params.url to extract origin.
+  // Pattern: `new URL(params.url)` followed by `.origin` access OR variable
+  // assignment that's later compared to current origin.
+  assert(
+    /new URL\(params\.url\)/.test(BG_SRC),
+    "nav handler must construct URL(params.url) to extract target origin",
+  );
+});
+
+test("nav handler compares target.origin vs current.origin", () => {
+  // Must read .origin from both target and current to compare.
+  // Looser pattern: at least 2 occurrences of `.origin` near nav case
+  // (one for target, one for current).
+  const navStart = BG_SRC.indexOf("case 'nav':");
+  assert(navStart !== -1, "nav case handler must exist");
+  // Search a 2000-char window starting from `case 'nav':`.
+  const navBlock = BG_SRC.slice(navStart, navStart + 2000);
+  const originAccesses = navBlock.match(/\.origin\b/g) || [];
+  assert(
+    originAccesses.length >= 2,
+    `nav handler must access .origin on both target and current to compare; ` +
+      `found ${originAccesses.length} .origin access(es) in 2000-char window`,
+  );
+});
+
+test("origin mismatch branch opens new tab via chrome.tabs.create", () => {
+  // Two acceptable idioms:
+  //   (a) inline:   if (target.origin !== current.origin) { chrome.tabs.create(...) }
+  //   (b) variable: const cross = a.origin !== b.origin; if (... || cross) { chrome.tabs.create(...) }
+  // What matters: somewhere in the nav handler there's an `.origin !==
+  // .origin` comparison whose result drives a chrome.tabs.create branch.
+  const navStart = BG_SRC.indexOf("case 'nav':");
+  const navBlock = BG_SRC.slice(navStart, navStart + 3000);
+  // Step 1: confirm origin-vs-origin comparison appears.
+  assert(
+    /\.origin\s*!==?\s*[a-zA-Z_$.]*\.origin/.test(navBlock),
+    "nav handler must compare `.origin !== .origin` (cross-origin detection)",
+  );
+  // Step 2: confirm chrome.tabs.create appears within the same nav block.
+  assert(
+    /chrome\.tabs\.create/.test(navBlock),
+    "nav handler must call chrome.tabs.create somewhere",
+  );
+  // Step 3: confirm the result of the origin comparison influences a
+  // boolean used in the if-guard. Look for either:
+  //   - inline:    if (...origin !==...origin...) { ... chrome.tabs.create
+  //   - variable:  crossOrigin (or similar) referenced in if + assigned from origin compare
+  const inlinePattern =
+    /if\s*\([^)]*\.origin\s*!==?[^)]*\.origin[^)]*\)\s*\{[\s\S]{0,500}chrome\.tabs\.create/;
+  const variablePattern =
+    /(\w+)\s*=\s*[^;]*\.origin\s*!==?\s*[a-zA-Z_$.]*\.origin[\s\S]{0,500}if\s*\([^)]*\1[^)]*\)\s*\{[\s\S]{0,500}chrome\.tabs\.create/;
+  assert(
+    inlinePattern.test(navBlock) || variablePattern.test(navBlock),
+    "nav handler must use the origin comparison (inline or via boolean " +
+      "variable) to gate a chrome.tabs.create branch",
   );
 });
 
