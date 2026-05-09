@@ -22,14 +22,6 @@ the data via Liquid:
 {{ site.data.cli.counts.community_taps }} <!-- 70 -->
 ```
 
-For multi-element snippets, use the includes in `_includes/`:
-
-```liquid
-{% include install-block.html %}
-{% include tier-table.html %}
-{% include cli-cheatsheet.html %}
-```
-
 Static `.html` files without frontmatter are served as raw HTML and ignore
 Liquid. Add an empty frontmatter block (just `---\n---\n`) to opt them in.
 
