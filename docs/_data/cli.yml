@@ -79,7 +79,7 @@ mcp:
 install:
   npx: "npx -y @taprun/cli --version"
   curl: "curl -fsSL https://taprun.dev/install.sh | sh"
-  brew: "brew install LeonTing1010/tap/tap"
+  brew: "brew install LeonTing1010/tap/taprun"
   mcp_config_json: |
     { "mcpServers": { "tap": { "command": "npx", "args": ["-y", "@taprun/cli", "mcp", "stdio"] } } }
 

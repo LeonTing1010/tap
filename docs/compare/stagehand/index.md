@@ -153,7 +153,7 @@ fs.writeFileSync('flow.tap.json', JSON.stringify(plan, null, 2));
 " scripts/your-stagehand-script.ts
 
 # 2. Run via Tap CLI
-brew install LeonTing1010/tap/tap
+brew install LeonTing1010/tap/taprun
 tap run mysite/flow
 
 # 3. Optional — install Chrome extension for logged-in sites

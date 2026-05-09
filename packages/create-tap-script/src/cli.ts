@@ -174,7 +174,7 @@ ${description}
 
 3. Run via the Tap CLI:
    \`\`\`bash
-   brew install LeonTing1010/tap/tap
+   brew install LeonTing1010/tap/taprun
    tap-v2 run ${site}/${name} --someArg some-value
    \`\`\`
 
