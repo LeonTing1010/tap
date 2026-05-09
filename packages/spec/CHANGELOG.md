@@ -1,5 +1,15 @@
 # @taprun/spec — Changelog
 
+## 1.1.1 — 2026-05-10
+
+- Fix: ship `schemas/plan-v1.schema.json` in the npm tarball. The 0.3.0
+  changelog promised this file as the `@taprun/spec/schema` subpath
+  export, but neither `files` nor `exports` in `package.json` referenced
+  it — the schema only lived in source-tree and on `taprun.dev`. Adds
+  `"./schema": "./schemas/plan-v1.schema.json"` to `exports` and
+  `schemas/plan-v1.schema.json` (plus `CHANGELOG.md`) to `files`.
+  Verified via `npm pack --dry-run`.
+
 ## 1.1.0 — 2026-05-05
 
 - Land `TAP_V1_NS_TERMS` (and `TAP_V1_PLAN_TERMS` / `TAP_V1_ASSESSMENT_TERMS` / `TAP_V1_NS_IRI`) for real. The 0.3.2 entry below promised these but the source file (`src/ns-vocabulary.ts`) was never committed; the `packages.yml :: ns-cross-consumer-only` CI gate has been failing since because `m.TAP_V1_NS_TERMS` resolved to undefined. Now ships exactly the 13 terms documented in `docs/ns/tap-v1/{index.jsonld,README.md}`. CI gate green.
