@@ -18,8 +18,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Changelog — Taprun</title>
-<meta name="description" content="Taprun release notes. Every version bumps, fixes, and new features. v0.11.3 shipped Chrome MV3 service worker persistence, lazy MCP main session, and four related fixes for orphan tab leaks.">
-<meta name="keywords" content="taprun changelog, taprun release notes, taprun version history, taprun v0.11.3, chrome extension taprun updates, taprun MCP fixes">
+<meta name="description" content="Taprun release notes. v{{ site.data.cli.version }} shipped userspace-via-standards: bare `tap` defaults to stdio MCP, plan files self-declare $schema, full release pipeline auto-publishes to MCP Registry via OIDC.">
+<meta name="keywords" content="taprun changelog, taprun release notes, taprun version history, taprun v{{ site.data.cli.version }}, chrome extension taprun updates, taprun MCP fixes">
 <link rel="canonical" href="https://taprun.dev/changelog.html">
 <meta property="og:title" content="Changelog — Taprun">
 <meta property="og:description" content="Release notes for every Taprun version. The story of every fix, written in one sentence each.">
@@ -43,7 +43,7 @@
   "description": "Release notes for every Taprun version.",
   "url": "https://taprun.dev/changelog.html",
   "isPartOf": { "@type": "WebSite", "name": "Taprun", "url": "https://taprun.dev/" },
-  "about": { "@type": "SoftwareApplication", "name": "Taprun", "url": "https://taprun.dev/", "softwareVersion": "0.11.3", "applicationCategory": "DeveloperApplication", "operatingSystem": "macOS, Linux, Windows" }
+  "about": { "@type": "SoftwareApplication", "name": "Taprun", "url": "https://taprun.dev/", "softwareVersion": "{{ site.data.cli.version }}", "applicationCategory": "DeveloperApplication", "operatingSystem": "macOS, Linux, Windows" }
 }
 </script>
 <style>
@@ -123,7 +123,7 @@ hr::before { content: '◆ ◆ ◆'; position: absolute; left: 50%; top: -0.7em;
 <header class="masthead-strip">
   <div class="row">
     <a href="/" class="brand">Taprun</a>
-    <span class="crumb">Changelog &middot; v0.11.3</span>
+    <span class="crumb">Changelog &middot; v{{ site.data.cli.version }}</span>
     <a href="https://github.com/LeonTing1010/tap/releases">Releases &nearr;</a>
   </div>
 </header>
@@ -132,6 +132,114 @@ hr::before { content: '◆ ◆ ◆'; position: absolute; left: 50%; top: -0.7em;
 <div class="kicker">Edition Log · One Sentence Per Fix</div>
 <h1>Change<em>log</em></h1>
 <p class="meta-intro">Every Taprun release, written as if for a typesetter. For full technical notes on each version, see the <a href="https://github.com/LeonTing1010/tap/releases">GitHub releases page</a>.</p>
+
+<div class="version-block">
+<h2><a href="https://github.com/LeonTing1010/tap/releases/tag/v0.15.8">v0.15.8</a> <span class="date">May 9, 2026</span></h2>
+<div class="version-highlight">
+<strong>Release pipeline is fully hands-off.</strong> First end-to-end run with zero human intervention: <code>git push v0.15.8</code> → 12 CI jobs → npm + PyPI + GitHub binaries + Homebrew formula + MCP Registry all auto-update. The MCP Registry leg uses GitHub Actions OIDC (no shared secret) with a direct curl POST to bypass a confirmed CLI false-negative bug.
+</div>
+<h3>Fixes</h3>
+<ul>
+<li><strong><code>release.yml mcp-registry-publish</code> uses curl directly</strong> instead of <code>mcp-publisher publish</code>. The CLI v1.7.8 returns HTTP 400 "duplicate version" even when the underlying POST returns 200 — verified against live Registry on 0.15.6 and 0.15.7. Workaround extracts the OIDC-issued JWT from <code>~/.config/mcp-publisher/token.json</code> and posts to <code>/v0/publish</code> with curl.</li>
+<li><strong><code>mcp-publisher</code> install URL fix.</strong> The <code>install.sh</code> path on the registry repo doesn't exist; replaced with direct release-tarball download (<code>mcp-publisher_linux_amd64.tar.gz</code>, pinned to v1.7.8).</li>
+</ul>
+</div>
+
+<div class="version-block">
+<h2><a href="https://github.com/LeonTing1010/tap/releases/tag/v0.15.7">v0.15.7</a> <span class="date">May 9, 2026</span></h2>
+<h3>Features</h3>
+<ul>
+<li><strong>MCP Registry auto-publish lands in <code>release.yml</code>.</strong> A new <code>mcp-registry-publish</code> job authenticates via GitHub OIDC and pushes the canonical <code>server.json</code> on every tag push. No more 13-day stalenesses where the Registry pinned <code>@taprun/cli@0.14.0</code> while npm shipped 0.15.4. Bumps version pins from canonical <code>npm/cli/package.json</code> via <code>jq</code>; no generator script, no diff gate, no SHIPPED_* table — just one ~30-line CI job.</li>
+</ul>
+</div>
+
+<div class="version-block">
+<h2><a href="https://github.com/LeonTing1010/tap/releases/tag/v0.15.6">v0.15.6</a> <span class="date">May 9, 2026</span></h2>
+<div class="version-highlight">
+<strong>Userspace via standards.</strong> ADR-driven: bare <code>tap</code> defaults to stdio MCP when stdin is a pipe — MCP host config simplifies to <code>{"command":"tap"}</code>, no Tap-specific argv string required. Plan files now self-declare <code>$schema</code> URL; loader supports every URL ever shipped, returning typed <code>kind:"unknown_schema"</code> for forward-incompatible plans.
+</div>
+<h3>Features</h3>
+<ul>
+<li><strong>E1 — argv dissolution.</strong> <code>tap</code> with empty argv routes by stdin TTY: pipe/redirect → stdio MCP server; TTY → help. All previously-published argv forms (<code>mcp start</code>, <code>mcp stdio</code>, <code>serve</code>, <code>serve stdio</code>) continue to work via alias dispatch (Tier 0 userspace loyalty).</li>
+<li><strong>INV-2 — plan <code>$schema</code> field.</strong> Optional URL on every Plan; <code>persistence.ts:loadPlan</code> dispatches by URL, supports every shipped schema. Adding a new schema = appending one reader function. Drift class structurally impossible.</li>
+<li><strong><code>tap daemon &lt;sub&gt;</code> forwards to <code>tap bridge &lt;sub&gt;</code>.</strong> Previously, <code>tap daemon status</code> silently started a daemon (sub-verb argv was dropped). Now grammar and behavior align: bare <code>tap daemon</code> still starts (preserves systemd convention); <code>tap daemon &lt;anything&gt;</code> mirrors <code>tap bridge &lt;anything&gt;</code>.</li>
+<li><strong><code>tap --version</code> works in compiled binary.</strong> Old <code>readVersion()</code> tried to read <code>CHANGELOG.md</code> via <code>import.meta.url</code> — the file isn't on disk inside <code>deno compile</code>'d binaries. Now JSON-imports from <code>npm/cli/package.json</code> at bundle time so the version literal is welded into the binary.</li>
+</ul>
+<h3>Fixes</h3>
+<ul>
+<li><strong>Homebrew orphan formula deleted.</strong> <code>Formula/tap.rb</code> at v0.4.0 was stuck since the <code>tap → taprun</code> rename in 2026-05-03; auto-bump only touched <code>taprun.rb</code>. Anyone running <code>brew install LeonTing1010/tap/tap</code> got a years-old binary. Fixed via <code>oldname "tap"</code> alias on the canonical <code>taprun.rb</code>; existing install commands keep working.</li>
+</ul>
+</div>
+
+<div class="version-block">
+<h2><a href="https://github.com/LeonTing1010/tap/releases/tag/v0.15.5">v0.15.5</a> <span class="date">May 5, 2026</span></h2>
+<h3>Fixes</h3>
+<ul>
+<li><strong>Extension cross-origin tab routing.</strong> Cross-origin navigations now update the daemon's <code>lastActiveTab</code> cache so subsequent ops route to the new tab. Previously the cache lagged behind the SW's view, causing routes to a closed/wrong tab.</li>
+<li><strong>Origin-mismatch nav opens new background tab.</strong> When a saved tap navigates to a host different from the active tab, the extension now spawns a background tab instead of clobbering the user's foreground tab.</li>
+<li><strong>Extension self-heal — MV3 SW keep-alive.</strong> Service worker stays alive while a long-running op is in flight (chrome.alarms heartbeat); prevents the 30s idle-kill mid-op.</li>
+</ul>
+</div>
+
+<div class="version-block">
+<h2><a href="https://github.com/LeonTing1010/tap/releases/tag/v0.15.4">v0.15.4</a> <span class="date">May 3, 2026</span></h2>
+<div class="version-highlight">
+<strong>v2 launch — substrate dissolved, surface vocabulary converged.</strong> Engine source contains no type representing substrate state. The 11 ops in <code>core/types.ts</code> ARE the protocol. Tool surface collapses 12→4 meta verbs (<code>capture</code> / <code>verify</code> / <code>mark</code> / <code>run</code>); saved taps appear as MCP Resources at <code>tap://{site}/{name}</code>.
+</div>
+<h3>Features</h3>
+<ul>
+<li><strong>Substrate-dissolved engine.</strong> No <code>Substrate</code> type or interface anywhere in <code>core/</code>. <code>core/dispatch.ts</code> routes each op to either an inline handler or to a registered peer function; substrate state lives on the other side of a function-call boundary, structurally inaccessible to the engine. Per ADR <code>2026-05-04-substrate-dissolved.md</code>.</li>
+<li><strong>4 meta verbs + N saved-tap Resources.</strong> Tool table is constant; per-plan capability is exposed as MCP Resources, not per-plan Tools. Discovery flow: <code>resources/list</code> → <code>resources/read({uri})</code> → <code>run({ref, args})</code>. Per ADR <code>2026-05-04-saved-taps-as-resources.md</code>.</li>
+<li><strong>Plan format simplified to bare JSON.</strong> No W3C envelope, no <code>@context</code>, no <code>motivation</code>. Pure data, schema-validated against <code>core/types.ts</code>. <code>op:exec</code> deleted; <code>op:eval</code> is the only escape hatch with mandatory <code>returns.type</code>.</li>
+<li><strong>Daemon model.</strong> Single-process daemon hosts the in-process queue plus two listeners (<code>:9333</code> extension long-poll, <code>:9334</code> MCP HTTP). Auto-forks on first call from CLI/stdio; idle-times out at 30 min.</li>
+<li><strong>K(Δ) accounting via Run transitions.</strong> Every Run captures a transition log; healing/recovery cost is computed by projecting over <code>transitions[kind=="heal"]</code>.</li>
+</ul>
+</div>
+
+<div class="version-block">
+<h2><a href="https://github.com/LeonTing1010/tap/releases/tag/v0.15.3">v0.15.3</a> <span class="date">May 3, 2026</span></h2>
+<h3>Fixes</h3>
+<ul>
+<li><strong>Release pipeline 5-bug sweep.</strong> v0.15.0 → 0.15.4 retried the binary-release flow until every latent CI bug was caught: bundle entry path, transitive-npm-import externalization, deno.json imports-map propagation, GH cross-repo PAT scope, and a stale <code>npm_publish_test.ts</code> reference. v0.15.4 was the first all-green run; v0.15.0–3 are CI-fix patches with no behavior changes.</li>
+</ul>
+</div>
+
+<div class="version-block">
+<h2><a href="https://github.com/LeonTing1010/tap/releases/tag/v0.14.7">v0.14.5–v0.14.7</a> <span class="date">May 1, 2026</span></h2>
+<h3>Fixes</h3>
+<ul>
+<li><strong>Capability-strict runtime API.</strong> Plans declare <code>requires</code>; lint hard-rejects <code>page-session</code> without <code>requires.runtime:"extension"</code>. <code>tap.run</code> pre-flights <code>matchCapability</code> before any op. No silent ephemeral-fallback or string-warning machinery.</li>
+<li><strong>Op-grain plan fingerprint Phase 1.</strong> <code>PlanFingerprint.op_hashes</code> + <code>diffPlanFingerprints</code> helper. Heal/doctor consumer wiring deferred to Phase 2.</li>
+<li><strong>No-new-legacy on save.</strong> <code>lintPlan({isNewSave:true})</code> rejects plans with <code>legacy:true</code>; <code>handleSavePlan</code> computes the flag from filesystem instead of trusting payload. Drainage terminal state codified.</li>
+</ul>
+</div>
+
+<div class="version-block">
+<h2><a href="https://github.com/LeonTing1010/tap/releases/tag/v0.14.0">v0.14.0–v0.14.4</a> <span class="date">April 26 – May 1, 2026</span></h2>
+<div class="version-highlight">
+<strong>MCP Registry submission.</strong> Tap goes live in the official Anthropic MCP Registry at <code>io.github.LeonTing1010/tap</code>; PulseMCP auto-syncs within 2 days. <code>op:fetch</code> gains <code>credentials: "deno-host" | "page-session"</code> field for cross-origin auth via the user's logged-in Chrome.
+</div>
+<h3>Features</h3>
+<ul>
+<li><strong>MCP Registry listing live.</strong> <code>mcp-publisher publish</code> from the canonical <code>server.json</code>. Empirical test confirmed Registry search is name-only — <code>name</code> is the discovery key, <code>description</code>/<code>title</code>/<code>websiteUrl</code> are render-only. v0.14.2/0.14.3 refresh metadata visible in client UIs.</li>
+<li><strong><code>op:fetch credentials: "page-session"</code>.</strong> Enables cross-origin requests authenticated by the user's Chrome session, replacing the <code>op:exec</code> escape hatch for 4 reddit taps blocked on free-tier auth.</li>
+</ul>
+</div>
+
+<div class="version-block">
+<h2><a href="https://github.com/LeonTing1010/tap/releases/tag/v0.13.1">v0.13.0–v0.13.1</a> <span class="date">April 20–22, 2026</span></h2>
+<h3>Features</h3>
+<ul>
+<li><strong>Plan-lint — static author-time checks.</strong> Catches schema errors, dangling references, unsafe ops at save time instead of run time. CLI reads <code>.tap.json</code> via <code>findTap</code> + <code>doctor</code>.</li>
+<li><strong><code>tap.run</code> envelope: annotation.</strong> Run records carry W3C Annotation envelope for cross-tool interop.</li>
+</ul>
+<h3>Fixes</h3>
+<ul>
+<li><strong>Sandbox fully retired.</strong> The sandbox layer that isolated tap code from the host's Deno APIs is removed; security boundary is now purely the runtime+extension trust model.</li>
+<li><strong>Linux UPX fix.</strong> v0.13.0 <code>tap-linux-x64</code> was UPX-packed and broke at startup ("Could not find standalone binary section"). v0.13.1 removes UPX from the build pipeline.</li>
+<li><strong>Runtime vision op removed.</strong> Violated the zero-AI-at-runtime invariant; vision-related compilation now happens at authoring time only.</li>
+</ul>
+</div>
 
 <div class="version-block">
 <h2><a href="https://github.com/LeonTing1010/tap/releases/tag/v0.11.3">v0.11.3</a> <span class="date">April 11, 2026</span></h2>

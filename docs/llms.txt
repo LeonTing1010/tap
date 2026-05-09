@@ -1,70 +1,83 @@
 # Taprun
 
-> Browser automation that doesn't burn tokens every run. AI forges a `.tap.json` program once at authoring time — the program replays deterministically forever, zero LLM at runtime. `tap doctor` catches structural drift before production breaks.
+> Browser automation that doesn't burn tokens every run. AI compiles a plan once at authoring time — the plan replays deterministically forever, zero LLM at runtime. The `verify` verb catches substrate drift before production breaks.
 
-Taprun is the tool layer, not an AI layer. Any MCP host (Claude Code, Cursor, Windsurf, Codex, Cline, Continue, VS Code) connects and gets forge + run + doctor. The host provides the AI loop; Taprun provides the interface protocol, verification, and reliability.
+Taprun is the tool layer, not an AI layer. Any MCP host (Claude Desktop, Claude Code, Cursor, Windsurf, Cline, Continue, VS Code, Zed) connects and gets the four meta verbs `capture / verify / mark / run` plus N saved-tap Resources. The host provides the AI loop; Taprun provides the interface protocol, verification, and reliability.
 
 ## Vocabulary
 
-- **tap** — the protocol, the handle, the program (`.tap.json`), and the product. One word, one concept.
-- **forge** — create a tap from an observed interface (AI participates once).
-- **runtime** — a platform implementation of tap's 8 core operations. Three today: Chrome Extension, Playwright (default, zero-setup), macOS (AX API + JXA + CGEvent).
-- **interface** — the automation target (a website, a native app). External, not part of tap.
+- **tap** — the protocol, the handle, the saved program (`<site>/<name>.plan.json`), and the product. One word, one concept.
+- **plan** — bare JSON definition of a tap (no W3C envelope). Closed 11-op union (fetch / nav / wait / input / extract / cookies / tap / if / foreach / parallel / eval). Self-declares its `$schema` URL for forward-compat.
+- **capture** — create or heal a tap from a URL × intent. AI participates once at authoring; runtime is pure data + dispatch.
+- **verify** — read-only substrate check. 4-arm verdict (`equivalent` / `drifted` / `first_snapshot` / `unreachable`).
+- **mark** — resolve an `intent_uncertain` Run to `committed` or `aborted`.
+- **run** — execute a saved tap. Auto-emits a Run record with transitions.
+- **runtime** — a platform implementation of the substrate-side ops. Currently registered: **extension** (real Chrome via the user's logged-in profile). Playwright peer is in tree but not registered at v2 launch (zero-setup headless will land when CI/headless demand documents itself).
 
-## 4-Layer Trust Stack
+## Surface
 
-Taps bind to the highest-stability structural address available:
+Tool-discoverable per session via MCP `tools/list`. Constant 4 meta verbs:
 
-1. **Layer 1 — Explicit declarations (~100% deterministic):** agents.json, OpenAPI, llms.txt, JSON-LD, RSS, Open Graph. SEO/legal/subscriber incentives keep these honest. Compiled to `.tap.json` with zero AI.
-2. **Layer 2 — Data contracts (~95%):** API endpoints, SSR hydration globals, WebSocket payloads. The site's own frontend depends on them.
-3. **Layer 3 — Semantic structure (~80%):** ARIA roles, heading levels, data-testid, itemprop, Schema.org. W3C-standardized, captured via fingerprint.
-4. **Layer 4 — Implementation details (~30%):** CSS classes, framework attrs (data-v-*, _ngcontent), DOM nesting. No external stability driver. Never hashed.
+```
+capture { url, intent?, site?, name? }     # create / heal a tap
+verify  { site, name }                     # snapshot equivalence
+mark    { site, name, key, as }            # resolve uncertain intent
+run     { ref, args }                      # execute saved tap
+```
 
-Doctor cross-validates across layers. If Layer 1 JSON-LD says `Product.name = "iPhone 16 Pro"` but the tap's DOM extraction returns `title = "iPhone Case"`, the tap navigated to the wrong structural location — "valid type, wrong node."
+Saved taps appear as MCP Resources at `tap://{site}/{name}` — discover via `resources/list`, fetch arg schema via `resources/read({uri})`, then invoke with `run({ref, args})`.
+
+Every tool returns a `ToolResult<T>` envelope: `{ ok: true, value }` on success, `{ ok: false, kind, message, detail, next? }` on recoverable failure. The `kind` is one of 9 closed agent-aligned values.
 
 ## Install
 
 ```
-npx -y @taprun/cli --version          # zero-install (any Node host)
-curl -fsSL https://taprun.dev/install.sh | sh   # permanent binary (macOS/Linux)
+npx -y @taprun/cli                            # zero-install (any Node host)
+curl -fsSL https://taprun.dev/install.sh | sh # permanent binary (macOS / Linux)
+brew install LeonTing1010/tap/taprun          # macOS / Linux via Homebrew
 ```
 
 ## Connect to any MCP host
 
-```
-tap mcp connect
-```
-
-Or add manually to your MCP config:
+Add to your MCP host config (Claude Desktop / Claude Code / Cursor / Cline / Continue / Zed / VS Code):
 
 ```json
-{ "mcpServers": { "tap": { "command": "tap", "args": ["mcp"] } } }
+{ "mcpServers": { "tap": { "command": "tap" } } }
 ```
 
-## First commands
+Bare `tap` invocation defaults to stdio MCP when stdin is a pipe (the MCP host case). On a TTY, prints help. Per ADR 2026-05-09-userspace-via-standards.md E1.
+
+Equivalent older forms — all preserved by `oldname`/argv aliases — also work:
+
+```json
+{ "mcpServers": { "tap": { "command": "tap", "args": ["mcp", "stdio"] } } }
+{ "mcpServers": { "tap": { "command": "npx", "args": ["-y", "@taprun/cli"] } } }
+```
+
+## First commands (CLI; agents use MCP)
 
 ```
-tap github/trending              # run a community tap (slash form, not space)
-tap hackernews/hot
-tap forge https://news.ycombinator.com    # Tier 0 — compile without AI (API/JSON-LD/RSS)
-tap forge "get Hacker News top stories"   # BYOK AI path (Claude / OpenAI / Ollama)
-tap doctor                       # check fleet health
-tap watch github/trending --every 5m      # follow changes over time
+tap capture https://news.ycombinator.com hackernews/hot --intent "list top stories"
+tap capture https://news.ycombinator.com hackernews/hot       # re-capture = heal
+tap verify  hackernews/hot
+tap hackernews/hot                            # run a saved tap
+tap list                                      # list local taps
+tap show    hackernews/hot                    # inspect a tap
 ```
 
 ## Pricing
 
-- **Free** — 140+ community taps, full doctor, Tier 0 forge, watch, MCP read ops. 3-day trial on paid features.
-- **Hacker ($9/mo)** — full forge pipeline through any MCP host. BYOK AI key.
-- **Pro ($29/mo)** — auto-heal, auto-refresh, scheduled runs, team MCP server. 100% local.
+All features free during v0.x. No tier gating in the engine; `core/auth.ts` was deleted in 2026-05-04 (ADR paid-tier-deferred). Static architecture guards prevent silent re-introduction. Future paid tiers, when introduced, will require a named first paying customer + named feature shipping atomically.
 
 ## Security invariants
 
 - Taprun servers never push executable code to clients.
-- Taprun servers never initiate connections to user machines.
-- Tap source never leaves the user's machine (multi-machine sync, when built, is end-to-end encrypted client-side).
-- Server features are opt-in, off by default.
-- Local-first is the architectural default, not a fallback.
+- Taprun servers never initiate connections to user machines (daemon is outbound-only).
+- Tap source never leaves the user's machine. `.plan.json` may contain selectors, endpoints, secret references. No cloud sync.
+- Server features opt-in, off by default. No telemetry, no license heartbeat.
+- Local-first is the architectural default, not a fallback. Every paid feature must have a 100% local mode.
+
+Secrets live at `~/.tap/secrets` (mode 0600). `op:fetch` references them via `${VAR}` indirection expanded at the boundary, so cleartext never enters traces.
 
 ## Authoritative links
 
@@ -73,8 +86,9 @@ tap watch github/trending --every 5m      # follow changes over time
 - Blog: https://taprun.dev/blog/
 - Agent discovery: https://taprun.dev/.well-known/agents.json
 - Sitemap: https://taprun.dev/sitemap.xml
-- Community taps (140+, MIT): https://github.com/LeonTing1010/tap-skills
+- Public taps (open community corpus): https://github.com/LeonTing1010/tap-skills
 - Public repo (extension + docs, MIT): https://github.com/LeonTing1010/tap
+- npm: https://www.npmjs.com/package/@taprun/cli
 - Chrome Extension: https://chromewebstore.google.com/detail/tap/llcidejeoobdegbkolbjhfoeckphldce
 
 ## Contact

@@ -75,6 +75,14 @@ mcp:
   default_port: 7891
   default_bind: "127.0.0.1"
 
+# ─── Version ─────────────────────────────────────────────────────────────
+# Canonical site version. Used by index.html (softwareVersion JSON-LD,
+# demo strings) and changelog.html. Bumped by tap-core's release.sh in
+# the same commit that bumps npm/cli/package.json — search for
+# `cli.yml` in scripts/release.sh. Manual edits to this field will be
+# overwritten on next release.
+version: "0.15.8"
+
 # ─── Install ─────────────────────────────────────────────────────────────
 install:
   npx: "npx -y @taprun/cli --version"

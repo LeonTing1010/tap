@@ -49,7 +49,7 @@
   "description": "Browser automation that stays on your machine. AI compiles your task once into a 24-op deterministic plan; your real Chrome replays it forever at zero tokens per run. No credentials uploaded, no mid-run session failure, no hallucinated clicks. Cloud-first SDKs architecturally cannot match this — they need credentials in the cloud to function.",
   "url": "https://taprun.dev/",
   "downloadUrl": "https://github.com/LeonTing1010/tap/releases/latest",
-  "softwareVersion": "0.15.5",
+  "softwareVersion": "{{ site.data.cli.version }}",
   "operatingSystem": "macOS, Linux, Windows",
   "applicationCategory": "DeveloperApplication",
   "author": {
@@ -1169,7 +1169,7 @@ footer {
   <div class="container">
     <div class="hero-meta">
       <span>Taprun / browser automation / local-first</span>
-      <span>● local · 0 tokens · v0.15.5</span>
+      <span>● local · 0 tokens · v{{ site.data.cli.version }}</span>
       <span>Filed 2026-05-05</span>
     </div>
 
@@ -1682,7 +1682,7 @@ const terminalLines = [
   { text: '[14:32:01] ✓ Plan loaded: 24 operations (compiled once)', color: '#22C55E', delay: 400 },
   { text: '[14:32:01] AI tokens used: 0 (already compiled)', color: 'var(--signal)', delay: 300 },
   { text: '[14:32:01] Connecting to Chrome Extension...', color: 'var(--text-dim)', delay: 300 },
-  { text: '[14:32:02] ✓ Extension ready (v0.15.5)', color: '#22C55E', delay: 200 },
+  { text: '[14:32:02] ✓ Extension ready (v{{ site.data.cli.version }})', color: '#22C55E', delay: 200 },
   { text: '[14:32:02] Opening new tab: github.com/LeonTing1010/tap', color: 'var(--text-dim)', delay: 400 },
   { text: '[14:32:03] ✓ Tab created (ID: 847)', color: '#22C55E', delay: 200 },
   { text: '[14:32:03] Waiting for page load...', color: 'var(--text-dim)', delay: 500 },
