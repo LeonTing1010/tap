@@ -205,6 +205,19 @@ async function execFunc(tabId, func, ...args) {
 // --- Message Handler ---
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  // Popup ↔ SW status channel — separate envelope from the JSON-RPC
+  // {method, params, id} shape used by external callers.
+  if (msg?.type === 'tap-status') {
+    sendResponse({ connected, version: chrome.runtime.getManifest().version })
+    return false
+  }
+  if (msg?.type === 'tap-retry') {
+    // User-initiated reconnect attempt. wsBackoff is reset on next
+    // successful onopen; here we just kick a fresh attempt.
+    try { startWs() } catch { /* surface via badge / next status poll */ }
+    sendResponse({ ok: true })
+    return false
+  }
   if (!msg.method) { sendResponse({ id: msg.id, error: 'Missing method' }); return false }
   handleMethod(msg.method, msg.params, sender.tab?.id)
     .then(result => sendResponse({ id: msg.id, result }))
@@ -1278,13 +1291,11 @@ function setBadge(ok) {
   chrome.action.setTitle({ title: ok ? 'Tap — connected' : 'Tap — bridge not running' })
 }
 
-// Click icon: open install guide if disconnected, otherwise no-op
-chrome.action.onClicked.addListener(async () => {
-  if (connected) return
-  // Disconnected — open install guide so user knows what to do
-  chrome.tabs.create({ url: 'https://taprun.dev/install?utm_source=chrome-ext&utm_medium=extension&utm_campaign=icon-click' })
-  startWs()
-})
+// Icon click is owned by the popup (manifest.action.default_popup) —
+// chrome.action.onClicked never fires while default_popup is set, so the
+// previous "open install URL on click" handler was dead code. The popup
+// surfaces bridge status, the `tap bridge start` hint, and the install
+// link when first-time setup is required.
 
 // ─── WebSocket transport (ADR 2026-05-05-daemon-sw-via-websocket.md) ─
 //

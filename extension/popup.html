@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <img src="icons/icon32.png" alt="" width="20" height="20">
+    <span class="title">Tap</span>
+    <span class="version" id="version"></span>
+  </header>
+
+  <section id="connected" hidden>
+    <div class="row">
+      <span class="dot dot-ok"></span>
+      <span>Connected to local bridge</span>
+    </div>
+    <p class="muted">Saved taps run in this browser. Credentials stay on your machine.</p>
+  </section>
+
+  <section id="disconnected" hidden>
+    <div class="row">
+      <span class="dot dot-err"></span>
+      <span><strong>Bridge not running</strong></span>
+    </div>
+    <p>Run this in a terminal to start it:</p>
+    <pre><code>tap bridge start</code><button class="copy" data-copy="tap bridge start" title="Copy">⧉</button></pre>
+    <p class="muted">The bridge runs locally on <code>127.0.0.1:9333</code>; the Chrome extension connects to it. Saved taps don't run until both sides are up.</p>
+    <div class="actions">
+      <button id="retry">Retry connection</button>
+      <a id="install" href="https://taprun.dev/install?utm_source=chrome-ext&utm_medium=extension&utm_campaign=popup" target="_blank" rel="noopener">Don't have Tap installed?</a>
+    </div>
+  </section>
+
+  <script src="popup.js"></script>
+</body>
+</html>
