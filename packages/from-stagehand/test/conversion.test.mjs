@@ -8,7 +8,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const FIXTURES = resolve(__dirname, "fixtures");
 const DIST = resolve(__dirname, "..", "dist", "index.js");
 
-test("stagehandToTap converts fixture sources to expected .tap.json", async () => {
+test("stagehandToTap converts fixture sources to expected v2 Plan", async () => {
   const mod = await import(DIST);
   const entries = await readdir(FIXTURES);
   const inputs = entries.filter(
@@ -30,15 +30,16 @@ test("stagehandToTap converts fixture sources to expected .tap.json", async () =
     );
 
     const got = mod.stagehandToTap(source, {
-      site: expected.body.site,
-      name: expected.body.name,
-      intent: expected.body.intent,
+      site: expected.id.site,
+      name: expected.id.name,
+      // Let the adapter auto-detect intent; the fixture is structured
+      // to match the auto-detection result.
     });
 
     assert.deepStrictEqual(
       got,
       expected,
-      `${basename(inputName)} → produced TapAnnotation does not match ${expectedName}`,
+      `${basename(inputName)} → produced v2 Plan does not match ${expectedName}`,
     );
   }
 });
@@ -61,39 +62,57 @@ test("stagehandToTap requires site and name", async () => {
   );
 });
 
-test("stagehandToTap maps deterministic page.* calls", async () => {
+test("stagehandToTap maps deterministic page.* calls to v2 ops (read variant)", async () => {
   const { stagehandToTap } = await import(DIST);
   const got = stagehandToTap(
     `await page.goto("https://x");\nawait page.click("#btn");\n`,
     { site: "x", name: "y" },
   );
-  assert.deepStrictEqual(got.body.ops, [
+  assert.deepStrictEqual(got.observe, [
     { op: "nav", url: "https://x" },
     { op: "input", kind: "click", target: "#btn" },
   ]);
-  assert.equal(got.body.allowUnverifiable, undefined);
+  assert.equal(got.return, "true");
+  // Read variant — no act / key.
+  assert.equal(got.act, undefined);
+  assert.equal(got.key, undefined);
 });
 
-test("stagehandToTap NL calls produce allowUnverifiable exec ops", async () => {
+test("stagehandToTap NL act() emits op:eval with prompt preserved as TODO", async () => {
   const { stagehandToTap } = await import(DIST);
   const got = stagehandToTap(
     `await page.goto("https://x");\nawait stagehand.act("click the login button");\n`,
     { site: "x", name: "y" },
   );
-  assert.equal(got.body.ops[0].op, "nav");
-  assert.equal(got.body.ops[1].op, "exec");
-  assert.match(got.body.ops[1].fn, /click the login button/);
-  assert.equal(got.body.allowUnverifiable, true);
+  // Login-flavored prompt → write variant detected.
+  assert.ok(Array.isArray(got.act));
+  assert.equal(got.act[0].op, "nav");
+  assert.equal(got.act[1].op, "eval");
+  assert.equal(got.act[1].returns.type, "object");
+  assert.match(got.act[1].fn, /click the login button/);
+  // v2 has no allowUnverifiable field on Plan.
+  assert.equal(got.allowUnverifiable, undefined);
 });
 
-test("stagehandToTap stagehand.extract preserves NL prompt", async () => {
+test("stagehandToTap stagehand.extract preserves NL prompt in op:eval", async () => {
   const { stagehandToTap } = await import(DIST);
   const got = stagehandToTap(
     `await page.goto("https://x");\nawait stagehand.extract("the price", schema);\n`,
     { site: "x", name: "y" },
   );
-  assert.equal(got.body.ops[1].op, "exec");
-  assert.match(got.body.ops[1].fn, /extract\("the price"\)/);
+  assert.equal(got.observe[1].op, "eval");
+  assert.equal(got.observe[1].returns.type, "object");
+  assert.match(got.observe[1].fn, /extract\("the price"\)/);
+});
+
+test("stagehandToTap stagehand.observe emits op:eval returns:array", async () => {
+  const { stagehandToTap } = await import(DIST);
+  const got = stagehandToTap(
+    `await page.goto("https://x");\nawait stagehand.observe();\n`,
+    { site: "x", name: "y" },
+  );
+  assert.equal(got.observe[1].op, "eval");
+  assert.equal(got.observe[1].returns.type, "array");
 });
 
 test("stagehandToTap silently skips lifecycle methods (init/close)", async () => {
@@ -103,7 +122,30 @@ test("stagehandToTap silently skips lifecycle methods (init/close)", async () =>
     { site: "x", name: "y" },
   );
   // Only the goto should produce an op.
-  assert.equal(got.body.ops.length, 1);
-  assert.equal(got.body.ops[0].op, "nav");
-  assert.equal(got.body.allowUnverifiable, undefined);
+  assert.equal(got.observe.length, 1);
+  assert.equal(got.observe[0].op, "nav");
+});
+
+test("stagehandToTap detects write variant on password fill", async () => {
+  const { stagehandToTap } = await import(DIST);
+  const got = stagehandToTap(
+    `await page.goto("https://x/login");\nawait page.fill("#password", "secret");\n`,
+    { site: "x", name: "login" },
+  );
+  assert.ok(Array.isArray(got.act));
+  assert.equal(got.key, '"x:login:" + string($args)');
+});
+
+test("stagehandToTap strict mode throws on unsupported call", async () => {
+  const { stagehandToTap, StagehandConversionError } = await import(DIST);
+  assert.throws(
+    () =>
+      stagehandToTap(
+        `await page.goto("https://x");\nawait page.dragAndDrop("#a", "#b");\n`,
+        { site: "x", name: "y", strict: true },
+      ),
+    (err) =>
+      err instanceof StagehandConversionError &&
+      /Unsupported Stagehand\/Playwright API/.test(err.message),
+  );
 });

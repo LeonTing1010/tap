@@ -1,5 +1,5 @@
 /**
- * @taprun/from-stagehand — Stagehand source → Tap plan-v1 adapter.
+ * @taprun/from-stagehand — Stagehand source → Tap Plan v2 adapter.
  *
  * Stagehand (browserbase/stagehand) ships natural-language browser
  * automation on top of Playwright. Two API surfaces coexist in user
@@ -7,7 +7,7 @@
  *
  *   1. Plain Playwright via stagehand.context.pages()[0] — these calls
  *      (page.goto, page.click, page.fill, etc.) are deterministic and
- *      get mapped to plan-v1 ops the same way @taprun/from-playwright
+ *      get mapped to plan-v2 ops the same way @taprun/from-playwright
  *      does.
  *
  *   2. Natural-language Stagehand calls — stagehand.act(prompt),
@@ -15,39 +15,47 @@
  *      stagehand.agent().execute(prompt). These resolve to a sequence
  *      of browser actions ONLY at runtime via an LLM. They are
  *      structurally non-deterministic and cannot be precompiled into
- *      plan-v1 ops without running the LLM.
+ *      plan-v2 ops without running the LLM.
  *
- * This adapter therefore takes a pragmatic approach:
+ * v2 mapping (per ADR `2026-05-04-ecosystem-v2-launch.md` §2.4 / §2.5):
+ *   page.goto(url)              → { op: "nav", url }
+ *   page.click(selector)        → { op: "input", kind: "click", target }
+ *   page.fill(selector, value)  → { op: "input", kind: "fill", target, value }
+ *   page.type(selector, value)  → { op: "input", kind: "type", target, value }
+ *   page.press(selector, key)   → { op: "input", kind: "press", target, value }
+ *   page.waitForSelector(s)     → { op: "wait", selector }
+ *   page.waitForTimeout(ms)     → { op: "wait", ms }
+ *   stagehand.act(prompt)       → { op: "eval", returns: { type: "object" }, fn: TODO with prompt }
+ *   stagehand.extract(prompt)   → { op: "eval", returns: { type: "object" }, fn: TODO with prompt }
+ *   stagehand.observe(...)      → { op: "eval", returns: { type: "array"  }, fn: TODO }
+ *   stagehand.agent().execute() → { op: "eval", returns: { type: "object" }, fn: TODO }
  *
- *   - Deterministic page.* calls → mapped 1:1 to plan ops
- *   - Stagehand NL calls          → emitted as { op: "exec",
- *                                    allowUnverifiable: true } with the
- *                                    original prompt preserved in the
- *                                    fn comment for human review
+ * NOTE: v2 has NO op:exec and NO op:screenshot. NL Stagehand calls land
+ * on op:eval with a mandatory `returns.type` declaration; the original
+ * prompt is preserved as a TODO comment for the author to refine.
+ * Lint will flag any op:eval where `returns.type` is structurally wrong.
  *
- * The resulting plan is partially deterministic — Tap can `doctor` and
- * `heal` the page.* portions; the NL portions remain a black box that
- * the user must re-resolve via Stagehand at runtime. To get fully
- * deterministic plans, users should record a Stagehand trace and use a
- * future trace-based adapter (out of MVP scope).
+ * Read vs Write variant heuristic (mirrors from-puppeteer / from-playwright):
+ *   Default = read variant (no act/key — whole script becomes `observe`).
+ *   Write = if any click selector or button text matches /submit|login|.../
+ *           or any page.fill/type targets a password field, the script
+ *           is emitted as the `act` variant with a generated `key`.
  *
- * Positioning: this is a complement to Stagehand, not a competitor.
- * "Run your Stagehand script through Tap to monitor what stays
- * deterministic and audit what doesn't."
+ * Anything outside the supported set falls through to op:eval with
+ * returns.type = "object" and a TODO comment carrying the original line.
+ * Strict mode throws a StagehandConversionError instead.
  */
 
-import type {
-  ExecutionPlan,
-  Op,
-  TapAnnotation,
-} from "@taprun/spec";
+import type { Op, Plan } from "@taprun/spec";
 
 export interface StagehandToTapOptions {
   site: string;
   name: string;
+  /** Force the variant. Auto-detected from heuristic when omitted. */
   intent?: "read" | "write";
   description?: string;
-  target?: string;
+  /** Emit error on any unsupported call instead of an op:eval fallback. */
+  strict?: boolean;
 }
 
 export class StagehandConversionError extends Error {
@@ -87,9 +95,7 @@ const RE_WAIT_SEL = callRe("waitForSelector", 1);
 const RE_WAIT_MS = /\.waitForTimeout\s*\(\s*(\d+)\s*\)/;
 const RE_SCREENSHOT = /\.screenshot\s*\(/;
 
-// Stagehand NL calls — capture the prompt for the exec op comment.
-// Match `<thing>.act("prompt")` — `<thing>` may be `stagehand`, `sh`, or
-// any identifier the user destructured.
+// Stagehand NL calls — capture the prompt for the eval-op TODO comment.
 const RE_STAGEHAND_ACT = new RegExp(`\\.act\\s*\\(${WS}${STR}`);
 const RE_STAGEHAND_EXTRACT = new RegExp(`\\.extract\\s*\\(${WS}${STR}`);
 const RE_STAGEHAND_OBSERVE = /\.observe\s*\(/;
@@ -116,6 +122,12 @@ const LIFECYCLE_METHODS: ReadonlySet<string> = new Set([
   "browser",
 ]);
 
+/** Heuristic: substring match against selector / value to decide whether
+ *  the action mutates server state. */
+const WRITE_RX =
+  /submit|login|sign[\s_-]?in|sign[\s_-]?up|register|checkout|buy|publish|post|delete|create|update/i;
+const PASSWORD_RX = /password|passwd|pwd/i;
+
 function pickStr(m: RegExpMatchArray): string | undefined {
   return m[1] ?? m[2] ?? m[3];
 }
@@ -126,16 +138,33 @@ function pickStr2(m: RegExpMatchArray): [string, string] | undefined {
   return a !== undefined && b !== undefined ? [a, b] : undefined;
 }
 
-function safeFnComment(label: string, lineNo: number, original: string): string {
-  return `async function(handle, args) { /* stagehand ${label} (line ${lineNo}, requires LLM at runtime — see plan.allowUnverifiable): ${
-    original.replace(/\*\//g, "*\\/")
-  } */ }`;
+function safeForComment(s: string): string {
+  return s.replace(/\*\//g, "*\\/");
+}
+
+function nlEvalOp(
+  label: string,
+  lineNo: number,
+  original: string,
+  returns: "object" | "array",
+): Op {
+  return {
+    op: "eval",
+    fn:
+      `/* TODO: stagehand ${label} on line ${lineNo} requires an LLM at ` +
+      `runtime — v2 has no op:exec, declare correct returns.type and ` +
+      `replace this stub with deterministic ops or a real eval body. ` +
+      `Original: ${safeForComment(original)} */ () => (${
+        returns === "array" ? "[]" : "{}"
+      })`,
+    returns: { type: returns },
+  };
 }
 
 export function stagehandToTap(
   source: string,
   options: StagehandToTapOptions,
-): TapAnnotation {
+): Plan {
   if (!options.site || !options.name) {
     throw new StagehandConversionError(
       "site and name are required in StagehandToTapOptions",
@@ -145,8 +174,7 @@ export function stagehandToTap(
 
   const lines = source.split(/\r?\n/);
   const ops: Op[] = [];
-  let firstNavUrl: string | undefined;
-  let nlCallCount = 0; // number of stagehand.* NL calls emitted as exec
+  let detectedWrite = false;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
@@ -160,40 +188,50 @@ export function stagehandToTap(
     //    the page-API regex which would mis-match `.act(` / `.extract(`).
     if ((m = trimmed.match(RE_STAGEHAND_ACT))) {
       const prompt = pickStr(m) ?? "";
-      ops.push({
-        op: "exec",
-        fn: safeFnComment(`act("${prompt.replace(/"/g, "\\\"")}")`, i + 1, line),
-      });
-      nlCallCount++;
+      ops.push(
+        nlEvalOp(
+          `act("${prompt.replace(/"/g, "\\\"")}")`,
+          i + 1,
+          line,
+          "object",
+        ),
+      );
+      // Treat NL act() as a likely write — Stagehand `act` typically
+      // mutates page state ("click on...", "fill in..."). Even if the
+      // prompt is read-flavored, an LLM-driven action is a state-touching
+      // operation by its nature.
+      if (WRITE_RX.test(prompt)) detectedWrite = true;
       matched = true;
     } else if ((m = trimmed.match(RE_STAGEHAND_EXTRACT))) {
       const prompt = pickStr(m) ?? "";
-      ops.push({
-        op: "exec",
-        fn: safeFnComment(`extract("${prompt.replace(/"/g, "\\\"")}")`, i + 1, line),
-      });
-      nlCallCount++;
+      ops.push(
+        nlEvalOp(
+          `extract("${prompt.replace(/"/g, "\\\"")}")`,
+          i + 1,
+          line,
+          "object",
+        ),
+      );
       matched = true;
     } else if (RE_STAGEHAND_OBSERVE.test(trimmed)) {
-      ops.push({
-        op: "exec",
-        fn: safeFnComment("observe", i + 1, line),
-      });
-      nlCallCount++;
+      ops.push(nlEvalOp("observe", i + 1, line, "array"));
       matched = true;
     } else if (
       RE_STAGEHAND_AGENT.test(trimmed) || (m = trimmed.match(RE_STAGEHAND_EXECUTE))
     ) {
       const prompt = m ? pickStr(m) ?? "" : "";
-      ops.push({
-        op: "exec",
-        fn: safeFnComment(
-          prompt ? `agent.execute("${prompt.replace(/"/g, "\\\"")}")` : "agent",
+      ops.push(
+        nlEvalOp(
+          prompt
+            ? `agent.execute("${prompt.replace(/"/g, "\\\"")}")`
+            : "agent",
           i + 1,
           line,
+          "object",
         ),
-      });
-      nlCallCount++;
+      );
+      // agent.execute is open-ended — assume write to be safe.
+      if (prompt) detectedWrite = true;
       matched = true;
     }
 
@@ -202,31 +240,34 @@ export function stagehandToTap(
       const url = pickStr(m);
       if (url !== undefined) {
         ops.push({ op: "nav", url });
-        if (firstNavUrl === undefined) firstNavUrl = url;
         matched = true;
       }
     } else if (!matched && (m = trimmed.match(RE_FILL))) {
       const pair = pickStr2(m);
       if (pair) {
         ops.push({ op: "input", kind: "fill", target: pair[0], value: pair[1] });
+        if (PASSWORD_RX.test(pair[0])) detectedWrite = true;
         matched = true;
       }
     } else if (!matched && (m = trimmed.match(RE_TYPE))) {
       const pair = pickStr2(m);
       if (pair) {
         ops.push({ op: "input", kind: "type", target: pair[0], value: pair[1] });
+        if (PASSWORD_RX.test(pair[0])) detectedWrite = true;
         matched = true;
       }
     } else if (!matched && (m = trimmed.match(RE_PRESS))) {
       const pair = pickStr2(m);
       if (pair) {
         ops.push({ op: "input", kind: "press", target: pair[0], value: pair[1] });
+        if (/^enter$/i.test(pair[1])) detectedWrite = true;
         matched = true;
       }
     } else if (!matched && (m = trimmed.match(RE_CLICK))) {
       const target = pickStr(m);
       if (target !== undefined) {
         ops.push({ op: "input", kind: "click", target });
+        if (WRITE_RX.test(target)) detectedWrite = true;
         matched = true;
       }
     } else if (!matched && (m = trimmed.match(RE_WAIT_SEL))) {
@@ -242,7 +283,16 @@ export function stagehandToTap(
         matched = true;
       }
     } else if (!matched && RE_SCREENSHOT.test(trimmed)) {
-      ops.push({ op: "screenshot" });
+      // v2 has no op:screenshot. Drop with a TODO eval stub so the line
+      // isn't silently lost.
+      ops.push({
+        op: "eval",
+        fn:
+          `/* TODO: page.screenshot() on line ${i + 1} has no v2 ` +
+          `equivalent (op:screenshot was retired in plan-v2). ` +
+          `Either delete or replace with an out-of-band capture. */ () => ({})`,
+        returns: { type: "object" },
+      });
       matched = true;
     }
 
@@ -251,12 +301,27 @@ export function stagehandToTap(
       if (generic) {
         const method = generic[1];
         if (LIFECYCLE_METHODS.has(method)) continue;
-        // Permissive — preserve as exec.
+        if (options.strict === true) {
+          throw new StagehandConversionError(
+            `Unsupported Stagehand/Playwright API on line ${i + 1}: ${method}(`,
+            source,
+            `MVP v2 supports goto / click / fill / type / press / ` +
+              `waitForSelector / waitForTimeout / stagehand.{act,extract,` +
+              `observe,agent.execute}. Run with strict:false to emit ` +
+              `{ op: "eval" } and preserve the original line as a TODO.`,
+            i + 1,
+          );
+        }
+        // Permissive fallback — emit an eval shell with returns: object.
         ops.push({
-          op: "exec",
-          fn: safeFnComment(`${method}(...) [unmatched]`, i + 1, line),
+          op: "eval",
+          fn:
+            `/* TODO: original Stagehand line ${i + 1} not auto-` +
+            `converted: ${safeForComment(line)} ` +
+            `— v2 has no op:exec; rewrite as plan ops or declare ` +
+            `correct returns.type. */ () => ({})`,
+          returns: { type: "object" },
         });
-        nlCallCount++;
       }
     }
   }
@@ -269,33 +334,26 @@ export function stagehandToTap(
     );
   }
 
-  const target = options.target ?? firstNavUrl ??
-    `urn:stagehand:${options.site}:${options.name}`;
+  const intent = options.intent ?? (detectedWrite ? "write" : "read");
+  const id = { site: options.site, name: options.name };
 
-  const body: ExecutionPlan = {
-    type: "tap:ExecutionPlan",
-    site: options.site,
-    name: options.name,
-    intent: options.intent ?? "read",
-    ops,
-  };
-  if (options.description) body.description = options.description;
-  // Any NL call (or unmatched permissive) flips the plan to unverifiable.
-  if (nlCallCount > 0) body.allowUnverifiable = true;
+  if (intent === "write") {
+    const plan: Plan = {
+      id,
+      ...(options.description ? { description: options.description } : {}),
+      act: ops,
+      key: `"${options.site}:${options.name}:" + string($args)`,
+      return: "true",
+    };
+    return plan;
+  }
 
-  return {
-    "@context": [
-      "http://www.w3.org/ns/anno.jsonld",
-      "https://taprun.dev/ns/tap-v1",
-    ],
-    type: "Annotation",
-    motivation: "tap:executing",
-    target,
-    body,
-    generator: {
-      id: "https://taprun.dev/from-stagehand",
-      type: "SoftwareAgent",
-      version: "0.x",
-    },
+  // Read variant — observe only, no act/key.
+  const plan: Plan = {
+    id,
+    ...(options.description ? { description: options.description } : {}),
+    observe: ops,
+    return: "true",
   };
+  return plan;
 }

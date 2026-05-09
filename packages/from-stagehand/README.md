@@ -1,6 +1,6 @@
 # @taprun/from-stagehand
 
-> Convert Stagehand scripts into Tap plan-v1 `.tap.json` files. Complement to Stagehand, not a replacement.
+> Convert Stagehand scripts into Tap Plan v2 objects. Complement to Stagehand, not a replacement.
 
 ```bash
 npm install @taprun/from-stagehand @taprun/spec
@@ -10,23 +10,23 @@ npm install @taprun/from-stagehand @taprun/spec
 
 [Stagehand](https://github.com/browserbase/stagehand) (Browserbase) ships natural-language browser automation on top of Playwright. Two API surfaces coexist in user scripts:
 
-1. **Deterministic Playwright** — `page.goto / click / fill / type / press / waitForSelector / waitForTimeout / screenshot`. These have fixed selectors and stable behavior.
+1. **Deterministic Playwright** — `page.goto / click / fill / type / press / waitForSelector / waitForTimeout`. These have fixed selectors and stable behavior.
 2. **Natural-language Stagehand** — `stagehand.act("...")`, `stagehand.extract("...", schema)`, `stagehand.observe()`, `stagehand.agent().execute("...")`. These resolve to actions only at runtime via an LLM.
 
 This adapter takes a pragmatic stance:
 
-| Stagehand API | → plan-v1 op | Verifiable? |
+| Stagehand API | → plan-v2 op | Verifiable? |
 |---|---|---|
 | `page.goto(url)` | `{ op: "nav", url }` | ✓ |
 | `page.click(s)` | `{ op: "input", kind: "click", target }` | ✓ |
 | `page.fill(s, v)` | `{ op: "input", kind: "fill", target, value }` | ✓ |
-| `page.type / press / waitForSelector / waitForTimeout / screenshot` | (same as @taprun/from-playwright) | ✓ |
-| `stagehand.act(prompt)` | `{ op: "exec", allowUnverifiable: true }` (prompt preserved in fn comment) | ✗ |
-| `stagehand.extract(prompt, schema)` | `{ op: "exec", allowUnverifiable: true }` | ✗ |
-| `stagehand.observe(...)` | `{ op: "exec", allowUnverifiable: true }` | ✗ |
-| `stagehand.agent().execute(prompt)` | `{ op: "exec", allowUnverifiable: true }` | ✗ |
+| `page.type / press / waitForSelector / waitForTimeout` | (same as @taprun/from-playwright) | ✓ |
+| `stagehand.act(prompt)` | `{ op: "eval", returns: { type: "object" }, fn: TODO with prompt }` | ✗ |
+| `stagehand.extract(prompt, schema)` | `{ op: "eval", returns: { type: "object" }, fn: TODO }` | ✗ |
+| `stagehand.observe(...)` | `{ op: "eval", returns: { type: "array" }, fn: TODO }` | ✗ |
+| `stagehand.agent().execute(prompt)` | `{ op: "eval", returns: { type: "object" }, fn: TODO }` | ✗ |
 
-**Result**: a partially deterministic plan. Tap can `doctor` and `heal` the page.* portions. The NL portions remain a black box that Stagehand re-resolves at runtime — Tap reports them via `allowUnverifiable: true` so consumers know exactly which steps require an LLM.
+**Result**: a partially deterministic v2 `Plan`. Tap can `doctor` and `heal` the deterministic portions. The NL portions land on `op:eval` with a TODO marker in `fn` — author refines `returns.type` and replaces the stub with deterministic ops or a real eval body before runtime. v2 has no `op:exec` and no `allowUnverifiable` flag; the LLM-required steps are visible by inspecting op types.
 
 ## Positioning
 
@@ -52,7 +52,7 @@ const plan = stagehandToTap(source, {
 const v = runConformance(plan);
 if (!v.pass) throw new Error(JSON.stringify(v.failures));
 
-await writeFile("github/browserbase-search.tap.json", JSON.stringify(plan, null, 2));
+await writeFile("github/browserbase-search.plan.json", JSON.stringify(plan, null, 2));
 ```
 
 ## Scope notes

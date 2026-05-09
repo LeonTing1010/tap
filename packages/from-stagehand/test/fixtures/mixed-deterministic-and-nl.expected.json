@@ -1,33 +1,25 @@
 {
-  "@context": [
-    "http://www.w3.org/ns/anno.jsonld",
-    "https://taprun.dev/ns/tap-v1"
-  ],
-  "type": "Annotation",
-  "motivation": "tap:executing",
-  "target": "https://github.com/browserbase",
-  "body": {
-    "type": "tap:ExecutionPlan",
+  "id": {
     "site": "github",
-    "name": "browserbase-search",
-    "intent": "read",
-    "ops": [
-      { "op": "nav", "url": "https://github.com/browserbase" },
-      {
-        "op": "exec",
-        "fn": "async function(handle, args) { /* stagehand act(\"click on the stagehand repo\") (line 19, requires LLM at runtime — see plan.allowUnverifiable): await stagehand.act(\"click on the stagehand repo\"); */ }"
-      },
-      {
-        "op": "exec",
-        "fn": "async function(handle, args) { /* stagehand extract(\"the author and title of the latest PR\") (line 20, requires LLM at runtime — see plan.allowUnverifiable): const { author, title } = await stagehand.extract(\"the author and title of the latest PR\", z.object({ author: z.string(), title: z.string() })); */ }"
-      },
-      { "op": "screenshot" }
-    ],
-    "allowUnverifiable": true
+    "name": "browserbase-search"
   },
-  "generator": {
-    "id": "https://taprun.dev/from-stagehand",
-    "type": "SoftwareAgent",
-    "version": "0.x"
-  }
+  "observe": [
+    { "op": "nav", "url": "https://github.com/browserbase" },
+    {
+      "op": "eval",
+      "fn": "/* TODO: stagehand act(\"click on the stagehand repo\") on line 19 requires an LLM at runtime — v2 has no op:exec, declare correct returns.type and replace this stub with deterministic ops or a real eval body. Original: await stagehand.act(\"click on the stagehand repo\"); */ () => ({})",
+      "returns": { "type": "object" }
+    },
+    {
+      "op": "eval",
+      "fn": "/* TODO: stagehand extract(\"the author and title of the latest PR\") on line 20 requires an LLM at runtime — v2 has no op:exec, declare correct returns.type and replace this stub with deterministic ops or a real eval body. Original: const { author, title } = await stagehand.extract(\"the author and title of the latest PR\", z.object({ author: z.string(), title: z.string() })); */ () => ({})",
+      "returns": { "type": "object" }
+    },
+    {
+      "op": "eval",
+      "fn": "/* TODO: page.screenshot() on line 21 has no v2 equivalent (op:screenshot was retired in plan-v2). Either delete or replace with an out-of-band capture. */ () => ({})",
+      "returns": { "type": "object" }
+    }
+  ],
+  "return": "true"
 }
