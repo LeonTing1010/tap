@@ -1274,7 +1274,8 @@ function setBadge(ok) {
   connected = ok
   chrome.action.setBadgeText({ text: ok ? '' : '!' })
   if (!ok) chrome.action.setBadgeBackgroundColor({ color: '#EF4444' })
-  chrome.action.setTitle({ title: ok ? 'Tap — connected' : 'Tap — disconnected (daemon not running)' })
+  // User-facing string says "bridge", not "daemon" (CLAUDE.md vocab rule).
+  chrome.action.setTitle({ title: ok ? 'Tap — connected' : 'Tap — bridge not running' })
 }
 
 // Click icon: open install guide if disconnected, otherwise no-op
@@ -1320,9 +1321,14 @@ function startWs() {
   if (wsHardClosed) return
   if (ws && (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.OPEN)) return
   try {
+    // Note: when the bridge isn't running, Chrome itself logs the WS
+    // ERR_CONNECTION_REFUSED to the console — that is a browser-level
+    // log we cannot suppress from JS. The popup + badge are the
+    // user-facing surface for this state; this catch only handles
+    // synchronous WebSocket() construction failures (rare — invalid URL
+    // shape, etc.) where there's no addressee for an error log.
     ws = new WebSocket(`${DAEMON_URL.replace(/^http/, 'ws')}/ws`)
-  } catch (e) {
-    console.log('[tap-ws] connect failed:', e?.message || e)
+  } catch {
     setTimeout(() => startWs(), wsBackoff)
     wsBackoff = Math.min(wsBackoff * 2, 30000)
     return
