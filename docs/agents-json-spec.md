@@ -39,7 +39,7 @@ Agents discover structured data through existing web standards, in priority orde
 
 1. **JSON-LD in page** — `<script type="application/ld+json">` in any page's `<head>`. Already published by 35% of websites for SEO. Google indexes this.
 2. **Well-known URL** — `GET /.well-known/agents.json` with `Content-Type: application/ld+json`. 3-second timeout.
-3. **Link header/tag** — `<link rel="describedby" type="application/ld+json" href="/agents.json">` in HTML or HTTP `Link` header.
+3. **Link header/tag** — `<link rel="describedby" type="application/ld+json" href="/.well-known/agents.json">` in HTML or HTTP `Link` header.
 4. **Sitemap reference** — `<url><loc>/.well-known/agents.json</loc></url>` in sitemap.xml.
 
 If none found, fall back to page inspection (the `capture` meta verb).
