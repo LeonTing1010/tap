@@ -31,6 +31,8 @@ jobs:
           - hn/top
           - hn/newest_ids
           - github/stagehand-recent-issues
+          - npm/taprun-cli
+          - algolia/hn-search
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

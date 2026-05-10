@@ -1,0 +1,20 @@
+{
+  "id": {
+    "site": "npm",
+    "name": "taprun-cli"
+  },
+  "description": "npm registry record for @taprun/cli (golden-replay fixture for Layer 2). Self-referential — if npm registry breaks the @taprun/cli URL, Layer 2 catches it before users do.",
+  "observe": [
+    {
+      "op": "fetch",
+      "url": "https://registry.npmjs.org/@taprun/cli",
+      "method": "GET",
+      "format": "json",
+      "save": "body",
+      "expect": "$exists($result.name) and $exists($result.`dist-tags`.latest) and $count($keys($result.versions)) > 0"
+    }
+  ],
+  "return": "{ 'name': $observe.body.name, 'latest': $observe.body.`dist-tags`.latest, 'version_count': $count($keys($observe.body.versions)) }",
+  "source_url": "https://registry.npmjs.org/@taprun/cli",
+  "source_intent": "npm registry record for @taprun/cli"
+}
