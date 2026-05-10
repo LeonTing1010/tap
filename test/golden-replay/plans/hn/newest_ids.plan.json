@@ -1,0 +1,20 @@
+{
+  "id": {
+    "site": "hn",
+    "name": "newest_ids"
+  },
+  "description": "list of HN newest story IDs (golden-replay fixture for Layer 2)",
+  "observe": [
+    {
+      "op": "fetch",
+      "url": "https://hacker-news.firebaseio.com/v0/newstories.json",
+      "method": "GET",
+      "format": "json",
+      "save": "body",
+      "expect": "$count($result) > 10 and $type($result[0]) = \"number\""
+    }
+  ],
+  "return": "$observe.body",
+  "source_url": "https://hacker-news.firebaseio.com/v0/newstories.json",
+  "source_intent": "list of HN newest story IDs"
+}

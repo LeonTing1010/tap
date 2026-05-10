@@ -1,0 +1,62 @@
+name: golden-replay
+
+# Layer 2 — CLI golden-replay against credential-free public APIs. Validates
+# end-to-end that the Tap binary can fetch real substrate data and that
+# per-tap op.expect predicates still pass against today's API shape.
+#
+# Catches what the contract layer can't: a substrate site renaming a JSON
+# field, returning empty arrays, or moving an endpoint. Each plan's
+# op.expect is the per-tap drift assertion (per ADR 2026-05-08 §2B);
+# this workflow exercises that mechanism against live HTTP.
+#
+# Trigger: nightly cron (catch site-side drift even when no Tap change)
+# + workflow_dispatch. NOT a PR gate — real network = flake risk + 2-3s
+# per plan = 10-30s wall time at scale, too slow for every PR.
+#
+# CLI exit-code caveat (2026-05-10): cli.ts:runPlanForCli wraps the Run
+# in {ok:true} unconditionally — even when state==aborted from a drifted
+# op.expect. Until that's fixed, this workflow parses the output JSON
+# instead of trusting exit code. Tracked as a follow-up in the iteration
+# log; the proper fix is to delegate runPlanForCli → tapRegistry.run.handler
+# (which classifies via classifyRunError correctly).
+
+on:
+  schedule:
+    - cron: "0 13 * * *"
+  workflow_dispatch:
+
+jobs:
+  replay:
+    strategy:
+      fail-fast: false
+      matrix:
+        plan:
+          - hn/top
+          - hn/newest_ids
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Replay ${{ matrix.plan }}
+        run: |
+          # Run via the in-repo plan fixture as TAP_HOME (~/.tap layout
+          # mirrored under test/golden-replay/). Output is a Run record JSON.
+          OUT=$(TAP_HOME="$PWD/test/golden-replay" \
+                npx -y @taprun/cli "${{ matrix.plan }}")
+          if [ -z "$OUT" ]; then
+            echo "::error::${{ matrix.plan }}: no output from tap CLI"
+            exit 1
+          fi
+          STATE=$(echo "$OUT" | jq -r '.state // "unknown"')
+          ERROR=$(echo "$OUT" | jq -r '.error // empty')
+          if [ "$STATE" != "committed" ]; then
+            echo "::error::${{ matrix.plan }}: state=$STATE (expected committed)"
+            [ -n "$ERROR" ] && echo "  error: $ERROR"
+            echo "  full output:"
+            echo "$OUT" | jq -C .
+            exit 1
+          fi
+          echo "::notice::${{ matrix.plan }}: committed, op.expect predicates passed"
