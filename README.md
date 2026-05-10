@@ -74,6 +74,12 @@ The first run downloads the matching platform binary (~30MB) and caches it. Subs
 curl -fsSL https://taprun.dev/install.sh | sh
 ```
 
+**Or via Homebrew** (macOS / Linux):
+
+```bash
+brew install LeonTing1010/tap/taprun
+```
+
 | Platform | Download |
 |----------|----------|
 | macOS (Apple Silicon) | [tap-macos-arm64](https://github.com/LeonTing1010/tap/releases/latest) |
