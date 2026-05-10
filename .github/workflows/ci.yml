@@ -20,6 +20,8 @@ jobs:
         run: node extension/test/architecture.test.mjs
       - name: Multi-tab routing
         run: node extension/test/multi-tab.test.mjs
+      - name: Popup state rendering
+        run: node extension/test/popup.test.mjs
       - name: Clone tap-skills
         run: git clone --depth 1 https://github.com/LeonTing1010/tap-skills.git /tmp/tap-skills
       - name: Tap format
