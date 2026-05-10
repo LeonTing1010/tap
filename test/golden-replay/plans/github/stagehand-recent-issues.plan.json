@@ -1,0 +1,20 @@
+{
+  "id": {
+    "site": "github",
+    "name": "stagehand-recent-issues"
+  },
+  "description": "Recent issues + PRs in browserbase/stagehand (golden-replay fixture for Layer 2). Per item: number, title, html_url, state, updated_at.",
+  "observe": [
+    {
+      "op": "fetch",
+      "url": "https://api.github.com/repos/browserbase/stagehand/issues?state=all&sort=updated&direction=desc&per_page=20",
+      "method": "GET",
+      "format": "json",
+      "save": "body",
+      "expect": "$count($result) > 0 and $exists($result[0].number) and $exists($result[0].title) and $exists($result[0].html_url)"
+    }
+  ],
+  "return": "$observe.body",
+  "source_url": "https://api.github.com/repos/browserbase/stagehand/issues?state=all&sort=updated&direction=desc&per_page=20",
+  "source_intent": "Recent issues + PRs in browserbase/stagehand"
+}
