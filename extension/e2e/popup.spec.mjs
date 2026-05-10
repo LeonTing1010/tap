@@ -48,6 +48,71 @@ async function loadExtension() {
   return { context, extensionId, userDataDir };
 }
 
+test("popup renders connected state when SW reports connected", async () => {
+  // Connected-state coverage: stubs chrome.runtime.sendMessage via
+  // addInitScript so popup.js sees `{connected:true, version:'<x>'}`
+  // without needing a real daemon. Verifies the visual side of the
+  // connected branch — green-dot row, "Connected to local bridge"
+  // copy, .dot-ok CSS — that Layer 3a's render() unit cannot see.
+  const { context, extensionId, userDataDir } = await loadExtension();
+  try {
+    const page = await context.newPage();
+    const STUB_VERSION = "9.9.9-test";
+    await page.addInitScript((stubVersion) => {
+      // Run after Chrome injects chrome.runtime but before popup.js
+      // calls sendMessage. Replace sendMessage so its callback fires
+      // synchronously with a connected-state payload.
+      const tryOverride = () => {
+        if (typeof chrome === "undefined" || !chrome.runtime) return false;
+        try {
+          chrome.runtime.sendMessage = (msg, cb) => {
+            if (msg && msg.type === "tap-status" && typeof cb === "function") {
+              cb({ connected: true, version: stubVersion });
+            }
+            return undefined;
+          };
+          return true;
+        } catch {
+          return false;
+        }
+      };
+      if (!tryOverride()) {
+        // chrome.runtime not yet defined — race rare but possible.
+        // Re-attempt at DOMContentLoaded (still before popup.js in
+        // popup.html since the script tag is the very last child).
+        document.addEventListener("DOMContentLoaded", tryOverride, { once: true });
+      }
+    }, STUB_VERSION);
+    await page.goto(`chrome-extension://${extensionId}/popup.html`);
+
+    await page.waitForSelector("#connected:not([hidden])", { timeout: 10_000 });
+
+    await expect(page.locator("#connected")).toBeVisible();
+    await expect(page.locator("#disconnected")).toBeHidden();
+
+    // Connected copy: green-dot row + headline text. The text is the
+    // user's primary signal that everything is working.
+    await expect(page.locator("#connected .row")).toContainText(
+      "Connected to local bridge",
+    );
+
+    // .dot-ok styling renders the green dot — visual regression catch.
+    // Asserting non-zero box size guards against display:none / hidden
+    // CSS regressions.
+    const dotBox = await page.locator("#connected .dot-ok").boundingBox();
+    expect(dotBox).not.toBeNull();
+    expect(dotBox.width).toBeGreaterThan(0);
+    expect(dotBox.height).toBeGreaterThan(0);
+
+    // Stub version flows through: proves the sendMessage payload reached
+    // popup.js's render() and updated #version.
+    await expect(page.locator("#version")).toHaveText(`v${STUB_VERSION}`);
+  } finally {
+    await context.close();
+    await fs.promises.rm(userDataDir, { recursive: true, force: true });
+  }
+});
+
 test("popup renders disconnected state when no bridge is reachable", async () => {
   const { context, extensionId, userDataDir } = await loadExtension();
   try {
