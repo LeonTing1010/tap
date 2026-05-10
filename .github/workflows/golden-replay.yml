@@ -13,12 +13,9 @@ name: golden-replay
 # + workflow_dispatch. NOT a PR gate — real network = flake risk + 2-3s
 # per plan = 10-30s wall time at scale, too slow for every PR.
 #
-# CLI exit-code caveat (2026-05-10): cli.ts:runPlanForCli wraps the Run
-# in {ok:true} unconditionally — even when state==aborted from a drifted
-# op.expect. Until that's fixed, this workflow parses the output JSON
-# instead of trusting exit code. Tracked as a follow-up in the iteration
-# log; the proper fix is to delegate runPlanForCli → tapRegistry.run.handler
-# (which classifies via classifyRunError correctly).
+# Trusts the CLI exit code: drift fires op.expect → runtime aborts the Run
+# → tapRegistry.run.handler classifies as tap_drifted → CLI exits 1
+# (per tap-core fix 5821d63 to runPlanForCli delegation).
 
 on:
   schedule:
@@ -41,22 +38,10 @@ jobs:
           node-version: 22
 
       - name: Replay ${{ matrix.plan }}
+        # Plan fixtures live under test/golden-replay/plans/<site>/<name>.plan.json
+        # (mirrors ~/.tap/plans/ layout) and are pointed at via TAP_HOME so the
+        # CLI loads them without polluting user state. Drift in any op.expect
+        # surfaces as exit 1 with a tap_drifted envelope on stdout.
         run: |
-          # Run via the in-repo plan fixture as TAP_HOME (~/.tap layout
-          # mirrored under test/golden-replay/). Output is a Run record JSON.
-          OUT=$(TAP_HOME="$PWD/test/golden-replay" \
-                npx -y @taprun/cli "${{ matrix.plan }}")
-          if [ -z "$OUT" ]; then
-            echo "::error::${{ matrix.plan }}: no output from tap CLI"
-            exit 1
-          fi
-          STATE=$(echo "$OUT" | jq -r '.state // "unknown"')
-          ERROR=$(echo "$OUT" | jq -r '.error // empty')
-          if [ "$STATE" != "committed" ]; then
-            echo "::error::${{ matrix.plan }}: state=$STATE (expected committed)"
-            [ -n "$ERROR" ] && echo "  error: $ERROR"
-            echo "  full output:"
-            echo "$OUT" | jq -C .
-            exit 1
-          fi
-          echo "::notice::${{ matrix.plan }}: committed, op.expect predicates passed"
+          TAP_HOME="$PWD/test/golden-replay" \
+            npx -y @taprun/cli "${{ matrix.plan }}"
