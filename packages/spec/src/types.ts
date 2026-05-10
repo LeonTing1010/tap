@@ -168,6 +168,23 @@ export type OpName = typeof OP_NAMES_V2[number];
 // L3 — Plan
 // ═══════════════════════════════════════════════════════════════════════════
 
+// ─── Plan lifecycle (per ADR 2026-05-10-plan-lifecycle-scoped-tabs) ─────
+//
+// Closed union: a plan declares its tab lifetime intent. Mirror of
+// `PLAN_LIFECYCLES` / `PlanLifecycle` / `resolveLifecycle` in
+// core/types.ts. Growing past 2 values requires ADR amendment + arch
+// test PL1 update on the engine side.
+
+/** Tab lifetime policy values. */
+export const PLAN_LIFECYCLES = ["scoped", "interactive"] as const;
+export type PlanLifecycle = typeof PLAN_LIFECYCLES[number];
+
+/** Resolution helper: explicit field wins; absent defaults to "scoped"
+ *  (RAII-safe default per the ADR's Decision Standard 1). */
+export function resolveLifecycle(plan: { lifecycle?: PlanLifecycle }): PlanLifecycle {
+  return plan.lifecycle ?? "scoped";
+}
+
 /** Common Plan fields (shared by read and write variants). */
 interface PlanCommon {
   id: TapId;
@@ -184,6 +201,9 @@ interface PlanCommon {
   fingerprint_equivalent?: CelExpr;
   /** Optional MCP exposure mode. */
   expose_as_mcp_tool?: boolean;
+  /** Tab lifetime policy (per ADR 2026-05-10-plan-lifecycle-scoped-tabs.md).
+   *  Absent ⇒ resolveLifecycle returns "scoped" (RAII-safe default). */
+  lifecycle?: PlanLifecycle;
 }
 
 /** Discriminated union: act non-empty ⇒ key required at type level.

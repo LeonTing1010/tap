@@ -1351,6 +1351,23 @@ function startWs() {
     let msg
     try { msg = JSON.parse(e.data) } catch { return }
     if (msg.jsonrpc !== '2.0') return
+
+    // ─── Notification: cleanup_tabs ───────────────────────────────────
+    // Per ADR 2026-05-10-plan-lifecycle-scoped-tabs: daemon sends
+    //   {jsonrpc:"2.0", method:"cleanup_tabs", params:{sessionId, tabIds:[...]}}
+    // (notification — no id) when a Run with lifecycle:"scoped"
+    // (the RAII default) terminates. We close each tracked tab
+    // errorTolerant — if the user already closed it, chrome.tabs.remove
+    // rejects, we discard (race per ADR §6.4). Pre-existing tabs not in
+    // tabIds are untouched (per ADR §6.2).
+    if (msg.method === 'cleanup_tabs' && (msg.id === undefined || msg.id === null)) {
+      const tabIds = (msg.params && Array.isArray(msg.params.tabIds)) ? msg.params.tabIds : []
+      for (const tabId of tabIds) {
+        try { await chrome.tabs.remove(tabId) } catch { /* race: tab already closed */ }
+      }
+      return
+    }
+
     if (msg.id === undefined || msg.id === null || typeof msg.method !== 'string') return
     // JSON-RPC request: {id, method:"dispatch", params:{op, sessionId?}}
     if (msg.method !== 'dispatch') return
