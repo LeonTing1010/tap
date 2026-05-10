@@ -20,6 +20,12 @@ jobs:
         run: node extension/test/architecture.test.mjs
       - name: Multi-tab routing
         run: node extension/test/multi-tab.test.mjs
+      - name: Kernel behavior
+        run: node extension/test/kernel-behavior.test.mjs
+      - name: Wire codes match core
+        run: node extension/test/wire_codes.test.mjs
+      - name: Self-heal
+        run: node extension/test/self-heal.test.mjs
       - name: Popup state rendering
         run: node extension/test/popup.test.mjs
       - name: Clone tap-skills

@@ -1306,7 +1306,7 @@ function setBadge(ok) {
 // — wakes the SW if it died, which retries WS connect.
 
 // JSON-RPC error code map (mirrors core/wire-codes.ts WIRE_CODE).
-// Drift caught by: `public/extension/test/wire_codes_test.mjs` (W4).
+// Drift caught by: `public/extension/test/wire_codes.test.mjs`.
 const WIRE_CODE = {
   missing_runtime_declaration: -32000,
   peer_not_registered: -32001,
@@ -1322,6 +1322,7 @@ const WIRE_CODE = {
   secret_unresolved: -32011,
   timeout: -32012,
   wire_kind_unknown: -32013,
+  tap_drifted: -32014,
 }
 
 let ws = undefined

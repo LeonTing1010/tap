@@ -198,37 +198,12 @@ console.log('\n  -- Rule 4: Eval Scope Isolation --\n')
 // handleMethod delegates to resolveTab() for tab resolution.
 // ═══════════════════════════════════════════════════════════
 
-console.log('\n  -- Rule 5: Tab Recovery --\n')
-
-{
-  const rtStart = BG_SRC.indexOf('async function resolveTab(')
-  assert(rtStart !== -1, 'resolveTab function must exist')
-  const rtEnd = BG_SRC.indexOf('\n}', rtStart + 10)
-  const rtBody = BG_SRC.substring(rtStart, rtEnd + 2)
-
-  test('resolveTab validates tab exists via chrome.tabs.get', () => {
-    assert(rtBody.includes('chrome.tabs.get'),
-      'resolveTab must call chrome.tabs.get to verify tab still exists')
-  })
-
-  test('resolveTab catches dead tab errors', () => {
-    assert(rtBody.includes('catch'),
-      'resolveTab must catch errors from chrome.tabs.get for dead tabs')
-  })
-
-  test('resolveTab auto-creates tab when none exists', () => {
-    assert(rtBody.includes('chrome.tabs.create'),
-      'resolveTab must auto-create a tab when no valid tab is found')
-  })
-
-  test('handleMethod delegates to resolveTab', () => {
-    const hmStart = BG_SRC.indexOf('async function handleMethod(')
-    const switchStart = BG_SRC.indexOf('switch (method)', hmStart)
-    const preamble = BG_SRC.substring(hmStart, switchStart)
-    assert(preamble.includes('resolveTab'),
-      'handleMethod must delegate tab resolution to resolveTab()')
-  })
-}
+// Rule 5 was "Tab Recovery via resolveTab function" — deleted 2026-05-10
+// because the resolveTab abstraction was removed when the session-as-actor
+// model landed (core ADR 2026-05-10-session-as-actor.md). Tab routing is
+// now per-session via sessions Map (background.js L34-35 declares
+// "Each MCP session owns a dedicated tab. Commands route via sessionId
+// → tabId."), making the auto-create-on-missing-tab pattern obsolete.
 
 // ═══════════════════════════════════════════════════════════
 // Rule 6: Screenshot Defaults
@@ -239,8 +214,12 @@ console.log('\n  -- Rule 5: Tab Recovery --\n')
 console.log('\n  -- Rule 6: Screenshot Defaults --\n')
 
 {
+  // Pre-2026-05-10 the case block was short and a 300-char scan covered it.
+  // Adding the locator-targeted capture path (target → element rect) grew
+  // the case body past ~700 chars; scan 1500 to keep all assertions in
+  // window without false positives from later cases.
   const ssStart = BG_SRC.indexOf("case 'screenshot':")
-  const ssBody = BG_SRC.substring(ssStart, ssStart + 300)
+  const ssBody = BG_SRC.substring(ssStart, ssStart + 1500)
 
   test('screenshot defaults to jpeg format', () => {
     assert(ssBody.includes("'jpeg'"),
