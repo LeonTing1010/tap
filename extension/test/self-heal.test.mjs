@@ -203,74 +203,70 @@ test("origin mismatch branch opens new tab via chrome.tabs.create", () => {
 });
 
 // ═══════════════════════════════════════════════════════════
-// Rule (iv): cross-origin new tab must update daemon's lastActiveTab cache
+// Rule (iv): cross-origin new tab must bind to params._sessionId locally
 // Why: 2026-05-08 dogfood post-merge — after §2C(iii) opens a new bg tab
-// for cross-origin nav, subsequent ops in the same plan got routed to
-// the OLD active tab (silent data corruption again, just at a different
-// layer). Root cause: chrome.tabs.create({active:false}) doesn't trigger
-// chrome.tabs.onActivated, so the existing `active_tab_changed` listener
-// at line ~1430 never fires. Daemon's lastActiveTab cache stays stale.
-// Fix: after creating the new bg tab in the §2C(iii) cross-origin branch,
-// the extension must MANUALLY emit `active_tab_changed` to daemon so the
-// cache points at the new tab. Subsequent ops without explicit tabId/
-// sessionId then route correctly via the lastActiveTab fallback.
+// for cross-origin nav, subsequent ops in the same plan must route to
+// the new tab. Pre-2026-05-10: this was solved by manually emitting
+// active_tab_changed so daemon's lastActiveTab cache updates. Post-2026-
+// 05-10 (parent SAA ADR + this ADR): daemon's lastActiveTab cache is
+// deleted; the new mechanism is the SAA self-heal at the end of the nav
+// handler — `if (!sessionUpdated && fromDaemon && sid && !sessions.has(sid))
+// { sessions.set(sid, {tabId, ...}) }` — binds the new tabId to the
+// dispatch sessionId locally without any daemon round-trip.
+//
+// Per ADR 2026-05-10-saa-page-session-fetch-cross-repo. The corresponding
+// active_tab_changed emissions in nav / ws.onopen / chrome.tabs.onActivated
+// are deleted (regression-guarded by SAA1 in the core repo).
 // ═══════════════════════════════════════════════════════════
 
-console.log("\n  -- Rule (iv): cross-origin new tab notifies daemon --\n");
+console.log("\n  -- Rule (iv): cross-origin new tab binds via SAA self-heal --\n");
 
-test("cross-origin/isInternal nav branch sends active_tab_changed", () => {
-  // The branch that calls chrome.tabs.create for cross-origin or
-  // isInternal must, before returning, send active_tab_changed via ws
-  // with the new tab's id. Otherwise daemon-side lastActiveTab cache
-  // keeps pointing at the previous active tab, and subsequent ops
-  // (eval/extract/click) silently target the wrong page.
+test("nav handler contains SAA self-heal that binds new tabId to sessionId", () => {
+  // Structural property: somewhere in the nav handler, after tabId is
+  // (re)assigned, there must be a self-heal block that pulls
+  // `params._sessionId` and calls `sessions.set(sid, {tabId, ...})`.
+  // This is what replaces the old daemon-side lastActiveTab cache.
   const navStart = BG_SRC.indexOf("case 'nav':");
-  const navBlock = BG_SRC.slice(navStart, navStart + 4000);
-  // Pattern: within or right after chrome.tabs.create call, must have
-  // an ws.send referencing 'active_tab_changed'.
-  // Looser proxy: after `chrome.tabs.create` (within ~600 chars) there
-  // must be `active_tab_changed` referenced.
-  const createMatches = [...navBlock.matchAll(/chrome\.tabs\.create/g)];
-  let foundAfterCreate = false;
-  for (const m of createMatches) {
-    const after = navBlock.slice(m.index, m.index + 800);
-    if (/active_tab_changed/.test(after)) {
-      foundAfterCreate = true;
-      break;
-    }
-  }
+  const navEnd = BG_SRC.indexOf("case '", navStart + 10);
+  const navBlock = BG_SRC.slice(
+    navStart,
+    navEnd > 0 ? navEnd : navStart + 6000,
+  );
+  // Look for: params._sessionId assignment + sessions.set(<sid>, {tabId})
+  // within the nav handler.
+  const hasSidPickup = /params\._sessionId/.test(navBlock);
+  const hasSessionsSet = /sessions\.set\s*\(\s*sid\s*,\s*\{\s*tabId/.test(
+    navBlock,
+  );
   assert(
-    foundAfterCreate,
-    "After `chrome.tabs.create` in nav handler, must emit `active_tab_changed` " +
-      "to daemon so lastActiveTab cache updates. Otherwise subsequent ops " +
-      "in the same plan route to the OLD active tab (silent tab routing).",
+    hasSidPickup && hasSessionsSet,
+    "Nav handler must contain SAA self-heal: read `params._sessionId` and " +
+      "`sessions.set(sid, { tabId, ... })` so the dispatch sessionId binds " +
+      "to the (possibly newly-created) tabId. Without this, page-session " +
+      "fetch in subsequent ops can't find the tab.",
   );
 });
 
-test("active_tab_changed emit is gated on fromDaemon (popup path unaffected)", () => {
-  // The new emit must only fire when fromDaemon=true, so popup path
-  // (user-initiated) doesn't spuriously update daemon cache.
-  // Looser proxy: somewhere in the nav handler, an `if (fromDaemon ...)`
-  // guard exists with `active_tab_changed` in its body block (within
-  // ~500 chars after the if).
+test("nav handler does NOT emit active_tab_changed (deleted per SAA cross-repo ADR)", () => {
+  // Regression guard. The pre-2026-05-10 nav handler had a manual
+  // active_tab_changed emission for daemon's lastActiveTab cache. Both
+  // the daemon's cache AND the emission are deleted. SAA1 in core/
+  // bans `lastActiveTab` symbol use; this is the cross-repo counterpart
+  // for the wire-side notification.
   const navStart = BG_SRC.indexOf("case 'nav':");
-  const navBlock = BG_SRC.slice(navStart, navStart + 4000);
-  // Find any `if (fromDaemon ...)` whose body block (next ~500 chars)
-  // includes active_tab_changed.
-  const ifFromDaemonRe = /if\s*\(\s*fromDaemon[^)]*\)\s*\{/g;
-  let foundGated = false;
-  for (const m of navBlock.matchAll(ifFromDaemonRe)) {
-    const body = navBlock.slice(m.index, m.index + 600);
-    if (/active_tab_changed/.test(body)) {
-      foundGated = true;
-      break;
-    }
-  }
+  const navEnd = BG_SRC.indexOf("case '", navStart + 10);
+  const navBlock = BG_SRC.slice(
+    navStart,
+    navEnd > 0 ? navEnd : navStart + 6000,
+  );
+  // The string may appear in a comment referencing the ADR; only
+  // reject ws.send / JSON.stringify shapes that actually emit.
+  const re = /ws\.send\s*\([\s\S]{0,200}?active_tab_changed/;
   assert(
-    foundGated,
-    "active_tab_changed emit in nav handler must be inside an " +
-      "`if (fromDaemon ...)` guard (otherwise popup-driven navs would " +
-      "override daemon cache).",
+    !re.test(navBlock),
+    "Nav handler must not call ws.send({...active_tab_changed...}) — the " +
+      "daemon-side lastActiveTab cache is gone (parent SAA ADR); the SAA " +
+      "self-heal binds tabId locally via sessions.set instead.",
   );
 });
 

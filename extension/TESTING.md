@@ -19,7 +19,7 @@ node extension/test/protocol.test.mjs           # JSON-RPC contract
 node extension/test/multi-tab.test.mjs          # session-as-actor / per-tab routing
 node extension/test/kernel-behavior.test.mjs    # CDP click chain, key codes, eval scope, screenshot defaults
 node extension/test/wire_codes.test.mjs         # extension WIRE_CODE matches core/wire-codes.ts
-node extension/test/self-heal.test.mjs          # active_tab_changed emit + dedup gating
+node extension/test/self-heal.test.mjs          # SAA self-heal — nav binds new tabId to sessionId
 node extension/test/popup.test.mjs              # popup state rendering (Layer 3a)
 node extension/test/tap-format.test.mjs <dir>   # corpus shape (run against tap-skills clone)
 ```

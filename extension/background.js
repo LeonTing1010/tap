@@ -379,27 +379,12 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
           crossOrigin = true
         }
         if (isInternal || crossOrigin) {
-          // chrome:// / data:// active tab (§2C(ii)) OR cross-origin nav
-          // (§2C(iii)) → open new background tab, never clobber.
+          // chrome:// / data:// (§2C(ii)) OR cross-origin (§2C(iii)) →
+          // open new bg tab. SAA self-heal below binds tabId to sessionId
+          // (no daemon round-trip per ADR 2026-05-10-saa-page-session-
+          // fetch-cross-repo).
           const tab = await chrome.tabs.create({ url: params.url, active: false })
           tabId = tab.id
-          // §2C(iv) [2026-05-09 post-merge dogfood fix] — chrome.tabs.create
-          // with active:false does NOT trigger chrome.tabs.onActivated, so
-          // the existing active_tab_changed notification (line ~1430) never
-          // fires. Daemon's lastActiveTab cache stays pointing at the OLD
-          // active tab, and subsequent ops in the same plan (eval/extract)
-          // silently route to the wrong page. Manually emit the
-          // notification here so the cache catches up. Gated on fromDaemon
-          // so popup path (user-driven) doesn't override daemon cache.
-          if (fromDaemon && ws && ws.readyState === WebSocket.OPEN) {
-            try {
-              ws.send(JSON.stringify({
-                jsonrpc: '2.0',
-                method: 'active_tab_changed',
-                params: { tabId, url: params.url },
-              }))
-            } catch { /* socket gone */ }
-          }
         } else {
           // Same-origin SPA-style nav: cheap tabs.update.
           await chrome.tabs.update(tabId, { url: params.url })
@@ -648,9 +633,17 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       // ─── page-session path (CF-bypass via real TLS fingerprint) ───
       if (_tapCredentials === 'page-session') {
         if (!explicitTabId) {
+          // Per ADR 2026-05-10-saa-page-session-fetch-cross-repo: page-session
+          // fetch is structurally TabBound. The dispatch envelope's sessionId
+          // (engine's run_id) must already be bound to a tab via a prior
+          // op:nav within the same plan. If we land here with no tabId,
+          // either (a) plan has no preceding op:nav, or (b) op:nav ran but
+          // the session-as-actor self-heal at handleMethod 'nav' did not
+          // populate sessions[sessionId]. Author fix: ensure the plan starts
+          // with op:nav (or session.create) before any page-session fetch.
           throw new Error('op:fetch failed: ' + JSON.stringify({
             kind: 'navigation_blocked',
-            message: 'page-session fetch needs an active tab — nav first, or daemon must have observed an active_tab_changed notification (lastActiveTab cache empty)',
+            message: 'page-session fetch needs an active tab — plan must precede this fetch with op:nav (or session.create) so the dispatch sessionId is bound to a tab',
             url,
           }))
         }
@@ -1349,20 +1342,10 @@ function startWs() {
     console.log('[tap-ws] connected to daemon')
     wsBackoff = 1000
     setBadge(true)
-    // Bug 3 fix: push current active tab on connect so daemon's
-    // lastActiveTab cache is populated immediately (without waiting
-    // for a tab switch).
-    chrome.tabs.query({ active: true, lastFocusedWindow: true }).then((tabs) => {
-      const t = tabs[0]
-      if (!t) return
-      try {
-        ws.send(JSON.stringify({
-          jsonrpc: '2.0',
-          method: 'active_tab_changed',
-          params: { tabId: t.id, url: t.url },
-        }))
-      } catch { /* ws may have closed */ }
-    }).catch(() => { /* permission gap */ })
+    // Per ADR 2026-05-10-saa-page-session-fetch-cross-repo: the prior
+    // initial-active-tab push (Bug 3 fix from 2026-05-05) is deleted.
+    // Daemon's lastActiveTab cache was deleted by parent SAA ADR; tab
+    // routing flows through sessionId/sessions[] only.
   }
   ws.onmessage = async (e) => {
     let msg
@@ -1388,21 +1371,14 @@ function startWs() {
         resolvedParams.tabId = sessions.get(params.sessionId).tabId
       }
     }
-    // Bug 3 fix (ADR 2026-05-05): when no sessionId binding produces a
-    // tabId, fall back to the user's currently-active tab — daemon
-    // tracks this via active_tab_changed notifications. Only fires
-    // when (a) caller didn't bind a session AND (b) op didn't specify
-    // tabId AND (c) daemon has observed an active tab. The original
-    // "no auto-discover" guard prevented cross-session leakage; with
-    // explicit lastActiveTab from daemon the cross-session risk is
-    // bounded — daemon serves one user's Chrome at a time.
-    if (
-      resolvedParams.tabId === undefined &&
-      params.lastActiveTab && typeof params.lastActiveTab.tabId === 'number'
-    ) {
-      resolvedParams.tabId = params.lastActiveTab.tabId
-      resolvedParams._tabIdFromActiveTab = true
-    }
+    // Per ADR 2026-05-10-saa-page-session-fetch-cross-repo: the prior
+    // `params.lastActiveTab` fallback is deleted. Daemon does not send
+    // it (per parent SAA ADR `2026-05-10-session-as-actor`); the only
+    // legitimate tab source is sessions[sessionId] populated by a prior
+    // op:nav (self-heal at 'nav' case binds tabId on demand) or
+    // session.create. TabBoundOp without a bound session = error path
+    // owned by the op handler (e.g. page-session fetch's 'no tabId'
+    // branch above).
     let response
     try {
       const result = await handleMethod(method, resolvedParams, null, { fromDaemon: true })
@@ -1460,23 +1436,10 @@ function classifyExtensionError(msg, _method) {
   return WIRE_CODE.peer_unreachable
 }
 
-// Bug 3 fix: forward active-tab changes as JSON-RPC notifications so
-// daemon caches lastActiveTab and auto-attaches sessionless ops.
-chrome.tabs.onActivated.addListener(async (info) => {
-  if (!ws || ws.readyState !== WebSocket.OPEN) return
-  let url
-  try {
-    const tab = await chrome.tabs.get(info.tabId)
-    url = tab && tab.url
-  } catch { /* tab gone */ }
-  try {
-    ws.send(JSON.stringify({
-      jsonrpc: '2.0',
-      method: 'active_tab_changed',
-      params: { tabId: info.tabId, url },
-    }))
-  } catch { /* socket gone */ }
-})
+// Per ADR 2026-05-10-saa-page-session-fetch-cross-repo: the prior
+// chrome.tabs.onActivated → active_tab_changed forwarder is deleted.
+// Daemon's lastActiveTab cache was deleted by parent SAA ADR; tab
+// routing flows through sessionId/sessions[] only.
 
 // Keep-alive: MV3 kills service workers after ~30s idle. chrome.alarms
 // at 1min (Chrome's minimum) wakes the SW so it can re-establish the
