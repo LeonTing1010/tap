@@ -1,0 +1,76 @@
+name: capture-smoke
+
+# Layer 2 extension — capture path validation (sibling of golden-replay).
+# golden-replay covers `tap <site>/<name>` against checked-in plan
+# fixtures; this workflow covers the OTHER half of the agent loop:
+# `tap capture <url> --site X --name Y` actually produces a runnable plan
+# from a real URL via the deterministic compile path (json-api template).
+#
+# Why both: a healthy capture+run pipeline is the agent's only recovery
+# tool when verify reports tap_drifted. If capture silently produces a
+# broken plan (right shape, wrong selectors), users hit a heal loop that
+# can't terminate. This workflow proves capture(url) → run yields exit 0
+# end-to-end against a stable public endpoint.
+#
+# Trigger: nightly cron + workflow_dispatch. Real-network = some flake
+# tolerance; not a PR gate.
+#
+# Source URL: HN Firebase topstories — chosen because
+#   (a) no auth / cookies / bot detection
+#   (b) shape stable for years (Firebase realtime DB schema)
+#   (c) classifier hits json-api branch deterministically (per CLAUDE.md
+#       core: "Deterministic compile path covers 5 source classes"), so
+#       no AI fallback dependency.
+
+on:
+  schedule:
+    - cron: "0 15 * * *"
+  workflow_dispatch:
+
+jobs:
+  capture-then-run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Capture a fresh tap from a stable public URL
+        run: |
+          export TAP_HOME="$RUNNER_TEMP/tap-capture-smoke"
+          mkdir -p "$TAP_HOME"
+          OUT=$(npx -y @taprun/cli capture \
+            "https://hacker-news.firebaseio.com/v0/topstories.json" \
+            --site capture-smoke \
+            --name hn-top \
+            --intent "list of HN top story IDs")
+          # Capture envelope must report saved + json-api source_class
+          # (proves classifier didn't silently fall through to a generic
+          # template that may not actually run).
+          SAVED=$(echo "$OUT" | jq -r '.saved // false')
+          CLASS=$(echo "$OUT" | jq -r '.inspection.source_class // "unknown"')
+          if [ "$SAVED" != "true" ]; then
+            echo "::error::capture did not save: $OUT"
+            exit 1
+          fi
+          if [ "$CLASS" != "json-api" ]; then
+            echo "::error::expected source_class=json-api, got $CLASS — Firebase API surface may have shifted"
+            exit 1
+          fi
+          echo "::notice::captured + saved as capture-smoke/hn-top (source_class=json-api)"
+
+      - name: Verify plan file landed at the canonical path
+        run: |
+          export TAP_HOME="$RUNNER_TEMP/tap-capture-smoke"
+          PLAN="$TAP_HOME/plans/capture-smoke/hn-top.plan.json"
+          if [ ! -f "$PLAN" ]; then
+            echo "::error::plan file missing at $PLAN"
+            exit 1
+          fi
+          echo "::notice::plan file present: $PLAN"
+
+      - name: Run the freshly captured plan (exit 1 on drift)
+        run: |
+          export TAP_HOME="$RUNNER_TEMP/tap-capture-smoke"
+          npx -y @taprun/cli capture-smoke/hn-top
