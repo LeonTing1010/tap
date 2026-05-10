@@ -1,0 +1,59 @@
+name: release-smoke
+
+# Layer 0b — cold-machine post-release smoke. Validates that the literal
+# install commands users see in docs (sourced from docs/_data/cli.yml,
+# the canonical surface) actually work on a fresh runner with no Tap
+# state, and that the resulting binary serves a complete MCP surface.
+#
+# Trigger: every published release of LeonTing1010/tap (binary lives here
+# per core/release.yml github-release job) + manual dispatch for ad-hoc.
+# NOT a PR gate — npm registry propagation takes a few minutes after publish,
+# and runtime variance on hosted runners would make this flaky on every PR.
+#
+# What it does NOT cover: brew install (formula auto-bump from core happens
+# in parallel with this trigger, so brew may lag by minutes — caught by the
+# daily cron in cli-drift.yml instead). Curl install.sh path likewise
+# deferred. Windows skipped (not in release matrix).
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  npx-install:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Run literal install command from docs/_data/cli.yml
+        run: |
+          # Source the EXACT command shown in the install section, not a
+          # paraphrase. Same single-source-of-truth principle as cli-drift.yml.
+          NPX_CMD=$(grep -E '^\s*npx:' docs/_data/cli.yml | sed -E 's/.*"(.*)".*/\1/')
+          echo "::notice::install command from cli.yml: $NPX_CMD"
+          $NPX_CMD
+
+      - name: MCP stdio returns the 4 bare meta verbs
+        run: |
+          # Pipe a single tools/list JSON-RPC request to the stdio MCP server.
+          # The server reads stdin until EOF, writes one response line, exits.
+          REQ='{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+          OUT=$(echo "$REQ" | timeout 60 npx -y @taprun/cli mcp stdio 2>/dev/null | head -1)
+          if [ -z "$OUT" ]; then
+            echo "::error::MCP stdio produced no output"
+            exit 1
+          fi
+          NAMES=$(echo "$OUT" | jq -r '.result.tools | map(.name) | sort | join(",")')
+          if [ "$NAMES" != "capture,mark,run,verify" ]; then
+            echo "::error::tools/list arity drift — expected capture,mark,run,verify; got: $NAMES"
+            echo "Full response: $OUT"
+            exit 1
+          fi
+          echo "::notice::tools/list returned 4 bare verbs as expected"
