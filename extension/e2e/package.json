@@ -1,0 +1,13 @@
+{
+  "name": "tap-extension-e2e",
+  "version": "0.0.0",
+  "private": true,
+  "description": "MV3 extension popup visual gate (Layer 3b). Not part of the public/ npm workspace — install separately when running e2e.",
+  "type": "module",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.0"
+  }
+}

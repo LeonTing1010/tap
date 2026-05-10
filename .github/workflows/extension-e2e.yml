@@ -1,0 +1,51 @@
+name: extension-e2e
+
+# Layer 3b — MV3 popup loaded in real Chromium via Playwright.
+# Catches what Layer 3a (state logic, hand-rolled DOM stub) can't:
+# CSS hides/shows correctly, canonical bridge command literal renders,
+# install link UTM survives Chrome's anchor handling, version display
+# matches manifest.
+#
+# Trigger: PR touching extension/** + workflow_dispatch. Not run on
+# every PR — chromium install is heavy. paths: filter keeps non-extension
+# PRs untouched. The 5/9 bridge-disconnect UX ship would have been
+# caught by this.
+#
+# Headless:false + xvfb-run is required because MV3 service workers
+# don't register reliably in headless:true (Chromium known issue).
+
+on:
+  pull_request:
+    paths:
+      - "extension/**"
+      - ".github/workflows/extension-e2e.yml"
+  workflow_dispatch:
+
+jobs:
+  popup-visual:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: extension/e2e
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: extension/e2e/package-lock.json
+
+      - name: Install npm deps (@playwright/test)
+        run: npm install
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ hashFiles('extension/e2e/package-lock.json') }}
+
+      - name: Install Chromium + system deps (xvfb etc.)
+        run: npx playwright install --with-deps chromium
+
+      - name: Run popup e2e (headed under xvfb)
+        run: xvfb-run -a npx playwright test
