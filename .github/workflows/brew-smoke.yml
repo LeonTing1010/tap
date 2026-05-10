@@ -1,0 +1,76 @@
+name: brew-smoke
+
+# Layer 0b extension — second documented install path: Homebrew.
+# Pairs with release-smoke.yml (npx) to cover both promises in
+# docs/_data/cli.yml.install.{npx, brew}. cli-drift.yml separately
+# verifies the formula's *version field* matches cli.yml; this workflow
+# verifies the formula is actually *installable + runnable* end-to-end.
+#
+# NOT triggered on release.published — the homebrew-tap formula bump
+# happens in core/release.yml's homebrew-update job AFTER the GH release
+# is published, so listening to release.published would race the bump.
+# Daily cron catches breakage within 24h; manual dispatch for ad-hoc.
+#
+# macos-latest only — Linux brew install works but adds 5-10min for
+# Linuxbrew bootstrap; macOS is the primary `brew install` target.
+
+on:
+  schedule:
+    - cron: "0 14 * * *"
+  workflow_dispatch:
+
+jobs:
+  brew-install:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run literal brew command from docs/_data/cli.yml
+        run: |
+          # Same single-source-of-truth principle as cli-drift + release-smoke:
+          # source the EXACT command shown in docs, not a paraphrase.
+          BREW_CMD=$(grep -E '^\s*brew:' docs/_data/cli.yml | sed -E 's/.*"(.*)".*/\1/')
+          echo "::notice::install command from cli.yml: $BREW_CMD"
+          $BREW_CMD
+
+      - name: Verify tap binary is on PATH and reports a version
+        run: |
+          which tap
+          VERSION=$(tap --version)
+          if [ -z "$VERSION" ]; then
+            echo "::error::tap --version produced no output"
+            exit 1
+          fi
+          echo "::notice::installed tap version: $VERSION"
+
+      - name: Verify version matches cli.yml canonical
+        run: |
+          # Note: brew formula bump is async vs npm publish, so a brand-new
+          # release may show CLI ahead of formula for minutes. The arch
+          # invariant here is "current brew install yields current cli.yml
+          # version" measured >24h after release — anything sooner gets
+          # rerun next cron.
+          CANONICAL=$(grep -E '^\s*version:' docs/_data/cli.yml | sed -E 's/.*"(.*)".*/\1/')
+          INSTALLED=$(tap --version | tr -d 'v ')
+          if [ "$INSTALLED" != "$CANONICAL" ]; then
+            echo "::error::brew version drift — cli.yml=$CANONICAL, brew installed=$INSTALLED"
+            echo "Likely the homebrew-update job in core/release.yml did not bump the formula. Check core/.github/workflows/release.yml run history."
+            exit 1
+          fi
+          echo "::notice::brew install yields canonical $CANONICAL"
+
+      - name: MCP stdio returns the 4 bare meta verbs
+        run: |
+          REQ='{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+          OUT=$(echo "$REQ" | timeout 60 tap mcp stdio 2>/dev/null | head -1)
+          if [ -z "$OUT" ]; then
+            echo "::error::MCP stdio produced no output"
+            exit 1
+          fi
+          NAMES=$(echo "$OUT" | jq -r '.result.tools | map(.name) | sort | join(",")')
+          if [ "$NAMES" != "capture,mark,run,verify" ]; then
+            echo "::error::tools/list arity drift — expected capture,mark,run,verify; got: $NAMES"
+            echo "Full response: $OUT"
+            exit 1
+          fi
+          echo "::notice::brew-installed tap serves the 4 bare meta verbs"
