@@ -503,7 +503,7 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
         runtime: 'extension', version: '0.6.5',
         supports: [
           'eval', 'pointer', 'keyboard', 'nav', 'wait', 'screenshot', 'cookies', 'storage',
-          'click', 'type', 'fill', 'hover', 'scroll', 'pressKey', 'select',
+          'input', 'click', 'type', 'fill', 'hover', 'scroll', 'pressKey', 'select',
           'fetch', 'find', 'download', 'waitFor', 'waitForNetwork', 'ssrState', 'copyAll',
           'upload', 'dialog', 'extract',
           'tab.new', 'tab.list', 'tab.close',
@@ -512,6 +512,36 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
           'session.create', 'session.destroy', 'session.info'
         ]
       }
+
+    // op:input — v2 InputOp envelope. Routes {kind, target, value} to the
+    // existing kind-specific handlers below. Error normalization: when a
+    // child handler throws "Element not found", rewrite to "selector_not_found:"
+    // so classifyExtensionError maps to WIRE_CODE.selector_not_found
+    // (peer-conformance.ts requires this kind for selector miss).
+    case 'input': {
+      const { kind, target, value, ...rest } = params
+      try {
+        switch (kind) {
+          case 'click':
+            return await handleMethod('click', { ...rest, target }, senderTabId, { fromDaemon })
+          case 'type':
+            return await handleMethod('type', { ...rest, selector: target, text: value }, senderTabId, { fromDaemon })
+          case 'fill':
+            return await handleMethod('fill', { ...rest, selector: target, text: value }, senderTabId, { fromDaemon })
+          case 'press':
+            return await handleMethod('pressKey', { ...rest, key: value }, senderTabId, { fromDaemon })
+          case 'upload':
+            throw new Error(`op:input kind=upload not yet wired in extension peer`)
+        }
+        throw new Error(`Unknown op:input kind: ${kind}`)
+      } catch (e) {
+        const msg = String(e?.message || e)
+        if (msg.startsWith('Element not found')) {
+          throw new Error(`selector_not_found: ${target}`)
+        }
+        throw e
+      }
+    }
 
     // ========== BUILT-IN (17) — chrome.scripting func injection, zero CSP issues ==========
 
