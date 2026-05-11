@@ -60,14 +60,19 @@ jobs:
           echo "::notice::brew install yields canonical $CANONICAL"
 
       - name: MCP stdio returns the 4 bare meta verbs
+        # Step-level backstop: replaces the prior in-script `timeout 60`,
+        # which silently no-op'd on macOS runners (`timeout` is GNU
+        # coreutils, not shipped by default — caused exit 127 hidden
+        # behind `2>/dev/null`). 2-min cap; tap mcp stdio responds in
+        # well under 1s, so anything longer is a real hang.
+        timeout-minutes: 2
         run: |
           REQ='{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
-          # Capture stdout fully (avoid SIGPIPE from `head -1` racing the
-          # binary's write) and keep stderr in a file we cat on failure.
-          # Previous `2>/dev/null | head -1` hid both the actual error
-          # AND any early-exit timing — silent failures only.
+          # stdin closes when echo finishes → tap's read loop hits EOF
+          # and exits cleanly after writing the response. Capture stdout
+          # via $() to avoid SIGPIPE racing the binary's write.
           set +e
-          STDOUT=$(echo "$REQ" | timeout 60 tap mcp stdio 2>/tmp/mcp.stderr)
+          STDOUT=$(echo "$REQ" | tap mcp stdio 2>/tmp/mcp.stderr)
           RC=$?
           set -e
           OUT=$(echo "$STDOUT" | head -1)
