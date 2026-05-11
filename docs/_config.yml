@@ -30,3 +30,15 @@ defaults:
       path: "e9ea3504983ec21b5c929ae5018ac153.txt"
     values:
       sitemap: false
+  # Tap detail pages: noindex'd via _layouts/tap.html (template-heavy, low
+  # unique content). Drop from sitemap so Google doesn't waste crawl budget
+  # — diagnosed 2026-05-11 via GSC: 76 tap pages → ~112 not-indexed URLs.
+  - scope:
+      path: "taps"
+    values:
+      sitemap: false
+  # Restore the /taps/ listing page — only per-tap detail pages are noindex'd.
+  - scope:
+      path: "taps/index.html"
+    values:
+      sitemap: true
