@@ -1159,7 +1159,7 @@ footer {
       <a href="#receipts">Receipts</a>
       <a href="/taps/">Taps</a>
       <a href="/blog/">Blog</a>
-      <a href="https://github.com/LeonTing1010/tap" class="nav-cta" onclick="showStarToast(event)">★ GitHub</a>
+      <a href="https://github.com/LeonTing1010/tap?ref=taprun.dev" class="nav-cta" onclick="showStarToast(event)">★ GitHub</a>
     </div>
   </div>
 </nav>
@@ -1184,7 +1184,7 @@ footer {
       <a href="#install" class="btn-primary">
         Install in 2 minutes <span class="arrow">→</span>
       </a>
-      <a href="https://github.com/LeonTing1010/tap" class="btn-ghost" style="display:inline-flex;align-items:center;gap:8px;">
+      <a href="https://github.com/LeonTing1010/tap?ref=taprun.dev" class="btn-ghost" style="display:inline-flex;align-items:center;gap:8px;">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="opacity:0.9;"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
         Star on GitHub
       </a>
@@ -1559,7 +1559,8 @@ footer {
           <button class="install-tab" data-tab="npm">npx</button>
           <button class="install-tab" data-tab="mcp">mcp.json</button>
         </div>
-        <div class="install-pane">
+        <div class="install-pane" style="position:relative;">
+          <button id="install-copy-btn" type="button" aria-label="Copy install command" style="position:absolute;top:12px;right:12px;background:transparent;color:var(--text-muted);border:1px solid var(--ink-rule);padding:6px 12px;font-family:var(--font-mono);font-size:11px;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:all 0.15s ease;z-index:2;">Copy</button>
           <div class="pane active" data-pane="curl"><span class="prompt">$</span><span class="cmd">{{ site.data.cli.install.curl }}</span>
 <span class="prompt">$</span><span class="cmd">{{ site.data.cli.mcp.stdio }}</span>      <span class="comment"># point your MCP host at this command</span></div>
           <div class="pane" data-pane="brew"><span class="prompt">$</span><span class="cmd">{{ site.data.cli.install.brew }}</span>
@@ -1583,7 +1584,7 @@ footer {
       <a href="#install" class="btn-primary">
         Install Taprun <span class="arrow">→</span>
       </a>
-      <a href="https://github.com/LeonTing1010/tap" class="btn-ghost">
+      <a href="https://github.com/LeonTing1010/tap?ref=taprun.dev" class="btn-ghost">
         Read the source ↗
       </a>
     </div>
@@ -1620,9 +1621,9 @@ footer {
       </div>
       <div class="footer-col">
         <h5>Open</h5>
-        <a href="https://github.com/LeonTing1010/tap">GitHub</a>
+        <a href="https://github.com/LeonTing1010/tap?ref=taprun.dev">GitHub</a>
         <a href="/privacy.html">Privacy</a>
-        <a href="https://github.com/LeonTing1010/tap/blob/main/SECURITY.md">Security</a>
+        <a href="https://github.com/LeonTing1010/tap/blob/main/SECURITY.md?ref=taprun.dev">Security</a>
       </div>
     </div>
     <div class="footer-bottom">
@@ -1801,6 +1802,88 @@ async function runTapDemo() {
 function sleep(ms) {
   return new Promise(r => setTimeout(r, ms));
 }
+
+// ========== Analytics: engagement events ==========
+function trackEvent(name, params) {
+  if (typeof window.gtag === 'function') window.gtag('event', name, params || {});
+}
+
+// Install tab selection (curl/brew/npm/mcp)
+document.querySelectorAll('.install-tab').forEach(tab => {
+  tab.addEventListener('click', () => trackEvent('install_tab_select', { method: tab.dataset.tab }));
+});
+
+// Install command copy
+(function() {
+  const btn = document.getElementById('install-copy-btn');
+  if (!btn) return;
+  btn.addEventListener('click', async () => {
+    const activePane = document.querySelector('.install-pane .pane.active');
+    if (!activePane) return;
+    const method = activePane.dataset.pane || 'unknown';
+    const cmds = activePane.dataset.pane === 'mcp'
+      ? activePane.textContent.trim()
+      : Array.from(activePane.querySelectorAll('.cmd')).map(c => c.textContent).join('\n');
+    try {
+      await navigator.clipboard.writeText(cmds);
+      btn.textContent = 'Copied';
+      btn.style.color = 'var(--signal)';
+      btn.style.borderColor = 'var(--signal)';
+      trackEvent('install_copy', { method, length: cmds.length });
+      setTimeout(() => { btn.textContent = 'Copy'; btn.style.color = ''; btn.style.borderColor = ''; }, 1800);
+    } catch (e) {
+      btn.textContent = 'Copy failed';
+      setTimeout(() => { btn.textContent = 'Copy'; }, 1800);
+    }
+  });
+})();
+
+// CTA clicks (nav, hero, closing — anything marked .btn-primary/.btn-ghost/.nav-cta)
+document.querySelectorAll('a.btn-primary, a.btn-ghost, a.nav-cta').forEach(el => {
+  el.addEventListener('click', () => {
+    const section = el.closest('section');
+    trackEvent('cta_click', {
+      label: (el.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 60),
+      href: el.getAttribute('href') || '',
+      location: section ? (section.id || section.className.split(' ')[0]) : (el.closest('nav') ? 'nav' : 'unknown')
+    });
+  });
+});
+
+// Demo run button
+const demoBtn = document.getElementById('demo-run-btn');
+if (demoBtn) demoBtn.addEventListener('click', () => trackEvent('demo_run'));
+
+// Outbound clicks (any link off taprun.dev)
+document.addEventListener('click', (e) => {
+  const a = e.target.closest && e.target.closest('a[href^="http"]');
+  if (!a) return;
+  const href = a.getAttribute('href') || '';
+  if (!/^https?:/.test(href)) return;
+  let host;
+  try { host = new URL(href).host; } catch { return; }
+  if (host === 'taprun.dev' || host === 'www.taprun.dev') return;
+  trackEvent('outbound_click', { url: href, target_host: host });
+}, true);
+
+// Scroll depth (25/50/75/100)
+(function() {
+  const marks = { 25: false, 50: false, 75: false, 100: false };
+  let ticking = false;
+  window.addEventListener('scroll', () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      const doc = document.documentElement;
+      const max = Math.max(doc.scrollHeight - window.innerHeight, 1);
+      const pct = Math.min(100, Math.round((window.scrollY / max) * 100));
+      for (const m of [25, 50, 75, 100]) {
+        if (pct >= m && !marks[m]) { marks[m] = true; trackEvent('scroll_depth', { percent: m }); }
+      }
+      ticking = false;
+    });
+  }, { passive: true });
+})();
 </script>
 
 </body>
