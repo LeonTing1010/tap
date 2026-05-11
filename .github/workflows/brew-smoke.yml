@@ -62,9 +62,21 @@ jobs:
       - name: MCP stdio returns the 4 bare meta verbs
         run: |
           REQ='{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
-          OUT=$(echo "$REQ" | timeout 60 tap mcp stdio 2>/dev/null | head -1)
+          # Capture stdout fully (avoid SIGPIPE from `head -1` racing the
+          # binary's write) and keep stderr in a file we cat on failure.
+          # Previous `2>/dev/null | head -1` hid both the actual error
+          # AND any early-exit timing — silent failures only.
+          set +e
+          STDOUT=$(echo "$REQ" | timeout 60 tap mcp stdio 2>/tmp/mcp.stderr)
+          RC=$?
+          set -e
+          OUT=$(echo "$STDOUT" | head -1)
           if [ -z "$OUT" ]; then
-            echo "::error::MCP stdio produced no output"
+            echo "::error::MCP stdio produced no output (exit=$RC)"
+            echo "--- stderr ---"
+            cat /tmp/mcp.stderr || true
+            echo "--- stdout (raw) ---"
+            echo "$STDOUT" | head -c 4096
             exit 1
           fi
           NAMES=$(echo "$OUT" | jq -r '.result.tools | map(.name) | sort | join(",")')
