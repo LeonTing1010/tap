@@ -13,19 +13,50 @@ console.log('[tap] extension runtime ready')
 
 // --- MV3 SW keep-alive (ADR 2026-05-08-failure-detection-phase-2 §2C(i)) ---
 //
-// MV3 unloads the SW after ~30s idle, breaking the daemon's WebSocket and
-// surfacing as `peer_unreachable` to engine. classifyOpFailure routes that
-// to reconnect_extension, but the root cause is fixable here: chrome.alarms
-// fires even when the SW is unloaded, waking it up. Calling any chrome
-// API in the listener resets the SW idle timer.
+// MV3 unloads the SW after ~30s idle AND Chrome 119+ enforces a ~5min hard
+// max even with active alarms. The defence is two-layer:
 //
-// periodInMinutes 0.4 = 24s, comfortably under the 30s idle window.
-chrome.alarms.create('tap-keepalive', { periodInMinutes: 0.4 })
-chrome.alarms.onAlarm.addListener((alarm) => {
-  if (alarm.name === 'tap-keepalive') {
-    // No-op API call resets the idle timer. getPlatformInfo is cheapest.
-    chrome.runtime.getPlatformInfo(() => {})
+//   (1) 25s alarm tick — under the 30s idle window. Each tick (a) makes a
+//       cheap chrome API call to reset the idle timer, (b) checks WS
+//       health and reconnects if the prior socket dropped (catches drops
+//       between SW wakes), (c) sends an in-band WS ping so the daemon
+//       side keeps the connection "active" and doesn't evict it.
+//
+//   (2) Wake hooks — when Chrome's 5-min hard cap kills the SW anyway,
+//       the SW gets re-spawned the moment any of these fire: alarm,
+//       runtime startup/install, tab activation, window focus. Each
+//       delegates to ensureConnection(), which is idempotent.
+//
+// Together the layers form a closed loop: every realistic wake source
+// re-runs ensureConnection → startWs (if needed). No matter which fires
+// first, the WS is back within one tick.
+function ensureConnection() {
+  if (typeof startWs !== 'function') return // top-level startWs not parsed yet on first tick
+  if (!ws || ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING) {
+    startWs()
+  } else if (ws.readyState === WebSocket.OPEN) {
+    // Keep daemon-side socket fresh; daemon ignores unknown notifications.
+    try { ws.send(JSON.stringify({ jsonrpc: '2.0', method: 'ping' })) } catch { /* socket gone */ }
   }
+}
+
+chrome.alarms.create('tap-keepalive', { periodInMinutes: 0.4 }) // 24s, under MV3's 30s idle
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name !== 'tap-keepalive') return
+  // Reset SW idle timer (cheapest no-op API call), then verify connection.
+  chrome.runtime.getPlatformInfo(() => {})
+  ensureConnection()
+})
+
+// Wake hooks — each fires when SW respawns or on browser-session events.
+// Together they cover the realistic ways the SW gets re-instantiated after
+// Chrome's 5-min hard kill: alarm tick, browser startup, extension install/
+// update, tab switch, window focus from outside Chrome.
+chrome.runtime.onStartup.addListener(() => ensureConnection())
+chrome.runtime.onInstalled.addListener(() => ensureConnection())
+chrome.tabs.onActivated.addListener(() => ensureConnection())
+chrome.windows.onFocusChanged.addListener((winId) => {
+  if (winId !== chrome.windows.WINDOW_ID_NONE) ensureConnection()
 })
 
 // --- State ---
@@ -1458,17 +1489,9 @@ function classifyExtensionError(msg, _method) {
 // Daemon's lastActiveTab cache was deleted by parent SAA ADR; tab
 // routing flows through sessionId/sessions[] only.
 
-// Keep-alive: MV3 kills service workers after ~30s idle. chrome.alarms
-// at 1min (Chrome's minimum) wakes the SW so it can re-establish the
-// WebSocket if the prior connection was dropped. The alarm itself does
-// not keep the SW alive between fires — only the WS does (Chrome
-// permits SW with active WS to extend lifetime).
-chrome.alarms.create('keepalive', { periodInMinutes: 1 })
-chrome.alarms.onAlarm.addListener(() => {
-  if (!ws || ws.readyState === WebSocket.CLOSED) {
-    console.log('[tap] alarm woke SW — re-attempting WebSocket connection')
-    startWs()
-  }
-})
+// (Keep-alive consolidated into the 25s `tap-keepalive` alarm + wake
+// hooks at the top of this file. The prior separate 1-min `keepalive`
+// alarm was redundant — it only caught WS drops up to 60s late while
+// the 25s alarm now handles reconnect in-band.)
 
 startWs()
