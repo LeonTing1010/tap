@@ -8,7 +8,7 @@ robots: "index,follow"
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Taprun extension installed — register the bridge in 60 seconds</title>
-<meta name="description" content="Finish setting up the Taprun Chrome extension. One command (`tap bridge setup`) registers the native-messaging bridge and the OS-supervised daemon that connects the extension to the CLI on your machine. Then optionally wire your AI agent.">
+<meta name="description" content="Finish setting up the Taprun Chrome extension. One command (`tap bridge setup`) registers the Chrome Native Messaging manifest so the extension can launch the tap CLI on your machine on demand — no localhost port, no background service. Then optionally wire your AI agent (Claude Code, Cursor, Windsurf).">
 <meta name="robots" content="index,follow">
 <link rel="canonical" href="https://taprun.dev/install">
 <meta property="og:title" content="Taprun extension installed — register the bridge in 60 seconds">
@@ -345,7 +345,7 @@ robots: "index,follow"
 <span class="cmt"># or</span>
 <span class="prompt">$ </span><span class="k">{{ site.data.cli.install.curl }}</span>
 
-<span class="cmt"># Register the native-messaging manifest + OS-supervised service</span>
+<span class="cmt"># Register the Chrome Native Messaging manifest (no daemon, no port)</span>
 <span class="prompt">$ </span><span class="k">tap bridge setup</span></pre>
       <p style="font-size:12.5px; color: var(--text-muted); margin: 0;">Then open Chrome and click the Taprun toolbar icon — the bridge launches automatically when this extension's service worker activates. The popup should say <span class="badge-illustration green">Connected to local bridge</span>. The bridge lives only as long as the extension is active; closing all Chrome windows shuts it down, and re-opening Chrome wakes it back up.</p>
     </div>
