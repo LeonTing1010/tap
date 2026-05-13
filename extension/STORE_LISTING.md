@@ -17,8 +17,8 @@ description (the "Description" textarea). Everything else lives in this file.
 
 | Field | Value |
 |---|---|
-| Item name | `Tap` |
-| Summary (132 chars max) | `AI browser automation runtime. Programs beat prompts — deterministic replay at zero AI cost.` |
+| Item name | `Tap — Local-First Browser MCP` |
+| Summary (132 chars max) | `Browser automation MCP — runs in your own browser with your logged-in sessions. Local-first alternative to Stagehand / Browserbase.` |
 | Detailed description | see `description.txt` |
 | Category | `Developer Tools` |
 | Language | English (en) |
