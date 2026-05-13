@@ -1,0 +1,27 @@
+{
+  "$schema": "https://open-plugins.com/schema.json",
+  "name": "tap",
+  "displayName": "Tap",
+  "description": "Local-first browser automation MCP server. CLI: taprun. Runs in your own Chrome on your existing cookies; compile-time AI produces zero-token deterministic replay. Install: brew install LeonTing1010/tap/taprun.",
+  "homepage": "https://taprun.dev",
+  "repository": "https://github.com/LeonTing1010/tap",
+  "license": "MIT",
+  "author": "Leon Ting",
+  "mcpServers": {
+    "tap": {
+      "command": "taprun",
+      "args": ["mcp", "stdio"]
+    }
+  },
+  "keywords": [
+    "browser-automation",
+    "mcp",
+    "chrome",
+    "compile-time-ai",
+    "deterministic",
+    "drift-detection",
+    "auth-walled",
+    "local-first",
+    "scraping"
+  ]
+}
