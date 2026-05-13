@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) — production host only -->
+<script>
+  (function() {
+    if (location.hostname !== 'taprun.dev') return;
+    var s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=G-RH14PQ10QK';
+    document.head.appendChild(s);
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function(){ dataLayer.push(arguments); };
+    gtag('js', new Date());
+    gtag('config', 'G-RH14PQ10QK');
+  })();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Playwright MCP vs Tap vs Browserbase: A Token-Cost Head-to-Head — Tap Blog</title>
+<meta name="description" content="Three ways to run a browser from an MCP host, compared on token cost, auth model, drift handling, and trust boundary. Pick the right tool for the workload.">
+<link rel="canonical" href="https://taprun.dev/blog/playwright-mcp-vs-tap.html">
+<meta property="og:title" content="Playwright MCP vs Tap vs Browserbase: A Token-Cost Head-to-Head">
+<meta property="og:description" content="Three ways to run a browser from an MCP host. Local Playwright, cloud Browserbase, and Tap's own-Chrome model. Head-to-head on tokens, auth, drift, and trust.">
+<meta property="og:url" content="https://taprun.dev/blog/playwright-mcp-vs-tap.html">
+<meta property="og:type" content="article">
+<meta property="article:published_time" content="2026-05-13">
+<meta property="article:author" content="Leon Ting">
+<meta property="og:image" content="https://taprun.dev/social-preview.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Playwright MCP vs Tap vs Browserbase: A Token-Cost Head-to-Head">
+<meta name="twitter:description" content="Three ways to run a browser from an MCP host. Tokens, auth, drift, trust — picked apart honestly.">
+<meta name="twitter:image" content="https://taprun.dev/social-preview.png">
+<meta name="keywords" content="Playwright MCP, Browserbase, Stagehand, Tap, browser automation, MCP server, local-first, token cost, drift">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Playwright MCP vs Tap vs Browserbase: A Token-Cost Head-to-Head",
+  "description": "Three ways to run a browser from an MCP host, compared honestly on token cost, auth model, drift handling, and trust boundary.",
+  "datePublished": "2026-05-13",
+  "author": {
+    "@type": "Person",
+    "name": "Leon Ting",
+    "url": "https://github.com/LeonTing1010"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Tap",
+    "url": "https://taprun.dev"
+  },
+  "url": "https://taprun.dev/blog/playwright-mcp-vs-tap.html",
+  "mainEntityOfPage": "https://taprun.dev/blog/playwright-mcp-vs-tap.html",
+  "image": "https://taprun.dev/social-preview.png"
+}
+</script>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='105' cy='115' r='55' fill='%23FFFFFF'/%3E%3Ccircle cx='85' cy='70' r='45' fill='%23FFFFFF'/%3E%3Cellipse cx='75' cy='32' rx='15' ry='22' fill='%23EF4444'/%3E%3Cellipse cx='90' cy='30' rx='12' ry='20' fill='%23DC2626'/%3E%3Cellipse cx='103' cy='35' rx='10' ry='16' fill='%23B91C1C'/%3E%3Cpath d='M 55 68 L 8 75 L 55 85 Z' fill='%23FBBF24'/%3E%3Cpath d='M 55 85 L 8 75 L 12 82 Z' fill='%23D97706'/%3E%3Ccircle cx='70' cy='65' r='14' fill='%231F2937'/%3E%3Ccircle cx='66' cy='61' r='5' fill='%23FFFFFF'/%3E%3Ccircle cx='74' cy='68' r='2.5' fill='%23FFFFFF'/%3E%3Cellipse cx='50' cy='78' rx='8' ry='5' fill='%23FECACA' opacity='0.8'/%3E%3Cellipse cx='125' cy='115' rx='35' ry='30' fill='%23818CF8'/%3E%3Cellipse cx='125' cy='115' rx='25' ry='20' fill='%236366F1'/%3E%3Ccircle cx='95' cy='130' r='25' fill='%23F9FAFB'/%3E%3Cpath d='M 145 140 L 175 185 L 155 180 L 140 145 Z' fill='%23818CF8'/%3E%3Cpath d='M 150 145 L 180 190 L 162 185 L 148 150 Z' fill='%236366F1'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,300..900,0..100;1,9..144,300..900,0..100&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Fraunces','Hoefler Text',Georgia,serif; background: #F4EDDE; color: #14110C; line-height: 1.7; }
+.container { max-width: 720px; margin: 0 auto; padding: 60px 24px; }
+h1 { font-size: 2rem; font-weight: 600; color: #14110C; margin-bottom: 8px; line-height: 1.3; }
+h2 { font-size: 1.35rem; font-weight: 500; color: #14110C; margin-top: 48px; margin-bottom: 16px; }
+p, li { font-size: 0.95rem; color: #3B332A; margin-bottom: 16px; }
+ul, ol { padding-left: 24px; }
+a { color: #1C2D5A; text-decoration: none; }
+a:hover { text-decoration: underline; }
+.meta { font-size: 0.85rem; color: #7A6F60; margin-bottom: 40px; }
+.back { display: inline-block; margin-bottom: 24px; font-size: 0.9rem; }
+code { background: rgba(28,45,90,0.08); padding: 2px 6px; border-radius: 0; font-size: 0.9em; font-family: 'JetBrains Mono', monospace; }
+pre { background: #14110C; border: 1px solid rgba(20,17,12,0.15); border-radius: 0; padding: 16px 20px; overflow-x: auto; margin: 20px 0; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; line-height: 1.6; color: #c8c8d0; }
+pre .comment { color: #7A6F60; }
+pre .cmd { color: #1C2D5A; }
+pre .output { color: #3D5E3B; }
+pre .flag { color: #A67A2E; }
+blockquote { border-left: 3px solid #7E2B1C; padding: 12px 16px; margin: 20px 0; background: rgba(126,43,28,0.05); border-radius: 0; }
+blockquote p { color: #3B332A; margin-bottom: 0; font-style: italic; }
+blockquote cite { display: block; margin-top: 8px; font-size: 0.85rem; color: #7A6F60; font-style: normal; }
+table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid rgba(20,17,12,0.15); font-size: 0.9rem; vertical-align: top; }
+th { color: #14110C; font-weight: 500; }
+td { color: #3B332A; }
+.num { text-align: right; font-variant-numeric: tabular-nums; font-family: 'JetBrains Mono', monospace; }
+.highlight-row td { color: #3D5E3B; font-weight: 500; }
+.cta { margin-top: 48px; padding: 24px; background: rgba(28,45,90,0.06); border: 1px solid #7E2B1C; border-radius: 0; }
+.cta h3 { color: #14110C; font-size: 1.1rem; margin-bottom: 12px; margin-top: 0; }
+.cta pre { margin-bottom: 0; }
+hr { border: none; border-top: 1px solid rgba(20,17,12,0.15); margin: 48px 0; }
+</style>
+<script src="https://analytics.ahrefs.com/analytics.js" data-key="G1wKuningnrw+t5LQJ+MPw" async></script>
+</head>
+<body>
+<div class="container">
+<a href="../" class="back">&larr; Tap</a> &middot; <a href="./" class="back">Blog</a>
+<h1>Playwright MCP vs Tap vs Browserbase: A Token-Cost Head-to-Head</h1>
+<p class="meta">May 13, 2026 &middot; Leon Ting &middot; 9 min read</p>
+
+<p>If an MCP host (Claude Code, Cursor, Cline, Windsurf, VS Code) needs to drive a browser, three credible servers ship today: Microsoft's <a href="https://github.com/microsoft/playwright-mcp">Playwright MCP</a>, Browserbase's <a href="https://github.com/browserbase/stagehand">Stagehand</a> (typically deployed on Browserbase cloud), and <a href="https://taprun.dev">Tap</a>. They look like substitutes from the outside &mdash; one tool slot, one MCP server, "give the agent a browser." Underneath, they pick three different answers to the same four questions: <em>where does the browser run, what credentials does it see, who pays the tokens, and what happens when the page changes</em>.</p>
+
+<p>Here's the head-to-head on a single screen, then the reasoning.</p>
+
+<h2>The comparison table</h2>
+
+<table>
+<thead>
+<tr><th>Dimension</th><th>Tap</th><th>Playwright MCP</th><th>Browserbase + Stagehand</th></tr>
+</thead>
+<tbody>
+<tr>
+<td>Where the browser runs</td>
+<td>Your own Chrome, locally (extension)</td>
+<td>Local Playwright (headless, or <code>--extension</code>)</td>
+<td>Cloud (Browserbase)</td>
+</tr>
+<tr>
+<td>Logged-in / cookies</td>
+<td>&#10003; uses your live session</td>
+<td>&#9651; <code>--extension</code> mode reuses Chrome profile; headless = none</td>
+<td>&#10007; credentials must be uploaded to cloud</td>
+</tr>
+<tr>
+<td>Tokens per run (after first compile)</td>
+<td><strong>0</strong> (deterministic replay)</td>
+<td>Per-call (~9.6K for HN top-30 extract)</td>
+<td>Per-call (LLM at runtime)</td>
+</tr>
+<tr>
+<td>Drift handling</td>
+<td><code>tap fix</code> patches the plan once; later runs free</td>
+<td>None &mdash; re-extracts every time</td>
+<td>None &mdash; re-extracts every time</td>
+</tr>
+<tr>
+<td>AI position</td>
+<td>Compile-time only</td>
+<td>Runtime</td>
+<td>Runtime</td>
+</tr>
+<tr>
+<td>Pricing</td>
+<td>Free / OSS (MIT)</td>
+<td>Free / OSS (Apache-2.0)</td>
+<td>Paid cloud minutes + LLM tokens</td>
+</tr>
+<tr>
+<td>Trust boundary</td>
+<td>User's browser; nothing leaves the machine</td>
+<td>User's machine (Playwright process)</td>
+<td>Browserbase's cloud</td>
+</tr>
+<tr>
+<td>Best for</td>
+<td>Authenticated workflows you run repeatedly</td>
+<td>Quick one-off scripts from an MCP host</td>
+<td>Multi-tenant / isolated cloud workloads</td>
+</tr>
+</tbody>
+</table>
+
+<p>The thesis up front: <strong>these are not three implementations of one product, they are three different products</strong>. Each is the right answer to a different question. The interesting work is figuring out which question you actually have.</p>
+
+<h2>Where the browser runs &mdash; the load-bearing distinction</h2>
+
+<p>Everything else flows from this.</p>
+
+<p><strong>Playwright MCP</strong> launches a Playwright-driven Chromium on the same machine as the MCP server process. By default it's headless and uses an empty profile &mdash; no cookies, no extensions, no autofill, no logged-in sites. Recently Microsoft shipped a <code>--extension</code> flag that connects to an already-running Chrome via a companion extension, which closes most of the auth gap. You can now point Playwright MCP at your real session, with some setup friction (install the extension, keep Chrome open, configure the connection).</p>
+
+<p><strong>Stagehand on Browserbase</strong> launches a Chromium inside Browserbase's data centers and exposes it via Stagehand's <code>act</code>/<code>extract</code>/<code>observe</code> primitives, each of which calls an LLM. Browserbase is a paid service; Stagehand (Apache-2.0, 22K&nbsp;stars) is open-source and you can run it against a local browser too, but its production deployment path is the cloud. Auth in this model means uploading cookies, OAuth tokens, or full session state to Browserbase.</p>
+
+<p><strong>Tap</strong> doesn't launch a browser at all. The browser is the one you already have open &mdash; logged into GitHub, Cursor's billing page, your Shopify admin, your bank. A Chrome extension is the runtime; the MCP server orchestrates from the OS side. Your live session is the auth model. Nothing about credentials crosses a trust boundary because there's no trust boundary to cross.</p>
+
+<p>This is the same architectural pattern that <a href="./six-products-same-form-factor.html">six unrelated indie products converged on independently</a>. When you need logged-in state, the user's own browser is the only credential store that already has it.</p>
+
+<h2>Tokens: where the money goes</h2>
+
+<p>An MCP host invokes a tool, the tool returns data, the host's LLM continues reasoning. The interesting question is: how many tokens did the <em>tool</em> burn between input and output?</p>
+
+<p>For a pure-Playwright tool (<code>browser_navigate</code>, <code>browser_click</code>) the answer is zero &mdash; deterministic. But the moment you ask "scrape the top 30 stories from Hacker News and return them as JSON," the tool itself needs an LLM, because Playwright doesn't understand "top 30 stories." Either the MCP host's own agent loop drives it step-by-step (DOM snapshot &rarr; reasoning &rarr; next action &rarr; repeat), or a Stagehand-style <code>extract()</code> call ships the page to an LLM and asks for structured output. Either way: per-call tokens.</p>
+
+<p>We measured this directly in an earlier post, <a href="./compile-once-diff-the-drift.html">Compile Once. Run Forever. Diff the Drift.</a> Same workload (HN top 30), four arms:</p>
+
+<table>
+<thead>
+<tr><th>Arm</th><th class="num">Tokens / call</th></tr>
+</thead>
+<tbody>
+<tr><td>A &mdash; naive LLM reads page, returns JSON (Playwright-MCP shape under an extracting host)</td><td class="num">9,625</td></tr>
+<tr class="highlight-row"><td>C &mdash; Tap router: deterministic replay, no LLM at runtime</td><td class="num"><strong>0</strong></td></tr>
+<tr><td>C &mdash; Tap with a drift event: V report + minimal patch</td><td class="num">1,134 (once)</td></tr>
+<tr><td>D &mdash; oracle MDL floor</td><td class="num">1</td></tr>
+</tbody>
+</table>
+
+<p>To be fair to Playwright MCP: Arm&nbsp;A isn't <em>literally</em> what playwright-mcp does. Playwright MCP returns DOM snapshots and exposes click/type/extract tools; the per-call token cost depends on whether the host's agent loop scrolls through the DOM with discipline or just dumps it into the model. But the architectural shape &mdash; <em>extraction happens at runtime, the LLM sees the page on every invocation</em> &mdash; is Arm&nbsp;A. That's the cost shape any runtime-extracting MCP server lives inside.</p>
+
+<p>For Stagehand the shape is the same. <code>extract({ schema })</code> ships the page to an LLM; <code>act("click the submit button")</code> ships a DOM context to an LLM. The improvements over a naive agent loop are real (better selectors, better caching, fewer retries) but the per-call ceiling is set by the architecture, not by engineering effort. Stagehand's own docs publish per-call costs in the cents range, scaling linearly with calls.</p>
+
+<p>Tap's number after the first compile is <strong>0</strong>. Not 0.001, not "very small" &mdash; zero. The compiled <code>.plan.json</code> is a closed-union 11-op program that the extension replays deterministically; no model is called during execution. <a href="./compile-once-diff-the-drift.html">Across 100 queries per drift, Tap is 849&times; cheaper than Arm&nbsp;A. Across 1,000 it's 8,489&times;.</a></p>
+
+<p>This advantage only exists because the workload is <em>repeated</em>. If you scrape HN once and never again, Tap's compile step (one LLM call) is roughly the same cost as Arm&nbsp;A's single extraction. The compiler model needs amortization to be cheap. For one-shot research tasks, runtime extraction is the right tool.</p>
+
+<h2>Drift: what happens when the page changes</h2>
+
+<p>Playwright MCP and Browserbase + Stagehand have <strong>no concept of drift</strong>. They re-extract from a fresh page on every call, so a site change is invisible until it produces wrong-shaped output. If a class rename causes the extraction to silently drop a field, the LLM cheerfully returns the field as <code>null</code> or "not found." The cost of the failure is paid downstream &mdash; in your monitoring, in your wrong dashboard, in the user noticing days later.</p>
+
+<p>This is also their <em>strength</em> on novel pages. Because they extract from scratch every time, they handle a site they've never seen with no setup. There's no compile step to invalidate. The LLM looks at the page and figures it out.</p>
+
+<p>Tap takes the opposite trade. A tap is a compiled plan; when the underlying page changes enough to break it, a cross-validator (<code>doctor</code> + an independent authoritative source like an RSS feed or public API) catches it. <code>tap fix</code> then makes one LLM call to emit a minimal patch &mdash; <a href="./compile-once-diff-the-drift.html">1,134 tokens on Sonnet through the production heal path</a> &mdash; and the tap goes back to running for free. On a scraper that runs hourly and drifts monthly (~700 queries between drifts), that's ~10,000&times; cheaper than re-extracting every time.</p>
+
+<p>The cost of this trade: Tap needs an authoring step. You can't point it at a brand-new site and immediately get JSON back. You spend a few minutes (or one LLM call via <code>tap capture</code>) compiling a plan first. That up-front cost is the price of admission for the zero-token replay.</p>
+
+<h2>Trust boundary: where credentials live</h2>
+
+<p>The single biggest difference between these three tools isn't tokens; it's the credential model. For unauthenticated work (HN, Wikipedia, public docs) the question doesn't matter &mdash; pick on price and speed. For anything behind a login, it dominates everything else.</p>
+
+<ul>
+<li><strong>Playwright MCP, headless mode:</strong> there are no credentials. You can't get into your Shopify admin from a fresh headless browser. <em>You can</em> upload session cookies via Playwright APIs, but you're now managing a separate credential store and rotating cookies that Chrome's own session refresh has already invalidated. The <code>--extension</code> flag fixes this by attaching to your real Chrome &mdash; closing most of the gap, at the cost of setup friction (install the companion extension, keep Chrome alive, configure the WebSocket bridge).</li>
+<li><strong>Browserbase + Stagehand:</strong> credentials live in their cloud. To automate your Shopify admin from Browserbase, the Shopify session cookie has to be uploaded and stored there. This is a real cost some teams accept (multi-tenant SaaS where you want isolation from user machines, agents that must run on a schedule when the user's laptop is closed) and a real cost some teams won't (solo founder automating their own paid SaaS dashboards; anything covered by SOC2-restricted credentials).</li>
+<li><strong>Tap:</strong> nothing leaves the machine. The browser is your browser, the cookies are your cookies, the network requests come from your IP. The MCP server orchestrates &mdash; it doesn't see the cookies. <a href="./authenticated-browser-mcp.html">This is why cloud tools architecturally can't see your logged-in state</a>: their browser isn't the one you logged in on.</li>
+</ul>
+
+<p>This is the dimension where the three tools stop being substitutes. For an automation that needs to schedule, retry, and run when your laptop is asleep, you want Browserbase. For an automation that touches your live HubSpot or Stripe dashboard, you want Tap. For a one-shot agentic task in Claude Code that browses public docs and reports back, you want Playwright MCP.</p>
+
+<h2>How to pick</h2>
+
+<p>A decision tree that resolves most cases in one question each:</p>
+
+<ol>
+<li><strong>Does the task need a logged-in session?</strong> If no &mdash; Playwright MCP is the obvious default. Free, ships in every MCP host's catalog, no setup. If yes &mdash; continue.</li>
+<li><strong>Is it OK to upload those credentials to a third-party cloud?</strong> If yes &mdash; Browserbase + Stagehand. You get always-on execution, parallelism, isolation. If no &mdash; continue.</li>
+<li><strong>Is this a one-shot exploration, or a workflow you'll run repeatedly?</strong> If one-shot &mdash; Playwright MCP with <code>--extension</code> is reasonable; the per-call tokens are paid once. If repeated &mdash; Tap. The amortization math only makes sense when "run forever" is on the table.</li>
+</ol>
+
+<p>And the inverse cases &mdash; where each tool clearly loses:</p>
+
+<ul>
+<li><strong>Tap loses</strong> on one-shot novel-site research. You'd spend more time authoring a tap than just letting an extracting agent read the page once.</li>
+<li><strong>Playwright MCP loses</strong> on repeated workloads against drifting sites. You re-pay extraction tokens forever and absorb silent failures every time the DOM changes.</li>
+<li><strong>Browserbase loses</strong> when credentials can't legally or operationally leave the user's machine. SOC2-restricted data, indie founders' own SaaS dashboards, anything where the trust boundary matters.</li>
+</ul>
+
+<h2>The honest caveats</h2>
+
+<p><strong>Playwright MCP's <code>--extension</code> flag is recent and good.</strong> It closes the auth gap that older comparisons (including <a href="./authenticated-browser-mcp.html">our own from April</a>) lean on. The remaining gaps for Playwright MCP versus Tap are not auth &mdash; they are still tokens-per-call and drift handling. Both real, neither uniquely about authentication.</p>
+
+<p><strong>Browserbase + Stagehand is a serious product.</strong> Stagehand is the best-engineered LLM-driven browser agent we've seen, and Browserbase's reliability/parallelism are genuinely useful for production agentic systems with cloud-isolation requirements. The "credentials must be uploaded" point isn't a bug &mdash; it's a deliberate architectural trade. For some teams (multi-tenant SaaS that automates customer accounts under signed agreements) cloud isolation is exactly what they want. We don't have firsthand token cost numbers for Stagehand on the HN workload, so we don't claim a multiplier &mdash; only the architectural point that runtime extraction has a per-call floor that Tap's deterministic replay doesn't.</p>
+
+<p><strong>Tap's compile-time AI is not magic.</strong> The first time you author a tap, an LLM call is involved (forge step). The 0-token claim is for execution after authoring. If your workload is "do this once and never again," Tap's amortization advantage is zero. <a href="./compile-once-diff-the-drift.html">Our experiment</a> made this explicit: at 1 query per drift, Arm&nbsp;C is only 8.5&times; cheaper than Arm&nbsp;A. The 849&times; and 10,000&times; numbers require repeated use.</p>
+
+<p><strong>None of this is about model quality.</strong> All three architectures could use the same Sonnet/Haiku/GPT and get different cost curves. The differences are about <em>when</em> the LLM enters the loop &mdash; runtime versus compile-time &mdash; not about which model is smarter.</p>
+
+<h2>Three different products</h2>
+
+<p>The frame to leave with: these aren't tiers of the same product. They are three answers to three different questions.</p>
+
+<ul>
+<li><strong>Playwright MCP</strong> answers: "how do I let my agent drive a browser cheaply, today, with no setup?"</li>
+<li><strong>Browserbase + Stagehand</strong> answers: "how do I run authenticated browser workflows in a cloud I control, at scale, isolated from end-user machines?"</li>
+<li><strong>Tap</strong> answers: "how do I run authenticated browser workflows repeatedly on my own machine, at zero token cost, with drift detection?"</li>
+</ul>
+
+<p>If your question is one of these three, the right answer is unambiguous. If it's two of them at once &mdash; "I want cloud isolation but also zero runtime tokens" &mdash; nothing in this comparison fits cleanly, and you're probably building a new category of tool, not picking one off this list.</p>
+
+<div class="cta">
+<h3>Install Tap</h3>
+<pre><span class="cmd">brew install</span> LeonTing1010/tap/taprun
+<span class="cmd">tap mcp stdio</span>
+<span class="cmd">tap</span> hackernews/hot</pre>
+</div>
+
+<hr>
+
+<p class="meta"><em>Tap is open-source under MIT. If you're picking a browser-automation MCP for a logged-in workflow that runs more than once, we want the head-to-head on your real workload. <a href="https://github.com/LeonTing1010/tap">Issues and benchmarks welcome.</a></em></p>
+
+</div>
+</body>
+</html>

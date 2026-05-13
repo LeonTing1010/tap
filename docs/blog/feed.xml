@@ -9,6 +9,14 @@
 <lastBuildDate>Wed, 13 May 2026 00:00:00 +0000</lastBuildDate>
 
 <item>
+<title>Playwright MCP vs Tap vs Browserbase: A Token-Cost Head-to-Head</title>
+<link>https://taprun.dev/blog/playwright-mcp-vs-tap.html</link>
+<description>Three credible MCP servers ship a browser to your agent: Microsoft's Playwright MCP, Browserbase + Stagehand, and Tap. They look like substitutes; they're three different products answering three different questions. Side-by-side on tokens, auth model, drift handling, and trust boundary — with the 849×-to-10,000× amortization math from the HN-top-30 experiment, and honest acknowledgement of where each tool wins.</description>
+<pubDate>Wed, 13 May 2026 00:00:00 +0000</pubDate>
+<guid>https://taprun.dev/blog/playwright-mcp-vs-tap.html</guid>
+</item>
+
+<item>
 <title>Building Hit Zero. Distribution Didn't.</title>
 <link>https://taprun.dev/blog/building-hit-zero-distribution-didnt.html</link>
 <description>AI agents compressed solo site-building from a month to a weekend. They did not compress distribution. Three popular AdSense-revival claims, three Reddit counter-examples from real operators. Costly Signaling Law explains why "I shipped a tool" stopped carrying information, and what's left to compete on.</description>
