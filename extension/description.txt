@@ -18,7 +18,7 @@ Every cloud-first browser-automation MCP forces a tradeoff: ship your credential
 - Authenticated by default — reuses your live Chrome cookies via Chrome Native Messaging. Same trust model as a browser bookmarklet; no localhost ports, no OS service.
 - Compile-time AI, runtime zero AI — the AI generates the plan once; runtime is deterministic. Predictable cost, predictable behavior, reproducible failures.
 - Composite plans — one plan can call other plans (op:tap composition). `tap verify` recursively checks composite plans against live substrates without side-effects.
-- 70+ community plans across 40+ sites — pre-built taps for GitHub, Reddit, Hacker News, Twitter/X, Producthunt, Glassnode, FRED, Notion, Linear, and more. Open MIT-licensed corpus.
+- Open MIT-licensed community plan corpus — 70+ pre-built plans across 40+ sites covering dev platforms, social networks, financial data, and productivity apps.
 - Local-first by architecture — no cloud account, no telemetry, no license heartbeat. Every feature has a 100% local mode.
 
 ## Compared
@@ -71,7 +71,7 @@ Source: https://github.com/LeonTing1010/tap (MIT, includes the extension you're 
 
 ## Use Cases
 
-- Authenticated scraping — pull data from GitHub / Linear / Notion / Twitter / your bank / your dashboards using your logged-in session, with zero cloud round-trip.
+- Authenticated scraping — pull data from any site you are logged into (dev tools, productivity apps, financial dashboards, internal portals) using your existing session, with zero cloud round-trip.
 - Multi-step workflows — chain page-A → API-B → page-C with stable JSON plans that survive site refactors better than vision-based loops.
 - AI-agent browser tools — give Claude Code, Cursor, or any MCP agent a browser without paying per-step token cost or shipping credentials anywhere.
 - Personal automation — daily KB scans, dashboard checks, monitoring runs scheduled via launchd / cron, hitting authenticated sites that public scrapers can't touch.
