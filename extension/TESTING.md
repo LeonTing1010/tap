@@ -45,7 +45,7 @@ npm test
 - [ ] Version matches `manifest.json`
 - [ ] Status: enabled, no errors
 - [ ] Service Worker running (click "service worker" link to inspect console)
-- [ ] Click toolbar icon → popup shows "Bridge not running" with `tap bridge start` command (when daemon down) OR "Connected to local bridge" (when daemon up)
+- [ ] Click toolbar icon → popup shows the matching disconnect bucket (Setup required / Bridge not running / Chrome blocked the host / Bridge down) when the host can't bridge, OR "Connected to local bridge" when it can
 
 ## Debug
 

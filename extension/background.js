@@ -1321,8 +1321,8 @@ function setBadge(ok) {
 // Icon click is owned by the popup (manifest.action.default_popup) —
 // chrome.action.onClicked never fires while default_popup is set, so the
 // previous "open install URL on click" handler was dead code. The popup
-// surfaces bridge status, the `tap bridge start` hint, and the install
-// link when first-time setup is required.
+// surfaces bridge status, the per-failure-mode recovery CTA, and the
+// install link when first-time setup is required.
 
 // ─── Native messaging transport (ADR 2026-05-13-daemon-extension-via-native-messaging.md) ─
 //

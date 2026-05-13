@@ -6,8 +6,8 @@
 //
 // Per ADR 2026-05-13-daemon-extension-via-native-messaging.md: the SW
 // surfaces (extensionId, disconnectReason) so the popup can render the
-// CORRECT CTA per failure mode — manifest missing vs daemon down vs
-// Chrome blocklist — instead of always advising `tap bridge start`.
+// CORRECT CTA per failure mode — manifest missing vs host crashed vs
+// Chrome blocklist — instead of always advising the same recovery cmd.
 
 const SECTION_IDS = [
   'connected',
