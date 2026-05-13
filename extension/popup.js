@@ -51,17 +51,11 @@ function render(status) {
   const bucket = classifyReason(status?.disconnectReason)
 
   if (bucket === 'not-installed') {
-    // Bake the user's actual extension ID into the setup command.
-    // chrome.runtime.id is stable across extension reloads when the
-    // `key` field is set in manifest.json (production ID), or the
-    // unpacked-install hash (dev).
-    const id = status?.extensionId ?? '<your-extension-id>'
-    const cmd = `tap bridge setup --extension-id ${id}`
-    const codeEl = document.getElementById('setup-cmd')
-    if (codeEl) codeEl.textContent = cmd
-    // Update the copy button's payload to match.
-    const btn = document.querySelector('[data-copy-target="setup-cmd"]')
-    if (btn) btn.dataset.copy = cmd
+    // Per ADR `2026-05-13-install-os-managed-daemon.md` Slice 3: the
+    // extension ID is pinned in manifest.json's `"key"` field, so
+    // `tap bridge setup` takes no flag. The popup no longer needs to
+    // bake an ID into the command — the static markup in popup.html
+    // ships the canonical form.
     showOnly('dc-not-installed')
     return
   }
