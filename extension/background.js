@@ -1324,12 +1324,17 @@ function setBadge(ok) {
 // surfaces bridge status, the per-failure-mode recovery CTA, and the
 // install link when first-time setup is required.
 
-// ─── Native messaging transport (ADR 2026-05-13-daemon-extension-via-native-messaging.md) ─
+// ─── Native messaging transport (ADR 2026-05-14-host-as-daemon.md) ─
 //
-// SUPERSEDES ADR 2026-05-05-daemon-sw-via-websocket.md. The Chrome SW
-// calls chrome.runtime.connectNative("dev.taprun.daemon"), which spawns
-// the tap-native-host binary that bridges its stdio to the daemon's
-// Unix socket at ~/.tap/daemon.sock.
+// SUPERSEDES ADR 2026-05-05-daemon-sw-via-websocket.md and the
+// short-lived 2026-05-13-daemon-extension-via-native-messaging.md
+// (host-as-byte-forwarder model). Per the 2026-05-14 T4-final
+// refactor, the NM host IS the dispatch core — there is no separate
+// daemon process. The Chrome SW calls
+// chrome.runtime.connectNative("dev.taprun.host"), which spawns the
+// tap binary; the binary detects its argv[0]=chrome-extension://...
+// invocation and routes into core/native-messaging/host.ts which
+// binds ~/.tap/host.sock for CLI conns and serves dispatch directly.
 //
 // Key properties (PoC 2026-05-13 validated, see core/core-experiments/
 // native-messaging-poc/):
@@ -1365,7 +1370,7 @@ const WIRE_CODE = {
   tap_drifted: -32014,
 }
 
-const NATIVE_HOST_NAME = 'dev.taprun.daemon'
+const NATIVE_HOST_NAME = 'dev.taprun.host'
 let port = undefined
 // Last disconnect reason from chrome.runtime.lastError — surfaced to
 // popup so the UI can show a specific CTA per failure mode:

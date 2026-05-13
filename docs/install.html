@@ -7,11 +7,11 @@ robots: "index,follow"
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Taprun extension installed — register the bridge in 60 seconds</title>
+<title>Install Taprun — Browser MCP for Chrome × your AI agent (60 seconds)</title>
 <meta name="description" content="Finish setting up the Taprun Chrome extension. One command (`tap bridge setup`) registers the Chrome Native Messaging manifest so the extension can launch the tap CLI on your machine on demand — no localhost port, no background service. Then optionally wire your AI agent (Claude Code, Cursor, Windsurf).">
 <meta name="robots" content="index,follow">
 <link rel="canonical" href="https://taprun.dev/install">
-<meta property="og:title" content="Taprun extension installed — register the bridge in 60 seconds">
+<meta property="og:title" content="Install Taprun — Browser MCP for Chrome × your AI agent">
 <meta property="og:description" content="One command registers the native-messaging bridge. Then optionally hook it to your AI agent (Claude Code, Cursor, Windsurf) or run taps from the terminal.">
 <meta property="og:url" content="https://taprun.dev/install">
 <meta property="og:type" content="article">
@@ -390,7 +390,7 @@ robots: "index,follow"
   <details class="troubleshoot">
     <summary>Still disconnected? Four things to check</summary>
     <ul>
-      <li><strong>Native-messaging host not registered</strong> — The extension talks to the CLI through Chrome's Native Messaging transport, not a network port. The host manifest must exist at <code>~/Library/Application Support/Google/Chrome/NativeMessagingHosts/dev.taprun.daemon.json</code> (macOS) or <code>~/.config/google-chrome/NativeMessagingHosts/dev.taprun.daemon.json</code> (Linux). Run <code>tap bridge setup</code> (no flag — the extension ID is pinned in the manifest) to (re)register it.</li>
+      <li><strong>Native-messaging host not registered</strong> — The extension talks to the CLI through Chrome's Native Messaging transport, not a network port. The host manifest must exist at <code>~/Library/Application Support/Google/Chrome/NativeMessagingHosts/dev.taprun.host.json</code> (macOS) or <code>~/.config/google-chrome/NativeMessagingHosts/dev.taprun.host.json</code> (Linux). Run <code>tap bridge setup</code> (no flag — the extension ID is pinned in the manifest) to (re)register it. <em>Note: pre-0.16.6 extension versions used <code>dev.taprun.daemon.json</code>; re-running <code>tap bridge setup</code> on the new CLI installs the new name and cleans up the old file.</em></li>
       <li><strong>Chrome blocked the host (crash lockout)</strong> — If the host has crashed ≥5 times in ~3 minutes, Chrome refuses to launch it again for ~10 minutes. The popup will say "Chrome blocked the host". <strong>Restart Chrome</strong> to clear the lockout. Then check <code>host.log</code> next to the <code>tap</code> binary for the underlying crash reason.</li>
       <li><strong>MCP host not restarted</strong> — Claude Code / Cursor only re-read MCP config on launch. Quit fully (not just close the window) and reopen.</li>
       <li><strong>Service worker asleep</strong> — Chrome MV3 puts background workers to sleep after ~30s idle. Click the Taprun extension icon once to wake it; it reconnects within a second.</li>
