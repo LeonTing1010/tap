@@ -19,17 +19,66 @@
     <p class="muted">Saved taps run in this browser. Credentials stay on your machine.</p>
   </section>
 
-  <section id="disconnected" hidden>
+  <!-- Disconnect mode: native messaging manifest not installed.
+       Triggered by lastError "Specified native messaging host not found".
+       Fix: register the per-user manifest via `tap bridge setup`. -->
+  <section id="dc-not-installed" hidden>
+    <div class="row">
+      <span class="dot dot-warn"></span>
+      <span><strong>Setup required</strong></span>
+    </div>
+    <p>Register the native messaging manifest:</p>
+    <pre><code id="setup-cmd">tap bridge setup --extension-id …</code><button class="copy" data-copy-target="setup-cmd" title="Copy">⧉</button></pre>
+    <p class="muted">One-time. Connects this Chrome extension to the local Tap daemon.</p>
+    <div class="actions">
+      <button class="retry">Retry connection</button>
+      <a id="install" href="https://taprun.dev/install?utm_source=chrome-ext&utm_medium=extension&utm_campaign=popup-setup" target="_blank" rel="noopener">Don't have Tap installed?</a>
+    </div>
+  </section>
+
+  <!-- Disconnect mode: native host process started but exited (daemon down,
+       Unix socket unreachable, host bug). Triggered by lastError "Native
+       host has exited". Fix: start the daemon. -->
+  <section id="dc-host-exited" hidden>
     <div class="row">
       <span class="dot dot-err"></span>
       <span><strong>Bridge not running</strong></span>
     </div>
-    <p>Run this in a terminal to start it:</p>
+    <p>Start it:</p>
     <pre><code>tap bridge start</code><button class="copy" data-copy="tap bridge start" title="Copy">⧉</button></pre>
-    <p class="muted">The bridge runs locally on <code>127.0.0.1:9333</code>; the Chrome extension connects to it. Saved taps don't run until both sides are up.</p>
+    <p class="muted">If the daemon is already running, the native host may have crashed — check <code>host.log</code> next to the <code>tap</code> binary.</p>
     <div class="actions">
-      <button id="retry">Retry connection</button>
-      <a id="install" href="https://taprun.dev/install?utm_source=chrome-ext&utm_medium=extension&utm_campaign=popup" target="_blank" rel="noopener">Don't have Tap installed?</a>
+      <button class="retry">Retry connection</button>
+    </div>
+  </section>
+
+  <!-- Disconnect mode: Chrome anti-DoS blocklist or allowed_origins mismatch.
+       Triggered by lastError "...is forbidden". Fix: restart Chrome (clears
+       blocklist) or re-run setup with correct extension ID. -->
+  <section id="dc-forbidden" hidden>
+    <div class="row">
+      <span class="dot dot-err"></span>
+      <span><strong>Chrome blocked the host</strong></span>
+    </div>
+    <p>One of:</p>
+    <ul class="muted">
+      <li>Host crashed ≥5 times — Chrome lockout active ~10 min. <strong>Restart Chrome</strong> to clear.</li>
+      <li>Manifest <code>allowed_origins</code> doesn't include this extension. Re-run setup.</li>
+    </ul>
+    <div class="actions">
+      <button class="retry">Retry connection</button>
+    </div>
+  </section>
+
+  <!-- Disconnect mode: unrecognized reason. Show raw text + generic retry. -->
+  <section id="dc-unknown" hidden>
+    <div class="row">
+      <span class="dot dot-err"></span>
+      <span><strong>Bridge down</strong></span>
+    </div>
+    <p class="muted">Reason: <code id="raw-reason">—</code></p>
+    <div class="actions">
+      <button class="retry">Retry connection</button>
     </div>
   </section>
 

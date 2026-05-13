@@ -10,7 +10,7 @@
     "128": "icons/icon128.png"
   },
   "permissions": [
-    "alarms",
+    "nativeMessaging",
     "debugger",
     "activeTab",
     "tabs",

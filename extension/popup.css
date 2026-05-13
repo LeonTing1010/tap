@@ -6,6 +6,7 @@
   --bg: #ffffff;
   --code-bg: #f3f4f6;
   --ok: #16a34a;
+  --warn: #d97706;
   --err: #ef4444;
   --accent: #2563eb;
 }
@@ -17,6 +18,7 @@
     --bg: #1f2937;
     --code-bg: #111827;
     --ok: #22c55e;
+    --warn: #f59e0b;
     --err: #f87171;
     --accent: #60a5fa;
   }
@@ -54,6 +56,7 @@ section { padding: 14px; }
   flex-shrink: 0;
 }
 .dot-ok { background: var(--ok); }
+.dot-warn { background: var(--warn); }
 .dot-err { background: var(--err); }
 
 p { margin: 8px 0; }

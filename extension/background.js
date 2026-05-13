@@ -11,53 +11,17 @@
 
 console.log('[tap] extension runtime ready')
 
-// --- MV3 SW keep-alive (ADR 2026-05-08-failure-detection-phase-2 §2C(i)) ---
+// --- SW keep-alive: DELETED per ADR 2026-05-13-daemon-extension-via-native-messaging.md ---
 //
-// MV3 unloads the SW after ~30s idle AND Chrome 119+ enforces a ~5min hard
-// max even with active alarms. The defence is two-layer:
+// The prior two-layer defence (25s alarm + 4 wake hooks) compensated for
+// the WS architecture's idle/hard-kill problems. PoC 2026-05-13 proved
+// chrome.runtime.connectNative's port keeps the SW alive >19 minutes
+// with zero traffic — crossing both the 30s idle threshold AND the
+// 5-minute hard-kill threshold. Compensation no longer needed.
 //
-//   (1) 25s alarm tick — under the 30s idle window. Each tick (a) makes a
-//       cheap chrome API call to reset the idle timer, (b) checks WS
-//       health and reconnects if the prior socket dropped (catches drops
-//       between SW wakes), (c) sends an in-band WS ping so the daemon
-//       side keeps the connection "active" and doesn't evict it.
-//
-//   (2) Wake hooks — when Chrome's 5-min hard cap kills the SW anyway,
-//       the SW gets re-spawned the moment any of these fire: alarm,
-//       runtime startup/install, tab activation, window focus. Each
-//       delegates to ensureConnection(), which is idempotent.
-//
-// Together the layers form a closed loop: every realistic wake source
-// re-runs ensureConnection → startWs (if needed). No matter which fires
-// first, the WS is back within one tick.
-function ensureConnection() {
-  if (typeof startWs !== 'function') return // top-level startWs not parsed yet on first tick
-  if (!ws || ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING) {
-    startWs()
-  } else if (ws.readyState === WebSocket.OPEN) {
-    // Keep daemon-side socket fresh; daemon ignores unknown notifications.
-    try { ws.send(JSON.stringify({ jsonrpc: '2.0', method: 'ping' })) } catch { /* socket gone */ }
-  }
-}
-
-chrome.alarms.create('tap-keepalive', { periodInMinutes: 0.4 }) // 24s, under MV3's 30s idle
-chrome.alarms.onAlarm.addListener((alarm) => {
-  if (alarm.name !== 'tap-keepalive') return
-  // Reset SW idle timer (cheapest no-op API call), then verify connection.
-  chrome.runtime.getPlatformInfo(() => {})
-  ensureConnection()
-})
-
-// Wake hooks — each fires when SW respawns or on browser-session events.
-// Together they cover the realistic ways the SW gets re-instantiated after
-// Chrome's 5-min hard kill: alarm tick, browser startup, extension install/
-// update, tab switch, window focus from outside Chrome.
-chrome.runtime.onStartup.addListener(() => ensureConnection())
-chrome.runtime.onInstalled.addListener(() => ensureConnection())
-chrome.tabs.onActivated.addListener(() => ensureConnection())
-chrome.windows.onFocusChanged.addListener((winId) => {
-  if (winId !== chrome.windows.WINDOW_ID_NONE) ensureConnection()
-})
+// When the SW does die (force-quit, OOM, browser restart), the next
+// event that wakes Chrome will re-run this module's top-level code,
+// which re-fires connectBridge() at the bottom of this file.
 
 // --- State ---
 
@@ -239,13 +203,22 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   // Popup ↔ SW status channel — separate envelope from the JSON-RPC
   // {method, params, id} shape used by external callers.
   if (msg?.type === 'tap-status') {
-    sendResponse({ connected, version: chrome.runtime.getManifest().version })
+    // Surface extensionId + lastDisconnectReason so popup can render the
+    // right CTA per failure mode (manifest missing vs host crash vs
+    // Chrome anti-DoS blocklist). Without these, the popup can only show
+    // a generic "bridge down" message that mis-directs the user.
+    sendResponse({
+      connected,
+      version: chrome.runtime.getManifest().version,
+      extensionId: chrome.runtime.id,
+      disconnectReason: lastDisconnectReason,
+    })
     return false
   }
   if (msg?.type === 'tap-retry') {
-    // User-initiated reconnect attempt. wsBackoff is reset on next
-    // successful onopen; here we just kick a fresh attempt.
-    try { startWs() } catch { /* surface via badge / next status poll */ }
+    // User-initiated reconnect attempt — invoked by popup's "Retry" link.
+    // connectBridge() is idempotent (no-op if `port` already open).
+    try { connectBridge() } catch { /* surface via badge / next status poll */ }
     sendResponse({ ok: true })
     return false
   }
@@ -1351,13 +1324,26 @@ function setBadge(ok) {
 // surfaces bridge status, the `tap bridge start` hint, and the install
 // link when first-time setup is required.
 
-// ─── WebSocket transport (ADR 2026-05-05-daemon-sw-via-websocket.md) ─
+// ─── Native messaging transport (ADR 2026-05-13-daemon-extension-via-native-messaging.md) ─
 //
-// The only daemon ↔ SW transport. Replaces the legacy /poll + /result
-// triplet (deleted I7 2026-05-05). JSON-RPC 2.0 envelope; closes Bug 1
-// (60s timeout race), Bug 2 (kind misclassification), Bug 3 (active-tab
-// not auto-bound). chrome.alarms at 1min cadence is the only fallback
-// — wakes the SW if it died, which retries WS connect.
+// SUPERSEDES ADR 2026-05-05-daemon-sw-via-websocket.md. The Chrome SW
+// calls chrome.runtime.connectNative("dev.taprun.daemon"), which spawns
+// the tap-native-host binary that bridges its stdio to the daemon's
+// Unix socket at ~/.tap/daemon.sock.
+//
+// Key properties (PoC 2026-05-13 validated, see core/core-experiments/
+// native-messaging-poc/):
+//   T1 — port keeps SW alive >19min idle with zero traffic
+//        (no alarm/keepalive needed)
+//   T2 — SW force-kill → host EOF detection in ~2ms
+//        (OS pipe close, not heuristic timer)
+//   T3 — Chrome quit → graceful EOF
+//        (clean disconnect, no zombie state)
+//
+// Wire envelope unchanged — JSON-RPC 2.0 per ADR 2026-05-05 §2.
+// What changes: transport is OS pipe (via Port) instead of WebSocket.
+// What stays the same: WIRE_CODE table, dispatch handler, cleanup_tabs
+// notification semantics.
 
 // JSON-RPC error code map (mirrors core/wire-codes.ts WIRE_CODE).
 // Drift caught by: `public/extension/test/wire_codes.test.mjs`.
@@ -1379,48 +1365,43 @@ const WIRE_CODE = {
   tap_drifted: -32014,
 }
 
-let ws = undefined
-let wsBackoff = 1000
-let wsHardClosed = false
+const NATIVE_HOST_NAME = 'dev.taprun.daemon'
+let port = undefined
+// Last disconnect reason from chrome.runtime.lastError — surfaced to
+// popup so the UI can show a specific CTA per failure mode:
+//   "Specified native messaging host not found" → manifest missing
+//   "Native host has exited"                    → daemon down / host crash
+//   "...is forbidden"                            → Chrome blocklist / allowed_origins
+//   ""                                            → never tried / initial
+let lastDisconnectReason = ''
 
-function startWs() {
-  if (wsHardClosed) return
-  if (ws && (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.OPEN)) return
+function connectBridge() {
+  if (port) return  // already connected — Port is held by SW, persists until close
   try {
-    // Note: when the bridge isn't running, Chrome itself logs the WS
-    // ERR_CONNECTION_REFUSED to the console — that is a browser-level
-    // log we cannot suppress from JS. The popup + badge are the
-    // user-facing surface for this state; this catch only handles
-    // synchronous WebSocket() construction failures (rare — invalid URL
-    // shape, etc.) where there's no addressee for an error log.
-    ws = new WebSocket(`${DAEMON_URL.replace(/^http/, 'ws')}/ws`)
-  } catch {
-    setTimeout(() => startWs(), wsBackoff)
-    wsBackoff = Math.min(wsBackoff * 2, 30000)
+    port = chrome.runtime.connectNative(NATIVE_HOST_NAME)
+  } catch (e) {
+    lastDisconnectReason = (e && e.message) || String(e)
+    console.log('[tap-nm] connectNative threw:', lastDisconnectReason)
+    setBadge(false)
     return
   }
-  ws.onopen = () => {
-    console.log('[tap-ws] connected to daemon')
-    wsBackoff = 1000
-    setBadge(true)
-    // Per ADR 2026-05-10-saa-page-session-fetch-cross-repo: the prior
-    // initial-active-tab push (Bug 3 fix from 2026-05-05) is deleted.
-    // Daemon's lastActiveTab cache was deleted by parent SAA ADR; tab
-    // routing flows through sessionId/sessions[] only.
-  }
-  ws.onmessage = async (e) => {
-    let msg
-    try { msg = JSON.parse(e.data) } catch { return }
-    if (msg.jsonrpc !== '2.0') return
+  console.log('[tap-nm] port opened to', NATIVE_HOST_NAME)
+  lastDisconnectReason = ''
+  setBadge(true)
+
+  port.onMessage.addListener(async (msg) => {
+    // Chrome Native Messaging delivers the parsed object directly —
+    // no JSON.parse needed (unlike ws.onmessage with e.data).
+    if (!msg || msg.jsonrpc !== '2.0') return
 
     // ─── Notification: cleanup_tabs ───────────────────────────────────
     // Per ADR 2026-05-10-plan-lifecycle-scoped-tabs: daemon sends
     //   {jsonrpc:"2.0", method:"cleanup_tabs", params:{sessionId, tabIds:[...]}}
-    // (notification — no id) when a Run with lifecycle:"scoped"
-    // (the RAII default) terminates. We close each tracked tab
-    // errorTolerant — if the user already closed it, chrome.tabs.remove
-    // rejects, we discard (race per ADR §6.4). Pre-existing tabs not in
-    // tabIds are untouched (per ADR §6.2).
+    // (notification — no id) when a Run with lifecycle:"scoped" (the
+    // RAII default) terminates. We close each tracked tab errorTolerant
+    // — if the user already closed it, chrome.tabs.remove rejects, we
+    // discard (race per ADR §6.4). Pre-existing tabs not in tabIds are
+    // untouched (per ADR §6.2).
     if (msg.method === 'cleanup_tabs' && (msg.id === undefined || msg.id === null)) {
       const tabIds = (msg.params && Array.isArray(msg.params.tabIds)) ? msg.params.tabIds : []
       for (const tabId of tabIds) {
@@ -1439,7 +1420,7 @@ function startWs() {
     const resolvedParams = { ...rest }
     // Engine-side EvalOp uses `fn`; extension's handleMethod historically
     // reads `params.expression`. Translate here so we don't have to fork
-    // the type. (Pre-existing mismatch — not introduced by Phase 5 WS.)
+    // the type.
     if (method === 'eval' && resolvedParams.fn !== undefined && resolvedParams.expression === undefined) {
       resolvedParams.expression = `(${resolvedParams.fn})()`
     }
@@ -1449,14 +1430,6 @@ function startWs() {
         resolvedParams.tabId = sessions.get(params.sessionId).tabId
       }
     }
-    // Per ADR 2026-05-10-saa-page-session-fetch-cross-repo: the prior
-    // `params.lastActiveTab` fallback is deleted. Daemon does not send
-    // it (per parent SAA ADR `2026-05-10-session-as-actor`); the only
-    // legitimate tab source is sessions[sessionId] populated by a prior
-    // op:nav (self-heal at 'nav' case binds tabId on demand) or
-    // session.create. TabBoundOp without a bound session = error path
-    // owned by the op handler (e.g. page-session fetch's 'no tabId'
-    // branch above).
     let response
     try {
       const result = await handleMethod(method, resolvedParams, null, { fromDaemon: true })
@@ -1472,17 +1445,25 @@ function startWs() {
         },
       }
     }
-    try { ws.send(JSON.stringify(response)) } catch { /* socket gone */ }
-  }
-  ws.onclose = (ev) => {
-    console.log('[tap-ws] closed:', ev.code, ev.reason)
-    ws = undefined
+    try { port.postMessage(response) } catch { /* port gone */ }
+  })
+
+  port.onDisconnect.addListener(() => {
+    const err = chrome.runtime.lastError
+    lastDisconnectReason = (err && err.message) || '(no error)'
+    console.log('[tap-nm] port disconnected:', lastDisconnectReason)
+    port = undefined
     setBadge(false)
-    if (wsHardClosed) return
-    setTimeout(() => startWs(), wsBackoff)
-    wsBackoff = Math.min(wsBackoff * 2, 30000)
-  }
-  ws.onerror = () => { /* onclose follows */ }
+    // No reconnect timer. Either:
+    //   - daemon stopped → next user action (which spawns a fresh SW
+    //     instance via any chrome API call) re-runs top-level
+    //     connectBridge() below.
+    //   - host crashed → Chrome's anti-DoS blocklist would activate on
+    //     repeated crashes anyway; a tight reconnect loop would just
+    //     accelerate that.
+    // The next legitimate SW spawn (user action / browser restart)
+    // re-establishes the bridge.
+  })
 }
 
 // Classify extension-side error string into a JSON-RPC code via
@@ -1519,9 +1500,8 @@ function classifyExtensionError(msg, _method) {
 // Daemon's lastActiveTab cache was deleted by parent SAA ADR; tab
 // routing flows through sessionId/sessions[] only.
 
-// (Keep-alive consolidated into the 25s `tap-keepalive` alarm + wake
-// hooks at the top of this file. The prior separate 1-min `keepalive`
-// alarm was redundant — it only caught WS drops up to 60s late while
-// the 25s alarm now handles reconnect in-band.)
-
-startWs()
+// Connect the native-messaging bridge on SW spawn. Per ADR 2026-05-13:
+// the Port itself keeps the SW alive (PoC T1: >19 min idle with 0
+// traffic). No keepalive alarm needed; no wake hooks needed; the next
+// SW respawn (browser restart, user action) re-runs this line.
+connectBridge()
