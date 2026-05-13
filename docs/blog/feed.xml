@@ -6,7 +6,15 @@
 <description>Engineering insights on browser automation, AI agents, and deterministic programs.</description>
 <language>en-us</language>
 <atom:link href="https://taprun.dev/blog/feed.xml" rel="self" type="application/rss+xml"/>
-<lastBuildDate>Mon, 27 Apr 2026 00:00:00 +0000</lastBuildDate>
+<lastBuildDate>Wed, 13 May 2026 00:00:00 +0000</lastBuildDate>
+
+<item>
+<title>Building Hit Zero. Distribution Didn't.</title>
+<link>https://taprun.dev/blog/building-hit-zero-distribution-didnt.html</link>
+<description>AI agents compressed solo site-building from a month to a weekend. They did not compress distribution. Three popular AdSense-revival claims, three Reddit counter-examples from real operators. Costly Signaling Law explains why "I shipped a tool" stopped carrying information, and what's left to compete on.</description>
+<pubDate>Wed, 13 May 2026 00:00:00 +0000</pubDate>
+<guid>https://taprun.dev/blog/building-hit-zero-distribution-didnt.html</guid>
+</item>
 
 <item>
 <title>Compile-time AI is safe. Runtime AI deleted a production database.</title>
