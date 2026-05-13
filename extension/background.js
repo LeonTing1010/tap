@@ -1331,10 +1331,20 @@ function setBadge(ok) {
 // (host-as-byte-forwarder model). Per the 2026-05-14 T4-final
 // refactor, the NM host IS the dispatch core — there is no separate
 // daemon process. The Chrome SW calls
-// chrome.runtime.connectNative("dev.taprun.host"), which spawns the
-// tap binary; the binary detects its argv[0]=chrome-extension://...
+// chrome.runtime.connectNative("dev.taprun.daemon"), which spawns
+// the tap binary; the binary detects its argv[0]=chrome-extension://
 // invocation and routes into core/native-messaging/host.ts which
 // binds ~/.tap/host.sock for CLI conns and serves dispatch directly.
+//
+// NATIVE_HOST_NAME below MUST equal core/native-messaging/extension_id.ts's
+// NATIVE_HOST_NAME export. Drift = silent NM handshake failure.
+// Architecture test `N9` (core/src/test/architecture_native_messaging_
+// test.ts) reads this literal and asserts equality with the Deno-side
+// constant; the test fails the build before any release ships with a
+// mismatch. The literal still carries ".daemon" suffix for the
+// historical reason explained in extension_id.ts — renaming would
+// require atomic CLI+extension release, which is impossible across
+// CWS auto-update + brew upgrade cadence.
 //
 // Key properties (PoC 2026-05-13 validated, see core/core-experiments/
 // native-messaging-poc/):
@@ -1370,7 +1380,7 @@ const WIRE_CODE = {
   tap_drifted: -32014,
 }
 
-const NATIVE_HOST_NAME = 'dev.taprun.host'
+const NATIVE_HOST_NAME = 'dev.taprun.daemon'
 let port = undefined
 // Last disconnect reason from chrome.runtime.lastError — surfaced to
 // popup so the UI can show a specific CTA per failure mode:
