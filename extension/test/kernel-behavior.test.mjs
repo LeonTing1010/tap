@@ -248,8 +248,13 @@ console.log('\n  -- Rule 6: Screenshot Defaults --\n')
 console.log('\n  -- Rule 8: Click JS-First --\n')
 
 {
-  const clickStart = BG_SRC.indexOf("case 'click':")
-  const clickEnd = BG_SRC.indexOf("case 'type':")
+  // Find the BUILT-IN click case (the real implementation) — not the
+  // op:input dispatch shell. The op:input switch (~line 498) has
+  // `case 'click':` that just calls handleMethod('click', ...); the actual
+  // click logic lives in the built-in `case 'click': {` (~line 521 — note
+  // the opening brace). Match on the brace to skip the dispatch shell.
+  const clickStart = BG_SRC.indexOf("case 'click': {")
+  const clickEnd = BG_SRC.indexOf("case 'type': {", clickStart)
   const clickBody = BG_SRC.substring(clickStart, clickEnd)
 
   test('click uses execFunc for JS click (not cdpClick as primary)', () => {

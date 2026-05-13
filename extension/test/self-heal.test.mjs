@@ -5,20 +5,18 @@
  * Classification: safety / what — violations cause silent peer_unreachable
  * spurious failures and active-tab clobbering during daemon ops.
  *
- * Per ADR `2026-05-08-failure-detection-phase-2.md` §2C:
- *   (i)  chrome.alarms keep-alive prevents MV3 SW idle (~30s timeout) from
- *        firing peer_unreachable to engine.
- *   (ii) fromDaemon exemption deleted — daemon-driven navs ALWAYS open a
- *        managed background tab when active is chrome://, never clobber.
+ * Rule (i): SW keepalive — POST-2026-05-13 (native messaging migration):
+ *   The chrome.runtime.connectNative port is held by the SW; per PoC T1
+ *   the port itself keeps the SW alive past Chrome's 30s idle threshold
+ *   AND past the 5-minute hard-kill (validated 19m30s zero-traffic
+ *   persistence). Previously: chrome.alarms 25s keepalive (deleted per
+ *   ADR 2026-05-13-daemon-extension-via-native-messaging.md §3 N1).
  *
- * Adversarial framing (Phase 1a):
- *   "If a half-implementation made this test pass, it could (a) add the
- *    chrome.alarms.create call but never wire onAlarm.addListener (no-op
- *    timer that doesn't actually wake SW) — caught by Rule (i)/2; (b)
- *    delete the !fromDaemon expression but introduce a different
- *    bypass like `if (isInternal && something_else)` that lets daemon
- *    navs through — caught by Rule (ii)/2 which asserts the strict
- *    isInternal-only guard pattern."
+ * Rule (ii): chrome:// guard — daemon-driven navs always use managed
+ * background tab (no !fromDaemon exemption).
+ *
+ * Rule (iii): origin-mismatch nav → new background tab.
+ * Rule (iv): cross-origin new tab binds via SAA self-heal (sessions.set).
  *
  * Run: node extension/test/self-heal.test.mjs
  */
@@ -47,50 +45,67 @@ function test(name, fn) {
 }
 
 // ═══════════════════════════════════════════════════════════
-// Rule (i): MV3 SW keep-alive via chrome.alarms
-// Why: MV3 SW unloads after ~30s of inactivity. Without a keep-alive,
-// idle daemon connections produce spurious peer_unreachable on next
-// op; classifyOpFailure routes those to reconnect_extension, but the
-// root cause is fixable here, not at the engine layer.
+// Rule (i): SW keepalive via Native Messaging port (post-2026-05-13)
+// Why: chrome.runtime.connectNative port persistence replaces the prior
+// chrome.alarms 25s ping. PoC validated 19m30s zero-traffic SW alive
+// while port is open — far past MV3's 30s idle and 5-min hard-kill.
+//
+// The OLD rule asserted chrome.alarms.create('tap-keepalive') existed;
+// per N1 architecture invariant that string MUST be gone post-migration.
+// These tests enforce both directions:
+//   - presence: connectNative call wired
+//   - absence: no chrome.alarms.create / no tap-keepalive name
 // ═══════════════════════════════════════════════════════════
 
-console.log("\n  -- Rule (i): MV3 SW keep-alive --\n");
+console.log("\n  -- Rule (i): SW keepalive via native messaging port --\n");
 
-test("chrome.alarms.create with name 'tap-keepalive' exists", () => {
-  // The name string is part of the contract — onAlarm dispatch matches
-  // on it, and arch tests cite it directly.
+test("chrome.runtime.connectNative is wired (sole keepalive mechanism)", () => {
   assert(
-    /chrome\.alarms\.create\s*\(\s*["']tap-keepalive["']/.test(BG_SRC),
-    "background.js must call chrome.alarms.create with name 'tap-keepalive'",
+    /chrome\.runtime\.connectNative\s*\(/.test(BG_SRC),
+    "background.js must call chrome.runtime.connectNative to establish the port that keeps SW alive",
   );
 });
 
-test("chrome.alarms.onAlarm.addListener wired to keepalive", () => {
+test("connectNative targets the canonical host name 'dev.taprun.daemon'", () => {
+  // The host name is part of the contract — the per-user manifest at
+  // ~/Library/Application Support/Google/Chrome/NativeMessagingHosts/
+  // dev.taprun.daemon.json identifies the host by this exact name.
   assert(
-    /chrome\.alarms\.onAlarm\.addListener/.test(BG_SRC),
-    "background.js must register a chrome.alarms.onAlarm listener",
-  );
-  // Listener body must reference the keepalive alarm name (otherwise it
-  // would be a no-op dispatcher matching nothing).
-  const listenerStart = BG_SRC.indexOf("chrome.alarms.onAlarm.addListener");
-  const listenerBody = BG_SRC.slice(listenerStart, listenerStart + 600);
-  assert(
-    /tap-keepalive/.test(listenerBody),
-    "onAlarm listener body must dispatch on the 'tap-keepalive' alarm name",
+    /chrome\.runtime\.connectNative\s*\(\s*['"`]?(?:NATIVE_HOST_NAME|dev\.taprun\.daemon)['"`]?\s*\)/
+      .test(BG_SRC) ||
+    /['"`]dev\.taprun\.daemon['"`]/.test(BG_SRC),
+    "background.js must reference 'dev.taprun.daemon' as the native messaging host name",
   );
 });
 
-test("keepalive period is < 0.5 minutes (< 30s, MV3 idle window)", () => {
-  // Default MV3 SW idle is 30s; keepalive must fire faster. Accept any
-  // periodInMinutes literal < 0.5 (i.e. <= 0.4 typical, or 0.49).
-  const m = BG_SRC.match(
-    /chrome\.alarms\.create\s*\(\s*["']tap-keepalive["']\s*,\s*\{[^}]*periodInMinutes:\s*([\d.]+)/,
-  );
-  assert(m, "chrome.alarms.create must specify periodInMinutes");
-  const period = parseFloat(m[1]);
+test("port.onDisconnect listener captures lastError for popup CTA dispatch", () => {
+  // The popup distinguishes failure modes by Chrome's lastError.message;
+  // SW must capture that into a module-scope variable returned via the
+  // tap-status response.
   assert(
-    period < 0.5,
-    `periodInMinutes ${period} >= 0.5 — SW would idle-die between alarms (MV3 idle ~30s = 0.5min)`,
+    /port\.onDisconnect\.addListener/.test(BG_SRC),
+    "background.js must register port.onDisconnect listener",
+  );
+  assert(
+    /chrome\.runtime\.lastError/.test(BG_SRC),
+    "port.onDisconnect handler must read chrome.runtime.lastError for failure-mode classification",
+  );
+});
+
+test("no chrome.alarms.create call (keepalive deleted per N1 invariant)", () => {
+  // Regression guard: the old alarm-based keepalive must stay deleted.
+  // Native messaging port is the only keepalive mechanism — reintroducing
+  // an alarm would be code rot.
+  assert(
+    !/chrome\.alarms\.create/.test(BG_SRC),
+    "chrome.alarms.create must NOT appear — native messaging port is the sole keepalive (N1 invariant)",
+  );
+});
+
+test("no 'tap-keepalive' alarm name (regression guard for the retired name)", () => {
+  assert(
+    !/tap-keepalive/.test(BG_SRC),
+    "'tap-keepalive' alarm name must NOT appear — deleted post-2026-05-13",
   );
 });
 
@@ -105,7 +120,6 @@ test("keepalive period is < 0.5 minutes (< 30s, MV3 idle window)", () => {
 console.log("\n  -- Rule (ii): chrome:// guard always open background tab --\n");
 
 test("no `&& !fromDaemon` exemption in isInternal nav guard", () => {
-  // Strict text check: the exact stale pattern must be absent.
   assert(
     !/if\s*\(\s*isInternal\s*&&\s*!fromDaemon\s*\)/.test(BG_SRC),
     "Stale exemption `if (isInternal && !fromDaemon)` must be deleted; " +
@@ -114,9 +128,6 @@ test("no `&& !fromDaemon` exemption in isInternal nav guard", () => {
 });
 
 test("isInternal guard exists and opens new tab", () => {
-  // The guard may be `if (isInternal)` or `if (isInternal || <other>)`.
-  // What matters: isInternal participates in a guard whose body opens
-  // a new background tab via chrome.tabs.create.
   const idx = BG_SRC.search(/if\s*\(\s*isInternal[\s|)]/);
   assert(
     idx !== -1,
@@ -131,22 +142,11 @@ test("isInternal guard exists and opens new tab", () => {
 
 // ═══════════════════════════════════════════════════════════
 // Rule (iii): origin-mismatch nav → new background tab
-// Why: 2026-05-08 dogfood — Cloudflare nav redirected through CF
-// auth chain, leaving tab on dash.cloudflare.com/two-factor. Next
-// nav (juejin.cn/search) called `chrome.tabs.update(tabId, { url })`
-// to navigate same tab, but the eval ran on cloudflare login page —
-// silent data corruption. Same applies to parallel batch calls
-// sharing a tab. Fix: when daemon-driven nav target origin differs
-// from current tab origin, open a new background tab instead of
-// clobbering. Same-origin navs continue to use tabs.update (cheap).
 // ═══════════════════════════════════════════════════════════
 
 console.log("\n  -- Rule (iii): origin-mismatch nav → new background tab --\n");
 
 test("nav handler computes target origin", () => {
-  // Source-text proxy: must call new URL(...) on params.url to extract origin.
-  // Pattern: `new URL(params.url)` followed by `.origin` access OR variable
-  // assignment that's later compared to current origin.
   assert(
     /new URL\(params\.url\)/.test(BG_SRC),
     "nav handler must construct URL(params.url) to extract target origin",
@@ -154,12 +154,8 @@ test("nav handler computes target origin", () => {
 });
 
 test("nav handler compares target.origin vs current.origin", () => {
-  // Must read .origin from both target and current to compare.
-  // Looser pattern: at least 2 occurrences of `.origin` near nav case
-  // (one for target, one for current).
   const navStart = BG_SRC.indexOf("case 'nav':");
   assert(navStart !== -1, "nav case handler must exist");
-  // Search a 2000-char window starting from `case 'nav':`.
   const navBlock = BG_SRC.slice(navStart, navStart + 2000);
   const originAccesses = navBlock.match(/\.origin\b/g) || [];
   assert(
@@ -170,27 +166,16 @@ test("nav handler compares target.origin vs current.origin", () => {
 });
 
 test("origin mismatch branch opens new tab via chrome.tabs.create", () => {
-  // Two acceptable idioms:
-  //   (a) inline:   if (target.origin !== current.origin) { chrome.tabs.create(...) }
-  //   (b) variable: const cross = a.origin !== b.origin; if (... || cross) { chrome.tabs.create(...) }
-  // What matters: somewhere in the nav handler there's an `.origin !==
-  // .origin` comparison whose result drives a chrome.tabs.create branch.
   const navStart = BG_SRC.indexOf("case 'nav':");
   const navBlock = BG_SRC.slice(navStart, navStart + 3000);
-  // Step 1: confirm origin-vs-origin comparison appears.
   assert(
     /\.origin\s*!==?\s*[a-zA-Z_$.]*\.origin/.test(navBlock),
     "nav handler must compare `.origin !== .origin` (cross-origin detection)",
   );
-  // Step 2: confirm chrome.tabs.create appears within the same nav block.
   assert(
     /chrome\.tabs\.create/.test(navBlock),
     "nav handler must call chrome.tabs.create somewhere",
   );
-  // Step 3: confirm the result of the origin comparison influences a
-  // boolean used in the if-guard. Look for either:
-  //   - inline:    if (...origin !==...origin...) { ... chrome.tabs.create
-  //   - variable:  crossOrigin (or similar) referenced in if + assigned from origin compare
   const inlinePattern =
     /if\s*\([^)]*\.origin\s*!==?[^)]*\.origin[^)]*\)\s*\{[\s\S]{0,500}chrome\.tabs\.create/;
   const variablePattern =
@@ -204,36 +189,17 @@ test("origin mismatch branch opens new tab via chrome.tabs.create", () => {
 
 // ═══════════════════════════════════════════════════════════
 // Rule (iv): cross-origin new tab must bind to params._sessionId locally
-// Why: 2026-05-08 dogfood post-merge — after §2C(iii) opens a new bg tab
-// for cross-origin nav, subsequent ops in the same plan must route to
-// the new tab. Pre-2026-05-10: this was solved by manually emitting
-// active_tab_changed so daemon's lastActiveTab cache updates. Post-2026-
-// 05-10 (parent SAA ADR + this ADR): daemon's lastActiveTab cache is
-// deleted; the new mechanism is the SAA self-heal at the end of the nav
-// handler — `if (!sessionUpdated && fromDaemon && sid && !sessions.has(sid))
-// { sessions.set(sid, {tabId, ...}) }` — binds the new tabId to the
-// dispatch sessionId locally without any daemon round-trip.
-//
-// Per ADR 2026-05-10-saa-page-session-fetch-cross-repo. The corresponding
-// active_tab_changed emissions in nav / ws.onopen / chrome.tabs.onActivated
-// are deleted (regression-guarded by SAA1 in the core repo).
 // ═══════════════════════════════════════════════════════════
 
 console.log("\n  -- Rule (iv): cross-origin new tab binds via SAA self-heal --\n");
 
 test("nav handler contains SAA self-heal that binds new tabId to sessionId", () => {
-  // Structural property: somewhere in the nav handler, after tabId is
-  // (re)assigned, there must be a self-heal block that pulls
-  // `params._sessionId` and calls `sessions.set(sid, {tabId, ...})`.
-  // This is what replaces the old daemon-side lastActiveTab cache.
   const navStart = BG_SRC.indexOf("case 'nav':");
   const navEnd = BG_SRC.indexOf("case '", navStart + 10);
   const navBlock = BG_SRC.slice(
     navStart,
     navEnd > 0 ? navEnd : navStart + 6000,
   );
-  // Look for: params._sessionId assignment + sessions.set(<sid>, {tabId})
-  // within the nav handler.
   const hasSidPickup = /params\._sessionId/.test(navBlock);
   const hasSessionsSet = /sessions\.set\s*\(\s*sid\s*,\s*\{\s*tabId/.test(
     navBlock,
@@ -248,24 +214,21 @@ test("nav handler contains SAA self-heal that binds new tabId to sessionId", () 
 });
 
 test("nav handler does NOT emit active_tab_changed (deleted per SAA cross-repo ADR)", () => {
-  // Regression guard. The pre-2026-05-10 nav handler had a manual
-  // active_tab_changed emission for daemon's lastActiveTab cache. Both
-  // the daemon's cache AND the emission are deleted. SAA1 in core/
-  // bans `lastActiveTab` symbol use; this is the cross-repo counterpart
-  // for the wire-side notification.
   const navStart = BG_SRC.indexOf("case 'nav':");
   const navEnd = BG_SRC.indexOf("case '", navStart + 10);
   const navBlock = BG_SRC.slice(
     navStart,
     navEnd > 0 ? navEnd : navStart + 6000,
   );
-  // The string may appear in a comment referencing the ADR; only
-  // reject ws.send / JSON.stringify shapes that actually emit.
-  const re = /ws\.send\s*\([\s\S]{0,200}?active_tab_changed/;
+  // Old shape: ws.send({...active_tab_changed...}). New transport is
+  // port.postMessage but the regression guard applies to either — the
+  // notification should not be emitted at all.
+  const wsPattern = /ws\.send\s*\([\s\S]{0,200}?active_tab_changed/;
+  const portPattern = /port\.postMessage\s*\([\s\S]{0,200}?active_tab_changed/;
   assert(
-    !re.test(navBlock),
-    "Nav handler must not call ws.send({...active_tab_changed...}) — the " +
-      "daemon-side lastActiveTab cache is gone (parent SAA ADR); the SAA " +
+    !wsPattern.test(navBlock) && !portPattern.test(navBlock),
+    "Nav handler must not emit active_tab_changed via ws.send or port.postMessage — " +
+      "the daemon-side lastActiveTab cache is gone (parent SAA ADR); the SAA " +
       "self-heal binds tabId locally via sessions.set instead.",
   );
 });

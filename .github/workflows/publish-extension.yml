@@ -56,12 +56,17 @@ jobs:
           generate_release_notes: true
 
       - name: Upload and publish to Chrome Web Store
+        # chrome-webstore-upload-cli ≥3.x removed --client-id / --client-secret /
+        # --refresh-token flags (see fregante/chrome-webstore-upload-cli#80).
+        # Values now MUST be passed via env vars CLIENT_ID / CLIENT_SECRET /
+        # REFRESH_TOKEN. --extension-id flag is preserved.
+        env:
+          CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+          REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
         run: |
           npm install -g chrome-webstore-upload-cli
           chrome-webstore-upload upload \
             --source tap-extension-${{ steps.version.outputs.version }}.zip \
             --extension-id '${{ secrets.CHROME_EXTENSION_ID }}' \
-            --client-id '${{ secrets.CHROME_CLIENT_ID }}' \
-            --client-secret '${{ secrets.CHROME_CLIENT_SECRET }}' \
-            --refresh-token '${{ secrets.CHROME_REFRESH_TOKEN }}' \
             --auto-publish
