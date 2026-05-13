@@ -63,18 +63,26 @@ test('popup.html all sections start hidden (background SW resolves state)', () =
   }
 })
 
-test('popup.html dc-not-installed cites `tap bridge setup` command', () => {
-  // The setup CTA gets the user from "extension installed but manifest
-  // missing" to "bridge working". popup.js auto-bakes the extension ID
-  // into this command at render time — the static HTML carries the
-  // template (`tap bridge setup --extension-id …`).
-  assert.match(HTML_SRC, /tap bridge setup --extension-id/,
-    'dc-not-installed section must template the `tap bridge setup --extension-id …` command')
+test('popup.html dc-not-installed cites bare `tap bridge setup` command', () => {
+  // Per ADR 2026-05-13-install-os-managed-daemon.md Slice 3: the extension
+  // ID is pinned in manifest.json's `"key"` field. `tap bridge setup` takes
+  // no flag, and the popup ships the canonical form as static markup
+  // (no per-install ID injection by popup.js).
+  assert.match(HTML_SRC, /<code>tap bridge setup<\/code>/,
+    'dc-not-installed section must cite the bare `tap bridge setup` command (no --extension-id flag — pinned via manifest "key" field)')
+  assert.doesNotMatch(HTML_SRC, /tap bridge setup --extension-id/,
+    'must NOT carry the legacy --extension-id template — Slice 3 removed it')
 })
 
-test('popup.html dc-host-exited cites `tap bridge start` command', () => {
-  assert.match(HTML_SRC, /tap bridge start/,
-    'dc-host-exited section must cite `tap bridge start`')
+test('popup.html dc-host-exited cites `tap bridge setup`, not deleted `tap bridge start`', () => {
+  // Per ADR 2026-05-13-install-os-managed-daemon.md Slice 1: `tap bridge
+  // start` was deleted from the CLI. Daemon liveness is OS-supervised; if
+  // the bridge is not running, the user's recovery path is to re-run
+  // `tap bridge setup` (idempotent) and then load the service.
+  assert.match(HTML_SRC, /<code>tap bridge setup<\/code>/,
+    'dc-host-exited must cite the bare `tap bridge setup` command (idempotent re-run)')
+  assert.doesNotMatch(HTML_SRC, /tap bridge start/,
+    'must NOT cite `tap bridge start` — that subcommand was deleted (94c6a43; CDD I1/I2 guards)')
 })
 
 test('popup.html install link carries UTM params (memory: always-utm-external-shares)', () => {
@@ -114,13 +122,17 @@ test('popup.js classifies disconnect reason into 4 buckets', () => {
   assert.match(JS_SRC, /forbidden/, 'classifier missing forbidden bucket')
 })
 
-test('popup.js auto-bakes chrome.runtime.id into setup CTA', () => {
-  // Critical UX: user shouldn't have to manually copy their ext ID from
-  // chrome://extensions. popup.js must read status.extensionId (which SW
-  // populates via chrome.runtime.id) and substitute into the setup-cmd
-  // <code> block.
-  assert.match(JS_SRC, /extensionId/, 'popup.js must read status.extensionId')
-  assert.match(JS_SRC, /setup-cmd/, 'popup.js must update the #setup-cmd <code> element')
+test('popup.js NO LONGER injects extension ID into setup CTA (P4 anti-reintroduce)', () => {
+  // Per ADR 2026-05-13-install-os-managed-daemon.md Slice 3: the extension
+  // ID is pinned via manifest.json `"key"` and surfaced as the constant
+  // EXTENSION_ID_PINNED. The popup ships the canonical command as static
+  // markup; popup.js no longer reads chrome.runtime.id, no longer mutates
+  // #setup-cmd. A future commit that re-introduces ID injection would
+  // fail this assertion — P4 anti-reintroduce guard.
+  assert.doesNotMatch(JS_SRC, /setup-cmd/,
+    'popup.js must NOT mutate #setup-cmd — the popup ships static markup post-Slice-3')
+  assert.doesNotMatch(JS_SRC, /tap bridge setup --extension-id/,
+    'popup.js must NOT construct a `--extension-id` command line — flag was removed')
 })
 
 // ─── Static dispatch logic check: regex-match the classifier branches ────
