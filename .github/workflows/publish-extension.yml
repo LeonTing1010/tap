@@ -60,12 +60,18 @@ jobs:
         # --refresh-token flags (see fregante/chrome-webstore-upload-cli#80).
         # Values now MUST be passed via env vars CLIENT_ID / CLIENT_SECRET /
         # REFRESH_TOKEN. --extension-id flag is preserved.
+        #
+        # CLI pinned to 3.5.0 — the last 3.x release. 4.0.0 (2026-05-12) bumped
+        # `chrome-webstore-upload` to ^6 which requires a new `publisherId`
+        # option (CWS PartnerDashV4 API). `PUBLISHER_ID` env is wired in below
+        # so removing the pin later only requires creating the secret.
         env:
           CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
           REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+          PUBLISHER_ID: ${{ secrets.CHROME_PUBLISHER_ID }}
         run: |
-          npm install -g chrome-webstore-upload-cli
+          npm install -g chrome-webstore-upload-cli@3.5.0
           chrome-webstore-upload upload \
             --source tap-extension-${{ steps.version.outputs.version }}.zip \
             --extension-id '${{ secrets.CHROME_EXTENSION_ID }}' \
