@@ -74,15 +74,27 @@ test('popup.html dc-not-installed cites bare `tap bridge setup` command', () => 
     'must NOT carry the legacy --extension-id template — Slice 3 removed it')
 })
 
-test('popup.html dc-host-exited cites `tap bridge setup`, not deleted `tap bridge start`', () => {
-  // Per ADR 2026-05-13-install-os-managed-daemon.md Slice 1: `tap bridge
-  // start` was deleted from the CLI. Daemon liveness is OS-supervised; if
-  // the bridge is not running, the user's recovery path is to re-run
-  // `tap bridge setup` (idempotent) and then load the service.
-  assert.match(HTML_SRC, /<code>tap bridge setup<\/code>/,
-    'dc-host-exited must cite the bare `tap bridge setup` command (idempotent re-run)')
+test('popup.html dc-host-exited cites Chrome/SW activation, not deleted `tap bridge start` / OS service load', () => {
+  // Per ADR 2026-05-14-host-as-daemon.md: host is launched by Chrome's
+  // SW (no OS service, no `tap bridge start` user command). Recovery
+  // when the bridge isn't running = wake the SW (open Chrome window,
+  // retry, or address a host crash). NOT `tap bridge setup` (that's
+  // only Setup-required state) and NOT `launchctl`/`systemctl` (no
+  // service to load in the host-as-daemon model).
+  assert.match(HTML_SRC, /host\.log|Retry|service worker is active|window is open/i,
+    'dc-host-exited must point at Chrome/SW activation or host crash diagnostics')
   assert.doesNotMatch(HTML_SRC, /tap bridge start/,
-    'must NOT cite `tap bridge start` — that subcommand was deleted (94c6a43; CDD I1/I2 guards)')
+    'must NOT cite `tap bridge start` — deleted in 94c6a43 (CDD I1/I2 guards)')
+  // The dc-host-exited section is specifically about the bridge NOT
+  // RUNNING — slicing the HTML in two to scope this assertion. The
+  // dc-not-installed section still uses `tap bridge setup` and must
+  // not be confused with this one.
+  const hostExitedSec = HTML_SRC.match(/<section id="dc-host-exited"[\s\S]*?<\/section>/)
+  assert.ok(hostExitedSec, 'dc-host-exited section must exist')
+  assert.doesNotMatch(hostExitedSec[0], /tap bridge setup/,
+    'dc-host-exited must NOT advise `tap bridge setup` — that is the dc-not-installed CTA, not this state')
+  assert.doesNotMatch(hostExitedSec[0], /launchctl|systemctl/,
+    'dc-host-exited must NOT cite launchctl/systemctl — host-as-daemon eliminates the OS service per ADR 2026-05-14')
 })
 
 test('popup.html install link carries UTM params (memory: always-utm-external-shares)', () => {

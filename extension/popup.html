@@ -47,9 +47,12 @@
       <span class="dot dot-err"></span>
       <span><strong>Bridge not running</strong></span>
     </div>
-    <p>Re-run setup (idempotent — writes the service if missing):</p>
-    <pre><code>tap bridge setup</code><button class="copy" data-copy="tap bridge setup" title="Copy">⧉</button></pre>
-    <p class="muted">Then follow the printed <code>launchctl bootstrap</code> (macOS) or <code>systemctl --user enable --now</code> (Linux) line to load the service. If the service is already loaded, the host may have crashed — check <code>host.log</code> next to the <code>tap</code> binary.</p>
+    <p>The bridge launches when this extension's service worker is active. Try:</p>
+    <ul class="muted">
+      <li>Make sure Chrome's window is open — closing all windows suspends the SW.</li>
+      <li>Click the Retry button below to wake the SW + relaunch the host.</li>
+      <li>If it persists, the host may have crashed — check <code>host.log</code> next to the <code>tap</code> binary.</li>
+    </ul>
     <div class="actions">
       <button class="retry">Retry connection</button>
       <a href="https://taprun.dev/install?utm_source=chrome-ext&utm_medium=extension&utm_campaign=popup-host-exited" target="_blank" rel="noopener">Learn more</a>

@@ -347,7 +347,7 @@ robots: "index,follow"
 
 <span class="cmt"># Register the native-messaging manifest + OS-supervised service</span>
 <span class="prompt">$ </span><span class="k">tap bridge setup</span></pre>
-      <p style="font-size:12.5px; color: var(--text-muted); margin: 0;">The command prints a <code>launchctl bootstrap</code> (macOS) or <code>systemctl --user enable --now</code> (Linux) line — run it to load the service. Then re-open the popup; it should say <span class="badge-illustration green">Connected to local bridge</span>. The OS now keeps the bridge alive across reboots and restarts it within seconds if it crashes.</p>
+      <p style="font-size:12.5px; color: var(--text-muted); margin: 0;">Then open Chrome and click the Taprun toolbar icon — the bridge launches automatically when this extension's service worker activates. The popup should say <span class="badge-illustration green">Connected to local bridge</span>. The bridge lives only as long as the extension is active; closing all Chrome windows shuts it down, and re-opening Chrome wakes it back up.</p>
     </div>
 
     <div class="step">
@@ -379,7 +379,7 @@ robots: "index,follow"
       <li>Still red? The popup tells you which failure mode you hit:
         <ul style="margin-top: 8px;">
           <li><strong>Setup required</strong> → Step 1 second command (<code>tap bridge setup</code>) hasn't run yet.</li>
-          <li><strong>Bridge not running</strong> → the LaunchAgent / systemd unit hasn't been loaded yet. Run the <code>launchctl bootstrap</code> (macOS) or <code>systemctl --user enable --now</code> (Linux) line that <code>tap bridge setup</code> printed.</li>
+          <li><strong>Bridge not running</strong> → the extension's service worker isn't active. Make sure a Chrome window is open and click the Taprun toolbar icon. If it persists, check <code>host.log</code> next to the <code>tap</code> binary for a host crash.</li>
           <li><strong>Chrome blocked the host</strong> → Restart Chrome to clear the crash lockout.</li>
           <li><strong>Bridge down</strong> → See troubleshooting below.</li>
         </ul>

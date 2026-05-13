@@ -35,17 +35,17 @@ curl -fsSL https://taprun.dev/install.sh | sh
 
 From the Chrome Web Store: https://chromewebstore.google.com/detail/tap/llcidejeoobdegbkolbjhfoeckphldce
 
-**3. Register the native-messaging host and start the OS-supervised bridge.**
+**3. Register the native-messaging manifest.**
 
 ```bash
 tap bridge setup
 ```
 
-This writes (a) the Chrome native-messaging manifest that authorises this extension to launch the `tap` binary, and (b) a LaunchAgent (macOS) or systemd user service (Linux) that supervises the bridge daemon. The extension ID is pinned in the manifest — the command takes no flag. One-time per Chrome profile. No network ports are opened.
+This writes the Chrome native-messaging manifest that authorises this extension to launch the `tap` binary. The extension ID is pinned in the manifest — the command takes no flag. One-time per Chrome profile. No network ports are opened, no OS service is installed.
 
-After running it, follow the printed `launchctl bootstrap` (macOS) or `systemctl --user enable --now` (Linux) instruction to load the service.
+**4. Open Chrome and click the Tap toolbar icon.** The bridge launches automatically when this extension's service worker activates. The popup should say "Connected to local bridge". You're set.
 
-**4. Re-open the popup.** It should now say "Connected to local bridge". You're set.
+The bridge only runs while Chrome is open — closing every window shuts it down, and re-opening Chrome (or clicking the toolbar icon) wakes it back up.
 
 ## Getting Started
 
