@@ -41,11 +41,18 @@ jobs:
           $NPX_CMD
 
       - name: MCP stdio returns the 4 bare meta verbs
+        # Step-level backstop replaces the prior in-script `timeout 60`,
+        # which silently no-op'd on macOS runners (`timeout` is GNU
+        # coreutils, not shipped by default on macos-* — caused exit 127
+        # hidden behind `2>/dev/null`, surfacing as "no output" false
+        # positive). 2-min cap; tap mcp stdio responds in well under 1s,
+        # so anything longer is a real hang. Same fix as brew-smoke.yml.
+        timeout-minutes: 2
         run: |
           # Pipe a single tools/list JSON-RPC request to the stdio MCP server.
           # The server reads stdin until EOF, writes one response line, exits.
           REQ='{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
-          OUT=$(echo "$REQ" | timeout 60 npx -y @taprun/cli mcp stdio 2>/dev/null | head -1)
+          OUT=$(echo "$REQ" | npx -y @taprun/cli mcp stdio 2>/dev/null | head -1)
           if [ -z "$OUT" ]; then
             echo "::error::MCP stdio produced no output"
             exit 1
