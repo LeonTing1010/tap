@@ -134,6 +134,19 @@ hr::before { content: '◆ ◆ ◆'; position: absolute; left: 50%; top: -0.7em;
 <p class="meta-intro">Every Taprun release, written as if for a typesetter. For full technical notes on each version, see the <a href="https://github.com/LeonTing1010/tap/releases">GitHub releases page</a>.</p>
 
 <div class="version-block">
+<h2><a href="https://github.com/LeonTing1010/tap/releases/tag/v0.16.3">v0.16.0 – v0.16.3</a> <span class="date">May 13, 2026</span></h2>
+<div class="version-highlight">
+<strong>Extension transport: WebSocket → Native Messaging.</strong> The extension no longer reaches the CLI via <code>ws://127.0.0.1:9333</code>; it speaks to a Chrome-managed native-messaging host over OS-supervised stdio. No localhost port is opened; the host is launched on demand and dies when the extension disconnects. PoC validated for 19m30s sustained port, 2.1ms graceful EOF, and clean shutdown across three failure modes. First-run flow gains a one-time <code>tap bridge setup --extension-id &lt;id&gt;</code> step that writes the native-host manifest into Chrome's profile directory; the popup walks new users through it.
+</div>
+<h3>Changes</h3>
+<ul>
+<li><strong>New permission: <code>nativeMessaging</code>.</strong> Replaces the previous reliance on a localhost WebSocket. No data leaves your machine — see the updated <a href="/privacy.html">Privacy Policy</a>.</li>
+<li><strong>Popup gains failure-mode CTAs.</strong> Distinct messaging for "manifest missing" (run setup), "host crashed" (check <code>host.log</code>), and "Chrome blocklist active" (restart Chrome) — instead of one generic "bridge down".</li>
+<li><strong>Service-worker keepalive consolidated.</strong> 25-second alarm plus four wake hooks (<code>onStartup</code>, <code>onInstalled</code>, <code>tabs.onActivated</code>, <code>windows.onFocusChanged</code>) — Chrome MV3's 30s idle sleep is no longer user-visible.</li>
+</ul>
+</div>
+
+<div class="version-block">
 <h2><a href="https://github.com/LeonTing1010/tap/releases/tag/v0.15.8">v0.15.8</a> <span class="date">May 9, 2026</span></h2>
 <div class="version-highlight">
 <strong>Release pipeline is fully hands-off.</strong> First end-to-end run with zero human intervention: <code>git push v0.15.8</code> → 12 CI jobs → npm + PyPI + GitHub binaries + Homebrew formula + MCP Registry all auto-update. The MCP Registry leg uses GitHub Actions OIDC (no shared secret) with a direct curl POST to bypass a confirmed CLI false-negative bug.

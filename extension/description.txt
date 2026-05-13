@@ -17,14 +17,44 @@ Tap compiles natural language instructions into deterministic JavaScript program
 - **Local-only** — Your data, sessions, and credentials never leave your machine.
 - **Automatic diagnostics** — `tap doctor` detects silent failures via health contracts and fingerprint diffs. AI reads diagnostics and patches programs when needed.
 
-## Getting Started
+## Setup (in this order)
+
+This extension is the browser half of Tap. It does nothing on its own — it talks to the Tap CLI on your machine via Chrome's Native Messaging transport.
+
+**1. Install the Tap CLI first.**
 
 ```bash
-# Quick start
-npx -y @taprun/cli --version
+# macOS (Homebrew)
+brew install LeonTing1010/tap/taprun
 
-# Or install permanently (macOS/Linux)
+# macOS / Linux (curl)
 curl -fsSL https://taprun.dev/install.sh | sh
 ```
 
-Install the Chrome Extension from the Chrome Web Store to automate sites that require login: https://chromewebstore.google.com/detail/tap/llcidejeoobdegbkolbjhfoeckphldce
+**2. Install this Chrome extension.**
+
+From the Chrome Web Store: https://chromewebstore.google.com/detail/tap/llcidejeoobdegbkolbjhfoeckphldce
+
+**3. Register the native-messaging host.**
+
+Click the Tap toolbar icon. The popup will show a one-line command — copy it into your terminal:
+
+```bash
+tap bridge setup --extension-id <id-from-popup>
+```
+
+This writes a small JSON manifest to Chrome's native-messaging directory that authorises this extension to launch the `tap` binary you just installed. One-time per Chrome profile. No network ports are opened.
+
+**4. Re-open the popup.** It should now say "Connected to local bridge". You're set.
+
+## Getting Started
+
+```bash
+# List saved taps
+tap ls
+
+# Run a tap
+tap run github/stars
+```
+
+See https://taprun.dev for the full guide.

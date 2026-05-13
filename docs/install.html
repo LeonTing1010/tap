@@ -354,11 +354,12 @@ robots: "index,follow"
   </section>
 
   <details class="troubleshoot">
-    <summary>Still disconnected? Three things to check</summary>
+    <summary>Still disconnected? Four things to check</summary>
     <ul>
-      <li><strong>Port 9333 in use</strong> — Taprun's daemon listens on <code>127.0.0.1:9333</code>. Check with <code>lsof -i :9333</code>; if another process holds it, kill or reassign before restarting.</li>
+      <li><strong>Native-messaging host not registered</strong> — The extension talks to the CLI through Chrome's Native Messaging transport, not a network port. The host manifest must exist at <code>~/Library/Application Support/Google/Chrome/NativeMessagingHosts/dev.taprun.host.json</code> (macOS) or <code>~/.config/google-chrome/NativeMessagingHosts/dev.taprun.host.json</code> (Linux). Run <code>tap bridge setup --extension-id &lt;id-from-popup&gt;</code> to (re)register it. The popup tells you the extension ID.</li>
+      <li><strong>Chrome blocked the host (crash lockout)</strong> — If the host has crashed ≥5 times in ~3 minutes, Chrome refuses to launch it again for ~10 minutes. The popup will say "Chrome blocked the host". <strong>Restart Chrome</strong> to clear the lockout. Then check <code>host.log</code> next to the <code>tap</code> binary for the underlying crash reason.</li>
       <li><strong>MCP host not restarted</strong> — Claude Code / Cursor only re-read MCP config on launch. Quit fully (not just close the window) and reopen.</li>
-      <li><strong>Service worker asleep</strong> — Chrome MV3 puts background workers to sleep after ~30s idle. Click the Taprun extension icon once to wake it; the badge updates within a second of the daemon being reachable.</li>
+      <li><strong>Service worker asleep</strong> — Chrome MV3 puts background workers to sleep after ~30s idle. Click the Taprun extension icon once to wake it; it reconnects within a second.</li>
     </ul>
   </details>
 

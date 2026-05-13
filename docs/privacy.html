@@ -88,13 +88,13 @@ code { font-family: var(--font-mono); font-size: 14px; color: var(--indigo); bac
 <main class="container">
 <div class="kicker">Legal · A Reference Edition</div>
 <h1>Privacy <em>Policy</em></h1>
-<p class="date">Effective · April 3, 2026</p>
+<p class="date">Effective · May 13, 2026</p>
 
 <h2>Overview</h2>
 <p>Taprun is an open-source browser automation runtime. It consists of a CLI tool and a Chrome extension that work together locally on your machine. <strong>Taprun does not collect, transmit, or store any personal data.</strong></p>
 
 <h2>What Taprun Does</h2>
-<p>Taprun executes deterministic automation scripts (<code>.tap.js</code> files) in your browser. The Chrome extension acts as a local runtime — it receives commands from the CLI via a localhost-only WebSocket connection (<code>ws://127.0.0.1:9333</code>) and executes them in the browser.</p>
+<p>Taprun executes deterministic automation plans (<code>.plan.json</code> files) in your browser. The Chrome extension acts as a local runtime — it communicates with the CLI through Chrome's Native Messaging transport (OS-supervised stdio between the browser and a binary on your machine). No network ports are opened and no remote servers are involved.</p>
 
 <h2>Data Collection</h2>
 <p>Taprun collects <strong>no user data</strong>. Specifically:</p>
@@ -103,19 +103,20 @@ code { font-family: var(--font-mono); font-size: 14px; color: var(--indigo); bac
   <li><strong>No personal information.</strong> No names, emails, or identifiers are collected.</li>
   <li><strong>No browsing history.</strong> Taprun does not track which sites you visit.</li>
   <li><strong>No cookies or credentials.</strong> While Taprun can read cookies for script execution (e.g., authenticated API requests), this data stays entirely on your local machine and is never transmitted externally.</li>
-  <li><strong>No remote servers.</strong> All communication happens locally between the CLI and extension via WebSocket on localhost.</li>
+  <li><strong>No remote servers.</strong> All communication happens locally between the CLI and the extension via Chrome's Native Messaging transport (OS-managed stdio). No localhost ports are opened.</li>
 </ul>
 
 <h2>Permissions Explained</h2>
 <p>The Chrome extension requests several permissions, all used exclusively for local automation:</p>
 <ul>
-  <li><strong>debugger</strong> — Native input simulation (mouse/keyboard events via Chrome DevTools Protocol)</li>
-  <li><strong>activeTab</strong> — Execute scripts in the current tab when a tap command runs</li>
-  <li><strong>tabs</strong> — Tab management: create, navigate, capture screenshots</li>
-  <li><strong>scripting</strong> — Run JavaScript in page context for data extraction and interaction</li>
-  <li><strong>cookies</strong> — Read session cookies for authenticated API requests within taps</li>
-  <li><strong>storage</strong> — Read page localStorage/sessionStorage for client-side state</li>
-  <li><strong>host_permissions (&lt;all_urls&gt;)</strong> — Automate any website the user explicitly targets</li>
+  <li><strong>nativeMessaging</strong> — Connects the extension to the locally-installed Tap CLI binary via Chrome-managed stdio. This is the only transport between the browser and the CLI; no network is involved.</li>
+  <li><strong>debugger</strong> — Native input simulation (mouse/keyboard events via Chrome DevTools Protocol) on tabs the user has explicitly selected for automation.</li>
+  <li><strong>activeTab</strong> — Resolves the tab the user just interacted with so the CLI can run a tap against the right page context.</li>
+  <li><strong>tabs</strong> — Tab management: enumerate, create, navigate, switch focus during multi-step flows. Does not by itself read page content.</li>
+  <li><strong>scripting</strong> — Injects content-script shims into user-selected tabs for DOM reads and event dispatch.</li>
+  <li><strong>cookies</strong> — Reuses the browser's existing session cookies for the sites the user automates, so credentials never leave the machine.</li>
+  <li><strong>storage</strong> — <code>chrome.storage.local</code> only; persists popup state and connection status. No page content or credentials are written.</li>
+  <li><strong>host_permissions (&lt;all_urls&gt;)</strong> — The user decides at runtime which site to automate; host access is exercised only on tabs they explicitly select.</li>
 </ul>
 
 <h2>Third-Party Services</h2>
@@ -124,8 +125,9 @@ code { font-family: var(--font-mono); font-size: 14px; color: var(--indigo); bac
 <h2>Data Storage</h2>
 <p>Taprun stores data only on your local filesystem:</p>
 <ul>
-  <li>Taprun scripts in <code>~/.tap/taps/</code></li>
-  <li>Execution logs in <code>~/.tap/logs/</code></li>
+  <li>Compiled plans in <code>~/.tap/plans/&lt;site&gt;/&lt;name&gt;.plan.json</code></li>
+  <li>Execution logs and intent records in <code>~/.tap/intents/</code> and <code>~/.tap/snapshots/</code></li>
+  <li>Local-only secret store (if used) in <code>~/.tap/config/secrets</code></li>
   <li>No cloud storage or sync</li>
 </ul>
 
