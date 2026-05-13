@@ -45,7 +45,15 @@ tap bridge setup --extension-id <id-from-popup>
 
 This writes a small JSON manifest to Chrome's native-messaging directory that authorises this extension to launch the `tap` binary you just installed. One-time per Chrome profile. No network ports are opened.
 
-**4. Re-open the popup.** It should now say "Connected to local bridge". You're set.
+**4. Start the local bridge daemon.**
+
+```bash
+tap bridge start
+```
+
+The bridge holds your tap registry and authenticated sessions. Chrome launches a small native host on demand that talks to this daemon over a local Unix socket — no network ports involved.
+
+**5. Re-open the popup.** It should now say "Connected to local bridge". You're set.
 
 ## Getting Started
 

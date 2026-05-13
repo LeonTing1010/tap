@@ -7,12 +7,12 @@ robots: "index,follow"
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Taprun extension installed but disconnected — finish setup in 60 seconds</title>
-<meta name="description" content="The Taprun Chrome extension is installed but can't reach a Taprun runtime on this machine. Pick a path: connect your AI agent (Claude Code, Cursor, Windsurf) or run standalone. Two minutes either way.">
+<title>Taprun extension installed — register the bridge in 60 seconds</title>
+<meta name="description" content="Finish setting up the Taprun Chrome extension. One command (`tap bridge setup --extension-id`) registers the native-messaging bridge that connects the extension to the CLI on your machine. Then optionally wire your AI agent.">
 <meta name="robots" content="index,follow">
 <link rel="canonical" href="https://taprun.dev/install">
-<meta property="og:title" content="Taprun extension installed but disconnected — finish setup">
-<meta property="og:description" content="Two paths to connect Taprun: MCP host auto-config, or standalone npx. Verify with the badge: red ! → empty.">
+<meta property="og:title" content="Taprun extension installed — register the bridge in 60 seconds">
+<meta property="og:description" content="One command registers the native-messaging bridge. Then optionally hook it to your AI agent (Claude Code, Cursor, Windsurf) or run taps from the terminal.">
 <meta property="og:url" content="https://taprun.dev/install">
 <meta property="og:type" content="article">
 <meta property="og:image" content="https://taprun.dev/social-preview.png">
@@ -119,25 +119,36 @@ robots: "index,follow"
   h1 .hl { color: var(--gold); }
   .lede { font-size: 17px; color: var(--text-dim); margin: 0 0 8px; max-width: 680px; }
 
-  .paths { display: grid; grid-template-columns: 1fr; gap: 20px; padding: 24px 0 8px; }
-  @media (min-width: 760px) { .paths { grid-template-columns: 1fr 1fr; } }
-  .path {
+  .steps { display: flex; flex-direction: column; gap: 20px; padding: 24px 0 8px; }
+  .step {
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    padding: 24px;
+    padding: 24px 24px 24px 64px;
+    position: relative;
   }
-  .path.recommended { border-color: rgba(99, 102, 241, 0.5); position: relative; }
-  .path.recommended::before {
-    content: 'Recommended';
-    position: absolute; top: -10px; left: 20px;
+  .step.required { border-color: rgba(99, 102, 241, 0.5); }
+  .step.required::after {
+    content: 'Required';
+    position: absolute; top: -10px; right: 20px;
     background: var(--indigo); color: var(--white);
     font-family: var(--font-mono); font-size: 10px; font-weight: 600;
     padding: 3px 8px; border-radius: 4px; letter-spacing: 0.04em;
   }
-  .path h2 { font-family: var(--font-heading); font-weight: 700; font-size: 18px; color: var(--white); margin: 0 0 8px; letter-spacing: -0.01em; }
-  .path p { font-size: 14px; color: var(--text-dim); margin: 0 0 14px; }
-  .path-targets { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); margin: -4px 0 14px; letter-spacing: 0.02em; }
+  .step-num {
+    position: absolute; top: 22px; left: 20px;
+    width: 28px; height: 28px;
+    background: var(--bg-deep);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-mono); font-weight: 700; font-size: 13px;
+    color: var(--indigo-bright);
+  }
+  .step.required .step-num { border-color: var(--indigo); color: var(--white); background: var(--indigo); }
+  .step h2 { font-family: var(--font-heading); font-weight: 700; font-size: 18px; color: var(--white); margin: 0 0 6px; letter-spacing: -0.01em; }
+  .step p { font-size: 14px; color: var(--text-dim); margin: 0 0 14px; }
+  .step-targets { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); margin: -4px 0 14px; letter-spacing: 0.02em; }
 
   pre {
     background: var(--bg-deep);
@@ -317,29 +328,48 @@ robots: "index,follow"
 <main class="container">
 
   <section class="hero">
-    <div class="badge-status"><span class="dot"></span> Extension installed · runtime not reachable</div>
-    <h1>The Taprun extension is installed.<br>Now <span class="hl">give it a runtime to talk to.</span></h1>
-    <p class="lede">The extension reuses your real browser session — that's the whole point. But it can't act alone: it needs the Taprun CLI running on this machine, either spawned by your AI agent over MCP, or started directly in a terminal. Pick the path that matches how you work.</p>
+    <div class="badge-status"><span class="dot"></span> Extension installed · bridge not registered</div>
+    <h1>You're <span class="hl">three commands</span> away from<br>a connected extension.</h1>
+    <p class="lede">The Taprun extension talks to a CLI on your machine through Chrome Native Messaging — an OS-supervised channel, no network port. After a one-time setup, Chrome launches the bridge on demand whenever you trigger a tap. Pick up the commands from the Tap popup, or copy them from here.</p>
   </section>
 
-  <section class="paths">
+  <section class="steps">
 
-    <div class="path recommended">
-      <h2>Connect your AI agent</h2>
-      <div class="path-targets">Claude Code · Cursor · Windsurf · Codex · any MCP host</div>
-      <p>Auto-edit your MCP host config and restart it. The host spawns <code>taprun mcp stdio</code> on demand — no daemon to babysit.</p>
-<pre><span class="prompt">$ </span><span class="k">{{ site.data.cli.install.curl }}</span>
-<span class="prompt">$ </span><span class="k">tap mcp connect</span>           <span class="cmt"># auto-detects host, edits config</span></pre>
-      <p style="font-size:12.5px; color: var(--text-muted); margin: 0;">Then restart your AI agent. The extension badge turns green within 2 seconds of the first MCP call.</p>
+    <div class="step required">
+      <div class="step-num">1</div>
+      <h2>Install the CLI and register the bridge</h2>
+      <div class="step-targets">required · ~60 seconds · macOS / Linux</div>
+      <p>Three commands, one time. Click the Taprun icon in your toolbar first to read your extension ID — the popup tells you the exact <code>--extension-id</code> value to paste below.</p>
+<pre><span class="cmt"># Install the CLI</span>
+<span class="prompt">$ </span><span class="k">{{ site.data.cli.install.brew }}</span>
+<span class="cmt"># or</span>
+<span class="prompt">$ </span><span class="k">{{ site.data.cli.install.curl }}</span>
+
+<span class="cmt"># Register the native-messaging manifest (one-time per Chrome profile)</span>
+<span class="prompt">$ </span><span class="k">tap bridge setup --extension-id &lt;id-from-popup&gt;</span>
+
+<span class="cmt"># Start the bridge daemon</span>
+<span class="prompt">$ </span><span class="k">tap bridge start</span></pre>
+      <p style="font-size:12.5px; color: var(--text-muted); margin: 0;">Re-open the popup. It should say <span class="badge-illustration green">Connected to local bridge</span>. The bridge holds your tap registry and authenticated sessions; Chrome spawns a thin native host on demand that talks to it over a local Unix socket.</p>
     </div>
 
-    <div class="path">
-      <h2>Run standalone</h2>
-      <div class="path-targets">no AI agent · just verify the extension works</div>
-      <p>Start the Taprun MCP server directly. Useful to confirm the extension can reach a runtime before wiring up an agent.</p>
-<pre><span class="prompt">$ </span><span class="k">{{ site.data.cli.install.curl }}</span>
-<span class="prompt">$ </span><span class="k">{{ site.data.cli.mcp.stdio }}</span>      <span class="cmt"># keep this terminal open</span></pre>
-      <p style="font-size:12.5px; color: var(--text-muted); margin: 0;">macOS / Linux. Windows users: <a href="/install.sh">read the install script</a> or use <code>npx -y @taprun/cli</code>.</p>
+    <div class="step">
+      <div class="step-num">2</div>
+      <h2>Optional · Wire your AI agent</h2>
+      <div class="step-targets">Claude Code · Cursor · Windsurf · Codex · any MCP host</div>
+      <p>Auto-edit your MCP host's config so it can call Tap as an MCP tool. Independent from Step 1 — these are two separate channels.</p>
+<pre><span class="prompt">$ </span><span class="k">tap mcp connect</span>           <span class="cmt"># auto-detects host, edits config</span></pre>
+      <p style="font-size:12.5px; color: var(--text-muted); margin: 0;">Then quit and reopen your AI agent (it only re-reads MCP config on launch). After that you can ask it "run the github-stars tap" and it dispatches via MCP.</p>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <h2>Optional · Run taps from the terminal</h2>
+      <div class="step-targets">scripts · cron · CI · no AI agent involved</div>
+      <p>Saved taps run directly from the shell. The extension is only invoked when a tap needs your authenticated browser session.</p>
+<pre><span class="prompt">$ </span><span class="k">tap ls</span>                      <span class="cmt"># list saved taps</span>
+<span class="prompt">$ </span><span class="k">tap run github/stars</span>       <span class="cmt"># execute one</span></pre>
+      <p style="font-size:12.5px; color: var(--text-muted); margin: 0;">Windows users: read the <a href="/install.sh">install script</a> or use <code>npx -y @taprun/cli</code>.</p>
     </div>
 
   </section>
@@ -347,9 +377,16 @@ robots: "index,follow"
   <section class="verify">
     <h2>Verify it worked</h2>
     <ol>
-      <li>Click the Taprun icon in your Chrome toolbar. Hover for the tooltip.</li>
-      <li>Disconnected: <span class="badge-illustration red">! Taprun — disconnected</span> &nbsp;·&nbsp; Connected: <span class="badge-illustration green">Taprun — connected</span></li>
-      <li>If still red after 5 seconds, open the troubleshooting list below.</li>
+      <li>Click the Taprun icon in your Chrome toolbar.</li>
+      <li>Connected: <span class="badge-illustration green">Connected to local bridge</span></li>
+      <li>Still red? The popup tells you which failure mode you hit:
+        <ul style="margin-top: 8px;">
+          <li><strong>Setup required</strong> → Step 1 second command (<code>tap bridge setup</code>) hasn't run yet.</li>
+          <li><strong>Bridge not running</strong> → Step 1 third command (<code>tap bridge start</code>) hasn't run yet.</li>
+          <li><strong>Chrome blocked the host</strong> → Restart Chrome to clear the crash lockout.</li>
+          <li><strong>Bridge down</strong> → See troubleshooting below.</li>
+        </ul>
+      </li>
     </ol>
   </section>
 
