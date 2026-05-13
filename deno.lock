@@ -1,0 +1,55 @@
+{
+  "version": "5",
+  "specifiers": {
+    "jsr:@std/yaml@1": "1.1.0"
+  },
+  "jsr": {
+    "@std/yaml@1.1.0": {
+      "integrity": "fc1c5c63e05c4c5eb6118355f557958035d41940d6c29d35b306ef7155d6edb0"
+    }
+  },
+  "workspace": {
+    "members": {
+      "packages/create-tap-script": {
+        "packageJson": {
+          "dependencies": [
+            "npm:@taprun/spec@1",
+            "npm:@types/node@22",
+            "npm:typescript@^5.5.0"
+          ]
+        }
+      },
+      "packages/from-playwright": {
+        "packageJson": {
+          "dependencies": [
+            "npm:@taprun/spec@1",
+            "npm:typescript@^5.5.0"
+          ]
+        }
+      },
+      "packages/from-puppeteer": {
+        "packageJson": {
+          "dependencies": [
+            "npm:@taprun/spec@1",
+            "npm:typescript@^5.5.0"
+          ]
+        }
+      },
+      "packages/from-stagehand": {
+        "packageJson": {
+          "dependencies": [
+            "npm:@taprun/spec@1",
+            "npm:typescript@^5.5.0"
+          ]
+        }
+      },
+      "packages/spec": {
+        "packageJson": {
+          "dependencies": [
+            "npm:typescript@^5.5.0"
+          ]
+        }
+      }
+    }
+  }
+}
