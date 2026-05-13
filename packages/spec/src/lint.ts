@@ -44,6 +44,9 @@ export const LINT_RULE_NAMES = [
   "tap-empty-id",
   // cross-origin coherence
   "cross-origin-page-session",
+  // composite-plan scope hygiene
+  "parallel-save-leak",
+  "eval-arithmetic-suggest",
 ] as const;
 
 export type LintRuleName = typeof LINT_RULE_NAMES[number];
