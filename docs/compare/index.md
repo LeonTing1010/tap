@@ -1,145 +1,131 @@
 ---
-title: "Where Tap fits among adjacent tools"
-description: "How Tap composes with browser-use, Stagehand, Browserbase, Libretto, and Replay MCP. Architecture diagram + per-project section showing where each lives in the stack and where Tap's compile-once layer fits."
+title: "Tap vs cloud MCP servers — pick by trust boundary"
+description: "Tap is the MCP for browser tasks that need login. Cloud MCP servers (Stagehand, Browserbase, Playwright-MCP-hosted, browser-use) need the session in their database to function — Tap runs in the user's real Chrome. Side-by-side comparison."
 permalink: /compare/
+layout: default
 ---
 
-# Where Tap fits among adjacent tools
+# Tap vs cloud MCP servers — pick by trust boundary
 
-**Format choice**: per Leo's W1-end suggestion, replace 5-column table with **one architecture diagram + per-project section**. The diagram does the heavy lifting; rows are honest detail.
+> **The MCP server for browser tasks that need login.** Cloud-hosted MCP servers need your session in *their* database to function. Tap runs in your real Chrome via extension — credentials never leave your machine.
 
----
+The browser-automation MCP landscape splits along a single architectural seam: **where the live browser runs**. Once that's decided, everything else follows.
 
-## Page outline (as it would render)
+- **Cloud-hosted MCPs** (Stagehand, Browserbase, Playwright-MCP-as-a-service, browser-use) run the browser in their pool. To do anything authenticated, they need your cookies in their database.
+- **Tap** runs the browser on your laptop via a Chrome extension. The MCP server bridges to a process the user owns; the substrate is the user's own logged-in profile.
 
-### Hero (above fold)
+For public-page scraping at high parallelism, cloud is the right answer. For tasks that touch your WeChat draft / Linear / Notion / internal SaaS / banking / SSO-gated admin consoles, only Tap is even architecturally eligible.
 
-> **Compile once. Run forever. Diff the drift.**
->
-> Five tools that touch the same problem from different angles. Here's where each lives, where they overlap, and where they compose.
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Tap vs cloud MCP servers — pick by trust boundary",
+  "about": [
+    { "@type": "SoftwareApplication", "name": "Taprun", "url": "https://taprun.dev" },
+    { "@type": "SoftwareApplication", "name": "Stagehand", "url": "https://github.com/browserbase/stagehand" },
+    { "@type": "SoftwareApplication", "name": "Browserbase", "url": "https://www.browserbase.com" },
+    { "@type": "SoftwareApplication", "name": "Playwright MCP", "url": "https://github.com/microsoft/playwright-mcp" },
+    { "@type": "SoftwareApplication", "name": "browser-use", "url": "https://github.com/browser-use/browser-use" }
+  ],
+  "isPartOf": { "@type": "WebSite", "url": "https://taprun.dev", "name": "Taprun" }
+}
+</script>
 
-(Existing taprun.dev hero copy. Keep verbatim — already user-voice anchored per `tap_evidence_positioning_2026-04-21.md`.)
+## Pick by use case
 
-### Architecture diagram (single image, ~600px wide)
+| Your task | Pick |
+|---|---|
+| Logged-in account (WeChat / Linear / Notion / Twitter / LinkedIn) | **Tap** — session stays in your Chrome |
+| Internal / VPN-restricted / SSO-gated tools | **Tap** — your laptop is on the VPN, the cloud isn't |
+| HIPAA / SOC2 / regulated cohort, data can't cross vendor boundary | **Tap** — no vendor-side log to subpoena |
+| 10K parallel scrape jobs against public pages | **Stagehand + Browserbase** — built for this |
+| AI agent that browses public web for end users | **browser-use** or **Stagehand** — cloud-first scales out |
+| Quick prototype, want LLM to figure it out at runtime | **Stagehand** — `act("click the price")` is faster than compiling a plan |
+| Cron job that runs the same flow forever, can't pay tokens per run | **Tap** — plans compile once, replay at zero tokens |
+| Existing Playwright/Puppeteer scripts that keep breaking | **Tap** — [adapters](/spec/plan-v1/) convert source 1:1, plus drift verify |
 
-ASCII sketch of what the rendered SVG should show:
+Both lists are real. Pick the architecture that matches what you're actually trying to do.
+
+## Architecture, in one diagram
 
 ```
-                  AGENT  (Claude Code · Cursor · LangChain · browser-use)
-                            │
-                            ▼
-           ┌────────────────────────────────────┐
-           │           PROGRAM FORMAT           │   ← Tap lives here
-           │   bare Plan (11-op closed union)   │
-           └─────┬─────────┬─────────┬──────────┘
-                 │         │         │
-                 ▼         ▼         ▼
-           ┌─────────┐ ┌─────────┐ ┌─────────┐
-           │ Adapter │ │ Adapter │ │ Adapter │   ← html / rss / jsonld /
-           │  html   │ │   rss   │ │ jsonld  │      mcp / openapi (A1+)
-           └─────┬───┘ └─────────┘ └─────────┘
-                 │
-                 ▼
-        ┌────────────────────────────────┐
-        │           RUNTIME              │     ← extension / playwright
-        │  Chrome ext · Playwright · AX  │        / macos
-        └──────────┬─────────────────────┘
-                   │
-                   ▼
-              ╔══════════╗
-              ║ Real web ║
-              ╚══════════╝
+                  AGENT  (Claude Code · Cursor · Cline · Continue · Zed)
+                                       │
+                                       ▼
+                ┌──────────────────────────────────────────┐
+                │              MCP server                   │
+                └──────────────────────────────────────────┘
+                          │                          │
+              ── runs IN your Chrome ──    ── runs IN vendor cloud ──
+                          ▼                          ▼
+                  ┌──────────────┐          ┌──────────────────┐
+                  │ Tap          │          │ Stagehand        │
+                  │  ext + plan  │          │ Browserbase      │
+                  │  (this site) │          │ Playwright-MCP*  │
+                  └──────┬───────┘          │ browser-use      │
+                         │                  └────────┬─────────┘
+                         ▼                           ▼
+                  ╔═════════════╗             ╔════════════════╗
+                  ║ Your Chrome ║             ║ Vendor browser ║
+                  ║ Your cookies║             ║ Your cookies   ║
+                  ╚═════════════╝             ║ (in their DB)  ║
+                                              ╚════════════════╝
+
+* Playwright-MCP itself can run locally; the comparison here is to the
+  hosted-service flavor most agents reach via remote MCP endpoints.
 ```
 
-Five competitor "blast zones" overlaid on this diagram (in caption / interactive form):
+The trust boundary is the load-bearing distinction. Everything else (cost model, parallelism profile, headless support, anti-bot infra) is downstream of where the browser runs.
 
-- **browser-use** = AGENT layer (LLM-at-runtime, no compile step)
-- **Libretto** = compiles to PROGRAM FORMAT, but format = arbitrary Playwright JS (not closed union)
-- **Browserbase / Steel** = RUNTIME layer (hosted Chrome / sessions / anti-bot)
-- **Playwright** = RUNTIME layer + bring-your-own program (humans hand-write the program)
-- **Tap** = PROGRAM FORMAT + ADAPTER + RUNTIME selector (only project that owns all three layers + open the format spec)
+## Per-project deep-dives
 
-### Per-project rows (5 sections)
+### vs Stagehand
 
-Each section reuses the ⟨Their layer · Tap layer · Where they don't overlap · Where they compose⟩ blocks from `core/docs/positioning-matrix.md`. Trimmed to ~80 words each. Includes the "honest weakness" sentence — non-negotiable.
+Stagehand (Browserbase, 22K★, 745K weekly npm downloads) and Tap target the same broken-scraper pain from opposite architectural ends. Stagehand: cloud SDK, plan-as-code, LLM-at-runtime. Tap: local-first, plan-as-data, AI-only-at-compile.
 
-#### vs Libretto
+[Full breakdown → `/compare/stagehand/`](/compare/stagehand/) — TL;DR-by-use-case table, the single trust-boundary decision, and honest weakness for both sides.
 
-> Libretto and Tap both compile-once with LLMs. Libretto emits Playwright JS; Tap emits a closed 11-op bare Plan that doctor statically verifies against Layer 1 sources.
->
-> *Where they don't overlap*: Libretto's output is unbounded JS; Tap's output is a closed-union JSON document `doctor` can statically verify. *Where they compose*: Libretto's compile step could emit `.tap.json` instead of Playwright scripts — same compile-once frame, narrower output, free static verifiability.
->
-> *Honest weakness*: Libretto has 100× the GitHub stars. Tap's 4-layer priority is structurally better but is unknown vocabulary outside Tap. Pick Libretto if your team already lives in Playwright.
+### vs Browserbase
 
-#### vs Browserbase + Stagehand
+Browserbase hosts the browser; Tap defines the program. They're not the same product even though both touch "reliable browser automation." Browserbase's value is hosted infra (anti-bot, replay, hosted sessions for orgs without infra). Tap's value is the program format (`.plan.json`, compile-once, deterministic replay, drift verify).
 
-> [Deep comparison →](/compare/stagehand/) — full architectural breakdown, where each wins, when they compose.
->
-> Browserbase hosts the browser; Tap defines the program. A `.tap.json` plan can run on Browserbase the same way it runs on local Chrome — the plan is the substrate.
->
-> *Where they don't overlap*: Browserbase's value is infra (hosted execution, replay, sessions); Tap's value is the program format (compile-once `.tap.json` + doctor + heal). *Where they compose*: Tap's `--runtime playwright` runs against any Playwright endpoint, including Browserbase-hosted browsers. Browserbase becomes a deployment target.
->
-> *Honest weakness*: Browserbase has $20M+ funding, hosted control plane, and replay tooling Tap doesn't ship. Tap doesn't compete on infrastructure.
+A `.plan.json` plan with `runtime: "playwright"` can target any Playwright endpoint, including a Browserbase-hosted browser — Browserbase as a deployment target, not a competitor.
 
-#### vs browser-use
+*Honest weakness*: Browserbase has $20M+ funding, hosted control plane, replay tooling Tap doesn't ship. Tap doesn't compete on infrastructure. Pick Browserbase when you need a hosted browser pool; pick Tap when the session has to stay on the user's machine.
 
-> browser-use runs an LLM at every step; Tap runs an LLM once at compile time and never again. Inside a browser-use agent, `tap.run` is the no-think sub-routine layer.
->
-> *Where they don't overlap*: browser-use solves "what should the agent do given the current page"; Tap solves "what is the deterministic program for this declared task". *Where they compose*: a browser-use agent that needs deterministic sub-tasks (paginated extraction, scrape, periodic check) calls `tap.run` instead of re-deciding at runtime.
->
-> *Honest weakness*: browser-use handles novel pages with no prior compile step. For one-shot tasks, browser-use is faster to first execution.
+### vs Playwright MCP
 
-#### vs Steel.dev
+Playwright-MCP (the Microsoft project) and Tap overlap in one specific mode: Playwright-MCP run **with `--extension`** also uses the user's Chrome via extension. In that mode the credential-safety properties match Tap's. The difference is then about the program format:
 
-> Steel keeps the session alive; Tap keeps the program correct. Both solve different halves of "agents that don't break in production."
->
-> *Where they don't overlap*: Steel solves session reliability and anti-bot; Tap solves selector/extraction stability over time (drift, heal). *Where they compose*: Tap's read-variant Plans running against Steel-hosted browsers gets Tap's compile-once + Steel's anti-detection.
->
-> *Honest weakness*: Steel has YC backing and infrastructure depth Tap doesn't replicate. Tap is the program; Steel is one possible runtime target.
+- Playwright-MCP: LLM operates on a live Playwright session every call. Each agent turn costs tokens.
+- Tap: AI compiles once into an 11-op closed-union plan; every subsequent run is pure data + dispatch, zero tokens.
 
-#### vs Playwright
+[Full breakdown → `/blog/playwright-mcp-vs-tap.html`](/blog/playwright-mcp-vs-tap.html) — when each wins, when they compose.
 
-> Playwright is the runtime; Tap is the program. Tap programs run on Playwright, but they're authored by `forge` and healed by `doctor` — not hand-edited.
->
-> *Where they don't overlap*: Playwright requires a human author writing selectors; Tap auto-compiles selectors at forge time and heals them on drift. *Where they compose*: existing Playwright codebases can adopt Tap incrementally — keep imperative tests, add Tap for the brittle scrape/extract paths.
->
-> *Honest weakness*: Playwright has 70k+ stars and is in production at thousands of companies. Tap is a compile-and-heal layer above Playwright, not a replacement.
+### vs browser-use
 
-### Benchmark teaser (link, not embed)
+browser-use runs an LLM at every step; Tap runs an LLM once at compile time and never again. Inside a browser-use agent, a saved Tap is the no-think sub-routine layer.
 
-One paragraph + chart preview pointing to `taprun.dev/benchmark/` (W3 deliverable, not yet shipped):
+*Where they compose*: a browser-use agent that needs deterministic sub-tasks (paginated extraction, periodic scrape, repeatable login flow) calls `mcp__tap__run` instead of re-deciding at every step.
 
-> **Concrete number**: on a synthetic HN class-rename drift, a Claude Code sub-agent spends 45,064 tokens to recover the broken extractor. Tap heals the same drift in 1,134 tokens (sonnet) — and 0 tokens on cache replay. [See full benchmark →]
+*Honest weakness*: browser-use handles novel pages with no prior compile step. For one-shot exploration, browser-use is faster to first execution. Tap is the answer when the same task will run more than twice.
 
-Don't embed the full chart here — keep this page focused on positioning. Benchmark page has the data.
+## When Tap is the wrong answer
 
-### Footer
+- You need 10K parallel sessions against public pages. Tap runs in *one* Chrome (yours). Use Browserbase.
+- You're building a consumer agent that browses arbitrary user-supplied URLs. The cloud pool model fits; Tap doesn't.
+- You want hosted replay, session recordings, an admin UI. Tap ships none of that — its scope is the program format + the local runtime.
 
-> Tap is closed-source / proprietary; the 11-op bare Plan format is open and documented at [taprun.dev/spec/plan-v1/](https://taprun.dev/spec/plan-v1/). The v1 W3C Annotation vocabulary at [/ns/tap-v1/](https://taprun.dev/ns/tap-v1/) is preserved as a historical archive.
->
-> Found an error in this page? [Open an issue](https://github.com/LeonTing1010/tap/issues).
+If your task description starts with "for each customer's account" — Tap is the right answer. If it starts with "for each search result" — probably not.
 
-(Per CLAUDE.md content rules: never call Tap "open-source"; phrasing here uses "closed-source / proprietary" with "the format is open" as the contrast — accurate per the source/license matrix.)
+## Further reading
+
+- [Authenticated browser MCP — what the trust boundary actually means](/blog/authenticated-browser-mcp.html)
+- [Why local-first browser automation outlasts cloud SDKs](/local-first/)
+- [Plan-v1 spec (11-op closed union)](/spec/plan-v1/)
+- [Compile once, run forever — the four meta verbs](/blog/compile-once-diff-the-drift.html)
 
 ---
 
-## Implementation plan for actual page
-
-This draft is markdown for review. Render path when published:
-
-1. **Location**: `public/compare/index.html` in `LeonTing1010/tap` repo (MIT public, GH Pages → taprun.dev)
-2. **Template**: copy structure from existing `public/blog/` post template; reuse the Bricolage Grotesque + Fraunces font stack from `taprun.dev/ns/tap-v1/`
-3. **Architecture diagram**: SVG hand-written, not generated. Single-file, no JS dependencies. ~600px max width.
-4. **SEO meta**:
-   - `<title>Tap vs Libretto vs Browserbase vs Steel vs Playwright — compile-time browser automation</title>`
-   - `<meta description>` covers all 5 projects + comparison frame in 155 chars
-   - Schema.org `ComparisonTable` JSON-LD for structured-data crawlers
-5. **UTM tagging on outbound links** — internal `/blog/` and `/ns/` links untagged; competitor homepage links tagged `utm_source=taprun-compare`
-6. **GA4 event**: `compare_page_view` on load + `compare_section_visible` on scroll into each per-project block (helps decide which competitor's section drives most attention)
-
-## Non-implementation considerations
-
-- **Risk: competitor backlash**. Honest comparisons get shared, but a competitor reading their own "honest weakness" sentence may dispute. Mitigation: every weakness sentence cites a verifiable fact (star count, funding, feature name). No subjective claims.
-- **Risk: looking small/needy**. A small project publishing comparisons against bigger projects can read as desperate. Mitigation: lead with architecture diagram (assertion of equal-scope discussion), not feature checklist.
-- **Updating cadence**: competitive landscape moves; commit to quarterly review. Add `<!-- last-reviewed: YYYY-MM-DD -->` HTML comment.
-
+<small>Found an error or out-of-date claim? <a href="https://github.com/LeonTing1010/tap/issues/new">Open an issue</a>. Last reviewed 2026-05-14.</small>
