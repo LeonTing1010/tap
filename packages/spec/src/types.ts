@@ -61,9 +61,32 @@ export interface FetchOp {
   save?: string;
 }
 
+/** Per ADR `2026-05-14-op-nav-attach.md` — closed 3-arm match mode for
+ *  the `op:nav.attach` directive. Growth requires ADR amendment + arch
+ *  test NA1 fail. PUBLIC mirror of core/types.ts:NAV_ATTACH_MATCH_MODES. */
+export const NAV_ATTACH_MATCH_MODES = [
+  "url-prefix",
+  "origin",
+  "exact",
+] as const;
+export type NavAttachMatchMode = typeof NAV_ATTACH_MATCH_MODES[number];
+
+/** Tab-attach directive on `op:nav`. PUBLIC mirror of NavAttach.
+ *  - `true` shorthand → `{ match: "url-prefix" }` (the dominant case)
+ *  - explicit object → caller-chosen match mode
+ *  Semantics: when set, peer queries Chrome tabs under the match mode;
+ *  on match, binds sessionId → existing tabId (preserving sessionStorage
+ *  for same-origin navigations) before running the standard nav path. */
+export type NavAttach =
+  | true
+  | { match: NavAttachMatchMode };
+
 export interface NavOp {
   op: "nav";
   url: string;
+  /** Optional attach directive. Absent = always-create (today's default).
+   *  Present = find-or-create. See ADR `2026-05-14-op-nav-attach.md`. */
+  attach?: NavAttach;
   save?: string;
 }
 

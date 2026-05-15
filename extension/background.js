@@ -172,6 +172,42 @@ async function cdpClick(tabId, x, y) {
 
 // --- Navigation Helper ---
 
+// ADR 2026-05-14-op-nav-attach §2 — find an existing tab matching the
+// target URL under the chosen match mode. Returns the most-recently-
+// accessed match, or null if no match. Used by `case 'nav':` to
+// implement find-or-create semantics when params.attach is set.
+async function queryAttachCandidate(url, mode) {
+  let target
+  try { target = new URL(url) } catch { return null }
+
+  let candidates
+  if (mode === 'exact') {
+    // chrome.tabs.query supports glob URLs but we want byte-equal match.
+    const all = await chrome.tabs.query({})
+    candidates = all.filter(t => t.url === url)
+  } else if (mode === 'url-prefix') {
+    const all = await chrome.tabs.query({})
+    candidates = all.filter(t => t.url && t.url.startsWith(url))
+  } else if (mode === 'origin') {
+    const all = await chrome.tabs.query({})
+    candidates = all.filter(t => {
+      if (!t.url) return false
+      try { return new URL(t.url).origin === target.origin }
+      catch { return false }
+    })
+  } else {
+    return null
+  }
+
+  if (candidates.length === 0) return null
+  // Pick the most-recently-accessed candidate. `lastAccessed` is
+  // a chrome.tabs.Tab field (ms since epoch); fall back to 0 when
+  // absent (Chrome <122) — older tabs sort behind newer ones with
+  // the field set.
+  candidates.sort((a, b) => (b.lastAccessed || 0) - (a.lastAccessed || 0))
+  return candidates[0]
+}
+
 async function waitForTabLoad(tabId, url = null) {
   // MV3 fix: poll chrome.tabs.get() every 300ms instead of setTimeout(30s).
   // Long setTimeout lets Chrome kill the service worker (~30s idle limit).
@@ -359,6 +395,22 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       if (tabId) {
         try { current = await chrome.tabs.get(tabId) }
         catch { tabId = null }
+      }
+      // ADR 2026-05-14-op-nav-attach §2 — find-or-create. When the
+      // sessionId has no bound tab (first nav in this session OR previous
+      // tab closed) AND params.attach is set, try to attach to a matching
+      // user tab before falling through to create. sessionStorage is
+      // preserved when the matched tab is same-origin to params.url
+      // (W3C: sessionStorage spans same-origin same-tab navigations) —
+      // this is the entire point of attach (e.g. ASC, xie.infoq.cn).
+      if (!tabId && params.attach) {
+        const mode = params.attach === true ? 'url-prefix' : params.attach.match
+        const matched = await queryAttachCandidate(params.url, mode)
+        if (matched) {
+          tabId = matched.id
+          try { current = await chrome.tabs.get(tabId) }
+          catch { tabId = null; current = null }
+        }
       }
       if (!tabId) {
         const tab = await chrome.tabs.create({ url: params.url, active: false })
