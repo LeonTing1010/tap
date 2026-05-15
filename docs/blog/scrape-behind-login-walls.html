@@ -1,0 +1,117 @@
+---
+layout: post
+title: "Scraping behind login walls: stop fighting OTP, CAPTCHA, and Cloudflare Turnstile"
+description: "r/webscraping keeps asking the same architectural question — how to scrape past OTP, CAPTCHA, Cloudflare Turnstile, Incapsula. The cheapest answer is to stop fighting detection and use your real authenticated browser instead."
+keywords: "scrape behind login, playwright captcha alternative, OTP scraping bypass, Cloudflare Turnstile scraping, Incapsula bot detection, session cookie reuse, authenticated browser scraping, local-first scraping, browser MCP, Tap"
+date: 2026-05-16
+read_time: "7 min read"
+subtitle: "Why the cheapest path through auth-gated scraping is not a better proxy"
+---
+
+<p>Open r/webscraping on any given day and you'll find the same five questions in different costumes:</p>
+
+<ul>
+  <li><a href="https://reddit.com/r/webscraping/comments/1tbd53c/an_app_for_forwarding_mobile_otp_for_verification/">"I built a phone-to-backend SMS forwarder so the scraper can complete OTP login"</a> — 50 upvotes, accidentally useful tool</li>
+  <li><a href="https://reddit.com/r/webscraping/comments/1t3de1n/handling_captcha_in_playwright_python/">"Handling CAPTCHA in Playwright (Python)"</a> — 45 upvotes, 19 comments arguing between $1/1k CAPTCHA APIs and rolling your own CNN</li>
+  <li><a href="https://reddit.com/r/webscraping/comments/1t26196/scraping_blocked_by_incapsula_help_anyone_figured/">"Scraping blocked by Incapsula at 50K req/day"</a> — a price-monitoring SaaS author who tried "rotating user agents, adding delays, the whole usual playbook" and concluded "the whole 'just use puppeteer with stealth' advice is not cutting it anymore"</li>
+  <li><a href="https://reddit.com/r/webscraping/comments/1smxftl/any_method_to_bypass_otp_verification/">"Any method to bypass OTP verification?"</a> — top reply: <em>"Reuse the cookie"</em>, follow-up reply: <em>"How?"</em>, never answered</li>
+  <li><a href="https://reddit.com/r/webscraping/comments/1smrg15/oauth2_pkce_invalid_request_after_keycloak/">"OAuth2 PKCE + Cloudflare Turnstile, Invalid request after the challenge"</a> — Keycloak debugging buried in an enterprise SSO flow</li>
+</ul>
+
+<p>Five different surfaces, one shared architectural cause. And — for the per-user use cases at least — one boring exit that almost nobody in those threads mentions.</p>
+
+<h2>Why the conventional playbook gets harder every quarter</h2>
+
+<p>The standard scraping stack — Playwright/Puppeteer with a stealth plugin, rotating user agents, datacenter or residential proxies, a CAPTCHA-solving API, sometimes an SMS-forwarder for OTP — is a stack of <em>compensations</em>. Each layer exists because the layer above it is being detected as not-a-real-browser.</p>
+
+<p>That's a losing arms race over time. Incapsula, Cloudflare, DataDome, PerimeterX all share the same incentive structure: discriminate "real human in a real browser" from "scripted automation," and they get richer signals every quarter. Mouse-jitter analysis, TLS fingerprinting (JA3/JA4), behavioral consistency across navigations, canvas/WebGL/AudioContext entropy, residential-IP reputation services. Whatever stealth plugin you're running last month is in their training data this month.</p>
+
+<p>The Reddit threads above are the visible top of the iceberg: every few weeks someone hits the next layer and posts. The OP of post #3 — at 50K req/day across 200 retailer domains — articulated it explicitly: "sites that worked fine 3 months ago are now fortress-level protected."</p>
+
+<h2>The boring exit: be a real browser, not a fake one</h2>
+
+<p>If detection is the problem, the cheapest fix is to <strong>not get detected — by actually being the thing detection systems look for</strong>: a real human browser with a real session, real cookies, real prior navigation history, real TLS fingerprint.</p>
+
+<p>Concretely:</p>
+
+<ol>
+  <li><strong>Log into the target site once, manually, in your real Chrome.</strong> You complete the OTP, you click the Turnstile checkbox, you let Incapsula score you as human. None of that is automated. None of it has to be.</li>
+  <li><strong>Drive the automation from that authenticated session.</strong> The cookies, localStorage, and indexedDB stay in your real browser profile. Your script doesn't need a proxy because it's not sending traffic from anywhere suspicious — it's <em>literally your browser's tab</em> making the request.</li>
+  <li><strong>The challenge already passed.</strong> You're inside the moat. Re-prompting per-request is rare; most sites gate on "is there a valid post-OTP session cookie?" and stop checking once they see one.</li>
+</ol>
+
+<p>This is what the muted "reuse the cookie" reply in post #4 was gesturing at, and nobody elaborated. The technique is correct; the missing piece was "how do you actually do that without it falling apart every two days when cookies refresh or SSO redirects."</p>
+
+<h2>How <a href="https://taprun.dev/?utm_source=blog&utm_medium=post&utm_campaign=scrape_behind_login">Tap</a> implements it</h2>
+
+<p>Tap (MIT, <a href="https://github.com/LeonTing1010/tap">GitHub</a>) is a Chrome extension plus CLI plus MCP server that does exactly the above. The interesting design choices:</p>
+
+<ul>
+  <li><strong>Tap runs inside your authenticated Chrome.</strong> The extension hooks into your existing browser session. There is no headless instance, no remote profile, no <code>storage_state.json</code> file to manage. Your cookies never leave the machine.</li>
+  <li><strong>Plans are JSON, not scripts.</strong> A saved <code>.plan.json</code> is an array of typed ops — <code>nav</code>, <code>fetch</code>, <code>eval</code>, <code>wait</code>, etc. Compile-time AI helps you write them; runtime replay is deterministic and uses zero LLM tokens.</li>
+  <li><strong>Fetches use <code>credentials: "page-session"</code></strong> — meaning the fetch is dispatched from within the authenticated tab's context. Your live cookies attach automatically. Same-origin policy applies as if you typed the URL into the address bar yourself.</li>
+  <li><strong>Replay is reproducible.</strong> A plan that worked today produces the same DOM/JSON tomorrow, modulo upstream data changes. When selectors drift, the doctor surfaces it; when they don't, the plan runs at the speed of HTTP, not the speed of an LLM.</li>
+</ul>
+
+<p>Three scenarios from the threads above, sketched as plan steps:</p>
+
+<h3>OTP-gated site (post #1, post #4)</h3>
+
+<ol>
+  <li>Open Chrome, log into the site, complete the SMS OTP once, like a person.</li>
+  <li><code>tap capture &lt;url&gt;</code> — Tap forges a plan against the page you can now see.</li>
+  <li><code>tap run &lt;name&gt;</code> on schedule. The session cookie carries auth; OTP doesn't re-trigger.</li>
+</ol>
+
+<p>If the site eventually expires the session, you redo step 1. That's once a week or once a month depending on the site, not once per scrape.</p>
+
+<h3>CAPTCHA-on-login site (post #2)</h3>
+
+<p>Same as above. You solve the CAPTCHA once with your eyes. The challenge issues a session token that's good for as long as the site lets it. The automation never sees a CAPTCHA because it never logs in — it just inherits the logged-in tab's state.</p>
+
+<p>This sidesteps the entire "$1 per 1,000 CAPTCHAs + 80% accuracy" subdebate, and the "train a CNN on 200 hand-annotated samples" subdebate, by changing the problem. You're not solving CAPTCHAs anymore; you're not encountering them.</p>
+
+<h3>Incapsula / Cloudflare Turnstile (post #3, post #5)</h3>
+
+<p>Honest answer first: <strong>if your use case is 50K requests/day across 200 retailer domains, Tap is not your tool</strong>. That's a cloud-scale, multi-tenant, residential-proxy job — go pay Bright Data or ScraperAPI, or buy the data from an enterprise provider. Tap is built around one user × N sites, not N users × one site.</p>
+
+<p>For per-user use cases — your own dashboards, your own SaaS accounts, your own paywalled subscriptions, niche sites you watch personally — Cloudflare and Incapsula don't fire. They're tuned to catch traffic that looks unlike normal human behavior. Your authenticated browser, navigating like you'd navigate, doesn't trip the heuristics. The infrastructure that costs SaaS scrapers thousands a month is invisible to single-seat use.</p>
+
+<h2>The honest limits</h2>
+
+<p>Local-first browser automation is the right tool when:</p>
+
+<ul>
+  <li>You're scraping for yourself, your team, or one customer at a time.</li>
+  <li>The site allows a human session and you have a legitimate account.</li>
+  <li>The data isn't being re-sold to thousands of customers (where you'd want centralized infrastructure).</li>
+  <li>You can tolerate "log in once, refresh occasionally" instead of "fully headless 24/7 fleet."</li>
+</ul>
+
+<p>It's <em>not</em> the right tool for:</p>
+
+<ul>
+  <li>Cloud-scale crawling at &gt;5K req/day per site (residential proxy territory).</li>
+  <li>Multi-account fan-out — Tap is one browser per machine.</li>
+  <li>Sites with per-request session validation that re-prompts OTP/CAPTCHA every few hits (rare, mostly banking).</li>
+  <li>Headless server environments where there's no real Chrome to attach to.</li>
+</ul>
+
+<p>If you're in those categories, the existing tooling (Playwright + residential proxies + a CAPTCHA solver + sometimes an OTP relay) is genuinely the right shape, despite the arms-race cost. Don't pretend otherwise.</p>
+
+<h2>The deeper architectural point</h2>
+
+<p>"Credentials in the cloud" is not a neutral architectural choice. It's the choice that makes most modern anti-scraping detection possible — because the cloud is where suspicious traffic comes from, by default. The moment your credentials live on the user's machine and your traffic comes from the user's actual residential IP through the user's actual TLS stack, you're indistinguishable from the user, because <em>you are</em> the user.</p>
+
+<p>This isn't a fancy bypass. It's just the boring observation that the cheapest way to look human is to be operated by a human, even if only briefly, once per session.</p>
+
+<p>r/webscraping has been having the same five conversations for years, each cycle getting harder as detection improves. The architectural exit ramp has been there the whole time. It's not for everyone — but for the per-user category, it's the cheapest, most durable, and least adversarial answer available.</p>
+
+<h2>Resources</h2>
+
+<ul>
+  <li><a href="https://taprun.dev/?utm_source=blog&utm_medium=post&utm_campaign=scrape_behind_login">Tap — local-first browser-MCP</a> (MIT, Chrome ext + CLI)</li>
+  <li><a href="https://github.com/LeonTing1010/tap">Source on GitHub</a></li>
+  <li><a href="/blog/authenticated-browser-mcp.html">Related: The authenticated browser MCP — why cloud tools can't see your logged-in state</a></li>
+  <li><a href="/blog/compile-time-ai-not-runtime-ai.html">Related: Compile-time AI, not runtime AI — why replay should cost zero tokens</a></li>
+</ul>
