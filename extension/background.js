@@ -13,11 +13,19 @@ console.log('[tap] extension runtime ready')
 
 // --- SW keep-alive: DELETED per ADR 2026-05-13-daemon-extension-via-native-messaging.md ---
 //
-// The prior two-layer defence (25s alarm + 4 wake hooks) compensated for
-// the WS architecture's idle/hard-kill problems. PoC 2026-05-13 proved
-// chrome.runtime.connectNative's port keeps the SW alive >19 minutes
-// with zero traffic — crossing both the 30s idle threshold AND the
-// 5-minute hard-kill threshold. Compensation no longer needed.
+// Per Chrome 114+ (developer.chrome.com/docs/extensions/develop/concepts/
+// service-workers/lifecycle): "Sending a message with long-lived messaging
+// keeps the service worker alive. Opening a port no longer resets the
+// timers." The host sends a 25s `{method:"ping"}` notification through
+// the NM port (host_dispatch.ts keepaliveTicker); each ping resets the
+// 30s SW idle timer. The SW's port.onMessage listener below drops
+// notifications with no `id`, so ping has no SW-side handler — the
+// side-effect of receiving the message IS the keepalive.
+//
+// ADR 2026-05-13 §1 T1 measured "port-alone 19m30s" which was pre-114
+// behaviour; amendment 2026-05-15 corrects the model. The keepalive is
+// host-driven (not SW-driven) because the host process is durable while
+// the SW is ephemeral — the stable side must initiate.
 //
 // When the SW does die (force-quit, OOM, browser restart), the next
 // event that wakes Chrome will re-run this module's top-level code,
@@ -1515,8 +1523,10 @@ function classifyExtensionError(msg, _method) {
 // Daemon's lastActiveTab cache was deleted by parent SAA ADR; tab
 // routing flows through sessionId/sessions[] only.
 
-// Connect the native-messaging bridge on SW spawn. Per ADR 2026-05-13:
-// the Port itself keeps the SW alive (PoC T1: >19 min idle with 0
-// traffic). No keepalive alarm needed; no wake hooks needed; the next
-// SW respawn (browser restart, user action) re-runs this line.
+// Connect the native-messaging bridge on SW spawn. Per ADR 2026-05-13
+// (amended 2026-05-15): keepalive is the host's responsibility — host
+// sends a 25s `{method:"ping"}` notification through the NM port,
+// resetting the SW idle timer per Chrome 114+ semantics. No SW-side
+// alarm, no wake hooks. SW respawn (browser restart, user action,
+// any chrome.* event) re-runs this line.
 connectBridge()
