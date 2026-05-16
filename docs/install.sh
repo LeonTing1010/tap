@@ -3,9 +3,40 @@ set -e
 
 # Tap installer — prefers npm (no Gatekeeper issues on macOS), falls back to
 # direct binary download for environments without Node.js.
+#
+# After the CLI binary lands, this script auto-chains `tap bridge setup` so
+# the Chrome extension can reach the CLI immediately. Bridge-setup failure
+# is non-fatal — some envs don't have Chrome installed; the user still gets
+# a working CLI and clear recovery instructions.
 
 REPO="LeonTing1010/tap"
 INSTALL_DIR="$HOME/.tap"
+
+# ── Shared post-install: register Native Messaging bridge + next steps ──
+
+setup_bridge_and_finish() {
+  TAP_BIN="$1"
+  echo ""
+  echo "Tap installed successfully!"
+  echo ""
+  echo "  binary: ${TAP_BIN}"
+  echo ""
+  echo "Registering Chrome extension bridge..."
+  if "${TAP_BIN}" bridge setup >/dev/null 2>&1; then
+    echo "  ✓ Native Messaging manifest registered"
+  else
+    echo "  ⚠  bridge setup failed (Chrome not installed?) — re-run manually:"
+    echo "       ${TAP_BIN} bridge setup"
+  fi
+  echo ""
+  echo "Next steps:"
+  echo "  1. Install the Chrome extension (if not yet):"
+  echo "       https://chromewebstore.google.com/detail/tap/llcidejeoobdegbkolbjhfoeckphldce"
+  echo "  2. Add Tap to your MCP host config (Claude Code / Cursor / Windsurf):"
+  echo '       { "mcpServers": { "tap": { "command": "tap" } } }'
+  echo "  3. Try it: tap hackernews/hot"
+  echo ""
+}
 
 # ── Strategy: npm > brew > direct binary ──
 
@@ -13,15 +44,7 @@ INSTALL_DIR="$HOME/.tap"
 if command -v npm >/dev/null 2>&1; then
   echo "Installing Tap via npm..."
   npm install -g @taprun/cli@latest 2>&1
-  echo ""
-  echo "Tap installed successfully!"
-  echo ""
-  echo "  binary: $(which tap)"
-  echo ""
-  echo "Next steps:"
-  echo "  1. Install community taps: tap update"
-  echo "  2. Try it: tap hackernews hot"
-  echo ""
+  setup_bridge_and_finish "$(which tap)"
   exit 0
 fi
 
@@ -30,15 +53,7 @@ if command -v brew >/dev/null 2>&1; then
   echo "Installing Tap via Homebrew..."
   brew tap LeonTing1010/tap 2>/dev/null
   brew install taprun 2>&1
-  echo ""
-  echo "Tap installed successfully!"
-  echo ""
-  echo "  binary: $(which tap)"
-  echo ""
-  echo "Next steps:"
-  echo "  1. Install community taps: tap update"
-  echo "  2. Try it: tap hackernews hot"
-  echo ""
+  setup_bridge_and_finish "$(which tap)"
   exit 0
 fi
 
@@ -114,21 +129,14 @@ if [ "$OS" = "macos" ]; then
     echo ""
     echo "  macOS blocked tap (this is normal for first install)."
     echo ""
-    echo "  Opening System Settings — click 'Allow Anyway' next to tap, then re-run:"
-    echo "    tap update"
+    echo "  Opening System Settings — click 'Allow Anyway' next to tap, then re-run this installer."
     echo ""
     open "x-apple.systempreferences:com.apple.preference.security" 2>/dev/null || true
+    rm -rf "$TMP"
+    exit 0
   }
 fi
 
 rm -rf "$TMP"
 
-echo ""
-echo "Tap installed successfully!"
-echo ""
-echo "  binary: ${BIN_DIR}/tap"
-echo ""
-echo "Next steps:"
-echo "  1. Install community taps: tap update"
-echo "  2. Try it: tap hackernews hot"
-echo ""
+setup_bridge_and_finish "${BIN_DIR}/tap"
