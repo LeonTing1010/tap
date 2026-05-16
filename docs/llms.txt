@@ -35,6 +35,118 @@ Saved taps appear as MCP Resources at `tap://{site}/{name}` — discover via `re
 
 Every tool returns a `ToolResult<T>` envelope: `{ ok: true, value }` on success, `{ ok: false, kind, message, detail, next? }` on recoverable failure. The `kind` is one of 9 closed agent-aligned values.
 
+<!-- TAP_REGISTRY_START -->
+## Available taps
+
+Pre-built automation programs in the public community corpus ([tap-skills](https://github.com/LeonTing1010/tap-skills)). Each tap is a `<site>/<name>.plan.json` runnable via `run({ref: "<site>/<name>", args: {...}})`. Per-tap page at `https://taprun.dev/taps/<site>/<name>`.
+
+### Social
+
+- `discord/send` *(write)* — Send a message in the current Discord channel
+- `douban/hot` *(read)* — Douban trending movies
+- `facebook/keyword-search` *(read)* — Search Facebook posts by keyword (requires login)
+- `hackernews/hot` *(read)* — Hacker News top stories
+- `hackernews/submit` *(write)* — Submit a story to Hacker News
+- `instagram/explore` *(read)* — Instagram Explore (requires login)
+- `linkedin/post` *(write)* — Post to LinkedIn feed
+- `lobsters/hot` *(read)* — Lobsters hot stories - Frontpage stories from Lobsters tech community, extrac...
+- `quora/feed-jp` *(read)* — Quora Japan homepage feed — questions + answer snippets from the explore feed
+- `reddit/hot` *(read)* — Reddit hot posts - Get hot posts from a specific subreddit, including rank, t...
+- `slack/send` *(write)* — Send a message in the current Slack channel
+- `telegraph/nav` *(read)* — Navigate to Telegraph editor and activate
+- `tiktok/trending` *(read)* — TikTok Trending Videos (requires login or geo-access)
+- `v2ex/hot` *(read)* — V2EX hot topics
+- `v2ex/post` *(write)* — Post a topic on V2EX
+- `weibo/hot` *(read)* — Weibo hot search - Real-time trending topics from Weibo (Chinese Twitter), in...
+- `xiaohongshu/search` *(read)* — Xiaohongshu (Little Red Book) notes search - Search for notes and get detaile...
+- `zhihu/hot` *(read)* — Zhihu hot topics - Extract trending topics and discussions from Zhihu (Chines...
+
+### News
+
+- `36kr/hot` *(read)* — 36Kr hot list - Tech and startup news from 36Kr (leading Chinese tech media),...
+- `arstechnica/news` *(read)* — Ars Technica latest tech news and articles
+- `bbc/news` *(read)* — BBC News top stories
+- `reuters/news` *(read)* — Reuters top news stories
+- `techcrunch/latest` *(read)* — TechCrunch latest articles via RSS feed — zero DOM dependency
+- `toutiao/hot` *(read)* — Toutiao hot topics
+
+### Dev tools
+
+- `crates/popular` *(read)* — crates
+- `devto/post` *(write)* — Publish an article on Dev
+- `devto/publish` *(write)* — Publish an article on Dev
+- `devto/top` *(read)* — Dev
+- `github/create-issue` *(write)* — Create a GitHub issue via API
+- `github/trending` *(read)* — GitHub repos created in the last N days with ≥ min_stars, filtered to AI/SaaS...
+- `glama/submit` *(write)* — Submit an MCP server to Glama directory
+- `juejin/hot` *(read)* — Juejin trending articles
+- `juejin/post` *(write)* — Publish article on Juejin
+- `npmjs/popular` *(read)* — npm most popular packages by weekly downloads
+- `producthunt/hot` *(read)* — Product Hunt hot products - Get today's trending products from Product Hunt, ...
+- `producthunt/relevant` *(read)* — Find recent PH launches matching keywords
+- `pypi/top` *(read)* — PyPI top Python packages by downloads (last 30 days)
+- `stackoverflow/hot` *(read)* — StackOverflow hot questions
+
+### Finance / Investing
+
+- `coingecko/top` *(read)* — Top cryptocurrencies by market cap from CoinGecko API - Get the top 50 crypto...
+- `scys/article` *(read)* — Read SCYS article with title, author, stats, full text
+- `scys/extract-results` *(read)* — Extract search results from SCYS Pinia store (requires login)
+- `scys/input-keyword` *(write)* — Input search keyword into SCYS search box (requires login)
+- `scys/nav` *(write)* — Navigate to SCYS homepage (requires login)
+- `scys/research` *(read)* — Search SCYS and extract Feishu doc links (search + article)
+- `scys/search` *(write)* — Search SCYS by keyword (requires login)
+- `scys/trigger-search` *(write)* — Trigger search on SCYS (Vue component method or form submit, requires login)
+- `xueqiu/hot-stock` *(read)* — Xueqiu hot stocks
+
+### Media / Entertainment
+
+- `bilibili/hot` *(read)* — Bilibili trending videos - Get trending videos from Bilibili ranking, includi...
+- `espn/scores` *(read)* — ESPN top headlines and scores
+- `imdb/top` *(read)* — IMDB Top 250 rated movies
+- `pixiv/ranking` *(read)* — Pixiv daily illustration ranking
+- `rottentomatoes/opening` *(read)* — Rotten Tomatoes popular movies at home
+- `steam/top-sellers` *(read)* — Steam top selling games
+
+### Productivity
+
+- `calendar/today` *(read)* — Today's calendar events
+- `feishu/doc` *(read)* — Read current Feishu doc full text (block_map + TOC fallback)
+- `macos/scroll-capture` *(read)* — Scrolling screenshots of frontmost macOS app (pixel-precise, max 3 screens)
+- `notes/create` *(write)* — Create a note in Apple Notes
+- `notion/create` *(write)* — Create a new page in Notion
+- `reminders/pending` *(read)* — Incomplete reminders
+- `shortcuts/list` *(read)* — List available Apple Shortcuts
+- `shortcuts/run` *(read)* — Run an Apple Shortcut
+- `sspai/hot` *(read)* — Sspai trending articles
+- `weather/forecast` *(read)* — Weather forecast from wttr
+
+### Knowledge
+
+- `arxiv/search` *(read)* — Search arXiv papers
+- `google/trends` *(read)* — Google Trends daily trending searches
+- `medium/hot` *(read)* — Medium Trending articles
+- `wikipedia/most-read` *(read)* — Wikipedia most read articles today
+
+### Misc
+
+- `clawhub/publish` *(write)* — Publish a skill to OpenClaw ClawHub
+- `creem/create-product` *(write)* — Create a Creem product with subscription pricing
+- `creem/products` *(read)* — List all Creem products with status, price, and subscriptions
+- `creem/subscriptions` *(read)* — List all Creem subscriptions with customer, product, and status
+- `creem/transactions` *(read)* — List recent Creem transactions (payments)
+- `creem/validate-license` *(write)* — Validate a Creem license key and check activation status
+- `daily/brief` *(read)* — Daily briefing from Calendar + Reminders
+- `tap/dedupe` *(read)* — Remove duplicate rows by field value
+- `tap/filter` *(read)* — Filter rows where field matches condition (gt, lt, eq, contains)
+- `tap/limit` *(read)* — Take first N rows (head) or skip M then take N (offset+limit)
+- `tap/pick` *(read)* — Select specific columns from rows (projection)
+- `tap/sort` *(read)* — Sort rows by field (numeric or alphabetic, asc or desc)
+- `tap/table` *(read)* — Format rows as a human-readable table (outputs one row per line)
+
+<!-- 80 taps as of generation -->
+<!-- TAP_REGISTRY_END -->
+
 ## Install
 
 ```

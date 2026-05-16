@@ -4,20 +4,706 @@
   "description": "MCP server for browser tasks that need login. Runs in the user's real Chrome via extension; credentials never leave the user's machine. Cloud MCP servers architecturally can't do this. AI compiles plans once, replays deterministically at zero tokens per run.",
   "use_case": "authenticated browser automation — WeChat / Linear / Notion / internal SaaS / banking / SSO-gated admin consoles. Pick a cloud MCP (Stagehand/Browserbase/Playwright-MCP-hosted) for public-page scraping at parallelism.",
   "homepage": "https://taprun.dev",
-
   "data": [
     {
-      "name": "community-taps",
-      "description": "140+ pre-built automation programs for popular websites",
-      "endpoint": "https://api.github.com/repos/LeonTing1010/tap-skills/contents",
-      "method": "GET",
-      "format": "json",
+      "name": "taps",
+      "description": "80 pre-built automation programs (inline catalog — agents do not need a second HTTP fetch). Each `ref` is invokable via MCP `run({ref, args})`.",
+      "format": "inline",
       "auth": "none",
-      "fields": {
-        "name": "string — site directory name",
-        "type": "string — 'dir' for site folders",
-        "path": "string — relative path"
-      }
+      "source": "https://github.com/LeonTing1010/tap-skills",
+      "items": [
+        {
+          "ref": "36kr/hot",
+          "intent": "read",
+          "description": "36Kr hot list - Tech and startup news from 36Kr (leading Chinese tech media), including rank, title, view count, and URL",
+          "args": [
+            "limit"
+          ],
+          "page": "https://taprun.dev/taps/36kr/hot"
+        },
+        {
+          "ref": "arstechnica/news",
+          "intent": "read",
+          "description": "Ars Technica latest tech news and articles",
+          "args": [],
+          "page": "https://taprun.dev/taps/arstechnica/news"
+        },
+        {
+          "ref": "arxiv/search",
+          "intent": "read",
+          "description": "Search arXiv papers",
+          "args": [
+            "keyword"
+          ],
+          "page": "https://taprun.dev/taps/arxiv/search"
+        },
+        {
+          "ref": "bbc/news",
+          "intent": "read",
+          "description": "BBC News top stories",
+          "args": [],
+          "page": "https://taprun.dev/taps/bbc/news"
+        },
+        {
+          "ref": "bilibili/hot",
+          "intent": "read",
+          "description": "Bilibili trending videos - Get trending videos from Bilibili ranking, including title, author, views, danmaku count, likes, coins, favori...",
+          "args": [
+            "limit"
+          ],
+          "page": "https://taprun.dev/taps/bilibili/hot"
+        },
+        {
+          "ref": "calendar/today",
+          "intent": "read",
+          "description": "Today's calendar events",
+          "args": [],
+          "page": "https://taprun.dev/taps/calendar/today"
+        },
+        {
+          "ref": "clawhub/publish",
+          "intent": "write",
+          "description": "Publish a skill to OpenClaw ClawHub",
+          "args": [
+            "slug",
+            "displayName",
+            "version",
+            "skillFile",
+            "changelog"
+          ],
+          "page": "https://taprun.dev/taps/clawhub/publish"
+        },
+        {
+          "ref": "coingecko/top",
+          "intent": "read",
+          "description": "Top cryptocurrencies by market cap from CoinGecko API - Get the top 50 cryptocurrencies with price, 24h change, market cap, and trading v...",
+          "args": [],
+          "page": "https://taprun.dev/taps/coingecko/top"
+        },
+        {
+          "ref": "crates/popular",
+          "intent": "read",
+          "description": "crates",
+          "args": [],
+          "page": "https://taprun.dev/taps/crates/popular"
+        },
+        {
+          "ref": "creem/create-product",
+          "intent": "write",
+          "description": "Create a Creem product with subscription pricing",
+          "args": [
+            "key",
+            "name",
+            "price",
+            "description",
+            "billing"
+          ],
+          "page": "https://taprun.dev/taps/creem/create-product"
+        },
+        {
+          "ref": "creem/products",
+          "intent": "read",
+          "description": "List all Creem products with status, price, and subscriptions",
+          "args": [
+            "key"
+          ],
+          "page": "https://taprun.dev/taps/creem/products"
+        },
+        {
+          "ref": "creem/subscriptions",
+          "intent": "read",
+          "description": "List all Creem subscriptions with customer, product, and status",
+          "args": [
+            "key"
+          ],
+          "page": "https://taprun.dev/taps/creem/subscriptions"
+        },
+        {
+          "ref": "creem/transactions",
+          "intent": "read",
+          "description": "List recent Creem transactions (payments)",
+          "args": [
+            "key"
+          ],
+          "page": "https://taprun.dev/taps/creem/transactions"
+        },
+        {
+          "ref": "creem/validate-license",
+          "intent": "write",
+          "description": "Validate a Creem license key and check activation status",
+          "args": [
+            "key",
+            "license",
+            "instance"
+          ],
+          "page": "https://taprun.dev/taps/creem/validate-license"
+        },
+        {
+          "ref": "daily/brief",
+          "intent": "read",
+          "description": "Daily briefing from Calendar + Reminders",
+          "args": [
+            "save"
+          ],
+          "page": "https://taprun.dev/taps/daily/brief"
+        },
+        {
+          "ref": "devto/post",
+          "intent": "write",
+          "description": "Publish an article on Dev",
+          "args": [
+            "title",
+            "body",
+            "tags",
+            "published"
+          ],
+          "page": "https://taprun.dev/taps/devto/post"
+        },
+        {
+          "ref": "devto/publish",
+          "intent": "write",
+          "description": "Publish an article on Dev",
+          "args": [
+            "title",
+            "content",
+            "tags"
+          ],
+          "page": "https://taprun.dev/taps/devto/publish"
+        },
+        {
+          "ref": "devto/top",
+          "intent": "read",
+          "description": "Dev",
+          "args": [],
+          "page": "https://taprun.dev/taps/devto/top"
+        },
+        {
+          "ref": "discord/send",
+          "intent": "write",
+          "description": "Send a message in the current Discord channel",
+          "args": [
+            "message"
+          ],
+          "page": "https://taprun.dev/taps/discord/send"
+        },
+        {
+          "ref": "douban/hot",
+          "intent": "read",
+          "description": "Douban trending movies",
+          "args": [],
+          "page": "https://taprun.dev/taps/douban/hot"
+        },
+        {
+          "ref": "espn/scores",
+          "intent": "read",
+          "description": "ESPN top headlines and scores",
+          "args": [],
+          "page": "https://taprun.dev/taps/espn/scores"
+        },
+        {
+          "ref": "facebook/keyword-search",
+          "intent": "read",
+          "description": "Search Facebook posts by keyword (requires login)",
+          "args": [
+            "keyword",
+            "limit"
+          ],
+          "page": "https://taprun.dev/taps/facebook/keyword-search"
+        },
+        {
+          "ref": "feishu/doc",
+          "intent": "read",
+          "description": "Read current Feishu doc full text (block_map + TOC fallback)",
+          "args": [],
+          "page": "https://taprun.dev/taps/feishu/doc"
+        },
+        {
+          "ref": "github/create-issue",
+          "intent": "write",
+          "description": "Create a GitHub issue via API",
+          "args": [
+            "repo",
+            "title",
+            "body",
+            "labels"
+          ],
+          "page": "https://taprun.dev/taps/github/create-issue"
+        },
+        {
+          "ref": "github/trending",
+          "intent": "read",
+          "description": "GitHub repos created in the last N days with ≥ min_stars, filtered to AI/SaaS/devtool niches via topic+description keyword match",
+          "args": [
+            "days",
+            "min_stars",
+            "per_page"
+          ],
+          "page": "https://taprun.dev/taps/github/trending"
+        },
+        {
+          "ref": "glama/submit",
+          "intent": "write",
+          "description": "Submit an MCP server to Glama directory",
+          "args": [
+            "name",
+            "repoUrl"
+          ],
+          "page": "https://taprun.dev/taps/glama/submit"
+        },
+        {
+          "ref": "google/trends",
+          "intent": "read",
+          "description": "Google Trends daily trending searches",
+          "args": [
+            "geo"
+          ],
+          "page": "https://taprun.dev/taps/google/trends"
+        },
+        {
+          "ref": "hackernews/hot",
+          "intent": "read",
+          "description": "Hacker News top stories",
+          "args": [],
+          "page": "https://taprun.dev/taps/hackernews/hot"
+        },
+        {
+          "ref": "hackernews/submit",
+          "intent": "write",
+          "description": "Submit a story to Hacker News",
+          "args": [
+            "title",
+            "link",
+            "text"
+          ],
+          "page": "https://taprun.dev/taps/hackernews/submit"
+        },
+        {
+          "ref": "imdb/top",
+          "intent": "read",
+          "description": "IMDB Top 250 rated movies",
+          "args": [],
+          "page": "https://taprun.dev/taps/imdb/top"
+        },
+        {
+          "ref": "instagram/explore",
+          "intent": "read",
+          "description": "Instagram Explore (requires login)",
+          "args": [],
+          "page": "https://taprun.dev/taps/instagram/explore"
+        },
+        {
+          "ref": "juejin/hot",
+          "intent": "read",
+          "description": "Juejin trending articles",
+          "args": [],
+          "page": "https://taprun.dev/taps/juejin/hot"
+        },
+        {
+          "ref": "juejin/post",
+          "intent": "write",
+          "description": "Publish article on Juejin",
+          "args": [
+            "title",
+            "body",
+            "category",
+            "tags"
+          ],
+          "page": "https://taprun.dev/taps/juejin/post"
+        },
+        {
+          "ref": "linkedin/post",
+          "intent": "write",
+          "description": "Post to LinkedIn feed",
+          "args": [
+            "content"
+          ],
+          "page": "https://taprun.dev/taps/linkedin/post"
+        },
+        {
+          "ref": "lobsters/hot",
+          "intent": "read",
+          "description": "Lobsters hot stories - Frontpage stories from Lobsters tech community, extracted via RSS feed",
+          "args": [],
+          "page": "https://taprun.dev/taps/lobsters/hot"
+        },
+        {
+          "ref": "macos/scroll-capture",
+          "intent": "read",
+          "description": "Scrolling screenshots of frontmost macOS app (pixel-precise, max 3 screens)",
+          "args": [
+            "screens",
+            "header",
+            "app"
+          ],
+          "page": "https://taprun.dev/taps/macos/scroll-capture"
+        },
+        {
+          "ref": "medium/hot",
+          "intent": "read",
+          "description": "Medium Trending articles",
+          "args": [],
+          "page": "https://taprun.dev/taps/medium/hot"
+        },
+        {
+          "ref": "notes/create",
+          "intent": "write",
+          "description": "Create a note in Apple Notes",
+          "args": [
+            "title",
+            "body",
+            "folder"
+          ],
+          "page": "https://taprun.dev/taps/notes/create"
+        },
+        {
+          "ref": "notion/create",
+          "intent": "write",
+          "description": "Create a new page in Notion",
+          "args": [
+            "title",
+            "content"
+          ],
+          "page": "https://taprun.dev/taps/notion/create"
+        },
+        {
+          "ref": "npmjs/popular",
+          "intent": "read",
+          "description": "npm most popular packages by weekly downloads",
+          "args": [],
+          "page": "https://taprun.dev/taps/npmjs/popular"
+        },
+        {
+          "ref": "pixiv/ranking",
+          "intent": "read",
+          "description": "Pixiv daily illustration ranking",
+          "args": [],
+          "page": "https://taprun.dev/taps/pixiv/ranking"
+        },
+        {
+          "ref": "producthunt/hot",
+          "intent": "read",
+          "description": "Product Hunt hot products - Get today's trending products from Product Hunt, including rank, product name, link, description, and author",
+          "args": [],
+          "page": "https://taprun.dev/taps/producthunt/hot"
+        },
+        {
+          "ref": "producthunt/relevant",
+          "intent": "read",
+          "description": "Find recent PH launches matching keywords",
+          "args": [
+            "keywords",
+            "limit"
+          ],
+          "page": "https://taprun.dev/taps/producthunt/relevant"
+        },
+        {
+          "ref": "pypi/top",
+          "intent": "read",
+          "description": "PyPI top Python packages by downloads (last 30 days)",
+          "args": [],
+          "page": "https://taprun.dev/taps/pypi/top"
+        },
+        {
+          "ref": "quora/feed-jp",
+          "intent": "read",
+          "description": "Quora Japan homepage feed — questions + answer snippets from the explore feed",
+          "args": [],
+          "page": "https://taprun.dev/taps/quora/feed-jp"
+        },
+        {
+          "ref": "reddit/hot",
+          "intent": "read",
+          "description": "Reddit hot posts - Get hot posts from a specific subreddit, including rank, title, subreddit, score, and URL",
+          "args": [
+            "subreddit",
+            "limit"
+          ],
+          "page": "https://taprun.dev/taps/reddit/hot"
+        },
+        {
+          "ref": "reminders/pending",
+          "intent": "read",
+          "description": "Incomplete reminders",
+          "args": [],
+          "page": "https://taprun.dev/taps/reminders/pending"
+        },
+        {
+          "ref": "reuters/news",
+          "intent": "read",
+          "description": "Reuters top news stories",
+          "args": [],
+          "page": "https://taprun.dev/taps/reuters/news"
+        },
+        {
+          "ref": "rottentomatoes/opening",
+          "intent": "read",
+          "description": "Rotten Tomatoes popular movies at home",
+          "args": [],
+          "page": "https://taprun.dev/taps/rottentomatoes/opening"
+        },
+        {
+          "ref": "scys/article",
+          "intent": "read",
+          "description": "Read SCYS article with title, author, stats, full text",
+          "args": [
+            "url"
+          ],
+          "page": "https://taprun.dev/taps/scys/article"
+        },
+        {
+          "ref": "scys/extract-results",
+          "intent": "read",
+          "description": "Extract search results from SCYS Pinia store (requires login)",
+          "args": [],
+          "page": "https://taprun.dev/taps/scys/extract-results"
+        },
+        {
+          "ref": "scys/input-keyword",
+          "intent": "write",
+          "description": "Input search keyword into SCYS search box (requires login)",
+          "args": [
+            "keyword"
+          ],
+          "page": "https://taprun.dev/taps/scys/input-keyword"
+        },
+        {
+          "ref": "scys/nav",
+          "intent": "write",
+          "description": "Navigate to SCYS homepage (requires login)",
+          "args": [],
+          "page": "https://taprun.dev/taps/scys/nav"
+        },
+        {
+          "ref": "scys/research",
+          "intent": "read",
+          "description": "Search SCYS and extract Feishu doc links (search + article)",
+          "args": [
+            "keyword",
+            "limit"
+          ],
+          "page": "https://taprun.dev/taps/scys/research"
+        },
+        {
+          "ref": "scys/search",
+          "intent": "write",
+          "description": "Search SCYS by keyword (requires login)",
+          "args": [
+            "keyword"
+          ],
+          "page": "https://taprun.dev/taps/scys/search"
+        },
+        {
+          "ref": "scys/trigger-search",
+          "intent": "write",
+          "description": "Trigger search on SCYS (Vue component method or form submit, requires login)",
+          "args": [],
+          "page": "https://taprun.dev/taps/scys/trigger-search"
+        },
+        {
+          "ref": "shortcuts/list",
+          "intent": "read",
+          "description": "List available Apple Shortcuts",
+          "args": [],
+          "page": "https://taprun.dev/taps/shortcuts/list"
+        },
+        {
+          "ref": "shortcuts/run",
+          "intent": "read",
+          "description": "Run an Apple Shortcut",
+          "args": [
+            "name",
+            "input"
+          ],
+          "page": "https://taprun.dev/taps/shortcuts/run"
+        },
+        {
+          "ref": "slack/send",
+          "intent": "write",
+          "description": "Send a message in the current Slack channel",
+          "args": [
+            "message"
+          ],
+          "page": "https://taprun.dev/taps/slack/send"
+        },
+        {
+          "ref": "sspai/hot",
+          "intent": "read",
+          "description": "Sspai trending articles",
+          "args": [],
+          "page": "https://taprun.dev/taps/sspai/hot"
+        },
+        {
+          "ref": "stackoverflow/hot",
+          "intent": "read",
+          "description": "StackOverflow hot questions",
+          "args": [],
+          "page": "https://taprun.dev/taps/stackoverflow/hot"
+        },
+        {
+          "ref": "steam/top-sellers",
+          "intent": "read",
+          "description": "Steam top selling games",
+          "args": [],
+          "page": "https://taprun.dev/taps/steam/top-sellers"
+        },
+        {
+          "ref": "tap/dedupe",
+          "intent": "read",
+          "description": "Remove duplicate rows by field value",
+          "args": [
+            "field"
+          ],
+          "page": "https://taprun.dev/taps/tap/dedupe"
+        },
+        {
+          "ref": "tap/filter",
+          "intent": "read",
+          "description": "Filter rows where field matches condition (gt, lt, eq, contains)",
+          "args": [
+            "field",
+            "gt",
+            "lt",
+            "eq",
+            "contains"
+          ],
+          "page": "https://taprun.dev/taps/tap/filter"
+        },
+        {
+          "ref": "tap/limit",
+          "intent": "read",
+          "description": "Take first N rows (head) or skip M then take N (offset+limit)",
+          "args": [
+            "n",
+            "offset"
+          ],
+          "page": "https://taprun.dev/taps/tap/limit"
+        },
+        {
+          "ref": "tap/pick",
+          "intent": "read",
+          "description": "Select specific columns from rows (projection)",
+          "args": [
+            "fields"
+          ],
+          "page": "https://taprun.dev/taps/tap/pick"
+        },
+        {
+          "ref": "tap/sort",
+          "intent": "read",
+          "description": "Sort rows by field (numeric or alphabetic, asc or desc)",
+          "args": [
+            "field",
+            "order"
+          ],
+          "page": "https://taprun.dev/taps/tap/sort"
+        },
+        {
+          "ref": "tap/table",
+          "intent": "read",
+          "description": "Format rows as a human-readable table (outputs one row per line)",
+          "args": [
+            "cols",
+            "max"
+          ],
+          "page": "https://taprun.dev/taps/tap/table"
+        },
+        {
+          "ref": "techcrunch/latest",
+          "intent": "read",
+          "description": "TechCrunch latest articles via RSS feed — zero DOM dependency",
+          "args": [],
+          "page": "https://taprun.dev/taps/techcrunch/latest"
+        },
+        {
+          "ref": "telegraph/nav",
+          "intent": "read",
+          "description": "Navigate to Telegraph editor and activate",
+          "args": [],
+          "page": "https://taprun.dev/taps/telegraph/nav"
+        },
+        {
+          "ref": "tiktok/trending",
+          "intent": "read",
+          "description": "TikTok Trending Videos (requires login or geo-access)",
+          "args": [],
+          "page": "https://taprun.dev/taps/tiktok/trending"
+        },
+        {
+          "ref": "toutiao/hot",
+          "intent": "read",
+          "description": "Toutiao hot topics",
+          "args": [],
+          "page": "https://taprun.dev/taps/toutiao/hot"
+        },
+        {
+          "ref": "v2ex/hot",
+          "intent": "read",
+          "description": "V2EX hot topics",
+          "args": [],
+          "page": "https://taprun.dev/taps/v2ex/hot"
+        },
+        {
+          "ref": "v2ex/post",
+          "intent": "write",
+          "description": "Post a topic on V2EX",
+          "args": [
+            "title",
+            "content",
+            "node"
+          ],
+          "page": "https://taprun.dev/taps/v2ex/post"
+        },
+        {
+          "ref": "weather/forecast",
+          "intent": "read",
+          "description": "Weather forecast from wttr",
+          "args": [
+            "location"
+          ],
+          "page": "https://taprun.dev/taps/weather/forecast"
+        },
+        {
+          "ref": "weibo/hot",
+          "intent": "read",
+          "description": "Weibo hot search - Real-time trending topics from Weibo (Chinese Twitter), including rank, topic, tag, heat value, and URL",
+          "args": [
+            "limit"
+          ],
+          "page": "https://taprun.dev/taps/weibo/hot"
+        },
+        {
+          "ref": "wikipedia/most-read",
+          "intent": "read",
+          "description": "Wikipedia most read articles today",
+          "args": [],
+          "page": "https://taprun.dev/taps/wikipedia/most-read"
+        },
+        {
+          "ref": "xiaohongshu/search",
+          "intent": "read",
+          "description": "Xiaohongshu (Little Red Book) notes search - Search for notes and get detailed information including title, author, likes, comments, coll...",
+          "args": [
+            "keyword"
+          ],
+          "page": "https://taprun.dev/taps/xiaohongshu/search"
+        },
+        {
+          "ref": "xueqiu/hot-stock",
+          "intent": "read",
+          "description": "Xueqiu hot stocks",
+          "args": [],
+          "page": "https://taprun.dev/taps/xueqiu/hot-stock"
+        },
+        {
+          "ref": "zhihu/hot",
+          "intent": "read",
+          "description": "Zhihu hot topics - Extract trending topics and discussions from Zhihu (Chinese Q&A platform), including title, heat index, and URL",
+          "args": [
+            "limit"
+          ],
+          "page": "https://taprun.dev/taps/zhihu/hot"
+        }
+      ]
     },
     {
       "name": "releases",
@@ -32,7 +718,6 @@
       }
     }
   ],
-
   "actions": [
     {
       "name": "install",
@@ -43,11 +728,9 @@
       "auth": "none"
     }
   ],
-
   "specs": {
     "llms_txt": "https://taprun.dev/llms.txt"
   },
-
   "policies": {
     "automation_allowed": true,
     "rate_limit": "60 req/min",
