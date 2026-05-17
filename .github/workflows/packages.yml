@@ -7,6 +7,7 @@ on:
       - "packages/**"
       - "package.json"
       - "docs/spec/plan-v1.schema.json"
+      - "docs/spec/plan-v1/schema.json"
       - "docs/ns/tap-v1/**"
       - ".github/workflows/packages.yml"
   pull_request:
@@ -14,28 +15,33 @@ on:
       - "packages/**"
       - "package.json"
       - "docs/spec/plan-v1.schema.json"
+      - "docs/spec/plan-v1/schema.json"
       - "docs/ns/tap-v1/**"
 
 jobs:
   schema-deploy-drift:
-    # Asserts the JSON Schema served at https://taprun.dev/spec/plan-v1.schema.json
-    # is byte-equivalent to the source-of-truth in @taprun/spec. The two files
-    # must stay equal because the schema's own $id points at the deployed URL —
-    # if the deploy lags, downstream validators that fetch by $id resolve to
-    # the wrong revision.
+    # Asserts the JSON Schema served at:
+    #   https://taprun.dev/spec/plan-v1.schema.json    (flat — legacy URL)
+    #   https://taprun.dev/spec/plan-v1/schema.json    (subdirectory — 1.2.0 $id target)
+    # are both byte-equivalent to the source-of-truth in @taprun/spec.
+    # The two mirrors must stay equal because the schema's own $id points at
+    # the subdirectory URL — if the deploy lags, downstream validators that
+    # fetch by $id resolve to the wrong revision. The flat URL is preserved
+    # for pre-1.2.0 back-compat references that pinned it directly.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Diff source schema vs deployed copy
+      - name: Diff source schema vs deployed copies (flat + subdirectory)
         run: |
           set -e
           src=packages/spec/schemas/plan-v1.schema.json
-          dst=docs/spec/plan-v1.schema.json
-          if ! diff -u "$src" "$dst"; then
-            echo "::error::$dst drifted from $src — run 'cp $src $dst' and commit."
-            exit 1
-          fi
-          echo "OK: $src == $dst"
+          for dst in docs/spec/plan-v1.schema.json docs/spec/plan-v1/schema.json; do
+            if ! diff -u "$src" "$dst"; then
+              echo "::error::$dst drifted from $src — run 'npm run docs:sync-schema' and commit."
+              exit 1
+            fi
+            echo "OK: $src == $dst"
+          done
 
   ns-cross-consumer-only:
     # Asserts the tap-v1 namespace defines exactly the cross-consumer

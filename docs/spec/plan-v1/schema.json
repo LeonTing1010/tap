@@ -1,0 +1,345 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://taprun.dev/spec/plan-v1/schema.json",
+  "title": "Tap Plan v1",
+  "description": "On-disk format for Tap v2 plans (bare JSON; no W3C Annotation envelope). Plans are a discriminated union of read (observe+return) and write (act+key+confirm?) variants. Mirrors @taprun/spec/src/types.ts; drift-guarded by packages/spec/test/schema-drift.test.mjs.",
+  "$comment": "Per ADR tap-core docs/adr/2026-05-03-unified-tap-primitive.md. Edited from src/types.ts. Do not edit fields without updating the drift-guard test.",
+
+  "oneOf": [
+    { "$ref": "#/$defs/PlanRead" },
+    { "$ref": "#/$defs/PlanWrite" }
+  ],
+
+  "$defs": {
+    "TapId": {
+      "type": "object",
+      "description": "Pure identity for a tap. Two TapIds equal iff site AND name match.",
+      "required": ["site", "name"],
+      "additionalProperties": false,
+      "properties": {
+        "site": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 }
+      }
+    },
+
+    "CelExpr": {
+      "type": "string",
+      "description": "A CEL expression source string. Validated by the engine's CEL Environment at lint time."
+    },
+
+    "ArgSpec": {
+      "type": "object",
+      "description": "Argument schema declaration on a Plan.",
+      "required": ["type"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "enum": ["string", "int", "number", "boolean", "object", "array"] },
+        "default": {},
+        "required": { "const": true },
+        "description": { "type": "string" }
+      }
+    },
+
+    "OpName": {
+      "type": "string",
+      "description": "Closed 11-op union (substrate 7 + control 3 + escape 1). Growth requires ADR amendment + arch test fail. Mirrors OP_NAMES_V2 in src/types.ts.",
+      "enum": [
+        "fetch", "nav", "wait", "input", "extract", "cookies", "tap",
+        "if", "foreach", "parallel",
+        "eval"
+      ]
+    },
+
+    "NavAttachMatchMode": {
+      "type": "string",
+      "description": "Per ADR tap-core/docs/adr/2026-05-14-op-nav-attach.md. Closed 3-arm.",
+      "enum": ["url-prefix", "origin", "exact"]
+    },
+
+    "NavAttach": {
+      "description": "Tab-attach directive on op:nav. `true` shorthand = { match: 'url-prefix' }.",
+      "oneOf": [
+        { "const": true },
+        {
+          "type": "object",
+          "required": ["match"],
+          "additionalProperties": false,
+          "properties": {
+            "match": { "$ref": "#/$defs/NavAttachMatchMode" }
+          }
+        }
+      ]
+    },
+
+    "FetchOp": {
+      "type": "object",
+      "required": ["op", "url"],
+      "additionalProperties": false,
+      "properties": {
+        "op": { "const": "fetch" },
+        "url": { "type": "string" },
+        "method": { "enum": ["GET", "POST", "PUT", "DELETE", "PATCH"] },
+        "headers": { "type": "object", "additionalProperties": { "type": "string" } },
+        "body": {},
+        "format": { "enum": ["json", "text", "arrayBuffer"] },
+        "credentials": {
+          "enum": ["deno-host", "page-session"],
+          "description": "Same-origin only when 'page-session' — the user's logged-in browser cookies authenticate."
+        },
+        "save": { "type": "string" }
+      }
+    },
+
+    "NavOp": {
+      "type": "object",
+      "required": ["op", "url"],
+      "additionalProperties": false,
+      "properties": {
+        "op": { "const": "nav" },
+        "url": { "type": "string" },
+        "attach": { "$ref": "#/$defs/NavAttach" },
+        "save": { "type": "string" }
+      }
+    },
+
+    "WaitOp": {
+      "type": "object",
+      "required": ["op"],
+      "additionalProperties": false,
+      "properties": {
+        "op": { "const": "wait" },
+        "ms": { "type": "number" },
+        "selector": { "type": "string" },
+        "timeout_ms": { "type": "number" },
+        "save": { "type": "string" }
+      }
+    },
+
+    "InputOp": {
+      "type": "object",
+      "required": ["op", "kind"],
+      "additionalProperties": false,
+      "properties": {
+        "op": { "const": "input" },
+        "kind": { "enum": ["click", "type", "fill", "press", "upload"] },
+        "target": { "type": "string" },
+        "value": { "type": "string" },
+        "save": { "type": "string" }
+      }
+    },
+
+    "ExtractSpec": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "attr": { "type": "string" },
+        "text": { "type": "string" },
+        "innerText": { "type": "string" },
+        "html": { "type": "string" },
+        "exists": { "type": "string" },
+        "selector": { "type": "string" }
+      }
+    },
+
+    "ExtractOp": {
+      "type": "object",
+      "required": ["op", "root", "per_item"],
+      "additionalProperties": false,
+      "properties": {
+        "op": { "const": "extract" },
+        "root": { "type": "string" },
+        "per_item": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/ExtractSpec" }
+        },
+        "save": { "type": "string" }
+      }
+    },
+
+    "CookiesOp": {
+      "type": "object",
+      "required": ["op"],
+      "additionalProperties": false,
+      "properties": {
+        "op": { "const": "cookies" },
+        "domain": { "type": "string" },
+        "name": { "type": "string" },
+        "save": { "type": "string" }
+      }
+    },
+
+    "TapOp": {
+      "type": "object",
+      "required": ["op", "site", "name"],
+      "additionalProperties": false,
+      "properties": {
+        "op": { "const": "tap" },
+        "site": { "type": "string" },
+        "name": { "type": "string" },
+        "args": { "type": "object" },
+        "save": { "type": "string" }
+      }
+    },
+
+    "IfOp": {
+      "type": "object",
+      "required": ["op", "cond", "then"],
+      "additionalProperties": false,
+      "properties": {
+        "op": { "const": "if" },
+        "cond": { "$ref": "#/$defs/CelExpr" },
+        "then": { "type": "array", "items": { "$ref": "#/$defs/Op" } },
+        "else": { "type": "array", "items": { "$ref": "#/$defs/Op" } },
+        "save": { "type": "string" }
+      }
+    },
+
+    "ForeachOp": {
+      "type": "object",
+      "required": ["op", "body"],
+      "additionalProperties": false,
+      "properties": {
+        "op": { "const": "foreach" },
+        "over": { "$ref": "#/$defs/CelExpr" },
+        "count": { "type": "number" },
+        "body": { "type": "array", "items": { "$ref": "#/$defs/Op" } },
+        "until": { "$ref": "#/$defs/CelExpr" },
+        "save": { "type": "string" }
+      }
+    },
+
+    "ParallelOp": {
+      "type": "object",
+      "required": ["op", "branches"],
+      "additionalProperties": false,
+      "properties": {
+        "op": { "const": "parallel" },
+        "branches": {
+          "type": "array",
+          "items": { "type": "array", "items": { "$ref": "#/$defs/Op" } }
+        },
+        "save": { "type": "string" }
+      }
+    },
+
+    "EvalOp": {
+      "type": "object",
+      "description": "Page-context JS escape hatch. `returns.type` is MANDATORY — runtime schema-validates output before binding.",
+      "required": ["op", "fn", "returns"],
+      "additionalProperties": false,
+      "properties": {
+        "op": { "const": "eval" },
+        "fn": { "type": "string" },
+        "returns": {
+          "type": "object",
+          "required": ["type"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "enum": ["string", "number", "boolean", "object", "array"] }
+          }
+        },
+        "args": { "type": "array" },
+        "save": { "type": "string" }
+      }
+    },
+
+    "Op": {
+      "description": "The closed Op union — exactly 11 members. Discriminated by `op`.",
+      "oneOf": [
+        { "$ref": "#/$defs/FetchOp" },
+        { "$ref": "#/$defs/NavOp" },
+        { "$ref": "#/$defs/WaitOp" },
+        { "$ref": "#/$defs/InputOp" },
+        { "$ref": "#/$defs/ExtractOp" },
+        { "$ref": "#/$defs/CookiesOp" },
+        { "$ref": "#/$defs/TapOp" },
+        { "$ref": "#/$defs/IfOp" },
+        { "$ref": "#/$defs/ForeachOp" },
+        { "$ref": "#/$defs/ParallelOp" },
+        { "$ref": "#/$defs/EvalOp" }
+      ]
+    },
+
+    "PlanLifecycle": {
+      "type": "string",
+      "description": "Tab lifetime policy. Absent ⇒ resolveLifecycle returns 'scoped' (RAII default).",
+      "enum": ["scoped", "interactive"]
+    },
+
+    "PlanCommon": {
+      "type": "object",
+      "description": "Fields shared by read and write Plan variants. NOT directly instantiable — use PlanRead or PlanWrite.",
+      "required": ["id", "return"],
+      "properties": {
+        "$schema": {
+          "type": "string",
+          "description": "Self-declared schema URL for forward-compatibility (per ADR tap-core 2026-05-09-userspace-via-standards.md INV-2)."
+        },
+        "id": { "$ref": "#/$defs/TapId" },
+        "description": { "type": "string" },
+        "args": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/ArgSpec" }
+        },
+        "arg_constraints": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/CelExpr" }
+        },
+        "requires": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "runtime": { "enum": ["extension", "playwright"] }
+          }
+        },
+        "lifecycle": { "$ref": "#/$defs/PlanLifecycle" },
+        "observe": { "type": "array", "items": { "$ref": "#/$defs/Op" } },
+        "return": { "$ref": "#/$defs/CelExpr" },
+        "expects": { "$ref": "#/$defs/CelExpr" },
+        "source_url": { "type": "string" },
+        "source_intent": { "type": "string" }
+      }
+    },
+
+    "PlanRead": {
+      "allOf": [
+        { "$ref": "#/$defs/PlanCommon" },
+        {
+          "type": "object",
+          "description": "Read variant — write fields are forbidden. The TS discriminated union uses `never` for these; JSON Schema expresses absence via `not`.",
+          "not": {
+            "anyOf": [
+              { "required": ["act"] },
+              { "required": ["key"] },
+              { "required": ["precondition"] },
+              { "required": ["postcondition"] },
+              { "required": ["return_when_skipped"] },
+              { "required": ["dedup_ttl_seconds"] },
+              { "required": ["confirm"] }
+            ]
+          }
+        }
+      ]
+    },
+
+    "PlanWrite": {
+      "allOf": [
+        { "$ref": "#/$defs/PlanCommon" },
+        {
+          "type": "object",
+          "description": "Write variant — `act` and `key` are both required (key authored in product-semantic space, drives intent_key for at-most-once).",
+          "required": ["act", "key"],
+          "properties": {
+            "act": { "type": "array", "items": { "$ref": "#/$defs/Op" }, "minItems": 1 },
+            "key": { "$ref": "#/$defs/CelExpr" },
+            "confirm": { "type": "array", "items": { "$ref": "#/$defs/Op" } },
+            "precondition": { "$ref": "#/$defs/CelExpr" },
+            "postcondition": { "$ref": "#/$defs/CelExpr" },
+            "return_when_skipped": { "$ref": "#/$defs/CelExpr" },
+            "dedup_ttl_seconds": { "type": "number" }
+          }
+        }
+      ]
+    }
+  }
+}
