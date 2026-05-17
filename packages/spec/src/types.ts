@@ -210,23 +210,38 @@ export function resolveLifecycle(plan: { lifecycle?: PlanLifecycle }): PlanLifec
 
 /** Common Plan fields (shared by read and write variants). */
 interface PlanCommon {
+  /** Self-declared schema URL for forward-compatibility (per ADR
+   *  `2026-05-09-userspace-via-standards.md` INV-2). When absent,
+   *  the engine backward-fills to the current schema reader. When
+   *  present and known, dispatch is exact. */
+  $schema?: string;
   id: TapId;
   description?: string;
   args?: Record<string, ArgSpec>;
   /** CEL constraints over args. Each must return bool. */
   arg_constraints?: CelExpr[];
   requires?: { runtime?: "extension" | "playwright" };
+  /** Tab lifetime policy (per ADR 2026-05-10-plan-lifecycle-scoped-tabs.md).
+   *  Absent ⇒ resolveLifecycle returns "scoped" (RAII-safe default). */
+  lifecycle?: PlanLifecycle;
   /** Pure read of current state. */
   observe?: Op[];
   /** What the tap returns. CEL over $args + phase outputs. */
   return: CelExpr;
-  /** Substrate equivalence predicate for doctor. */
-  fingerprint_equivalent?: CelExpr;
-  /** Optional MCP exposure mode. */
-  expose_as_mcp_tool?: boolean;
-  /** Tab lifetime policy (per ADR 2026-05-10-plan-lifecycle-scoped-tabs.md).
-   *  Absent ⇒ resolveLifecycle returns "scoped" (RAII-safe default). */
-  lifecycle?: PlanLifecycle;
+  /** CEL boolean evaluated after `observe` and before `act`, declaring
+   *  substrate-state that must hold for the plan to proceed. When false,
+   *  runtime emits `precondition_unmet` and the user-action arm names
+   *  what the user must do. Scope = `$args` + `$observe`. Per ADR
+   *  `2026-05-04-user-recoverable-failures.md`. */
+  expects?: CelExpr;
+  /** The source URL the tap was originally captured from. Set by
+   *  `capture` so subsequent calls (heal-by-recapture, drift diagnosis)
+   *  know where the substrate lives without manual passing. */
+  source_url?: string;
+  /** The user's intent expressed in natural language at capture time.
+   *  Forge consumes this for template selection + AI-fallback routing.
+   *  Plan.description may be derived from intent if absent. */
+  source_intent?: string;
 }
 
 /** Discriminated union: act non-empty ⇒ key required at type level.
@@ -266,7 +281,15 @@ export type IntentState = typeof INTENT_STATES[number];
 // L7 — Doctor verdict enum (PUBLIC; full DoctorOutcome is INTERNAL)
 // ═══════════════════════════════════════════════════════════════════════════
 
+/** 3-arm closed enum returned by `verify`.
+ *  - live: every observe op succeeded; any op.expect predicate truthy
+ *  - drifted: 4xx/5xx, op.expect → falsy, JSON parse fail, or unimplemented op
+ *  - unreachable: network failure / timeout / DNS / connection refused
+ *
+ *  Per ADR `2026-05-10-snapshot-dissolved.md` — the v0.x 4-arm
+ *  (equivalent/drifted/baseline-set/unreachable) retired with the
+ *  snapshot subsystem. */
 export const VERDICT_VALUES = [
-  "equivalent", "drifted", "baseline-set", "unreachable",
+  "live", "drifted", "unreachable",
 ] as const;
 export type Verdict = typeof VERDICT_VALUES[number];

@@ -1,5 +1,73 @@
 # @taprun/spec — Changelog
 
+## 1.2.0 — 2026-05-17
+
+**BREAKING (silently — see below)**: schema realigned with Tap v2 plan
+format. v0.x users who validated `.tap.json` plans against this package's
+shipped `schemas/plan-v1.schema.json` were already getting wrong results
+since the v2 launch on 2026-05-03 — the schema enumerated 24 ops
+including `exec` / `parseXML` / `screenshot` / `scroll` / `compute` /
+`filter` / `project` / `sort` / `dedupe` / `pick` / `limit` / `concat` /
+`pipe`, all of which were deleted in v2, and the envelope still required
+the W3C Annotation wrapper (`type: "Annotation"`, `motivation:
+"tap:executing"`) and the deleted `intent: "read"|"write"` field. This
+release replaces the schema with one that matches the live runtime.
+
+- `schemas/plan-v1.schema.json`: complete rewrite.
+  - `$id` set to `https://taprun.dev/spec/plan-v1/schema.json` (the
+    canonical reference URL; `taprun.dev/spec/plan-v1.schema.json` is
+    a byte-identical mirror).
+  - `OpName.enum` now has 11 entries matching `OP_NAMES_V2` in
+    `src/types.ts` (`fetch`, `nav`, `wait`, `input`, `extract`,
+    `cookies`, `tap`, `if`, `foreach`, `parallel`, `eval`).
+  - `$defs` now has a per-op variant (FetchOp / NavOp / WaitOp /
+    InputOp / ExtractOp / CookiesOp / TapOp / IfOp / ForeachOp /
+    ParallelOp / EvalOp) with all fields and `additionalProperties:
+    false`.
+  - Plan modeled as a discriminated union via `oneOf` of `PlanRead`
+    (write fields forbidden via `not`) and `PlanWrite` (`act` + `key`
+    both required).
+  - No envelope wrapper. Plans are bare JSON per ADR tap-core
+    `docs/adr/2026-05-03-unified-tap-primitive.md`.
+- `src/types.ts`: align with `core/types.ts` v2 baseline.
+  - Add `$schema?`, `expects?`, `source_url?`, `source_intent?` on
+    `PlanCommon` (present in core since 2026-05-04 ~ 2026-05-09).
+  - Remove `fingerprint_equivalent?` (deleted with snapshot subsystem
+    per `2026-05-10-snapshot-dissolved.md`).
+  - Remove `expose_as_mcp_tool?` (deleted per
+    `2026-05-04-saved-taps-as-resources.md`; saved taps are MCP
+    Resources now, not Tools).
+  - `VERDICT_VALUES`: 4-arm `equivalent`/`drifted`/`baseline-set`/
+    `unreachable` → 3-arm `live`/`drifted`/`unreachable` (snapshot
+    dissolution again).
+- `test/schema-drift.test.mjs`: new drift-guard. Asserts bidirectional
+  parity between `schemas/plan-v1.schema.json` and `src/types.ts`:
+  OpName.enum ⊇⊆ OP_NAMES_V2, every TS Op interface has a $defs entry,
+  every $defs entry's `op` const is in OP_NAMES_V2, `$id` points at
+  taprun.dev, no deleted v0.x ops leak. Runs via `npm test` (Node
+  built-in test runner). Closes the silent-drift loophole — prior to
+  1.2.0 only `tap-core/src/test/spec_public_subset_test.ts` guarded
+  this, and only in one direction (no INTERNAL leak), letting deleted
+  fields linger in spec indefinitely.
+
+### Migration for existing consumers
+
+- **TS types**: re-typecheck against 1.2.0. If you used
+  `fingerprint_equivalent` / `expose_as_mcp_tool` / `Verdict ==
+  "equivalent" | "baseline-set"` — those don't exist in v2 runtime
+  either; drop the references.
+- **JSON schema validation** (`@taprun/spec/schema` subpath import):
+  before 1.2.0, any v2 plan was failing schema validation against
+  the v0.x shape; after, it passes. If you had workarounds for
+  "schema rejects valid plans," remove them.
+- **Published artifact**: `taprun.dev/spec/plan-v1/schema.json` and
+  `taprun.dev/spec/plan-v1.schema.json` are updated by the public/
+  repo release pipeline to byte-match the npm tarball.
+
+Related: LeonTing1010/tap#8 (this work), tap-core#47 (publish v2
+reference), tap-core#46 (closed — envelope `intent` field dissolved),
+tap-core#56 (downstream MCP-resource consumer C, blocked on this).
+
 ## 1.1.1 — 2026-05-10
 
 - Fix: ship `schemas/plan-v1.schema.json` in the npm tarball. The 0.3.0

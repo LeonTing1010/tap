@@ -1,6 +1,6 @@
 {
   "name": "@taprun/spec",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "Tap v2 plan format — public TypeScript types for the 11-op closed union, Plan discriminated union, and state-machine enums (Verdict, IntentState). Schema break vs v0.x; see ADR 2026-05-04-ecosystem-v2-launch.",
   "publishConfig": {
     "access": "public"
@@ -30,7 +30,8 @@
   ],
   "scripts": {
     "build": "tsc",
-    "prepublishOnly": "npm run build && node scripts/pre-publish-check.ts"
+    "prepublishOnly": "npm run build && node scripts/pre-publish-check.ts",
+    "test": "node --test test/*.test.mjs"
   },
   "engines": {
     "node": ">=18"
