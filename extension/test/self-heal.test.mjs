@@ -154,19 +154,24 @@ test("nav handler computes target origin", () => {
 });
 
 test("nav handler compares target.origin vs current.origin", () => {
-  const navStart = BG_SRC.indexOf("case 'nav':");
+  const navStart = BG_SRC.indexOf("case 'nav': {");
   assert(navStart !== -1, "nav case handler must exist");
-  const navBlock = BG_SRC.slice(navStart, navStart + 2000);
+  // Slice through end of the nav case (next `case '...':`) so the window
+  // size doesn't drift as the handler grows. Pre-2026-05-17 this was a
+  // hardcoded 2000-char window that fell short once op-nav-attach landed
+  // ~50 lines of attach-mode bookkeeping before the cross-origin check.
+  const navEnd = BG_SRC.indexOf("case '", navStart + 10);
+  const navBlock = BG_SRC.slice(navStart, navEnd > 0 ? navEnd : navStart + 6000);
   const originAccesses = navBlock.match(/\.origin\b/g) || [];
   assert(
     originAccesses.length >= 2,
     `nav handler must access .origin on both target and current to compare; ` +
-      `found ${originAccesses.length} .origin access(es) in 2000-char window`,
+      `found ${originAccesses.length} .origin access(es) in nav case block`,
   );
 });
 
 test("origin mismatch branch opens new tab via chrome.tabs.create", () => {
-  const navStart = BG_SRC.indexOf("case 'nav':");
+  const navStart = BG_SRC.indexOf("case 'nav': {");
   const navBlock = BG_SRC.slice(navStart, navStart + 3000);
   assert(
     /\.origin\s*!==?\s*[a-zA-Z_$.]*\.origin/.test(navBlock),
@@ -194,7 +199,7 @@ test("origin mismatch branch opens new tab via chrome.tabs.create", () => {
 console.log("\n  -- Rule (iv): cross-origin new tab binds via SAA self-heal --\n");
 
 test("nav handler contains SAA self-heal that binds new tabId to sessionId", () => {
-  const navStart = BG_SRC.indexOf("case 'nav':");
+  const navStart = BG_SRC.indexOf("case 'nav': {");
   const navEnd = BG_SRC.indexOf("case '", navStart + 10);
   const navBlock = BG_SRC.slice(
     navStart,
@@ -214,7 +219,7 @@ test("nav handler contains SAA self-heal that binds new tabId to sessionId", () 
 });
 
 test("nav handler does NOT emit active_tab_changed (deleted per SAA cross-repo ADR)", () => {
-  const navStart = BG_SRC.indexOf("case 'nav':");
+  const navStart = BG_SRC.indexOf("case 'nav': {");
   const navEnd = BG_SRC.indexOf("case '", navStart + 10);
   const navBlock = BG_SRC.slice(
     navStart,
