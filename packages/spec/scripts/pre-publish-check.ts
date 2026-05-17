@@ -35,6 +35,7 @@ const PKG_ROOT = new URL("..", import.meta.url).pathname;
 const ALLOWED_FILES = new Set([
   "package.json",
   "README.md",
+  "CHANGELOG.md",
   "dist/types.js",
   "dist/types.d.ts",
   "dist/lint.js",
@@ -43,6 +44,7 @@ const ALLOWED_FILES = new Set([
   "dist/ns-vocabulary.d.ts",
   "dist/index.js",
   "dist/index.d.ts",
+  "schemas/plan-v1.schema.json",
 ]);
 
 // ─── INTERNAL symbol names that must never appear in published JS ───────
