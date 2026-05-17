@@ -47,15 +47,36 @@ console.log(`canonical binary_pkg: ${cli.binary_pkg}`);
 console.log("");
 
 // ─── In-repo: extension manifest version ─────────────────────────────────
+//
+// The extension and the CLI binary are independent release cycles. CWS
+// rejects a re-publish at the same version, so extension-only fixes
+// (NM manifest rename, listing copy, etc.) bump the manifest without
+// bumping the CLI. The invariant is therefore "extension version is at
+// LEAST cli.yml version" — never behind. Pre-2026-05-17 this was a
+// strict-equality check, which fired daily after extension 0.16.6+0.16.7
+// shipped without a CLI re-release (3b2f085 / 98ab151).
 {
   const path = `${repoRoot}extension/manifest.json`;
   const m = JSON.parse(await Deno.readTextFile(path)) as { version: string };
-  if (m.version === cli.version) {
-    pass("extension/manifest.json version", `${m.version}`);
+  const cmp = semverCmp(m.version, cli.version);
+  if (cmp >= 0) {
+    pass("extension/manifest.json version",
+      cmp === 0 ? `${m.version}` : `${m.version} (>= ${cli.version})`);
   } else {
     fail("extension/manifest.json version",
-      `expected ${cli.version} (cli.yml), found ${m.version}`);
+      `extension behind CLI: cli.yml is ${cli.version}, manifest is ${m.version}`);
   }
+}
+
+/** Numeric semver compare. Returns -1 / 0 / 1. Inputs must be `X.Y.Z`
+ *  pre-validated by the cli.version regex above. */
+function semverCmp(a: string, b: string): number {
+  const pa = a.split(".").map((n) => parseInt(n, 10));
+  const pb = b.split(".").map((n) => parseInt(n, 10));
+  for (let i = 0; i < 3; i++) {
+    if (pa[i] !== pb[i]) return pa[i] < pb[i] ? -1 : 1;
+  }
+  return 0;
 }
 
 // ─── In-repo: README must literally cite install commands ────────────────

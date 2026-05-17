@@ -43,6 +43,9 @@ This extension is the browser half of Tap. It talks to the Tap CLI on your machi
    # macOS / Linux (curl)
    curl -fsSL https://taprun.dev/install.sh | sh
 
+   # any platform with Node 18+ (verify CLI is reachable)
+   npx -y @taprun/cli --version
+
 2. Install this Chrome extension from the Chrome Web Store.
 
 3. Register the native-messaging manifest:
