@@ -1485,9 +1485,38 @@ function connectBridge() {
     const { op: opName, ...rest } = op
     const method = String(opName).replace(/^tap\./, '')
     const resolvedParams = { ...rest }
+    // ─── Per-op shape guard (tap-core#59 P0-A) ─────────────────────────────
+    // Mirror of core/assets/plan-v1.schema.json per-op `required` arrays
+    // (besides discriminator `op`). On missing required field, return a
+    // typed JSON-RPC -32602 (Invalid params) error BEFORE handleMethod, so
+    // `undefined` never leaks into the handler and surfaces as the
+    // user-baffling "empty SW reply" failure mode that cost 30min on
+    // 2026-05-18. Drift-guarded by extension/test/op-shape-validation.test.mjs.
+    const OP_REQUIRED_FIELDS = {
+      fetch: ['url'],
+      nav: ['url'],
+      input: ['kind'],
+      extract: ['root', 'per_item'],
+      tap: ['site', 'name'],
+      eval: ['fn', 'returns'],
+    }
+    const required = OP_REQUIRED_FIELDS[method] || []
+    const missing = required.filter((k) => resolvedParams[k] === undefined)
+    if (missing.length > 0) {
+      const errResp = {
+        jsonrpc: '2.0',
+        id: msg.id,
+        error: {
+          code: -32602,
+          message: `Invalid params: op:${method} missing required field(s): ${missing.join(', ')}`,
+        },
+      }
+      try { port.postMessage(errResp) } catch { /* port gone */ }
+      return
+    }
     // Engine-side EvalOp uses `fn`; extension's handleMethod historically
     // reads `params.expression`. Translate here so we don't have to fork
-    // the type.
+    // the type. Safe because the guard above guarantees `fn` is present.
     if (method === 'eval' && resolvedParams.fn !== undefined && resolvedParams.expression === undefined) {
       resolvedParams.expression = `(${resolvedParams.fn})()`
     }
