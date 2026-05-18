@@ -463,8 +463,16 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       // via session.create). Bind the freshly-navigated tab to that sessionId
       // so subsequent commands resolve instead of throwing "No active tab"
       // forever. Without this the MCP main session stays orphaned for life.
+      //
+      // 2026-05-18 fix: dropped `!sessionUpdated &&` short-circuit. Multiple
+      // sessionIds can legitimately share one tab (cross-Run attach reuse:
+      // Run-A interactive lifecycle leaves sid-A bound to the user's tab;
+      // Run-B navs via op:nav.attach to the same tab → for-loop above syncs
+      // sid-A's URL, but sid-B must STILL get bound here, otherwise eval in
+      // Run-B fails with "No active tab"). The two paths operate on
+      // different sessions entries and don't conflict.
       const sid = params._sessionId
-      if (!sessionUpdated && fromDaemon && sid && !sessions.has(sid)) {
+      if (fromDaemon && sid && !sessions.has(sid)) {
         sessions.set(sid, {
           tabId, url: finalTab.url || params.url,
           interceptActive: false, networkCapturing: false,
