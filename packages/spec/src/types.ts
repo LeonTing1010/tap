@@ -103,6 +103,18 @@ export interface InputOp {
   kind: "click" | "type" | "fill" | "press" | "upload";
   target?: string;
   value?: string;
+  /** Substrate-tier hint. Absent/false → L1 (JS-injection click; default;
+   *  no DevTools warning bar). true → L2 (CDP trusted click at element
+   *  coordinates; emits isTrusted:true events). Set by `capture` when
+   *  forge detects L1 fails the `expect` predicate. PUBLIC mirror of
+   *  core/types.ts:InputOp.trusted per ADR
+   *  `2026-05-19-forge-tier-discovery.md` §2A. */
+  trusted?: boolean;
+  /** Per-op postcondition predicate. Truthy → ok; falsy → tap_drifted.
+   *  PUBLIC mirror of core/types.ts:InputOp.expect per ADR
+   *  `2026-05-08-failure-detection-phase-2.md` §2B (extended to InputOp
+   *  by `2026-05-19-forge-tier-discovery.md`). */
+  expect?: CelExpr;
   save?: string;
 }
 
