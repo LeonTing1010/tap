@@ -2,17 +2,17 @@
 # https://smithery.ai/docs/config#smitheryyaml
 #
 # Tap: MCP server for browser automation.
-# Compiles AI browser intent into deterministic .tap.json plans,
+# Compiles AI browser intent into deterministic .plan.json programs,
 # runs on your logged-in Chrome, detects drift when sites change.
-# 65+ open community taps on 40+ sites.
+# 80+ open community taps on 55+ sites.
 
 title: "Tap — compile-once browser automation MCP"
 description: |
   MCP server that compiles AI browser automation into deterministic
-  `.tap.json` plans (25-op closed union, zero runtime LLM), runs on
-  your logged-in Chrome (or headless Playwright), and detects drift
-  via semantic fingerprint diff when sites change. 65+ open community
-  taps on 40+ sites.
+  `.plan.json` programs (11-op closed union, zero runtime LLM), runs
+  on your logged-in Chrome (or headless Playwright), and detects drift
+  via semantic fingerprint diff when sites change. 80+ open community
+  taps on 55+ sites.
 tags:
   - browser-automation
   - compile-once
