@@ -122,6 +122,14 @@ h1 em { font-style: italic; color: var(--red); font-weight: 400; }
 <main class="archive">
 
 <article class="post">
+  <div class="date-col">May 22, 2026<span class="read-time">8 min</span></div>
+  <div class="content">
+    <h2><a href="capture-trace-spa-shells.html">What 44 Capture Traces Taught Us About SPA Shells</a></h2>
+    <p>An audit of recent capture traces found 34% were retry loops against single-page-app shells &mdash; same URL, three to five attempts, identical 200-OK empty bodies. Five commits and two ADRs later, the first-time success rate stopped depending on luck. The fix: persist forge's verdict alongside the bytes, then cache one bit per domain so the second visit pre-escalates to the authenticated browser.</p>
+  </div>
+</article>
+
+<article class="post">
   <div class="date-col">May 16, 2026<span class="read-time">7 min</span></div>
   <div class="content">
     <h2><a href="scrape-behind-login-walls.html">Scraping Behind Login Walls: Stop Fighting OTP, CAPTCHA, and Cloudflare Turnstile</a></h2>

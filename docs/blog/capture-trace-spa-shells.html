@@ -1,0 +1,120 @@
+---
+layout: post
+title: "What 44 capture traces taught us about SPA shells"
+description: "An audit of Tap's recent capture traces found that 34% were retry loops against single-page-app shells — same URL, three to five attempts, identical 200-OK empty bodies. Two ADRs and five commits later, the first-time success rate stopped depending on luck."
+keywords: "SPA scraping, browser automation retry loop, capture trace audit, fingerprint cache, first-time capture success, web scraping reliability, Vite SPA detection, single-page app scraping, Tap, browser MCP"
+date: 2026-05-22
+read_time: "8 min read"
+subtitle: "Diagnosing the silent 34% retry-loop tax on first-time captures, and the two ADRs that fixed it"
+---
+
+<p>Last week we did a boring audit. <code>ls ~/.tap/traces/ | wc -l</code> on a developer machine: 44 trace files. <code>jq</code> over them, group by source URL, count repetitions. The result was uncomfortable: <strong>15 of the 44 traces were retry clusters on the same URL</strong> — three, four, sometimes five attempts each, all bare-fetch, all returning 200 OK with bodies that differed by milliseconds in the timestamps and nothing else.</p>
+
+<p>Three sites dominated: <code>xiaohongshu.com</code>, <code>console.aliyun.com</code>, <code>jike.city</code>. Different products, different teams, same architectural answer to "what is your homepage?" — a Vite-built single-page-app shell that serves a 200 OK with about 800 bytes of HTML, then asks the browser to fetch the real content over XHR after the JS bundle boots.</p>
+
+<p>For a real user this is invisible: Chrome renders the shell, runs the JS, fetches the data, paints. For a bare <code>fetch</code> with no JS runtime, the shell <em>is</em> the response. And our forge — Tap's URL-and-intent-to-plan compiler — was reading the 200 status, finding none of its expected source-class signatures in the body (no JSON, no RSS, no OpenGraph card, no obvious list rendering), and shrugging back a <code>plan: null</code>. The user retried. The forge tried again. Same shell, same shrug. The trace directory grew.</p>
+
+<p>None of this was new. SPA shells have been a known scraping landmine for years — every other thread on <a href="https://reddit.com/r/webscraping">r/webscraping</a> includes someone explaining for the hundredth time that <em>"you need a headless browser for this site, not <code>requests</code></em>." What was new was that we now had structured trace data on disk to <em>measure</em> the problem, and the measurement said it was the single biggest source of first-capture failures across the corpus.</p>
+
+<h2>Why the trace files alone weren't enough</h2>
+
+<p>Tap persists every capture to <code>~/.tap/traces/&lt;ts&gt;-&lt;urlhash8&gt;.trace.json</code>. Per <a href="/adrs/">ADR <code>2026-05-15-capture-trace-persistence</code></a>, the schema records: the URL, the request method, the dispatch path (<code>via: "bare"</code> for direct fetch or <code>"extension"</code> for the authenticated browser peer), and a fixed-cap body preview (1 MiB max, byte-exact). That's enough to <em>re-read what arrived</em>, which is half of what you need when debugging a failure.</p>
+
+<p>It is not enough to <em>read what forge concluded</em>. The forge pipeline runs the bytes through a classifier that emits a <code>source_class</code> — one of nine closed values: <code>json-api</code>, <code>rss</code>, <code>atom</code>, <code>json-ld</code>, <code>opengraph</code>, <code>html-list</code>, <code>spa-rendered</code>, <code>auth_redirect</code>, <code>unknown</code> — plus a <code>reason</code> string explaining why. That decision lived in memory during the capture call and surfaced once in the MCP envelope, then evaporated. The trace file on disk had the input; it didn't have the verdict.</p>
+
+<p>So when we sat down to diagnose the retry clusters, we could see the bytes (<code>&lt;!doctype html&gt;&lt;html&gt;&lt;head&gt;...&lt;script type="module" src="/assets/index-DQqWfQqj.js"&gt;&lt;/script&gt;&lt;/head&gt;&lt;body&gt;&lt;div id="app"&gt;&lt;/div&gt;&lt;/body&gt;&lt;/html&gt;</code> on every retry — Vite's signature). We could not, from the trace alone, see <em>why forge had concluded the body was <code>unknown</code> rather than <code>spa-rendered</code></em>. The information existed at decision time; we had thrown it away.</p>
+
+<h2>Fix #1: persist the verdict alongside the bytes</h2>
+
+<p><a href="/adrs/">ADR <code>2026-05-22-augment-capture-trace-with-forge-decision</code></a> ships an additive change to the <code>CaptureTrace</code> interface: a required <code>inspection</code> field with the same shape as the projection the MCP envelope already exposes — <code>{ source_class, reason, detected_signals? }</code>. Every code path that writes a trace now reads the same <code>InspectionResult</code> the forge classifier just computed and persists it. Same source of truth, two destinations.</p>
+
+<p>The architecture test that locks this is short: open every trace file, assert <code>.inspection.source_class</code> is one of the nine closed values and <code>.inspection.reason</code> is a non-empty string. No null, no missing. A future refactor that drops the field fails CI before it merges, regardless of whether anyone remembered to add the field to the schema doc.</p>
+
+<p>This is half of what we needed. The next capture against an SPA shell now writes a trace that says, in plain text, <code>"source_class": "spa-rendered"</code>, <code>"reason": "vite asset bundle reference + empty #app div + no other content"</code>. A human reading the trace knows what happened in one glance. So does the agent on the next call.</p>
+
+<h2>Fix #2: a per-domain fingerprint cache</h2>
+
+<p>Knowing what went wrong on attempt one doesn't help attempt two if attempt two has no memory of attempt one. Bare-fetch is cheap and stateless and that's exactly its problem: forge couldn't remember that <code>xiaohongshu.com</code> had served it a Vite shell five minutes ago, so it tried bare-fetch again.</p>
+
+<p><a href="/adrs/">ADR <code>2026-05-22-substrate-fingerprint-cache</code></a> introduces <code>~/.tap/fingerprints/&lt;hostname&gt;.json</code> — one file per registrable host, atomic write, 30-day mtime TTL. The schema records what worked on this domain and what didn't:</p>
+
+<pre><code>{
+  "domain": "xiaohongshu.com",
+  "first_seen_at": "2026-05-22T01:14:33Z",
+  "last_seen_at": "2026-05-22T08:42:11Z",
+  "captures": 7,
+  "source_class_distribution": {
+    "spa-rendered": 6,
+    "unknown": 1
+  },
+  "last_via": "extension"
+}</code></pre>
+
+<p>The capture pipeline reads this file before deciding how to fetch. If a domain has prior <code>spa-rendered</code> evidence at any reasonable frequency, the forge <strong>pre-escalates</strong> directly to the authenticated extension peer — skipping bare-fetch entirely on the second-plus visit. The first visit still pays the bare-fetch cost (we need to learn what kind of site this is), but the cost is now amortized: one wasted retry per domain, ever, not one per capture call.</p>
+
+<p>Two architectural details worth calling out, because they're load-bearing:</p>
+
+<ul>
+  <li><strong>One file per host, not a single index.</strong> Concurrency on a developer laptop is racy — two parallel <code>tap capture</code> calls against different domains shouldn't fight for the same JSON file. Per-host files mean each lock is contention-free.</li>
+  <li><strong>30-day TTL, not infinite.</strong> A site that was SPA in May might be statically rendered in November after an architectural rewrite. The fingerprint should decay; the cache enumerator excludes files older than 30 days from its read path, so a stale entry self-evicts rather than rotting forever.</li>
+</ul>
+
+<p>The arch test for this is structural: open <code>~/.tap/fingerprints/</code>, assert filename pattern is exactly <code>&lt;hostname&gt;.json</code>, assert every record has the required fields, assert no file is older than 30 days. Cache divergence becomes a build break, not a Slack thread six weeks later.</p>
+
+<h2>Five commits, one week</h2>
+
+<p>The full shipped sequence, oldest first:</p>
+
+<ol>
+  <li><code>de45b30</code> — <em>feat(forge): spa-rendered source_class + nav+wait+eval template (#58)</em>. Add the ninth source_class value plus the template forge emits when it recognizes one. Without this, "we know it's an SPA" doesn't help — there's still no plan to ship.</li>
+  <li><code>0ea398c</code> — <em>fix(forge): detect Vite-style empty SPA shells (Phase 7 from #58)</em>. The classifier specifically. Vite's signature is fairly tight: <code>&lt;script type="module" src="/assets/index-&lt;hash&gt;.js"&gt;</code> + an empty <code>#app</code> or <code>#root</code> div + no JSON-LD or OpenGraph cards. Detecting this also catches Vue 3, React 18 + Vite, Svelte 5, and Solid — they all bundle through Vite by default now.</li>
+  <li><code>1dfde37</code> — <em>feat(forge): augment capture trace with forge decision rationale</em>. The disk-persistence fix from ADR (augment-capture-trace).</li>
+  <li><code>33756b0</code> — <em>feat(forge): per-domain fingerprint cache (slice 1 — write-only)</em>. Cache the data; nothing reads it yet. (Slicing it write-first means we can verify the disk shape independently of the read consumer.)</li>
+  <li><code>348d62c</code> — <em>feat(forge): fingerprint cache READ side + extension pre-escalation</em>. The read consumer that closes the loop.</li>
+</ol>
+
+<p>One follow-up worth calling out, because it caught a real bug:</p>
+
+<ul>
+  <li><code>01f1f24</code> — <em>feat(forge): capture-and-verify atomic — smoke-run plans before savePlan</em>. After the fingerprint cache started routing more captures through the extension peer, we noticed forge was happily saving plans that the runtime would reject on first execution (drift between forge's expectation of substrate behavior and the actual peer response). The fix: before <code>savePlan</code>, the forge runs the plan's observe phase end-to-end. If runtime says "this won't work," the plan never lands on disk. Catches the <em>first</em> drift, not the second.</li>
+</ul>
+
+<p>749/749 tests pass strict typecheck. The audit on a fresh developer machine three days post-ship shows zero retry clusters across the same three domains. The 34% number is a one-time scar, not a recurring one.</p>
+
+<h2>What's actually generalizable</h2>
+
+<p>The specific fix — augment trace, add fingerprint cache — is Tap-internal. The shape of the bug is not.</p>
+
+<p>Three patterns kept showing up across the audit and the post-mortem discussions:</p>
+
+<ol>
+  <li><strong>Persist verdicts, not just inputs.</strong> Logs that capture "what arrived" without also capturing "what we decided about it" make every debugging session start from byte-level. The cost of writing the verdict alongside the input is one extra field; the savings are felt every time a future maintainer reads a trace from a system they don't remember.</li>
+  <li><strong>Cache the cheapest signal that breaks ambiguity.</strong> "Was this site SPA last time?" is one bit per domain. Caching it is a kilobyte per host. The alternative — re-running the bare-fetch experiment every call — is dollars per thousand requests across a corpus. The asymmetry is large enough that the cache shouldn't be an optimization, it should be the default.</li>
+  <li><strong>Decay caches by default.</strong> A 30-day TTL is not about freshness in the index sense; it's about not building a system whose memory of failure modes outlives the failure modes themselves. Sites refactor. If your cache doesn't, every refactor becomes a silent re-introduction of the bug you fixed in 2024.</li>
+</ol>
+
+<p>Pattern 1 is the cheap one and the one most teams skip. The relevant question to ask of any logging system is not "what fields does it write?" but "if the worst bug we fixed last quarter happened again, would the new logs let me find the root cause without re-deriving it?" If the answer involves looking at code, the log is missing the verdict.</p>
+
+<h2>If you're hitting the same wall</h2>
+
+<p><a href="https://taprun.dev/?utm_source=blog&utm_medium=post&utm_campaign=capture_trace_spa_shells">Tap</a> is MIT (<a href="https://github.com/LeonTing1010/tap">GitHub</a>) and runs as a Chrome extension plus CLI plus MCP server. Install path:</p>
+
+<pre><code>brew install LeonTing1010/tap/taprun
+# or
+npx @taprun/spec init</code></pre>
+
+<p>For sites in the SPA-shell shape — xiaohongshu, jike, aliyun-console, douyin, many Vue/React SaaS dashboards — <code>tap capture</code> now writes a working plan on the first call, no retry loop. The trace file on disk carries the verdict if you ever need to debug. The per-domain fingerprint at <code>~/.tap/fingerprints/&lt;host&gt;.json</code> is a few kilobytes you can <code>cat</code> any time to see what Tap remembers about that site.</p>
+
+<p>None of this is novel as a scraping technique. What's novel is making the verdict and the cache <em>visible</em> — disk-persisted, schema-checked, deletable by hand if you want to start over. Browser automation has historically been a black box of "it worked yesterday, why is it failing today?" The boring fix is to stop building black boxes.</p>
+
+<p>The next time the audit runs and the retry-cluster count goes back up, we'll know within minutes which domain changed shape — because the verdict is on disk, and the verdict has a date.</p>
+
+<hr/>
+
+<p><em>Related reading on taprun.dev:</em></p>
+
+<ul>
+  <li><a href="/blog/scrape-behind-login-walls.html">Scraping behind login walls</a> — why authenticated browser sessions beat OTP/CAPTCHA bypass</li>
+  <li><a href="/blog/compile-once-diff-the-drift.html">Compile once, diff the drift</a> — why deterministic plans beat per-call LLM calls</li>
+  <li><a href="/blog/health-contracts-catch-silent-failures.html">Health contracts catch silent failures</a> — the per-op <code>expect</code> CEL predicate</li>
+</ul>
