@@ -49,7 +49,7 @@
 <text transform="matrix(1 0 0 1 36 200)" class="st4 st5 st6 st7">layer 2</text>
 <text transform="matrix(1 0 0 1 36 218)" class="st1 st11 st12">Program</text>
 <path class="st16" d="M208,186h574c1.1,0,2,0.9,2,2v54c0,1.1-0.9,2-2,2H208c-1.1,0-2-0.9-2-2v-54C206,186.9,206.9,186,208,186z"/>
-<text transform="matrix(1 0 0 1 220 212)" class="st14 st17 st15">.tap.json — 24-op closed union (W3C Annotation envelope)</text>
+<text transform="matrix(1 0 0 1 220 212)" class="st14 st17 st15">.plan.json — 11-op closed union (bare JSON, no envelope)</text>
 <text transform="matrix(1 0 0 1 220 229)" class="st14 st5 st15">the deterministic program · compile-once · doctor-verifiable</text>
 <text transform="matrix(1 0 0 1 36 296)" class="st4 st5 st6 st7">layer 3</text>
 <text transform="matrix(1 0 0 1 36 314)" class="st1 st11 st12">Adapters</text>
