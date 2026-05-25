@@ -23,17 +23,17 @@
   })();
 </script>
 <title>Taprun — Browser automation that never leaves your machine.</title>
-<meta name="description" content="Tell your agent a browser task in plain language — it does it in your real, already-logged-in Chrome, right now. Like the result? The first run compiles it; every run after is free, local, zero tokens. Cookies never leave your machine.">
-<meta property="og:title" content="Taprun — Describe the task. Your own Chrome does it.">
-<meta property="og:description" content="Your agent does the browser task in your own logged-in Chrome — then keeps it as a free, local, zero-token replay. 100 reruns: browser-use $4.20, Taprun $0.003.">
+<meta name="description" content="Every browser task your AI agent runs becomes an auditable, credential-safe .plan.json — a deterministic, versioned record of exactly what it did, replayable forever at zero tokens. It runs in your real, already-logged-in Chrome, so credentials never leave your machine.">
+<meta property="og:title" content="Taprun — Your agent runs the browser task. You keep the audit trail.">
+<meta property="og:description" content="Every browser task your agent runs becomes an auditable, credential-safe replay that lives on your machine — deterministic, versioned, zero tokens. 100 reruns: browser-use $4.20, Taprun $0.003.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://taprun.dev/">
 <meta property="og:image" content="https://taprun.dev/social-preview.svg">
 <meta property="og:image:width" content="1280">
 <meta property="og:image:height" content="640">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Taprun — Describe the task. Your own Chrome does it.">
-<meta name="twitter:description" content="Say what you want; your agent does it in your own logged-in Chrome. The first run compiles it — every run after is free, local, zero tokens forever.">
+<meta name="twitter:title" content="Taprun — Your agent runs the browser task. You keep the audit trail.">
+<meta name="twitter:description" content="Your agent runs the browser task in your own logged-in Chrome — and you keep an auditable, deterministic record of exactly what it did. Replayable forever, zero tokens, credentials never leave.">
 <meta name="twitter:image" content="https://taprun.dev/social-preview.svg">
 <meta name="keywords" content="local-first browser automation, MCP, model context protocol, Chrome extension, Playwright alternative, deterministic automation, browser-use alternative, Stagehand alternative, Browserbase alternative, AI agent, web scraping, tap protocol, forge, verify, snapshot, JSON-LD, RSS, OpenAPI">
 <meta name="author" content="LeonTing1010">
@@ -47,7 +47,7 @@
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
   "name": "Taprun",
-  "description": "Browser automation that stays on your machine. AI compiles your task once into a 24-op deterministic plan; your real Chrome replays it forever at zero tokens per run. No credentials uploaded, no mid-run session failure, no hallucinated clicks. Cloud-first SDKs architecturally cannot match this — they need credentials in the cloud to function.",
+  "description": "An auditable, credential-safe record of every browser task your AI agent runs. AI compiles the task once into a deterministic .plan.json — a versioned, reviewable program of exactly what the agent did — and your real Chrome replays it forever at zero tokens per run. No credentials uploaded, no mid-run session failure, no hallucinated clicks. Cloud-first SDKs architecturally cannot match this — they need credentials in the cloud to function.",
   "url": "https://taprun.dev/",
   "downloadUrl": "https://github.com/LeonTing1010/tap/releases/latest",
   "softwareVersion": "{{ site.data.cli.version }}",
@@ -1175,10 +1175,10 @@ footer {
       <span>Filed 2026-05-05</span>
     </div>
 
-    <h1>Describe the task. <span class="accent">Your own Chrome</span> does it.</h1>
+    <h1>Your agent runs the browser task. <span class="accent">You keep the audit trail.</span></h1>
 
     <p class="hero-deck">
-      Local-first browser MCP for Claude, Cursor, and Windsurf. Say what you want in plain language — your agent drives your <em>real, already-logged-in</em> Chrome and does it right now. No script to write, nothing you've done before required. Like the result? The first run compiles it; <em>every run after is free, local, zero tokens — yours forever.</em> The Chrome extension is the bridge — add it below.
+      Local-first browser MCP for Claude, Cursor, and Windsurf. Every task your agent runs in your <em>real, already-logged-in</em> Chrome compiles once into a deterministic <code>.plan.json</code> — a versioned, reviewable record of exactly what it did, replayable forever at zero tokens. Credentials never cross a trust boundary, because the work never leaves your machine. <em>The audit trail and the keys both stay with you.</em> The Chrome extension is the bridge — add it below.
     </p>
 
     <div class="hero-cta">
