@@ -23,7 +23,7 @@ Verify is the "differential-testing-equipped" half of that sentence.
 
 | Tool | Source IRI | Role |
 |---|---|---|
-| [`tap doctor [<site>/<name>]`](/doctor/) | `https://taprun.dev/doctor` | 4-layer cross-validation against the live page |
+| [`tap verify [<site>/<name>]`](/verify/) | `https://taprun.dev/verify` | 4-layer cross-validation against the live page |
 | `V` (verifier) | (internal) | strict pass/fail against an authoritative source (fetch-json / fetch-json-2step / fetch-atom) |
 | `fingerprint` | (internal) | site-shape baseline; flags STALE state on diff |
 | `heal-cache` | (internal) | site-scoped cache of `{old_fragment, new_fragment}` patches replayed at 0 LLM tokens |
@@ -31,7 +31,7 @@ Verify is the "differential-testing-equipped" half of that sentence.
 
 ## The 4-layer cross-validation
 
-[`tap doctor`](/doctor/) runs the plan output against four independent sources in descending trust:
+[`tap verify`](/verify/) runs the plan output against four independent sources in descending trust:
 
 1. **JSON-LD / schema.org / Annotation / RDFa** — canonical machine-emitted data
 2. **API JSON** — the network response the page itself fetches

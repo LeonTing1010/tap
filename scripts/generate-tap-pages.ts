@@ -188,7 +188,7 @@ function renderPage(plan: TapPlan, planRel: string, siblings: Array<{ name: stri
     .map(([k, v]) => `--${k} ${shellQuote(String(v))}`)
     .join(" ");
 
-  const sourceUrl = `https://github.com/${REPO}/blob/main/${planRel}`;
+  const sourceUrl = `https://github.com/${REPO}/blob/main/${planRel.replace(/\.tap\.(json|js)$/, ".plan.json")}`;
 
   const frontmatter = [
     "---",
@@ -252,7 +252,7 @@ tap mcp connect</code></pre>
 
 <section>
   <h2>Why compile it once</h2>
-  <p>This plan was forged once — the AI read <code>${b.site}</code>, picked stable structural addresses (JSON-LD, ARIA, RSS, or declared API endpoints, in that priority order), and saved them to a <code>.tap.json</code>. Every replay since then has used zero LLM tokens. When <code>${b.site}</code> ships a site change that breaks the extraction, <code>tap doctor</code> surfaces it before your data goes stale — not after your pipeline silently writes garbage for a week.</p>
+  <p>This plan was forged once — the AI read <code>${b.site}</code>, picked stable structural addresses (JSON-LD, ARIA, RSS, or declared API endpoints, in that priority order), and saved them to a <code>.plan.json</code>. Every replay since then has used zero LLM tokens. When <code>${b.site}</code> ships a site change that breaks the extraction, <code>tap verify</code> surfaces it before your data goes stale — not after your pipeline silently writes garbage for a week.</p>
 </section>
 ${relatedSection}
 `;
@@ -267,7 +267,7 @@ ${relatedSection}
 // references for crawlers and AI clients.
 function renderJsonLd(plan: TapPlan, planRel: string): string {
   const b = plan.body;
-  const sourceUrl = `https://github.com/${REPO}/blob/main/${planRel}`;
+  const sourceUrl = `https://github.com/${REPO}/blob/main/${planRel.replace(/\.tap\.(json|js)$/, ".plan.json")}`;
   const htmlUrl = `https://taprun.dev/taps/${b.site}/${b.name}.html`;
   const id = `https://taprun.dev/taps/${b.site}/${b.name}`;
   const doc = {

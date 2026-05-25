@@ -5,13 +5,13 @@
 <h1 align="center">Taprun</h1>
 
 <h4 align="center">
-  你的爬虫现在就是坏的。你只是还不知道。
+  跑在你自己浏览器里的浏览器自动化，而不是别人的云里。
 </h4>
 
 <p align="center">
   <a href="https://taprun.dev/?utm_source=readme-cn&utm_medium=docs&utm_campaign=homepage"><b>主页</b></a> &nbsp;|&nbsp;
   <a href="https://taprun.dev/blog/?utm_source=readme-cn&utm_medium=docs&utm_campaign=blog"><b>博客</b></a> &nbsp;|&nbsp;
-  <a href="https://taprun.dev/taps/?utm_source=readme-cn&utm_medium=docs&utm_campaign=skills-catalog"><b>140+ Skills</b></a> &nbsp;|&nbsp;
+  <a href="https://taprun.dev/taps/?utm_source=readme-cn&utm_medium=docs&utm_campaign=skills-catalog"><b>70+ Skills</b></a> &nbsp;|&nbsp;
   <a href="README.md"><b>English</b></a>
 </p>
 
@@ -25,16 +25,32 @@
 
 ---
 
-**Taprun 是本地优先（local-first）的浏览器自动化 — 跑在你自己的浏览器里，不是别人的云里。** 把 AI 对网站的理解编译成确定性程序，然后持续监控它。你的 cookie 和登录会话永不离开你的机器 — 这是架构决定，不是承诺。健康合约捕获静默故障，指纹对比精确定位变更。`tap doctor` 在数据变质前就发现问题 — 不是三天以后。
+**本地优先（local-first）的浏览器自动化。编译一次，永久零 LLM token 重放。**
+
+把 Taprun 指向任何网站。你的 AI agent 把页面分析一次，产出一个确定性的 `.plan.json` 程序。之后永久重放 — 每次调用结果完全一致，$0 token。cookie 和登录会话留在你自己真实的 Chrome 里 — 这是架构决定，不是政策承诺。`tap verify` 在你的数据变质前就发现页面变化。
+
+适用于 Claude Code、Cursor、Cline、Windsurf 以及任何 MCP host。70+ 预建 tap，或从任意 URL 锻造你自己的。
 
 ```
-锻造：  AI 分析网站 → 编译成 .tap.js 程序          （一次性成本）
+捕获：  AI 分析网站 → 编译成 .plan.json 程序        （一次性成本）
 执行：  程序即时运行，每次结果完全一致              ($0，零 AI）
-监控：  tap doctor 检查健康合约 + 指纹对比          （捕获故障）
-修复：  AI 读取诊断报告并修补程序                   （仅在需要时）
+验证：  tap verify 检查快照等价断言                 （捕获漂移）
+修复：  对同一 site/name 重新执行 capture；         （仅在需要时）
+        人工 review 后下一次 verify 重建基线
 ```
 
-**MCP 是创作层，`tap.run` 是执行层。** AI 只在锻造时参与（一次性成本）。执行是纯代码 — 零 token，确定性输出。140+ skills，覆盖 68+ 网站。一个二进制，零依赖。
+## Taprun 对比
+
+|  | Taprun | AI 浏览器 Agent | 传统爬虫 |
+|--|-----|-----------------|----------|
+| **每次运行 AI 成本** | $0（编译一次） | 每次消耗 token | 免费 |
+| **准确性** | 确定性 | 每次不同 | 确定性 |
+| **静默故障检测** | 每个 tap 的 CEL `snapshot_equivalent` 断言 + 四态裁定 | 无 | 无 |
+| **故障诊断** | `tap verify` — 精确 diff 出变了什么 | 无 | 手动抽查 |
+| **检测风险** | 低（真实浏览器会话） | 高 | 高 |
+| **运行时** | 2（Chrome 扩展 + Playwright） | 1 | 1 |
+| **代码可检查** | .plan.json — 纯 JSON，11-op 闭集词汇，可 git diff | 黑盒 / 临时的 | 脆弱脚本 |
+| **MCP 原生** | 是（仅创作层 — 执行零 token） | 否 | 否 |
 
 ## 快速开始
 
@@ -54,6 +70,12 @@ npx -y @taprun/cli --version
 curl -fsSL https://taprun.dev/install.sh | sh
 ```
 
+**或通过 Homebrew**（macOS / Linux）：
+
+```bash
+brew install LeonTing1010/tap/taprun
+```
+
 | 平台 | 下载 |
 |------|------|
 | macOS (Apple Silicon) | [tap-macos-arm64](https://github.com/LeonTing1010/tap/releases/latest) |
@@ -66,20 +88,17 @@ curl -fsSL https://taprun.dev/install.sh | sh
 适用于 Claude Code、Cursor、Windsurf 或任何 MCP 兼容的 Agent — 不需要浏览器扩展：
 
 ```json
-{ "mcpServers": { "tap": { "command": "npx", "args": ["-y", "@taprun/cli", "mcp", "start"] } } }
+{ "mcpServers": { "tap": { "command": "npx", "args": ["-y", "@taprun/cli", "mcp", "stdio"] } } }
 ```
 
-或一键配置所有已安装的 Agent：
+或直接运行服务：
 
 ```bash
-tap mcp connect
+tap mcp stdio    # 默认；管道接入你的 MCP host
+tap mcp http     # 在 127.0.0.1:7891 上跑 streamable-HTTP（bearer 鉴权）
 ```
 
-### 可选：Chrome 扩展（需要登录的站点）
-
-大部分 tap 不需要登录即可运行。如需访问小红书、知乎等需要登录的站点，从 [Chrome Web Store](https://chromewebstore.google.com/detail/tap/llcidejeoobdegbkolbjhfoeckphldce) 安装扩展。
-
-### 4. 开始使用
+### 3. 开始使用
 
 ```bash
 tap github/trending              # GitHub 热门仓库
@@ -94,13 +113,29 @@ tap xiaohongshu/search --keyword "AI"  # 小红书搜索
 你：   今天 GitHub 有什么热门？
 Agent：今天最热门的仓库是... React compiler 已达 734 stars...
 
-你：   给我锻造一个豆瓣 Top250 的 tap
+你：   给我捕获一个豆瓣 Top250 的 tap
 Agent：好了。随时运行 `tap douban/top250`，每次 $0。
 ```
 
+### 可选：Chrome 扩展（需要登录的站点）
+
+大部分 tap 不需要登录即可运行。如需访问小红书、知乎等需要会话的站点，从 [Chrome Web Store](https://chromewebstore.google.com/detail/tap/llcidejeoobdegbkolbjhfoeckphldce) 安装扩展。
+
+### 可选：嵌入你自己的 agent 代码（TypeScript / Python）
+
+跳过 MCP — 在你自己的循环里直接调用 `tap` 二进制：
+
+```bash
+tap hackernews/top --args '{}'    # JSON 输出到 stdout，成功 exit 0
+tap verify hackernews/top         # 四态裁定（equivalent / drifted / first_snapshot / unreachable）
+tap capture <url> hackernews/top --intent "front-page top stories"
+```
+
+CLI 以 JSON 形式输出 `ToolResult<T>` 信封 —— 和 MCP 接口返回的形状一致 —— 任何有子进程库的语言都能驱动它。完整 verb 列表见 `tap --help`。
+
 ### 已有 Playwright / Puppeteer / Stagehand 脚本？
 
-不要重写。用四个开源 adapter 之一直接转换 — 把已有脚本扔进去，拿一份 Tap 兼容的 `.tap.json` 出来：
+不要重写。用其中一个开源 adapter 直接转换 — 把已有脚本扔进去，拿一份 Tap 兼容的 `.plan.json` 出来：
 
 ```bash
 # 已有 Playwright 脚本（npm 47M 周下载，你最可能用的 SDK）
@@ -115,10 +150,10 @@ npx create-tap-script github/trending https://github.com/trending
 |---|---|---|
 | [`@taprun/from-playwright`](https://www.npmjs.com/package/@taprun/from-playwright) | `.ts/.js` Playwright 测试 | 8 个 page.* API（goto/click/fill/type/press/waitForSelector/waitForTimeout/screenshot） |
 | [`@taprun/from-puppeteer`](https://www.npmjs.com/package/@taprun/from-puppeteer) | `.ts/.js` Puppeteer 脚本 | 7 个 page.* API + page.keyboard.press |
-| [`@taprun/from-stagehand`](https://www.npmjs.com/package/@taprun/from-stagehand) | `.ts/.js` Stagehand 脚本 | 混合：确定性的 page.* 转 plan op；自然语言 `act/extract/observe` 标 `allowUnverifiable` 让 doctor 透明分流 |
-| [`create-tap-script`](https://www.npmjs.com/package/create-tap-script) | （无 — 脚手架） | `<site>/<name> <url>` 一键生成 `.tap.json` 信封 |
+| [`@taprun/from-stagehand`](https://www.npmjs.com/package/@taprun/from-stagehand) | `.ts/.js` Stagehand 脚本 | 混合：确定性的 page.* 转 plan op；自然语言 `act/extract/observe` 被标记，让 verify 给出诚实裁定 |
+| [`create-tap-script`](https://www.npmjs.com/package/create-tap-script) | （无 — 脚手架） | 从 `<site>/<name> <url>` 生成一个起步 `.plan.json` 信封 |
 
-格式本身有完整文档：[`@taprun/spec`](https://www.npmjs.com/package/@taprun/spec)（TypeScript 类型 + W3C Annotation 验证器 + JSON Schema 2020-12 + 10-fixture conformance 套件）。规范：[taprun.dev/spec/plan-v1](https://taprun.dev/spec/plan-v1/)。源码：[`packages/`](packages/)。
+格式本身有完整文档：[`@taprun/spec`](https://www.npmjs.com/package/@taprun/spec) —— 公共协议接口包：v2 Plan 的 TypeScript 类型（11-op 闭集联合 + 区分式的读/写 Plan 联合）+ JSON Schema 2020-12，其 `$id` 可在 `taprun.dev/spec/plan-v1/schema.json` 解析，并与 TS 类型双向漂移校验。第三方工具（IDE `$schema` 补全、Python/Ruby/Go 中的 ajv 等价校验器、治理层、替代运行时、带 plan 感知权限作用域的 MCP host）都基于此包构建，无需依赖专有的 Tap 引擎。Plan-v1 规范：[taprun.dev/spec/plan-v1](https://taprun.dev/spec/plan-v1/)。五个包的源码：[`packages/`](packages/)（workspace 总览见 [`packages/README.md`](packages/README.md)）。
 
 ## 你能用 Taprun 做什么？
 
@@ -140,7 +175,7 @@ tap zhihu/publish --title "我的文章" --content "..."
 **监控** — 追踪变化
 
 ```bash
-tap watch github/trending --every 5m
+tap verify github/trending        # 发现漂移；用 cron / launchd 定时跑
 ```
 
 **组合** — 像 Unix 管道一样串联
@@ -152,8 +187,8 @@ tap github/trending | tap filter --field stars --gt 500 | tap table
 **锻造** — 用 AI 创建新的自动化
 
 ```bash
-tap forge "获取 Hacker News 热门文章"         # 自带 Claude / GPT key
-tap forge https://news.ycombinator.com        # 检测到 API — 无需 AI 直接编译
+tap capture https://news.ycombinator.com hackernews/hot --intent "top stories"   # 检测到 API — 无需 AI 直接编译
+tap capture https://example.com mysite/home --intent "..."                       # 长尾页面走 BYOK Claude / GPT
 ```
 
 自带模型 — 支持 Claude、OpenAI、DeepSeek，或任何 OpenAI 兼容端点，包括 **本地 Ollama / LM Studio**，实现完全离线锻造：
@@ -162,26 +197,26 @@ tap forge https://news.ycombinator.com        # 检测到 API — 无需 AI 直�
 tap config set ai.baseUrl http://localhost:11434/v1
 tap config set ai.key ollama
 tap config set ai.model llama3.1
-tap forge "抓取 arxiv 最新论文"                # 0 字节离开你的机器
+tap capture https://arxiv.org/list/cs.AI/recent arxiv/recent --intent "recent papers"  # 0 字节离开你的机器
 ```
 
 ## 工作原理
 
 ```
-                     ┌─ Chrome      （你的真实浏览器会话）
-你 → AI → Taprun ──────┤─ Playwright  （无头模式，服务端，CI/CD）
-     编译            └─ macOS       （原生桌面应用）
+                        ┌─ Chrome 扩展  （你的真实浏览器会话）
+你 → AI → Taprun ──────┤
+     capture            └─ Playwright   （无头模式，服务端，CI/CD）
 ```
 
-1. **你描述**你想要什么（自然语言或 URL）
-2. **AI 编译**成 `.tap.js` 程序 — 纯 JavaScript，可版本控制
-3. **Taprun 运行**程序 — 三个运行时任选，永久运行，$0
+1. **你描述**你想要什么（URL × 自然语言意图）
+2. **AI 编译**成 `.plan.json` 程序 — 纯 JSON，11-op 闭集词汇，可版本控制
+3. **Taprun 运行**程序 — 两个运行时任选，永久运行，$0
 
-每次成功编译都让下一次更快。140+ 社区 skills 意味着你的 Agent 已经认识 68+ 个网站。
+每次成功编译都让下一次更快。70+ 社区 tap 意味着你的 Agent 已经认识常见的网站模式。
 
 ## 社区 Skills
 
-**[tap-skills](https://github.com/LeonTing1010/tap-skills)** — 140+ skills，开源。
+**[tap-skills](https://github.com/LeonTing1010/tap-skills)** — 70+ tap，开源。
 
 | 分类 | 示例 |
 |------|------|
@@ -192,23 +227,10 @@ tap forge "抓取 arxiv 最新论文"                # 0 字节离开你的机�
 | **监控** | 价格追踪, 股票数据, 竞品分析 |
 
 ```bash
-tap doctor    # 健康检查 — 在数据变质前捕获静默故障
-tap update    # 安装 / 更新所有 skills
-tap list      # 查看所有可用 skills
+tap verify <site>/<name>   # 快照等价 — 在数据变质前捕获静默故障
+tap list                   # 查看所有可用 tap
+tap show <site>/<name>     # 以 JSON 形式打印已保存 tap 的 plan
 ```
-
-## 对比
-
-|  | Taprun | AI 浏览器 Agent | 传统爬虫 |
-|--|-----|-----------------|----------|
-| **每次运行 AI 成本** | $0（编译一次） | 每次消耗 token | 免费 |
-| **准确性** | 确定性 | 每次不同 | 确定性 |
-| **静默故障检测** | 健康合约 + 指纹对比 | 无 | 无 |
-| **故障诊断** | `tap doctor` — 精确定位变更 | 无 | 手动排查 |
-| **检测风险** | 低（真实浏览器会话） | 高 | 高 |
-| **运行时** | 3（Chrome + Playwright + macOS） | 1 | 1 |
-| **代码可检查** | .tap.js — 可 git diff、调试、版本控制 | 黑盒 / 临时的 | 脆弱脚本 |
-| **MCP 原生** | 是（仅创作层 — 执行零 token） | 否 | 否 |
 
 ## 架构层面的本地优先（Local-first）
 
@@ -232,20 +254,21 @@ Taprun 跑在 **你的** 浏览器，不是别人的云。Chrome 扩展复用你
 
 ## 贡献
 
-最简单的贡献方式：**锻造一个新 tap。** 只需一个 `.tap.js` 文件。
+最简单的贡献方式：**锻造一个新 tap。** 只需一个 `.plan.json` 文件。
 
 详见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
 ## 路线图
 
-- [x] 140+ 社区 skills，覆盖 68+ 网站
-- [x] 3 个运行时 — Chrome, Playwright, macOS
+- [x] 70+ 社区 tap，覆盖 70+ 网站
+- [x] 2 个运行时 — Chrome 扩展 + Playwright（无头 / CI）
 - [x] Unix 管道 — `tap A | tap B`
-- [x] Watch 模式 — 监控变化
-- [x] Doctor — 健康合约、指纹对比、损坏 taps 自动诊断
-- [x] 一键配置 — `tap mcp connect` 配置所有 AI Agent
+- [x] Watch 模式 — 随时间监控变化
+- [x] `tap verify` — 快照等价、四态裁定，损坏 tap 的精确漂移诊断
+- [x] 单命令 MCP 服务 — `tap mcp stdio`（或 `tap mcp http`）接入任意 MCP host
 - [ ] Android 运行时
 - [ ] iOS 运行时
+- [ ] 并发控制 — 多 agent 并行操作共享账号的确定性协调
 
 ## 支持
 

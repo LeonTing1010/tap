@@ -498,7 +498,7 @@ footer.colophon .ornament { color: var(--gold); letter-spacing: 0.6em; }
     <dl class="provenance">
       <dt>Source</dt><dd><a href="{{ page.source_url }}">{{ page.source_url | replace: "https://github.com/", "" }}</a></dd>
       <dt>Machine format</dt><dd><a href="{{ page.tap_name }}.jsonld"><code>{{ page.tap_name }}.jsonld</code></a> &mdash; W3C Annotation</dd>
-      <dt>Last doctor run</dt><dd>{{ page.doctor_checked | default: "never" }}</dd>
+      <dt>Last verify run</dt><dd>{{ page.verify_checked | default: "never" }}</dd>
       <dt>License</dt><dd>{{ page.license | default: "MIT" }}</dd>
     </dl>
   </section>

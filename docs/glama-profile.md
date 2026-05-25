@@ -134,8 +134,8 @@ data goes wrong downstream.
 
 **What Tap does.** Forge once, run forever. The agent inspects the page,
 compiles a deterministic program (a "skill"), and every subsequent call
-replays that program with zero AI at execution time. Health contracts and
-structural fingerprints flag drift the moment a site changes.
+replays that program with zero AI at execution time. `tap verify` checks each
+replay for snapshot equivalence, flagging drift the moment a site changes.
 
 ### Quick start
 
@@ -159,8 +159,7 @@ npx -y @taprun/cli mcp connect
 |--------|------------------------------------------------------|
 | Forge  | AI inspects site → compiles skill (one-time cost)    |
 | Run    | Skill executes instantly, same result every time     |
-| Doctor | Health contracts + fingerprint diff detect breakage  |
-| Fix    | Diagnostics + patch proposal when a skill breaks     |
+| Verify | tap verify — snapshot-equivalence check, 4-arm drift verdict |
 
 ### Why agents choose Tap
 

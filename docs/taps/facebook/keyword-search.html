@@ -53,7 +53,7 @@ license: MIT
   <pre><code>post_id      author_name   author_url                              text                                                 like_count  lang
 fb_74ig3q    Snowie.Ai     https://www.facebook.com/SnowieAi       In 24 months every serious website will talk…        500         en</code></pre>
   <p><strong>Known gaps.</strong> Facebook search cards do not expose a public post permalink href — the visible links are profile URLs plus encrypted <code>__cft__</code> tracking params. When no native post ID is found, this tap emits a content-hash id (<code>fb_…</code>) that is stable across runs for the same author+body combination, so downstream deduplication still works.</p>
-  <p><code>posted_at</code>, <code>comment_count</code>, and <code>share_count</code> are best-effort: Facebook omits or obfuscates these on some search result layouts. The tap returns empty strings rather than failing the row — use <code>tap doctor</code> to check health drift per field if you need one of them to be non-empty.</p>
+  <p><code>posted_at</code>, <code>comment_count</code>, and <code>share_count</code> are best-effort: Facebook omits or obfuscates these on some search result layouts. The tap returns empty strings rather than failing the row — use <code>tap verify</code> to check health drift per field if you need one of them to be non-empty.</p>
 </section>
 
 <section>

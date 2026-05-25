@@ -5,7 +5,7 @@
 <h1 align="center">Taprun</h1>
 
 <h4 align="center">
-  Your scraper is broken right now. You just don't know it yet.
+  Browser automation that runs in your Chrome, not someone else's cloud.
 </h4>
 
 <p align="center">
@@ -139,7 +139,7 @@ The CLI emits `ToolResult<T>` envelopes as JSON — same shape the MCP surface r
 
 ### Have an existing Playwright / Puppeteer / Stagehand script?
 
-Don't rewrite. Convert with one of the open-source adapters — drop your existing source in, get a Tap-compatible `.tap.json` plan out:
+Don't rewrite. Convert with one of the open-source adapters — drop your existing source in, get a Tap-compatible `.plan.json` plan out:
 
 ```bash
 # Existing Playwright script (47M weekly npm downloads — most likely the one you have)
@@ -155,7 +155,7 @@ npx create-tap-script github/trending https://github.com/trending
 | [`@taprun/from-playwright`](https://www.npmjs.com/package/@taprun/from-playwright) | `.ts/.js` Playwright tests | 8 page.* APIs (goto/click/fill/type/press/waitForSelector/waitForTimeout/screenshot) |
 | [`@taprun/from-puppeteer`](https://www.npmjs.com/package/@taprun/from-puppeteer) | `.ts/.js` Puppeteer scripts | 7 page.* APIs + page.keyboard.press |
 | [`@taprun/from-stagehand`](https://www.npmjs.com/package/@taprun/from-stagehand) | `.ts/.js` Stagehand scripts | Hybrid: deterministic page.* mapped to plan ops; NL `act/extract/observe` flagged for honest verify verdicts |
-| [`create-tap-script`](https://www.npmjs.com/package/create-tap-script) | (none — scaffolder) | Generates a starter `.tap.json` envelope from `<site>/<name> <url>` |
+| [`create-tap-script`](https://www.npmjs.com/package/create-tap-script) | (none — scaffolder) | Generates a starter `.plan.json` envelope from `<site>/<name> <url>` |
 
 The format itself is documented at [`@taprun/spec`](https://www.npmjs.com/package/@taprun/spec) — the public protocol surface package: TypeScript types for the v2 Plan (11-op closed union + discriminated read/write Plan union) + JSON Schema 2020-12 with `$id` resolvable at `taprun.dev/spec/plan-v1/schema.json`, bidirectionally drift-guarded against the TS types. Third-party tooling (IDE `$schema` autocomplete, ajv-equivalent validators in Python/Ruby/Go, governance layers, alternative runtimes, MCP hosts with plan-aware permission scoping) builds against this package without depending on the proprietary Tap engine. Plan-v1 reference: [taprun.dev/spec/plan-v1](https://taprun.dev/spec/plan-v1/). Source for all five packages: [`packages/`](packages/) (see [`packages/README.md`](packages/README.md) for the workspace overview).
 
@@ -260,17 +260,17 @@ See [SECURITY.md](SECURITY.md) for the full threat model.
 
 ## Contributing
 
-The easiest way to contribute: **forge a new tap.** One `.tap.js` file is all it takes.
+The easiest way to contribute: **forge a new tap.** One `.plan.json` file is all it takes.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ## Roadmap
 
-- [x] 70+ community taps across 68+ sites
+- [x] 70+ community taps across 70+ sites
 - [x] 2 runtimes — Chrome extension + Playwright (headless / CI)
 - [x] Unix pipes — `tap A | tap B`
 - [x] Watch mode — monitor changes over time
-- [x] Doctor — health contracts, fingerprint diffs, automatic diagnostics for broken taps
+- [x] Verify — `tap verify` snapshot-equivalence check with a 4-arm drift verdict (equivalent / drifted / first_snapshot / unreachable)
 - [x] Single-command MCP server — `tap mcp stdio` (or `tap mcp http`) for any MCP host
 - [ ] Android runtime
 - [ ] iOS runtime
