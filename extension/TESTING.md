@@ -53,3 +53,45 @@ npm test
 2. Find "Tap" extension
 3. Click "service worker" under "Inspect views"
 4. Check Console for logs and errors
+
+## Pre-Release Cross-OS Smoke (manual, ~10 min per release)
+
+Run before tagging a new `v0.x.y`. CI already covers parts of this — see
+the **Already in CI** column. Manual focus is the two cells CI cannot
+reach: Windows install (no CI runner / no installer yet) and the full
+native-messaging wire (CI tests popup HTML in headless xvfb but never
+spawns the real `tap` binary + opens a real Chrome with the extension
+loaded).
+
+| # | Step | Already in CI? | What to assert |
+|---|---|---|---|
+| 1 | **Install the CLI** — `brew install LeonTing1010/tap/taprun` (macOS) or `curl -fsSL https://taprun.dev/install.sh \| sh` (Linux) | macOS via `brew-smoke.yml`; Linux via `release-smoke.yml` (ubuntu-latest) | `tap --version` matches `extension/manifest.json` version |
+| 2 | **Register native-messaging manifest** — `tap bridge setup` | ❌ | exit 0; manifest file landed at `~/Library/Application Support/Google/Chrome/NativeMessagingHosts/com.taprun.host.json` (macOS) or `~/.config/google-chrome/NativeMessagingHosts/com.taprun.host.json` (Linux); JSON references the canonical extension ID |
+| 3 | **Install extension from CWS, open popup** | popup HTML rendering via `extension-e2e.yml` (no real CLI connection) | popup row shows "Connected to local bridge" with green dot. If it shows a disconnect bucket, the wire is broken — STOP and diagnose before tagging |
+| 4 | **Run a smoke tap end-to-end** — e.g. `mcp__tap__run smoke/open_tab` from an MCP-connected agent, or directly: `tap run smoke/open_tab` | ❌ | A new Chrome tab opens at the smoke URL. Popup stays connected throughout |
+| 5 | **Diagnostic verifies wire** — `tap bridge status --json` | ❌ | JSON output reports `connected: true` and the extension ID matches step 2's manifest |
+
+If any of 2/3/4/5 regresses after a CI-green merge, that's a CI gap — add
+the assertion to the corresponding workflow before next release rather
+than relying on this checklist to catch it again.
+
+### Windows status
+
+There is no Windows install path as of 2026-05-28. `install.sh` is bash,
+no PowerShell installer, no Scoop / Chocolatey package. If you have a
+Windows machine, the test you can run is "does the prebuilt
+`tap-windows-x64.exe` from the GitHub release artifact start when
+double-clicked, and does `tap --version` work from a PowerShell prompt
+after putting it on `PATH`?" — that's a Stage-zero install check, not a
+full smoke. Ship the installer first; expanding this checklist for
+Windows is downstream of that.
+
+### When to upgrade to CI
+
+Currently the manual checklist is right because release cadence is
+~weekly-or-less and engagement is low (per the 2026-05-21 distribution-
+motion gate). When release cadence climbs to multi-per-week, automate
+steps 2/4/5 via a Playwright integration test that loads the extension
+into persistent-context Chromium and spawns a real `tap` binary on the
+same machine. That's a 1-2 day build and replaces the manual cells in
+the table above.
