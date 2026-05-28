@@ -43,8 +43,8 @@ This extension is the browser half of Tap. It talks to the Tap CLI on your machi
    # macOS / Linux (curl)
    curl -fsSL https://taprun.dev/install.sh | sh
 
-   # verify
-   tap --version
+   # any platform with Node 18+
+   npx -y @taprun/cli --version
 
 2. Install this Chrome extension from the Chrome Web Store.
 
@@ -119,7 +119,7 @@ A different plan in `~/.tap/plans/` is malformed JSON and breaks enumeration. Va
 Chrome isn't open, or the extension is disabled, or this profile hasn't run `tap bridge setup`. Open Chrome, enable the extension, re-run setup.
 
 **`runtime_unavailable` from MCP**
-Start the engine in another terminal: `tap bridge start` (it stays attached). Or let your MCP host launch `tap mcp stdio` for you (see the snippet above) — that path doesn't require a separate bridge.
+Let your MCP host launch `tap mcp stdio` for you (see the snippet above) — that path runs in-process and doesn't need a separate bridge. If you're using `tap mcp http`, confirm the daemon is running.
 
 **Site needs a login I haven't done yet**
 Just log in normally in Chrome first. Tap reuses your existing cookies — there's no separate Tap login.

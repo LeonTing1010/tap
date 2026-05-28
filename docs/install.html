@@ -363,16 +363,16 @@ robots: "index,follow"
        against an allow-list, never echoed back into the DOM. -->
   <section id="recovery-host-exited" class="recovery" hidden>
     <h2>Bridge not running — let's wake it up</h2>
-    <p class="symptom">The extension's service worker is alive but the local <code class="inline">tap</code> binary either isn't installed yet, the daemon socket is down, or the host crashed on startup.</p>
+    <p class="symptom">Chrome's native messaging is alive but the local host process exited. The bridge launches on demand via Chrome's <code class="inline">connectNative</code> — you don't start it manually; the popup's <strong>Retry</strong> button does that. If retries fail, the host is crashing on startup.</p>
     <div class="fix-cmd">
-      <code>tap bridge start</code>
-      <button class="copy-btn" data-copy="tap bridge start">Copy</button>
+      <code>which tap</code>
+      <button class="copy-btn" data-copy="which tap">Copy</button>
     </div>
     <ol>
-      <li>Run the command above in any terminal. It starts the persistent engine the native host bridges to.</li>
-      <li>Back in Chrome, click <strong>Retry connection</strong> on the Tap popup.</li>
-      <li>Still broken? Open <code class="inline">host.log</code> next to your <code class="inline">tap</code> binary (find it with <code class="inline">which tap</code>) — the last few lines say what's failing on startup.</li>
-      <li>Never installed Tap? Follow the install command at the top of this page first.</li>
+      <li>Run <code class="inline">which tap</code> — if it prints nothing, the CLI isn't on your PATH. Re-install with the command at the top of this page.</li>
+      <li>If it prints a path, open <code class="inline">host.log</code> in that same directory — the last few lines say what's crashing on startup.</li>
+      <li>Common causes: stale extension ID in the native-messaging manifest (run <code class="inline">tap bridge setup</code> to rewrite it), Chrome anti-DoS lockout after repeated crashes (fully quit + re-open Chrome to clear).</li>
+      <li>Then return to the Tap popup and click <strong>Retry connection</strong>.</li>
     </ol>
   </section>
 

@@ -47,12 +47,11 @@
       <span class="dot dot-err"></span>
       <span><strong>Bridge not running</strong></span>
     </div>
-    <p>Most often: the local engine isn't running. Start it once:</p>
-    <pre><code>tap bridge start</code><button class="copy" data-copy="tap bridge start" title="Copy">⧉</button></pre>
+    <p>The bridge launches when this extension's service worker is active. Try:</p>
     <ul class="muted">
-      <li>Then click <strong>Retry connection</strong> below.</li>
-      <li>Keep Chrome's window open — closing every window suspends the service worker.</li>
-      <li>Still failing? The host may be crashing on startup — open <code>host.log</code> next to your <code>tap</code> binary (find it with <code>which tap</code>); the last lines say why.</li>
+      <li>Make sure Chrome's window is open — closing all windows suspends the SW.</li>
+      <li>Click the Retry button below to wake the SW + relaunch the host.</li>
+      <li>If it persists, the host may have crashed — open <code>host.log</code> next to your <code>tap</code> binary (find it with <code>which tap</code>); the last lines say why.</li>
     </ul>
     <div class="actions">
       <button class="retry">Retry connection</button>

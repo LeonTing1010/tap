@@ -88,7 +88,10 @@ test("popup renders connected state when SW reports connected", async () => {
     await page.waitForSelector("#connected:not([hidden])", { timeout: 10_000 });
 
     await expect(page.locator("#connected")).toBeVisible();
-    await expect(page.locator("#disconnected")).toBeHidden();
+    await expect(page.locator("#dc-not-installed")).toBeHidden();
+    await expect(page.locator("#dc-host-exited")).toBeHidden();
+    await expect(page.locator("#dc-forbidden")).toBeHidden();
+    await expect(page.locator("#dc-unknown")).toBeHidden();
 
     // Connected copy: green-dot row + headline text. The text is the
     // user's primary signal that everything is working.
@@ -119,19 +122,22 @@ test("popup renders disconnected state when no bridge is reachable", async () =>
     const page = await context.newPage();
     await page.goto(`chrome-extension://${extensionId}/popup.html`);
 
-    // Popup polls every 2s; wait for the SW response to flip the state.
-    await page.waitForSelector("#disconnected:not([hidden])", {
+    // Fresh CI env has no native-messaging host registered, so the popup
+    // classifier maps lastError ("Specified native messaging host not found")
+    // → dc-not-installed bucket. Popup polls every 2s; wait for the flip.
+    await page.waitForSelector("#dc-not-installed:not([hidden])", {
       timeout: 10_000,
     });
 
-    await expect(page.locator("#disconnected")).toBeVisible();
+    await expect(page.locator("#dc-not-installed")).toBeVisible();
     await expect(page.locator("#connected")).toBeHidden();
 
-    // Canonical bridge-start command literal — the #1 traffic page promise.
-    // If anyone renames the CLI verb, this test fails (paired with Layer 3a's
-    // structural assertion in popup.test.mjs).
-    await expect(page.locator("#disconnected pre code")).toContainText(
-      "tap bridge start",
+    // Canonical setup command literal — the dc-not-installed CTA. If anyone
+    // renames the CLI verb this test fails (paired with Layer 3a's structural
+    // assertion in popup.test.mjs). Note: `tap bridge start` was deleted in
+    // 94c6a43 — bridge launches via Chrome connectNative, no user command.
+    await expect(page.locator("#dc-not-installed pre code")).toContainText(
+      "tap bridge setup",
     );
 
     // Install link must keep its UTM payload through Chrome's anchor handling
