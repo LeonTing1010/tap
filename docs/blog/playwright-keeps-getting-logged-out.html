@@ -1,0 +1,149 @@
+---
+layout: post
+title: "Why your Playwright scraper keeps getting logged out"
+description: "The three things a 'logged-in' web session actually depends on, what Playwright's storageState captures and what it silently drops, and why the bug class disappears once you stop simulating the session and drive a real Chrome instead."
+keywords: "playwright authenticated session, playwright storageState, playwright cookie reuse, scrape after login playwright, scrape behind login, playwright sessionStorage, persistent context playwright, playwright service worker"
+date: 2026-05-28
+read_time: "8 min read"
+subtitle: "storageState, sessionStorage, service workers, and the boring fix"
+---
+
+<p>Open StackOverflow, filter to <code>[playwright]</code>, sort by frequency. About every fifth question is some variant of this:</p>
+
+<blockquote>
+<p>"I save <code>storageState</code> after login and load it on the next run, but the site logs me out anyway. What am I missing?"</p>
+</blockquote>
+
+<p>The shape recurs on <a href="https://reddit.com/r/Playwright">r/Playwright</a>, on the Playwright GitHub issue tracker, in <a href="https://reddit.com/r/webscraping">r/webscraping</a>. The answers are usually some combination of "wait longer," "check your cookies," "maybe it's CSRF," "you need <code>headless: false</code>." Most of those answers are technically right about <em>one</em> case and wrong about most cases. After fixing this bug class enough times across enough sites, it stops looking like a collection of edge cases and starts looking like a single architectural mismatch.</p>
+
+<p>This post is the architectural version of the answer: what a "logged-in" web session actually depends on, what Playwright captures, what it silently drops, and the operational cost of trying to simulate a session at all.</p>
+
+<h2>What "logged in" actually depends on</h2>
+
+<p>The web platform has accumulated, over twenty-five years, at least four orthogonal places where a server-issued session token can live in your browser:</p>
+
+<ol>
+<li><strong>Cookies</strong> — the original. <code>Set-Cookie</code> on a response, sent back on every same-origin request that matches the path/secure/SameSite predicate. Visible to JavaScript unless <code>HttpOnly</code>.</li>
+
+<li><strong>localStorage</strong> — origin-scoped, persists indefinitely until the user (or your code) clears it. Modern SPA login flows often stash a refresh token here.</li>
+
+<li><strong>sessionStorage</strong> — origin-scoped <em>and</em> tab-scoped. Wiped when the tab closes. Many SPAs put short-lived access tokens here so they die when the user closes the tab — a deliberate security property.</li>
+
+<li><strong>IndexedDB</strong> — origin-scoped structured storage. Used by service workers, by larger SPAs (Gmail, Linear, Notion), by anything that wants to cache auth-related state across reloads.</li>
+</ol>
+
+<p>Plus a load-bearing fifth thing that isn't storage at all:</p>
+
+<ol start="5">
+<li><strong>In-memory state on a live navigation</strong> — CSRF tokens issued by the page render, JWTs returned by an <code>/api/me</code> call the SPA makes on first paint, cookies set as side effects of OAuth callback URLs the user already navigated through. None of this survives a fresh navigation. It exists because the previous navigation happened.</li>
+</ol>
+
+<p>"Are you logged in?" is the question <em>"can the server identify you as a known user, on the next request you make from this page?"</em> A real human's browser usually has all five mechanisms in agreement. Your Playwright run almost never does.</p>
+
+<h2>What <code>storageState</code> captures</h2>
+
+<p>From the <a href="https://playwright.dev/docs/api/class-browsercontext#browser-context-storage-state">Playwright docs</a>:</p>
+
+<blockquote>
+<p><code>storageState()</code> returns storage state for this browser context, contains current cookies and local storage snapshot.</p>
+</blockquote>
+
+<p>Cookies. localStorage. Two of the five.</p>
+
+<p>The other three — sessionStorage, IndexedDB, in-memory state — are not in the snapshot. If a site's login depends on any of them, your scraper will log in once during the priming run, save state, load state on run #2, and discover it's logged out again. The cookies are present; the access token in <code>sessionStorage</code> is not; the SPA's bootstrap code sees no token in <code>sessionStorage</code>, decides you're a fresh visitor, and redirects to the login page.</p>
+
+<p>The Playwright team is not hiding this. The behavior is documented. The problem is that the documentation describes a snapshot, and developers reach for it assuming it captures the <em>session</em>. Those are different things.</p>
+
+<h2>An example: the JWT-in-sessionStorage trap</h2>
+
+<p>A real site (anonymized; this shape recurs across at least four B2B SaaS apps I've debugged this year). Login flow:</p>
+
+<ol>
+<li>User submits credentials to <code>POST /api/auth/login</code>.</li>
+<li>Server responds with <code>Set-Cookie: refresh_token=...; HttpOnly; SameSite=Strict</code> <em>and</em> a JSON body containing <code>{ accessToken: "ey..." }</code>.</li>
+<li>The SPA's auth interceptor reads <code>accessToken</code> from the body and stashes it in <code>sessionStorage["accessToken"]</code>.</li>
+<li>Every XHR after that pulls the token from sessionStorage and sets <code>Authorization: Bearer ...</code>.</li>
+<li>When the access token expires (15 minutes), the interceptor calls <code>POST /api/auth/refresh</code>. The refresh cookie identifies the user; the server returns a new access token; the SPA stashes it in sessionStorage and continues.</li>
+</ol>
+
+<p>This is a normal, defensible design. The refresh token gets HttpOnly + SameSite=Strict protection. The access token is short-lived and dies when the tab closes. The user gets persistence across tabs (refresh cookie) without giving a long-lived bearer token to <code>document.cookie</code>.</p>
+
+<p>Now you run Playwright. <code>page.goto('/login')</code>, fill, submit, <code>context.storageState({ path: 'auth.json' })</code>. On run #2: <code>chromium.launchPersistentContext</code> with <code>storageState: 'auth.json'</code>. Navigate to the dashboard. <em>You are not logged in.</em></p>
+
+<p>Why: <code>auth.json</code> contains the refresh cookie (cookies are captured) but the access token is in sessionStorage (not captured). The SPA bootstraps, looks for <code>sessionStorage["accessToken"]</code>, finds nothing, decides you're unauthenticated, redirects to login. The refresh cookie is sitting right there in your request headers, perfectly valid, and the client-side code never asks for it because nothing told it the user was mid-session.</p>
+
+<p>The "fix" in the StackOverflow answers is usually <em>also</em> wait for the refresh endpoint to fire automatically. That works on sites where the SPA bootstrap optimistically calls <code>/api/auth/refresh</code> on every load. It doesn't work when the bootstrap checks sessionStorage first and only calls refresh when it has reason to.</p>
+
+<h2>Three fixes, ranked by leverage</h2>
+
+<h3>Fix 1: capture more than storageState</h3>
+
+<p>You can manually round-trip the missing storage:</p>
+
+<pre><code>const sessionData = await page.evaluate(() =&gt; ({
+  accessToken: sessionStorage.getItem('accessToken'),
+  // …other keys you've reverse-engineered
+}));
+
+// On reload:
+await page.addInitScript((data) =&gt; {
+  for (const [k, v] of Object.entries(data)) {
+    sessionStorage.setItem(k, v);
+  }
+}, sessionData);
+</code></pre>
+
+<p>This works. It also rots fast. Every time the site rotates which storage key holds which token, your scraper breaks. Every time they add IndexedDB to the mix, your scraper breaks. Every time they introduce a service worker that intercepts the <code>/api/me</code> call and caches the response, your scraper breaks. You're now maintaining a parallel, reverse-engineered model of someone else's auth implementation. That model has a half-life measured in deploys.</p>
+
+<h3>Fix 2: persistent context</h3>
+
+<p><code>chromium.launchPersistentContext(userDataDir, options)</code> reuses a Chrome user-data directory across runs. Cookies, localStorage, sessionStorage, IndexedDB — all of it persists, because you're running against the same on-disk Chrome profile both times.</p>
+
+<p>This actually works. The catch is operational: a persistent context dir is a stateful artifact. It holds cookies that expire, service workers that get invalidated, cache entries that go stale. CI runs that share a persistent context across multiple jobs hit race conditions on the lock file. Persistent contexts also can't be containerized cleanly — the whole point is on-disk state, which doesn't survive a fresh container.</p>
+
+<p>And the credential exposure surface gets larger: anything that can read <code>userDataDir</code> can impersonate the user on every site they were logged into. If that directory ends up in a CI artifact, a build cache, a developer's home directory backed up to a corporate sync — the blast radius is your entire browser history's worth of sessions.</p>
+
+<h3>Fix 3: drive your real Chrome</h3>
+
+<p>The third option is to skip the simulation entirely. Connect Playwright (or a CDP client) to the Chrome the user is already running, the one they logged in to last week, the one with all five storage mechanisms already in their normal lived-in state.</p>
+
+<p>The Chrome DevTools Protocol exposes this directly. So does the Chrome extension API. The trade-off space is different from headless Playwright:</p>
+
+<table>
+<thead><tr><th></th><th>storageState reload</th><th>Persistent context</th><th>Attach to real Chrome</th></tr></thead>
+<tbody>
+<tr><td>Captures all 5 storage mechanisms</td><td>No (2 of 5)</td><td>Yes</td><td>Yes</td></tr>
+<tr><td>Reproducible across machines</td><td>Yes (small file)</td><td>Partial (large dir)</td><td>No (machine-bound)</td></tr>
+<tr><td>Survives credential rotation by the site</td><td>No (breaks)</td><td>Until next forced re-auth</td><td>Yes (user re-auths normally)</td></tr>
+<tr><td>Containerizable</td><td>Yes</td><td>Awkward</td><td>No</td></tr>
+<tr><td>Credential blast radius</td><td>One site, in a small file</td><td>All sites, in a large dir</td><td>None — credentials don't leave the user's machine</td></tr>
+<tr><td>Right for…</td><td>Sites with cookie-only auth</td><td>Sites with sessionStorage/SW auth, single-machine CI</td><td>Per-user automation, anything credential-sensitive</td></tr>
+</tbody></table>
+
+<p>The third column is the architecture <a href="/">Taprun</a> defaults to and the reason this whole bug class disappears when you use it. You aren't simulating a session. You're driving the actual session the user is already in.</p>
+
+<h2>When each fix is actually right</h2>
+
+<p>The decision tree is shorter than it looks:</p>
+
+<ul>
+<li>Is the site cookie-only? (<code>document.cookie</code> auth, no JS-side token in sessionStorage.) <strong>storageState reload is fine.</strong></li>
+
+<li>Does the site use sessionStorage or IndexedDB for auth, and do you control the CI environment? <strong>Persistent context is fine — accept the operational complexity.</strong></li>
+
+<li>Is this a per-user automation? Does the user need to keep their credentials? Is the site behind MFA or OTP? Will the site rotate auth implementation faster than you can maintain a reverse-engineered model? <strong>Drive the real Chrome.</strong></li>
+</ul>
+
+<p>That last row is what "scrape behind login" usually means in practice. The user has an account. They've logged in. They don't want to hand the cookie jar to a CI job or a vendor. They want a tool that runs <em>in their browser</em>, scoped to whatever they're already authorized to see. The right architecture is to stop pretending the scraper is a separate browser at all.</p>
+
+<h2>What this looks like in Taprun</h2>
+
+<p>For completeness — this is the thing the post is implicitly about. Tap's runtime is a Chrome extension that exposes the user's already-authenticated tabs to a local MCP server. Plans (<code>.plan.json</code>) reference site state by URL and DOM selector, not by re-authentication script. The plan never sees the cookies; the extension never sends them anywhere; the agent that called the plan doesn't have credential scope. Re-login bugs of the kind in this post can't happen because there's no re-login: the user logged in last Tuesday, the session is whatever Chrome says it is right now, and the scraper inherits that state instead of constructing its own.</p>
+
+<p>The cost is real: a Tap plan only runs on the machine where the user is logged in. You can't lift it to a CI runner and have it scrape behalf-of-user accounts at scale. For per-user automation, that's the constraint you want. For mass anonymous scraping, you want a different tool.</p>
+
+<p>If the bug-class enumeration in this post matches what you've been fighting — the Playwright re-login loop, the sessionStorage trap, the storageState that worked yesterday and doesn't today — try driving real Chrome for one of the per-user scrapers in your fleet and see whether the bug class survives the move. In my experience across roughly a dozen sites with this shape, it doesn't.</p>
+
+<hr>
+
+<p><em>Tap is a local-first browser MCP — your agent drives your already-logged-in Chrome, plans compile once to <code>.plan.json</code>, replays are deterministic and free. <a href="/">taprun.dev</a> · <a href="https://github.com/LeonTing1010/tap">github</a>.</em></p>
