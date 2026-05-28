@@ -65,11 +65,12 @@ loaded).
 
 | # | Step | Already in CI? | What to assert |
 |---|---|---|---|
-| 1 | **Install the CLI** — `brew install LeonTing1010/tap/taprun` (macOS) or `curl -fsSL https://taprun.dev/install.sh \| sh` (Linux) | macOS via `brew-smoke.yml`; Linux via `release-smoke.yml` (ubuntu-latest) | `tap --version` matches `extension/manifest.json` version |
-| 2 | **Register native-messaging manifest** — `tap bridge setup` | ❌ | exit 0; manifest file landed at `~/Library/Application Support/Google/Chrome/NativeMessagingHosts/com.taprun.host.json` (macOS) or `~/.config/google-chrome/NativeMessagingHosts/com.taprun.host.json` (Linux); JSON references the canonical extension ID |
+| 0 | **Refresh the CLI binary** — `brew upgrade taprun` (macOS) or re-run the curl installer (Linux); if developing locally on source, rebuild via `./scripts/build-all.sh` and ensure the dev shim's manifest still points at the new binary | ❌ | The next step's `tap --version` must come from the *just-shipped* binary, not a previous release |
+| 1 | **Install/version check** — `tap --version` | macOS install path via `brew-smoke.yml`; Linux install path via `release-smoke.yml` (ubuntu-latest) | `tap --version` matches `extension/manifest.json` version. Mismatch here means step 0 didn't actually pick up the new build |
+| 2 | **Register native-messaging manifest** — `tap bridge setup` | ❌ | exit 0; manifest landed at `~/Library/Application Support/Google/Chrome/NativeMessagingHosts/dev.taprun.daemon.json` (macOS) or `~/.config/google-chrome/NativeMessagingHosts/dev.taprun.daemon.json` (Linux). The canonical host name is `dev.taprun.daemon` (`core/native-messaging/extension_id.ts` → `NATIVE_HOST_NAME`); `allowed_origins` array contains the extension ID. Stale `dev.taprun.poc.json` from earlier PoCs is harmless leftover; ignore |
 | 3 | **Install extension from CWS, open popup** | popup HTML rendering via `extension-e2e.yml` (no real CLI connection) | popup row shows "Connected to local bridge" with green dot. If it shows a disconnect bucket, the wire is broken — STOP and diagnose before tagging |
-| 4 | **Run a smoke tap end-to-end** — e.g. `mcp__tap__run smoke/open_tab` from an MCP-connected agent, or directly: `tap run smoke/open_tab` | ❌ | A new Chrome tab opens at the smoke URL. Popup stays connected throughout |
-| 5 | **Diagnostic verifies wire** — `tap bridge status --json` | ❌ | JSON output reports `connected: true` and the extension ID matches step 2's manifest |
+| 4 | **Reconnect MCP host if you just edited engine source.** Then run a smoke tap end-to-end — e.g. `mcp__tap__run smoke/open_tab` from an MCP-connected agent, or directly: `tap run smoke/open_tab` | ❌ | A new Chrome tab opens at the smoke URL. Popup stays connected throughout. If you get `runtime_unavailable: engine stale — source edited`, restart the MCP host (the engine self-protects against running stale code after a source mtime moves past `process_start_ms`) |
+| 5 | **Diagnostic verifies wire** — `tap bridge status` | ❌ | exit 0, stdout exactly `bridge: connected (host.sock at <HOME>/.tap/host.sock)`. The flag `--json` is **NOT** supported (the impl ignores `parsed`); don't expect machine-readable output here |
 
 If any of 2/3/4/5 regresses after a CI-green merge, that's a CI gap — add
 the assertion to the corresponding workflow before next release rather
