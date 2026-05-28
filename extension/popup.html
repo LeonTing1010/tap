@@ -51,7 +51,7 @@
     <ul class="muted">
       <li>Make sure Chrome's window is open — closing all windows suspends the SW.</li>
       <li>Click the Retry button below to wake the SW + relaunch the host.</li>
-      <li>If it persists, the host may have crashed — check <code>host.log</code> next to the <code>tap</code> binary.</li>
+      <li>If it persists, the host may have crashed — open <code>host.log</code> next to your <code>tap</code> binary (find it with <code>which tap</code>); the last lines say why.</li>
     </ul>
     <div class="actions">
       <button class="retry">Retry connection</button>
@@ -67,10 +67,11 @@
       <span class="dot dot-err"></span>
       <span><strong>Chrome blocked the host</strong></span>
     </div>
-    <p>One of:</p>
+    <p>Either Chrome's anti-DoS lockout is active (~10 min), or the manifest's <code>allowed_origins</code> is wrong. Re-register:</p>
+    <pre><code>tap bridge setup</code><button class="copy" data-copy="tap bridge setup" title="Copy">⧉</button></pre>
     <ul class="muted">
-      <li>Host crashed ≥5 times — Chrome lockout active ~10 min. <strong>Restart Chrome</strong> to clear.</li>
-      <li>Manifest <code>allowed_origins</code> doesn't include this extension. Re-run setup.</li>
+      <li>Fully quit Chrome (⌘Q) and re-open — this clears the anti-DoS blocklist.</li>
+      <li>Then click <strong>Retry connection</strong>.</li>
     </ul>
     <div class="actions">
       <button class="retry">Retry connection</button>
@@ -85,6 +86,8 @@
       <span><strong>Bridge down</strong></span>
     </div>
     <p class="muted">Reason: <code id="raw-reason">—</code></p>
+    <p>Run the diagnostic — it prints which side is unhappy:</p>
+    <pre><code>tap bridge status</code><button class="copy" data-copy="tap bridge status" title="Copy">⧉</button></pre>
     <div class="actions">
       <button class="retry">Retry connection</button>
       <a href="https://taprun.dev/install?utm_source=chrome-ext&utm_medium=extension&utm_campaign=popup-unknown" target="_blank" rel="noopener">Learn more</a>
