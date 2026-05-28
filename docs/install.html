@@ -309,6 +309,36 @@ robots: "index,follow"
   }
   footer.site-footer a { color: var(--text-dim); }
   footer.site-footer .row { display: flex; flex-wrap: wrap; gap: 18px; justify-content: space-between; }
+
+  /* Recovery panel — shown when arriving from popup error states.
+     JS at bottom of <body> reads ?utm_campaign= and unhides one variant. */
+  .recovery {
+    margin: 24px 0 0;
+    padding: 20px 22px;
+    border: 1px solid rgba(251, 191, 36, 0.35);
+    background: rgba(251, 191, 36, 0.06);
+    border-radius: 10px;
+    color: var(--text);
+  }
+  .recovery h2 { margin: 0 0 6px; font-size: 18px; font-weight: 700; }
+  .recovery .symptom { font-size: 14px; color: var(--text-dim); margin: 0 0 14px; }
+  .recovery .fix-cmd {
+    display: flex; align-items: center; gap: 8px;
+    background: #0b0d12; border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px 12px; margin-bottom: 12px;
+    font-family: var(--font-mono); font-size: 13px;
+  }
+  .recovery .fix-cmd code { flex: 1; color: var(--text); white-space: nowrap; overflow-x: auto; }
+  .recovery .copy-btn {
+    background: var(--indigo); color: var(--white); border: 0;
+    padding: 6px 12px; border-radius: 6px;
+    font-size: 12px; font-weight: 600;
+    cursor: pointer; white-space: nowrap;
+  }
+  .recovery .copy-btn:hover { background: #4f51d8; }
+  .recovery ol { margin: 8px 0 0 18px; padding: 0; font-size: 13px; color: var(--text-dim); }
+  .recovery ol li { margin: 4px 0; }
+  .recovery code.inline { background: #0b0d12; border: 1px solid var(--border); padding: 1px 6px; border-radius: 4px; font-family: var(--font-mono); font-size: 12px; }
 </style>
 </head>
 <body>
@@ -326,6 +356,55 @@ robots: "index,follow"
 </header>
 
 <main class="container">
+
+  <!-- Recovery panel: campaign-aware. Hidden by default; the small script
+       at end-of-body unhides one variant when utm_campaign matches a known
+       popup error. Reading URL params here is safe — values are matched
+       against an allow-list, never echoed back into the DOM. -->
+  <section id="recovery-host-exited" class="recovery" hidden>
+    <h2>Bridge not running — let's wake it up</h2>
+    <p class="symptom">The extension's service worker is alive but the local <code class="inline">tap</code> binary either isn't installed yet, the daemon socket is down, or the host crashed on startup.</p>
+    <div class="fix-cmd">
+      <code>tap bridge start</code>
+      <button class="copy-btn" data-copy="tap bridge start">Copy</button>
+    </div>
+    <ol>
+      <li>Run the command above in any terminal. It starts the persistent engine the native host bridges to.</li>
+      <li>Back in Chrome, click <strong>Retry connection</strong> on the Tap popup.</li>
+      <li>Still broken? Open <code class="inline">host.log</code> next to your <code class="inline">tap</code> binary (find it with <code class="inline">which tap</code>) — the last few lines say what's failing on startup.</li>
+      <li>Never installed Tap? Follow the install command at the top of this page first.</li>
+    </ol>
+  </section>
+
+  <section id="recovery-forbidden" class="recovery" hidden>
+    <h2>Chrome is refusing to launch the bridge</h2>
+    <p class="symptom">Either (a) the native-messaging manifest is missing or points at the wrong extension ID, or (b) Chrome's anti-DoS blocklist kicked in after the host crashed several times in a row.</p>
+    <div class="fix-cmd">
+      <code>tap bridge setup</code>
+      <button class="copy-btn" data-copy="tap bridge setup">Copy</button>
+    </div>
+    <ol>
+      <li>Run the command above — it re-writes the native-messaging manifest with the right extension ID.</li>
+      <li>Fully quit Chrome (⌘Q on macOS) and re-open it. This clears any anti-DoS blocklist entry.</li>
+      <li>Click the Tap toolbar icon → <strong>Retry connection</strong>.</li>
+      <li>If it still fails, run <code class="inline">tap bridge status</code> in a terminal — it prints exactly which side is misconfigured.</li>
+    </ol>
+  </section>
+
+  <section id="recovery-unknown" class="recovery" hidden>
+    <h2>Bridge connection error — let's diagnose</h2>
+    <p class="symptom">The popup got a connection error that doesn't match any known failure mode. The diagnostic command below prints which side is unhappy.</p>
+    <div class="fix-cmd">
+      <code>tap bridge status</code>
+      <button class="copy-btn" data-copy="tap bridge status">Copy</button>
+    </div>
+    <ol>
+      <li>Run the command above and read the output. It checks the CLI install, the daemon socket, and the native-messaging manifest in one pass.</li>
+      <li>If the manifest is missing: <code class="inline">tap bridge setup</code>.</li>
+      <li>If the daemon isn't running: <code class="inline">tap bridge start</code>.</li>
+      <li>Still stuck? Open an issue with the <code class="inline">tap bridge status --json</code> output — that's the diagnostic the maintainer needs.</li>
+    </ol>
+  </section>
 
   <section class="hero">
     <div class="badge-status"><span class="dot"></span> Extension installed · bridge not registered</div>
@@ -445,11 +524,48 @@ robots: "index,follow"
   </div>
 </footer>
 
-<!-- Click-to-copy: matches head-common.html behavior. No URL params are read or rendered anywhere on this page. -->
+<!-- Click-to-copy + recovery-panel unhide.
+     The only URL param read is utm_campaign, and only to match against a fixed
+     allow-list of campaign IDs. The campaign value is never echoed into the DOM. -->
 <script>
+  // Recovery panel: unhide one variant when arriving from an extension popup error.
+  (function() {
+    var params = new URLSearchParams(window.location.search);
+    var campaign = params.get('utm_campaign') || '';
+    var map = {
+      'popup-host-exited': 'recovery-host-exited',
+      'popup-forbidden':   'recovery-forbidden',
+      'popup-unknown':     'recovery-unknown'
+    };
+    var id = Object.prototype.hasOwnProperty.call(map, campaign) ? map[campaign] : null;
+    if (!id) return;
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.hidden = false;
+    el.scrollIntoView({ behavior: 'auto', block: 'start' });
+    if (window.gtag) window.gtag('event', 'recovery_panel_shown', { campaign: campaign, page: 'install' });
+  })();
+
+  // Click-to-copy for recovery-panel buttons (data-copy attribute).
+  document.addEventListener('click', function(e) {
+    var btn = e.target.closest && e.target.closest('button.copy-btn[data-copy]');
+    if (!btn || !navigator.clipboard) return;
+    e.preventDefault();
+    var cmd = btn.getAttribute('data-copy') || '';
+    if (!cmd) return;
+    navigator.clipboard.writeText(cmd).then(function() {
+      var original = btn.textContent;
+      btn.textContent = 'Copied';
+      setTimeout(function() { btn.textContent = original; }, 1500);
+      if (window.gtag) window.gtag('event', 'recovery_command_copy', { command: cmd, page: 'install' });
+    }).catch(function() {});
+  });
+
+  // Click-to-copy for existing <code>/<pre> blocks (preserved from prior behavior).
   document.addEventListener('click', function(e) {
     if (!navigator.clipboard) return;
     if (e.target.closest && e.target.closest('a')) return;
+    if (e.target.closest && e.target.closest('button.copy-btn')) return;
     var pre = e.target.closest && e.target.closest('pre');
     var target = pre || (e.target.closest && e.target.closest('code'));
     if (!target) return;
