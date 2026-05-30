@@ -185,17 +185,24 @@ test('handleMethod gates the active-tab fallback on !fromDaemon', () => {
     'active-tab fallback must be gated on !fromDaemon so daemon commands never silently retarget')
 })
 
-test('daemon WebSocket dispatch passes fromDaemon: true', () => {
-  // Post-WS migration (commit adc8e67 — "delete pollLoop / startPoll /
-  // handleAndReport — WS only"), the daemon poll handler is gone. The
-  // daemon-fallback gate is now enforced inside ws.onmessage where it
-  // calls handleMethod with the daemon-origin flag set.
-  const wsStart = BG_SRC.indexOf('ws.onmessage')
-  assert(wsStart !== -1, 'ws.onmessage handler must exist (WS-only architecture)')
-  const wsSection = BG_SRC.substring(wsStart, wsStart + 4000)
-  const callsHandleMethod = /handleMethod\([^)]*\{\s*fromDaemon:\s*true\s*\}/.test(wsSection)
+test('daemon NM dispatch passes fromDaemon: true', () => {
+  // Post native-messaging migration (ADR 2026-05-13-daemon-extension-via-
+  // native-messaging + 2026-05-14-host-as-daemon): the WebSocket transport
+  // was deleted (the N2 arch tests now FORBID `new WebSocket(`), so the
+  // daemon dispatch path is `port.onMessage`. The daemon-fallback gate is
+  // enforced there — it calls handleMethod with the daemon-origin flag set
+  // so daemon commands never silently retarget the active tab. (This test
+  // referenced the deleted `ws.onmessage` until 2026-05-30.)
+  const dispatchStart = BG_SRC.indexOf('port.onMessage')
+  assert(dispatchStart !== -1, 'port.onMessage handler must exist (native-messaging architecture)')
+  // Window covers the onMessage listener body down to the handleMethod
+  // call; sized generously so unrelated additions to the listener (e.g.
+  // the B1 host_unavailable notification handler) don't push the call
+  // out of range.
+  const section = BG_SRC.substring(dispatchStart, dispatchStart + 8000)
+  const callsHandleMethod = /handleMethod\([^)]*\{\s*fromDaemon:\s*true\s*\}/.test(section)
   assert(callsHandleMethod,
-    'ws.onmessage must call handleMethod(..., { fromDaemon: true }) so daemon commands hit the gated path')
+    'port.onMessage must call handleMethod(..., { fromDaemon: true }) so daemon commands hit the gated path')
 })
 
 // --- Summary ---

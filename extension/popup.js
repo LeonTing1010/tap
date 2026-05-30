@@ -14,6 +14,7 @@ const SECTION_IDS = [
   'dc-not-installed',
   'dc-host-exited',
   'dc-forbidden',
+  'dc-owned-by-other',
   'dc-unknown',
 ]
 
@@ -34,6 +35,11 @@ function showOnly(id) {
 function classifyReason(reason) {
   if (!reason) return 'unknown'
   const r = String(reason)
+  // Checked first: the host's B1 signal (ADR 2026-05-30 §5) sets this
+  // reason — another Chrome profile owns the singleton bridge. Must
+  // precede the generic checks; the bridge is NOT down, it's just held
+  // elsewhere, so this is an honest "info" state, not a failure.
+  if (/already_running|another.*profile/i.test(r)) return 'owned-by-other'
   if (/forbidden/i.test(r)) return 'forbidden'
   if (/not found/i.test(r)) return 'not-installed'
   if (/has exited|error when communicating/i.test(r)) return 'host-exited'
@@ -67,6 +73,12 @@ function render(status) {
 
   if (bucket === 'forbidden') {
     showOnly('dc-forbidden')
+    return
+  }
+
+  if (bucket === 'owned-by-other') {
+    // Not a failure — another Chrome profile holds the single bridge.
+    showOnly('dc-owned-by-other')
     return
   }
 

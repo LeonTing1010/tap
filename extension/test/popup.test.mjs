@@ -42,13 +42,27 @@ test('popup.html declares #connected section', () => {
   assert.match(HTML_SRC, /id="connected"/, 'missing #connected section')
 })
 
-test('popup.html declares 4 disconnect-mode sections (post-2026-05-13)', () => {
+test('popup.html declares 5 disconnect-mode sections (post-2026-05-30 B1)', () => {
   // Native messaging migration replaced the single #disconnected section
-  // with 4 failure-mode-specific sections so the CTA matches the actual
+  // with failure-mode-specific sections so the CTA matches the actual
   // root cause (manifest missing vs daemon down vs Chrome blocklist).
-  for (const id of ['dc-not-installed', 'dc-host-exited', 'dc-forbidden', 'dc-unknown']) {
+  // 2026-05-30 (ADR bind-host-lifetime-to-nm-port §5, B1) added
+  // dc-owned-by-other: another Chrome profile holds the single bridge —
+  // an honest info state, not a failure.
+  for (const id of ['dc-not-installed', 'dc-host-exited', 'dc-forbidden', 'dc-owned-by-other', 'dc-unknown']) {
     assert.match(HTML_SRC, new RegExp(`id="${id}"`), `missing #${id} section`)
   }
+})
+
+test('popup.html dc-owned-by-other is an info state, not red "Bridge not running"', () => {
+  // B1's whole point is to stop the popup crying wolf when the bridge is
+  // up but held by another profile. The section must use the amber warn
+  // dot (not dot-err) and must NOT claim the bridge is "not running".
+  const sec = HTML_SRC.match(/<section id="dc-owned-by-other"[\s\S]*?<\/section>/)
+  assert.ok(sec, 'dc-owned-by-other section must exist')
+  assert.match(sec[0], /dot-warn/, 'dc-owned-by-other must use the amber dot-warn (info), not dot-err')
+  assert.doesNotMatch(sec[0], /not running/i, 'dc-owned-by-other must NOT say "Bridge not running" — the bridge IS running, just held by another profile')
+  assert.match(sec[0], /another.*profile/i, 'dc-owned-by-other must explain another profile owns the bridge')
 })
 
 test('popup.html all sections start hidden (background SW resolves state)', () => {
@@ -124,14 +138,16 @@ test('popup.js wires retry button → tap-retry message', () => {
   assert.match(JS_SRC, /['"`]tap-retry['"`]/, 'retry handler does not send tap-retry message')
 })
 
-test('popup.js classifies disconnect reason into 4 buckets', () => {
-  // The dispatch function maps Chrome's lastError.message → CTA bucket.
-  // Must distinguish at least: not-installed / host-exited / forbidden /
-  // unknown (any unrecognized reason falls through to unknown).
+test('popup.js classifies disconnect reason into 5 buckets', () => {
+  // The dispatch function maps Chrome's lastError.message (or the host's
+  // B1 signal) → CTA bucket. Must distinguish at least: not-installed /
+  // host-exited / forbidden / owned-by-other / unknown (any unrecognized
+  // reason falls through to unknown).
   assert.match(JS_SRC, /classifyReason/, 'missing classifyReason function')
   assert.match(JS_SRC, /not-installed/, 'classifier missing not-installed bucket')
   assert.match(JS_SRC, /host-exited/, 'classifier missing host-exited bucket')
   assert.match(JS_SRC, /forbidden/, 'classifier missing forbidden bucket')
+  assert.match(JS_SRC, /owned-by-other/, 'classifier missing owned-by-other bucket (B1)')
 })
 
 test('popup.js NO LONGER injects extension ID into setup CTA (P4 anti-reintroduce)', () => {
@@ -174,6 +190,17 @@ test('classifier maps "forbidden" lastError → forbidden bucket', () => {
   // Chrome anti-DoS blocklist OR allowed_origins mismatch.
   assert.match(JS_SRC, /\/forbidden\/[\s\S]{0,300}['"`]forbidden['"`]/,
     'classifyReason must map /forbidden/ → "forbidden" bucket')
+})
+
+test('classifier maps host_already_running reason → owned-by-other bucket (B1)', () => {
+  // The host's B1 signal (ADR 2026-05-30 §5) sets a reason containing
+  // "already_running". classifyReason must route it to a distinct
+  // owned-by-other bucket — checked BEFORE the generic buckets so it
+  // never falls through to host-exited / unknown.
+  assert.match(JS_SRC, /already_running[\s\S]{0,200}['"`]owned-by-other['"`]/,
+    'classifyReason must map /already_running/ → "owned-by-other" bucket')
+  assert.match(JS_SRC, /owned-by-other/,
+    'render() must handle the owned-by-other bucket')
 })
 
 test('classifier has unknown fallback (raw reason surfaced for debug)', () => {

@@ -1427,6 +1427,11 @@ const WIRE_CODE = {
   peer_not_registered: -32001,
   unsupported_op_for_peer: -32002,
   peer_unreachable: -32003,
+  // -32015 fetch_network (DNS / connection refused / TLS / timeout — the
+  // layer below HTTP) added per ADR 2026-05-22-unify-verify-with-runtime
+  // slice 2. Mirrors core/core/wire-codes.ts; the W4 drift-guard keeps
+  // them in lockstep (was missing here until 2026-05-30).
+  fetch_network: -32015,
   fetch_http: -32004,
   fetch_parse: -32005,
   navigation_blocked: -32006,
@@ -1449,9 +1454,16 @@ let port = undefined
 //   "...is forbidden"                            → Chrome blocklist / allowed_origins
 //   ""                                            → never tried / initial
 let lastDisconnectReason = ''
+// B1 (ADR 2026-05-30-bind-host-lifetime-to-nm-port §5): set when the host
+// we just spawned signalled `host_unavailable / already_running` — another
+// Chrome profile owns the singleton bridge. Lets onDisconnect surface the
+// honest "another profile owns the bridge" reason instead of Chrome's
+// generic "Native host has exited", so the popup stops crying wolf.
+let bridgeOwnedElsewhere = false
 
 function connectBridge() {
   if (port) return  // already connected — Port is held by SW, persists until close
+  bridgeOwnedElsewhere = false  // reset per connect attempt
   try {
     port = chrome.runtime.connectNative(NATIVE_HOST_NAME)
   } catch (e) {
@@ -1468,6 +1480,24 @@ function connectBridge() {
     // Chrome Native Messaging delivers the parsed object directly —
     // no JSON.parse needed (unlike ws.onmessage with e.data).
     if (!msg || msg.jsonrpc !== '2.0') return
+
+    // ─── Notification: host_unavailable (B1) ──────────────────────────
+    // Per ADR 2026-05-30-bind-host-lifetime-to-nm-port §5: the host we
+    // just spawned lost the singleton lock — another Chrome profile owns
+    // the bridge. It sends this one frame right before exiting 0. Record
+    // the honest reason so the imminent onDisconnect surfaces it (and the
+    // popup shows "another profile owns the bridge", not red "Bridge not
+    // running"). The bridge IS available — just not to this profile.
+    if (msg.method === 'host_unavailable' && (msg.id === undefined || msg.id === null)) {
+      const reason = (msg.params && msg.params.reason) || 'unavailable'
+      if (reason === 'already_running') {
+        bridgeOwnedElsewhere = true
+        const owner = msg.params && msg.params.owner_pid
+        lastDisconnectReason = 'host_already_running' + (owner ? ` (owner pid ${owner})` : '')
+        console.log('[tap-nm] another Chrome profile owns the bridge', owner ? `(pid ${owner})` : '')
+      }
+      return
+    }
 
     // ─── Notification: cleanup_tabs ───────────────────────────────────
     // Per ADR 2026-05-10-plan-lifecycle-scoped-tabs: daemon sends
@@ -1554,7 +1584,12 @@ function connectBridge() {
 
   port.onDisconnect.addListener(() => {
     const err = chrome.runtime.lastError
-    lastDisconnectReason = (err && err.message) || '(no error)'
+    // Preserve the specific host_already_running reason if the host
+    // signalled it just before exiting (B1); otherwise Chrome's generic
+    // lastError ("Native host has exited") is the best we have.
+    if (!bridgeOwnedElsewhere) {
+      lastDisconnectReason = (err && err.message) || '(no error)'
+    }
     console.log('[tap-nm] port disconnected:', lastDisconnectReason)
     port = undefined
     setBadge(false)
@@ -1565,6 +1600,11 @@ function connectBridge() {
     //   - host crashed → Chrome's anti-DoS blocklist would activate on
     //     repeated crashes anyway; a tight reconnect loop would just
     //     accelerate that.
+    //   - another profile owns the bridge (bridgeOwnedElsewhere) → the
+    //     loser host clean-exits in <50ms (not a crash, no blocklist
+    //     pressure). A wake-driven reconnect is harmless and self-heals
+    //     the moment the owning profile closes; meanwhile the popup shows
+    //     the honest "another profile owns the bridge" CTA, not red.
     // The next legitimate SW spawn (user action / browser restart)
     // re-establishes the bridge.
   })

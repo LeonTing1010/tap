@@ -79,6 +79,26 @@
     </div>
   </section>
 
+  <!-- Disconnect mode: another Chrome profile owns the single bridge.
+       Triggered by the host's `host_unavailable / already_running` signal
+       (ADR 2026-05-30-bind-host-lifetime-to-nm-port §5). NOT a failure —
+       the bridge is up, just held by another profile. amber, not red. -->
+  <section id="dc-owned-by-other" hidden>
+    <div class="row">
+      <span class="dot dot-warn"></span>
+      <span><strong>Bridge in use by another profile</strong></span>
+    </div>
+    <p>Tap runs one bridge per machine, and another Chrome profile is holding it right now. This profile can't use the bridge until that one releases it.</p>
+    <ul class="muted">
+      <li>Use Tap in the profile that owns the bridge, or close it / disable the Tap extension there.</li>
+      <li>Then click <strong>Retry connection</strong> here to take over.</li>
+    </ul>
+    <div class="actions">
+      <button class="retry">Retry connection</button>
+      <a href="https://taprun.dev/install?utm_source=chrome-ext&utm_medium=extension&utm_campaign=popup-owned-by-other" target="_blank" rel="noopener">Learn more</a>
+    </div>
+  </section>
+
   <!-- Disconnect mode: unrecognized reason. Show raw text + generic retry. -->
   <section id="dc-unknown" hidden>
     <div class="row">
