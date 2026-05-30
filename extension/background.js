@@ -1555,8 +1555,17 @@ function connectBridge() {
     // Engine-side EvalOp uses `fn`; extension's handleMethod historically
     // reads `params.expression`. Translate here so we don't have to fork
     // the type. Safe because the guard above guarantees `fn` is present.
+    //
+    // op.args (engine-resolved positional values; the engine already
+    // interpolated {{...}} as DATA in core/dispatch.ts:engineEval) are
+    // applied to the fn so authors pass run-time values WITHOUT baking
+    // them into the code string. JSON.stringify is the safe data→JS-literal
+    // serialization (escapes quotes/newlines/unicode); the values are
+    // already-resolved data, not user code. Absent args → `apply(null, [])`
+    // ≡ `()`, so existing zero-arg eval plans are unchanged.
     if (method === 'eval' && resolvedParams.fn !== undefined && resolvedParams.expression === undefined) {
-      resolvedParams.expression = `(${resolvedParams.fn})()`
+      const argsLit = JSON.stringify(Array.isArray(resolvedParams.args) ? resolvedParams.args : [])
+      resolvedParams.expression = `(${resolvedParams.fn}).apply(null, ${argsLit})`
     }
     if (params.sessionId) {
       resolvedParams._sessionId = params.sessionId
