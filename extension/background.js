@@ -170,6 +170,45 @@ async function cdpClick(tabId, x, y) {
   })
 }
 
+// Deliver keystroke-equivalent text into a contenteditable rich-text editor
+// (Quill / ProseMirror / etc). The earlier `type` fallback dispatched per-char
+// Input.dispatchKeyEvent({text}), which silently no-op'd on Quill (issue #19):
+// it left the editor's model untouched yet returned success. CDP's
+// Input.insertText drives the real beforeinput/input pipeline the editor's
+// MutationObserver + model actually observe, matching human typing. After
+// inserting we re-read the editor text and THROW if it didn't land, so a
+// rejected edit surfaces as a failure instead of a silent success.
+//
+// `coords` is the element center (from a prior execFunc rect read). A real CDP
+// click there establishes focus + caret/selection inside the editable frame —
+// el.focus() alone does not place a caret, so insertText would have no
+// selection to write into.
+async function typeIntoContentEditable(tabId, selector, text, coords) {
+  await cdpClick(tabId, coords.x, coords.y)
+  // Select existing content so insertText REPLACES it (preserves the
+  // select-all-then-type intent of the original `type` fallback). On an empty
+  // editor this selects nothing and insertText just inserts at the caret.
+  await handleMethod('keyboard', { tabId, key: 'a', action: 'press', modifiers: 4 })
+  await withDebugger(tabId, () =>
+    chrome.debugger.sendCommand({ tabId }, 'Input.insertText', { text }))
+  // Verify the mutation took effect (issue #19: no error, no effect). Compare
+  // whitespace-stripped so rich-text wrapping (<p>/<br>) and newline
+  // normalization don't trigger a false failure.
+  const want = String(text ?? '').replace(/\s+/g, '')
+  if (!want) return
+  const after = await execFunc(tabId, (sel) => {
+    const el = document.querySelector(sel)
+    return el ? (el.textContent ?? '') : null
+  }, selector)
+  if (after === null) throw new Error('Element not found: ' + selector)
+  if (!String(after).replace(/\s+/g, '').includes(want)) {
+    throw new Error(
+      'input_ineffective: keystrokes did not mutate contenteditable ' + selector +
+      ' — the editor rejected the synthesized input; for rich HTML use op:input kind=setHtml'
+    )
+  }
+}
+
 // --- Navigation Helper ---
 
 // ADR 2026-05-14-op-nav-attach §2 — find an existing tab matching the
@@ -610,7 +649,7 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
 
     case 'type': {
       const { selector, text } = params
-      const mode = await execFunc(tabId, (sel, txt) => {
+      const probe = await execFunc(tabId, (sel, txt) => {
         const el = document.querySelector(sel)
         if (!el) throw new Error('Element not found: ' + sel)
         el.scrollIntoView({ block: 'center', behavior: 'instant' })
@@ -623,25 +662,40 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
           if (setter) setter.call(el, txt); else el.value = txt
           el.dispatchEvent(new Event('input', { bubbles: true }))
           el.dispatchEvent(new Event('change', { bubbles: true }))
-          return 'done'
+          return { mode: 'done' }
         }
         const r = el.getBoundingClientRect()
-        return { x: Math.round(r.x + r.width / 2), y: Math.round(r.y + r.height / 2) }
+        const x = Math.round(r.x + r.width / 2), y = Math.round(r.y + r.height / 2)
+        // contenteditable → trusted keystrokes via CDP Input.insertText (issue
+        // #19). Other non-input widgets that merely LISTEN to key events keep
+        // the legacy per-char dispatchKeyEvent path — insertText would not fire
+        // their keydown handlers.
+        return { mode: el.isContentEditable ? 'contenteditable' : 'keys', x, y }
       }, selector, text)
-      if (mode !== 'done') {
-        await cdpClick(tabId, mode.x, mode.y)
-        await handleMethod('keyboard', { key: 'a', action: 'press', modifiers: 4 })
-        await handleMethod('keyboard', { key: text, action: 'type' })
+      if (probe.mode === 'contenteditable') {
+        await typeIntoContentEditable(tabId, selector, text, probe)
+      } else if (probe.mode === 'keys') {
+        await cdpClick(tabId, probe.x, probe.y)
+        await handleMethod('keyboard', { tabId, key: 'a', action: 'press', modifiers: 4 })
+        await handleMethod('keyboard', { tabId, key: text, action: 'type' })
       }
       return {}
     }
 
     case 'fill': {
       const { selector, text } = params
-      await execFunc(tabId, (sel, txt) => {
+      const probe = await execFunc(tabId, (sel, txt) => {
         const el = document.querySelector(sel)
         if (!el) throw new Error('Element not found: ' + sel)
+        el.scrollIntoView({ block: 'center', behavior: 'instant' })
         el.focus()
+        // contenteditable rich-text editors have no .value — the value-setter
+        // path below is a silent no-op (issue #19). Defer to trusted keystrokes
+        // so the editor's framework state matches human typing.
+        if (el.isContentEditable) {
+          const r = el.getBoundingClientRect()
+          return { mode: 'contenteditable', x: Math.round(r.x + r.width / 2), y: Math.round(r.y + r.height / 2) }
+        }
         const proto = el.tagName === 'SELECT' ? HTMLSelectElement.prototype
           : el.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype
           : HTMLInputElement.prototype
@@ -649,7 +703,11 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
         if (setter) setter.call(el, txt); else el.value = txt
         el.dispatchEvent(new Event('input', { bubbles: true }))
         el.dispatchEvent(new Event('change', { bubbles: true }))
+        return { mode: 'done' }
       }, selector, text)
+      if (probe.mode === 'contenteditable') {
+        await typeIntoContentEditable(tabId, selector, text, probe)
+      }
       return {}
     }
 
@@ -675,7 +733,10 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       return {}
 
     case 'pressKey':
-      return handleMethod('keyboard', { key: params.key, action: 'press', modifiers: params.modifiers || 0 })
+      // Propagate tabId so the keystroke lands on the dispatch-target tab, not
+      // whatever tab happens to be active (issue #19: press was a silent no-op
+      // when the bound tab ≠ the active tab).
+      return handleMethod('keyboard', { tabId, key: params.key, action: 'press', modifiers: params.modifiers || 0 })
 
     case 'select':
       await execFunc(tabId, (sel, val) => {
