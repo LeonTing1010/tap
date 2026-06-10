@@ -93,7 +93,7 @@ test('typeIntoContentEditable helper exists', () => {
 console.log('\n  -- Rule 2: type/fill detect contenteditable --\n')
 
 {
-  const typeBody = slice("case 'type': {", 2100)
+  const typeBody = slice("case 'type': {", 3400)
   test('type detects el.isContentEditable', () => {
     assert(typeBody.includes('isContentEditable'),
       'type must branch on isContentEditable to pick the trusted-keystroke path')
@@ -118,7 +118,11 @@ console.log('\n  -- Rule 2: type/fill detect contenteditable --\n')
 }
 
 {
-  const fillBody = slice("case 'fill': {", 1400)
+  // Window widened 1400→2000→2800 (#61): the fill handler grew a web-component
+  // shadow-DOM value-target resolver (now recursive across nested shadow roots).
+  // The contenteditable-delegation invariant below is unchanged — it just now
+  // lives in a larger handler.
+  const fillBody = slice("case 'fill': {", 2800)
   test('fill detects el.isContentEditable', () => {
     assert(fillBody.includes('isContentEditable'),
       'fill must branch on isContentEditable instead of the no-op value setter')
@@ -126,6 +130,47 @@ console.log('\n  -- Rule 2: type/fill detect contenteditable --\n')
   test('fill routes contenteditable to typeIntoContentEditable', () => {
     assert(fillBody.includes('typeIntoContentEditable'),
       'fill must delegate contenteditable targets to the insertText helper')
+  })
+}
+
+// ── Rule 4 (#61): type & fill write masked / web-component inner inputs ──
+// Masked inputs (air3 currency, Reddit faceplate-text-input) put the writable
+// <input> inside the custom element's shadow root; .value on the host is inert.
+// Both kinds must resolve the inner control by piercing (nested) open shadow
+// roots, or the write is a silent no-op on the host.
+console.log('\n  -- Rule 4: masked / web-component inner-input resolution --\n')
+
+{
+  const typeBody = slice("case 'type': {", 3400)
+  const fillBody = slice("case 'fill': {", 2800)
+
+  test('type resolves the inner form control (no longer host-tagName-only)', () => {
+    assert(typeBody.includes('deepControl'),
+      'type must resolve a nested form control, not branch solely on el.tagName === INPUT — ' +
+      'a web-component host is not an INPUT so the legacy path silently fell through to keystrokes')
+  })
+
+  test('fill resolves the inner form control via deepControl', () => {
+    assert(fillBody.includes('deepControl'),
+      'fill must use the shared recursive resolver (was a one-level shadowRoot.querySelector)')
+  })
+
+  for (const [name, body] of [['type', typeBody], ['fill', fillBody]]) {
+    test(`${name}'s deepControl pierces open shadow roots`, () => {
+      assert(/shadowRoot/.test(body) && /querySelectorAll/.test(body),
+        `${name} must descend into element.shadowRoot (and nested hosts) to find the inner control`)
+    })
+    test(`${name}'s deepControl recurses with a bounded depth`, () => {
+      assert(/deepControl\(\s*h,\s*d\s*\+\s*1\s*\)/.test(body) && /d\s*>\s*\d/.test(body),
+        `${name} must recurse into nested shadow roots with a depth guard (avoid infinite walks)`)
+    })
+  }
+
+  test('inner-control write swallows masked-input handler throws (#60)', () => {
+    // air3 currency throws "null (reading 'mode')" in its input handler AFTER the
+    // value is already set; the dispatch must not propagate that as a write failure.
+    assert(/catch \(_\) \{ \/\* value persisted \*\/ \}/.test(typeBody),
+      "type's inner-control write must swallow the post-set handler throw (#60)")
   })
 }
 

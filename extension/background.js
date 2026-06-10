@@ -183,7 +183,9 @@ async function cdpClick(tabId, x, y) {
 // click there establishes focus + caret/selection inside the editable frame —
 // el.focus() alone does not place a caret, so insertText would have no
 // selection to write into.
-async function typeIntoContentEditable(tabId, selector, text, coords) {
+// `fx` is the execFunc target (tabId or {tabId, frameId}) for the re-read;
+// `coords` arrive already translated to top-frame viewport space (#62).
+async function typeIntoContentEditable(tabId, fx, selector, text, coords) {
   await cdpClick(tabId, coords.x, coords.y)
   // Select existing content so insertText REPLACES it (preserves the
   // select-all-then-type intent of the original `type` fallback). On an empty
@@ -196,7 +198,7 @@ async function typeIntoContentEditable(tabId, selector, text, coords) {
   // normalization don't trigger a false failure.
   const want = String(text ?? '').replace(/\s+/g, '')
   if (!want) return
-  const after = await execFunc(tabId, (sel) => {
+  const after = await execFunc(fx, (sel) => {
     const el = document.querySelector(sel)
     return el ? (el.textContent ?? '') : null
   }, selector)
@@ -265,11 +267,48 @@ async function waitForTabLoad(tabId, url = null) {
 
 // --- Scripting Helper (CSP-immune function injection) ---
 
-async function execFunc(tabId, func, ...args) {
+async function execFunc(t, func, ...args) {
+  // t: tabId, or { tabId, frameId } from resolveFrame (#62 iframe targeting)
+  const target = typeof t === 'object' ? { tabId: t.tabId, frameIds: [t.frameId] } : { tabId: t }
   const [result] = await chrome.scripting.executeScript({
-    target: { tabId }, func, args, world: 'MAIN'
+    target, func, args, world: 'MAIN'
   })
   return result?.result
+}
+
+// #62 frame-piercing combinator: "<iframe-sel> >>> <inner-sel>" addresses an
+// element inside an iframe. chrome.scripting reaches cross-origin frames via
+// frameIds (host_permissions) where page-JS contentDocument cannot, and the
+// injection results carry frameId — so no webNavigation permission needed.
+// Returns { t, sel, dx, dy }: execFunc target, inner selector, and the iframe's
+// viewport offset so CDP coordinate ops (top-frame space) can be translated.
+// Plain selectors pass through untouched. Single frame hop only.
+const FRAME_SEP = ' >>> '
+async function resolveFrame(tabId, sel) {
+  if (!sel || !sel.includes(FRAME_SEP)) return { t: tabId, sel, dx: 0, dy: 0 }
+  const i = sel.indexOf(FRAME_SEP)
+  const frameSel = sel.slice(0, i), inner = sel.slice(i + FRAME_SEP.length)
+  const meta = await execFunc(tabId, (fs) => {
+    const f = document.querySelector(fs)
+    if (!f) return null
+    const r = f.getBoundingClientRect()
+    return { src: f.src || '', x: Math.round(r.x), y: Math.round(r.y) }
+  }, frameSel)
+  if (!meta) throw new Error('Element not found: ' + frameSel)
+  let probes = []
+  try {
+    probes = await chrome.scripting.executeScript({
+      target: { tabId, allFrames: true }, world: 'MAIN',
+      func: (s) => ({ hit: !!document.querySelector(s), href: location.href }),
+      args: [inner],
+    })
+  } catch (e) { throw new Error('Element not found: ' + sel + ' (frame probe: ' + e.message + ')') }
+  const hits = probes.filter(p => p.frameId !== 0 && p.result?.hit)
+  if (!hits.length) throw new Error('Element not found: ' + sel)
+  // Disambiguate by the iframe's resolved src when several frames match;
+  // post-navigation the frame URL may drift from src, so fall back to first.
+  const m = hits.find(p => meta.src && p.result.href === meta.src) || hits[0]
+  return { t: { tabId, frameId: m.frameId }, sel: inner, dx: meta.x, dy: meta.y }
 }
 
 // --- Message Handler ---
@@ -522,9 +561,26 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       return { frameId: 'main', tabId, url: finalTab.url || params.url }
     }
 
-    case 'wait':
+    case 'wait': {
+      // op:wait selector-mode arrives here (NM bridge maps op name → method
+      // verbatim); the selector was historically IGNORED — Math.min(undefined)
+      // = NaN ms sleep → instant ok, violating the peer-conformance contract
+      // (wait selector miss → selector_not_found). Delegate to waitFor (which
+      // also gives selector-waits >>> frame piercing, #62) and map its
+      // timeout onto the contracted wire code.
+      if (params.selector) {
+        try {
+          await handleMethod('waitFor', { tabId, selector: params.selector, ms: params.timeout_ms }, senderTabId, { fromDaemon })
+        } catch (e) {
+          const m = String(e?.message || e)
+          if (m.startsWith('waitFor timeout')) throw new Error('selector_not_found: ' + params.selector + ' (wait timed out)')
+          throw e
+        }
+        return {}
+      }
       await new Promise(r => setTimeout(r, Math.min(params.ms, 25000)))
       return {}
+    }
 
     case 'screenshot': {
       const fmt = params.format || 'jpeg'
@@ -600,10 +656,12 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
             return await handleMethod('type', { ...rest, selector: target, text: value }, senderTabId, { fromDaemon })
           case 'fill':
             return await handleMethod('fill', { ...rest, selector: target, text: value }, senderTabId, { fromDaemon })
+          case 'setHtml':
+            return await handleMethod('setHtml', { ...rest, selector: target, html: value }, senderTabId, { fromDaemon })
           case 'press':
             return await handleMethod('pressKey', { ...rest, key: value }, senderTabId, { fromDaemon })
           case 'upload':
-            throw new Error(`op:input kind=upload not yet wired in extension peer`)
+            return await handleMethod('upload', { ...rest, selector: target, files: value }, senderTabId, { fromDaemon })
         }
         throw new Error(`Unknown op:input kind: ${kind}`)
       } catch (e) {
@@ -618,9 +676,9 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
     // ========== BUILT-IN (17) — chrome.scripting func injection, zero CSP issues ==========
 
     case 'click': {
-      const target = (params.target || params.selector)
+      const { t: fx, sel: target, dx, dy } = await resolveFrame(tabId, params.target || params.selector)
       // JS-first: use el.click() via execFunc — no debugger, no yellow bar, CSP-immune
-      const result = await execFunc(tabId, (t) => {
+      const result = await execFunc(fx, (t) => {
         let el = document.querySelector(t)
         if (!el) {
           for (const e of document.querySelectorAll('a, button, [role="button"], input, [onclick], [tabindex]')) {
@@ -641,27 +699,49 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
         return { clicked: true, x: Math.round(r.x + r.width / 2), y: Math.round(r.y + r.height / 2) }
       }, target)
       // CDP fallback: if site needs isTrusted events, retry with cdpClick
+      // (dx/dy translate frame-relative coords to top-frame viewport space)
       if (params.trusted) {
-        await cdpClick(tabId, result.x, result.y)
+        await cdpClick(tabId, result.x + dx, result.y + dy)
       }
       return {}
     }
 
     case 'type': {
-      const { selector, text } = params
-      const probe = await execFunc(tabId, (sel, txt) => {
+      const { text } = params
+      const { t: fx, sel: selector, dx, dy } = await resolveFrame(tabId, params.selector)
+      const probe = await execFunc(fx, (sel, txt) => {
         const el = document.querySelector(sel)
         if (!el) throw new Error('Element not found: ' + sel)
         el.scrollIntoView({ block: 'center', behavior: 'instant' })
         el.focus()
-        if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT') {
-          const proto = el.tagName === 'SELECT' ? HTMLSelectElement.prototype
-            : el.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype
+        // #61: resolve the real form control — directly, or the native <input>
+        // nested inside a web component's (possibly nested) open shadow root.
+        // Masked inputs (air3 currency, faceplate-text-input) expose no .value on
+        // the custom-element host; the inner control is the write target.
+        // deepControl pierces open shadow roots to a bounded depth, then null.
+        const deepControl = (n, d) => {
+          if (!n || d > 4) return null
+          if (/^(INPUT|TEXTAREA|SELECT)$/.test(n.tagName)) return n
+          const root = n.shadowRoot || n
+          const hit = root.querySelector && root.querySelector('input, textarea, select')
+          if (hit) return hit
+          for (const h of (root.querySelectorAll ? root.querySelectorAll('*') : [])) {
+            if (h.shadowRoot) { const r = deepControl(h, d + 1); if (r) return r }
+          }
+          return null
+        }
+        const C = deepControl(el, 0)
+        if (C) {
+          C.focus()
+          const proto = C.tagName === 'SELECT' ? HTMLSelectElement.prototype
+            : C.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype
             : HTMLInputElement.prototype
           const setter = Object.getOwnPropertyDescriptor(proto, 'value')?.set
-          if (setter) setter.call(el, txt); else el.value = txt
-          el.dispatchEvent(new Event('input', { bubbles: true }))
-          el.dispatchEvent(new Event('change', { bubbles: true }))
+          try { setter ? setter.call(C, txt) : (C.value = txt) } catch (_) { try { C.value = txt } catch (_) {} }
+          try { // #60: swallow masked-input handler throw; value already set
+            C.dispatchEvent(new Event('input', { bubbles: true }))
+            C.dispatchEvent(new Event('change', { bubbles: true }))
+          } catch (_) { /* value persisted */ }
           return { mode: 'done' }
         }
         const r = el.getBoundingClientRect()
@@ -672,10 +752,11 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
         // their keydown handlers.
         return { mode: el.isContentEditable ? 'contenteditable' : 'keys', x, y }
       }, selector, text)
+      if (!probe) throw new Error('type: page-context value-set failed for selector: ' + selector)
       if (probe.mode === 'contenteditable') {
-        await typeIntoContentEditable(tabId, selector, text, probe)
+        await typeIntoContentEditable(tabId, fx, selector, text, { x: probe.x + dx, y: probe.y + dy })
       } else if (probe.mode === 'keys') {
-        await cdpClick(tabId, probe.x, probe.y)
+        await cdpClick(tabId, probe.x + dx, probe.y + dy)
         await handleMethod('keyboard', { tabId, key: 'a', action: 'press', modifiers: 4 })
         await handleMethod('keyboard', { tabId, key: text, action: 'type' })
       }
@@ -683,8 +764,9 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
     }
 
     case 'fill': {
-      const { selector, text } = params
-      const probe = await execFunc(tabId, (sel, txt) => {
+      const { text } = params
+      const { t: fx, sel: selector, dx, dy } = await resolveFrame(tabId, params.selector)
+      const probe = await execFunc(fx, (sel, txt) => {
         const el = document.querySelector(sel)
         if (!el) throw new Error('Element not found: ' + sel)
         el.scrollIntoView({ block: 'center', behavior: 'instant' })
@@ -696,41 +778,79 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
           const r = el.getBoundingClientRect()
           return { mode: 'contenteditable', x: Math.round(r.x + r.width / 2), y: Math.round(r.y + r.height / 2) }
         }
-        const proto = el.tagName === 'SELECT' ? HTMLSelectElement.prototype
-          : el.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype
-          : HTMLInputElement.prototype
+        // #61: resolve the real form control — directly or nested inside a web
+        // component's (possibly nested) open shadow root. deepControl mirrors the
+        // `type` handler so both kinds write masked / web-component inputs (e.g.
+        // air3 currency, faceplate-text-input) where .value lives on the inner
+        // <input>, not the custom-element host.
+        const deepControl = (n, d) => {
+          if (!n || d > 4) return null
+          if (/^(INPUT|TEXTAREA|SELECT)$/.test(n.tagName)) return n
+          const root = n.shadowRoot || n
+          const hit = root.querySelector && root.querySelector('input, textarea, select')
+          if (hit) return hit
+          for (const h of (root.querySelectorAll ? root.querySelectorAll('*') : [])) {
+            if (h.shadowRoot) { const r = deepControl(h, d + 1); if (r) return r }
+          }
+          return null
+        }
+        const T = deepControl(el, 0) || el // #61 web-component inner input
+        if (T !== el && T.focus) T.focus()
+        const proto = T.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype : T.tagName === 'SELECT' ? HTMLSelectElement.prototype : HTMLInputElement.prototype
         const setter = Object.getOwnPropertyDescriptor(proto, 'value')?.set
-        if (setter) setter.call(el, txt); else el.value = txt
-        el.dispatchEvent(new Event('input', { bubbles: true }))
-        el.dispatchEvent(new Event('change', { bubbles: true }))
+        try { setter ? setter.call(T, txt) : (T.value = txt) } catch (_) { try { T.value = txt } catch (_) {} }
+        try { T.dispatchEvent(new Event('input', { bubbles: true })); T.dispatchEvent(new Event('change', { bubbles: true })) } catch (_) {}
         return { mode: 'done' }
       }, selector, text)
-      if (probe.mode === 'contenteditable') {
-        await typeIntoContentEditable(tabId, selector, text, probe)
+      if (probe?.mode === 'contenteditable') {
+        await typeIntoContentEditable(tabId, fx, selector, text, { x: probe.x + dx, y: probe.y + dy })
       }
       return {}
     }
 
-    case 'hover': {
-      const coords = await execFunc(tabId, (sel) => {
+    case 'setHtml': {
+      // Rich-HTML injection for contenteditable / rich-text editors (e.g. ProseMirror).
+      // Mirrors 'fill' but assigns innerHTML instead of .value. The html arrives
+      // already-substituted (op:input value receives {{$args}} as DATA in core),
+      // so large per-run HTML flows in without baking it into an op:eval literal.
+      const { html } = params
+      const { t: fx, sel: selector } = await resolveFrame(tabId, params.selector)
+      await execFunc(fx, (sel, h) => {
         const el = document.querySelector(sel)
         if (!el) throw new Error('Element not found: ' + sel)
         el.scrollIntoView({ block: 'center', behavior: 'instant' })
-        const r = el.getBoundingClientRect()
-        return { x: Math.round(r.x + r.width / 2), y: Math.round(r.y + r.height / 2) }
-      }, params.selector)
-      await withDebugger(tabId, () =>
-        chrome.debugger.sendCommand({ tabId }, 'Input.dispatchMouseEvent', { type: 'mouseMoved', x: coords.x, y: coords.y }))
+        el.focus()
+        el.innerHTML = h
+        el.dispatchEvent(new Event('input', { bubbles: true }))
+        el.dispatchEvent(new Event('change', { bubbles: true }))
+        el.dispatchEvent(new Event('blur', { bubbles: true }))
+      }, selector, html)
       return {}
     }
 
-    case 'scroll':
-      await execFunc(tabId, (sel) => {
-        const el = sel ? document.querySelector(sel) : null
+    case 'hover': {
+      const { t: fx, sel, dx, dy } = await resolveFrame(tabId, params.selector)
+      const coords = await execFunc(fx, (s) => {
+        const el = document.querySelector(s)
+        if (!el) throw new Error('Element not found: ' + s)
+        el.scrollIntoView({ block: 'center', behavior: 'instant' })
+        const r = el.getBoundingClientRect()
+        return { x: Math.round(r.x + r.width / 2), y: Math.round(r.y + r.height / 2) }
+      }, sel)
+      await withDebugger(tabId, () =>
+        chrome.debugger.sendCommand({ tabId }, 'Input.dispatchMouseEvent', { type: 'mouseMoved', x: coords.x + dx, y: coords.y + dy }))
+      return {}
+    }
+
+    case 'scroll': {
+      const { t: fx, sel } = await resolveFrame(tabId, params.selector || '')
+      await execFunc(fx, (s) => {
+        const el = s ? document.querySelector(s) : null
         if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
         else window.scrollBy({ top: 500, behavior: 'smooth' })
-      }, params.selector || '')
+      }, sel)
       return {}
+    }
 
     case 'pressKey':
       // Propagate tabId so the keystroke lands on the dispatch-target tab, not
@@ -738,15 +858,17 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       // when the bound tab ≠ the active tab).
       return handleMethod('keyboard', { tabId, key: params.key, action: 'press', modifiers: params.modifiers || 0 })
 
-    case 'select':
-      await execFunc(tabId, (sel, val) => {
-        const el = document.querySelector(sel)
-        if (!el) throw new Error('Element not found: ' + sel)
+    case 'select': {
+      const { t: fx, sel } = await resolveFrame(tabId, params.selector)
+      await execFunc(fx, (s, val) => {
+        const el = document.querySelector(s)
+        if (!el) throw new Error('Element not found: ' + s)
         el.value = val
         el.dispatchEvent(new Event('change', { bubbles: true }))
         el.dispatchEvent(new Event('input', { bubbles: true }))
-      }, params.selector, params.value)
+      }, sel, params.value)
       return {}
+    }
 
     case 'fetch': {
       // Two paths:
@@ -948,6 +1070,19 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
 
     case 'waitFor': {
       const ms = Math.min(params.ms || 10000, 25000)
+      // Frame-piercing wait: resolveFrame's probe hit IS the wait condition
+      // (element exists in some frame) — poll it instead of one-shot resolving,
+      // since the iframe itself may still be loading (#62).
+      if (params.selector?.includes(FRAME_SEP)) {
+        const end = Date.now() + ms
+        for (;;) {
+          try { await resolveFrame(tabId, params.selector); return {} }
+          catch (e) {
+            if (Date.now() > end) throw new Error('waitFor timeout: ' + params.selector)
+            await new Promise(r => setTimeout(r, 300))
+          }
+        }
+      }
       await execFunc(tabId, (sel, timeout) => {
         if (document.querySelector(sel)) return true
         return new Promise((resolve, reject) => {
@@ -989,9 +1124,9 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       return await execFunc(tabId, () => document.body.innerText)
 
     case 'extract': {
-      const sel = params.selector
+      const { t: fx, sel } = await resolveFrame(tabId, params.selector)
       const fields = params.fields
-      return await execFunc(tabId, (rowSel, fieldMap) => {
+      return await execFunc(fx, (rowSel, fieldMap) => {
         return Array.from(document.querySelectorAll(rowSel)).map(row => {
           const obj = {}
           for (const [name, spec] of Object.entries(fieldMap)) {
@@ -1010,17 +1145,57 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
     }
 
     case 'upload': {
+      // Frame-piercing upload (#62): the pierced DOM tree does not let
+      // DOM.querySelector cross document boundaries, so resolve the inner
+      // input via page-JS contentDocument (same-origin frames) and hand its
+      // objectId straight to setFileInputFiles. Cross-origin frames are
+      // separate CDP targets (OOPIF) — fail with a clear message.
+      if (params.selector?.includes(FRAME_SEP)) {
+        const i = params.selector.indexOf(FRAME_SEP)
+        const fSel = params.selector.slice(0, i), inner = params.selector.slice(i + FRAME_SEP.length)
+        const files = typeof params.files === 'string' ? params.files.split(',').map(f => f.trim()) : params.files
+        const chain = `document.querySelector(${JSON.stringify(fSel)})?.contentDocument?.querySelector(${JSON.stringify(inner)})`
+        await withDebugger(tabId, async () => {
+          await chrome.debugger.sendCommand({ tabId }, 'DOM.enable')
+          const r = await chrome.debugger.sendCommand({ tabId }, 'Runtime.evaluate', { expression: chain })
+          if (!r?.result?.objectId) {
+            throw new Error(`upload: file input not found for selector: ${params.selector}` +
+              ' (note: cross-origin iframes are not yet supported for upload — tap-core#62)')
+          }
+          await chrome.debugger.sendCommand({ tabId }, 'DOM.setFileInputFiles', { objectId: r.result.objectId, files })
+          // same re-dispatch rationale as the top-document path below
+          await chrome.debugger.sendCommand({ tabId }, 'Runtime.evaluate', {
+            expression: `(() => { const el = ${chain}; if (el) { el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); return true; } return false; })()`,
+            returnByValue: true,
+          })
+        })
+        scheduleDetach(tabId)
+        return {}
+      }
       // CDP setFileInputFiles — can't be done via chrome.scripting
       const nodeId = await withDebugger(tabId, async () => {
         await chrome.debugger.sendCommand({ tabId }, 'DOM.enable')
-        const doc = await chrome.debugger.sendCommand({ tabId }, 'DOM.getDocument')
+        // depth:-1 + pierce so DOM.querySelector resolves deeply-nested / shadow
+        // nodes; a shallow getDocument leaves them unknown → setFileInputFiles
+        // fails with "Could not find node with given id".
+        const doc = await chrome.debugger.sendCommand({ tabId }, 'DOM.getDocument', { depth: -1, pierce: true })
         const node = await chrome.debugger.sendCommand({ tabId }, 'DOM.querySelector', {
           nodeId: doc.root.nodeId, selector: params.selector
         })
+        if (!node?.nodeId) throw new Error(`upload: file input not found for selector: ${params.selector}`)
         return node.nodeId
       })
       const files = typeof params.files === 'string' ? params.files.split(',').map(f => f.trim()) : params.files
       await chrome.debugger.sendCommand({ tabId }, 'DOM.setFileInputFiles', { nodeId, files })
+      // React-synthetic upload components (Ant/rc-upload, mdu) bind onChange via
+      // the document-root listener and don't react to the native change that
+      // setFileInputFiles fires. Re-dispatch input+change in page context so the
+      // component's onChange runs with the now-populated files. Plain inputs
+      // (e.g. APK uploader) are unaffected — they just get a harmless extra event.
+      await chrome.debugger.sendCommand({ tabId }, 'Runtime.evaluate', {
+        expression: `(() => { const el = document.querySelector(${JSON.stringify(params.selector)}); if (el) { el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); return true; } return false; })()`,
+        returnByValue: true,
+      })
       scheduleDetach(tabId)
       return {}
     }
