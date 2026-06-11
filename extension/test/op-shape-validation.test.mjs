@@ -91,6 +91,8 @@ const EXPECTED = {
   extract: ['root', 'per_item'],
   tap: ['site', 'name'],
   eval: ['fn', 'returns'],
+  tab: ['action'],
+  bookmark: ['action'],
 }
 
 for (const [op, fields] of Object.entries(EXPECTED)) {

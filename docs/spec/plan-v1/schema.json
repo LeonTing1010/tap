@@ -42,11 +42,12 @@
 
     "OpName": {
       "type": "string",
-      "description": "Closed 11-op union (substrate 7 + control 3 + escape 1). Growth requires ADR amendment + arch test fail. Mirrors OP_NAMES_V2 in src/types.ts.",
+      "description": "Closed 13-op union (substrate 7 + control 3 + escape 1 + host 2). Growth requires ADR amendment + arch test fail. Mirrors OP_NAMES_V2 in src/types.ts.",
       "enum": [
         "fetch", "nav", "wait", "input", "extract", "cookies", "tap",
         "if", "foreach", "parallel",
-        "eval"
+        "eval",
+        "tab", "bookmark"
       ]
     },
 
@@ -57,7 +58,7 @@
     },
 
     "NavAttach": {
-      "description": "Tab-attach directive on op:nav. `true` shorthand = { match: 'url-prefix' }.",
+      "description": "Tab-attach directive on op:nav. `true` shorthand = { match: 'url-prefix' }. `reload:false` = bind-only on match (no page reload).",
       "oneOf": [
         { "const": true },
         {
@@ -65,7 +66,11 @@
           "required": ["match"],
           "additionalProperties": false,
           "properties": {
-            "match": { "$ref": "#/$defs/NavAttachMatchMode" }
+            "match": { "$ref": "#/$defs/NavAttachMatchMode" },
+            "reload": {
+              "type": "boolean",
+              "description": "false = when a tab MATCHED, bind without navigating (no tabs.update/reload) — preserves live page state (form drafts) in the user's tab. 0 matches still falls through to create+navigate. Absent/true = navigate-always (today's behavior)."
+            }
           }
         }
       ]
@@ -121,7 +126,7 @@
       "additionalProperties": false,
       "properties": {
         "op": { "const": "input" },
-        "kind": { "enum": ["click", "type", "fill", "press", "upload"] },
+        "kind": { "enum": ["click", "type", "fill", "press", "upload", "setHtml", "hover", "keytype", "blur"] },
         "target": { "type": "string" },
         "value": { "type": "string" },
         "save": { "type": "string" }
@@ -243,8 +248,52 @@
       }
     },
 
+    "TabGroupColor": {
+      "type": "string",
+      "description": "Closed tab-group color set — mirrors chrome.tabGroups.Color.",
+      "enum": ["grey", "blue", "red", "yellow", "green", "pink", "purple", "cyan", "orange"]
+    },
+
+    "TabOp": {
+      "type": "object",
+      "description": "Host op — browser-harness management (tabs / tab-groups). Acts on the user's own browser chrome, not a foreign substrate. Tab-free; peer-routed to the extension. Per ADR 2026-06-11-op-tab-host-op.md.",
+      "required": ["op", "action"],
+      "additionalProperties": false,
+      "properties": {
+        "op": { "const": "tab" },
+        "action": { "enum": ["list", "group", "ungroup", "close", "pin", "unpin"] },
+        "tabIds": {
+          "description": "Target tabs for group/ungroup/close/pin/unpin. A literal number[] or a template string resolving to number[]. Omit for action:list.",
+          "oneOf": [
+            { "type": "array", "items": { "type": ["number", "string"] } },
+            { "type": "string" }
+          ]
+        },
+        "title": { "type": "string" },
+        "color": { "$ref": "#/$defs/TabGroupColor" },
+        "save": { "type": "string" }
+      }
+    },
+
+    "BookmarkOp": {
+      "type": "object",
+      "description": "Host op — bookmark-tree management. Same tier as TabOp: acts on the user's own browser chrome (chrome.bookmarks), not a foreign substrate. Tab-free; peer-routed to the extension. Per ADR 2026-06-11-op-bookmark-host-op.md.",
+      "required": ["op", "action"],
+      "additionalProperties": false,
+      "properties": {
+        "op": { "const": "bookmark" },
+        "action": { "enum": ["tree", "create", "move", "update", "remove", "removeTree"] },
+        "id": { "type": "string", "description": "Target node id (move/update/remove/removeTree)." },
+        "parentId": { "type": "string", "description": "Destination parent folder id (create/move)." },
+        "index": { "type": "number", "description": "Position within the parent (create/move)." },
+        "title": { "type": "string", "description": "Title (create folder/bookmark; update)." },
+        "url": { "type": "string", "description": "URL (create/update a bookmark; omit for folder)." },
+        "save": { "type": "string" }
+      }
+    },
+
     "Op": {
-      "description": "The closed Op union — exactly 11 members. Discriminated by `op`.",
+      "description": "The closed Op union — exactly 13 members. Discriminated by `op`.",
       "oneOf": [
         { "$ref": "#/$defs/FetchOp" },
         { "$ref": "#/$defs/NavOp" },
@@ -256,7 +305,9 @@
         { "$ref": "#/$defs/IfOp" },
         { "$ref": "#/$defs/ForeachOp" },
         { "$ref": "#/$defs/ParallelOp" },
-        { "$ref": "#/$defs/EvalOp" }
+        { "$ref": "#/$defs/EvalOp" },
+        { "$ref": "#/$defs/TabOp" },
+        { "$ref": "#/$defs/BookmarkOp" }
       ]
     },
 

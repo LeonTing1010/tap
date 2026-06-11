@@ -172,7 +172,11 @@ test("nav handler compares target.origin vs current.origin", () => {
 
 test("origin mismatch branch opens new tab via chrome.tabs.create", () => {
   const navStart = BG_SRC.indexOf("case 'nav': {");
-  const navBlock = BG_SRC.slice(navStart, navStart + 3000);
+  // 4000: the nav case legitimately grew (attach find-or-create + 
+  // attach.reload bind-only + created-flag tab ownership, 2026-06-11);
+  // the constraint is proximity of the origin-gate to tabs.create, not
+  // a fixed handler size.
+  const navBlock = BG_SRC.slice(navStart, navStart + 4000);
   assert(
     /\.origin\s*!==?\s*[a-zA-Z_$.]*\.origin/.test(navBlock),
     "nav handler must compare `.origin !== .origin` (cross-origin detection)",

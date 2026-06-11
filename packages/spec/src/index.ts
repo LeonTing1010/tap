@@ -11,7 +11,7 @@
  *
  * What's in scope (PUBLIC):
  *   - Plan, ArgSpec, TapId
- *   - Op (11-arm closed union) + every member interface
+ *   - Op (13-arm closed union) + every member interface
  *   - OP_NAMES_V2, OpName
  *   - Verdict, IntentState (state-machine enums)
  *   - CelExpr, Json (primitive aliases)
@@ -46,6 +46,11 @@ export type {
   ForeachOp,
   ParallelOp,
   EvalOp,
+  TabOp,
+  TabAction,
+  TabGroupColor,
+  BookmarkOp,
+  BookmarkAction,
   // Plan
   Plan,
   // State-machine enums
@@ -55,6 +60,9 @@ export type {
 
 export {
   OP_NAMES_V2,
+  TAB_ACTIONS,
+  TAB_GROUP_COLORS,
+  BOOKMARK_ACTIONS,
   INTENT_STATES,
   VERDICT_VALUES,
 } from "./types.ts";

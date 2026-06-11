@@ -1,5 +1,19 @@
 # @taprun/spec — Changelog
 
+## 1.3.0 — 2026-05-30
+
+**Additive (backward-compatible).** New `InputOp.kind` member `"setHtml"`.
+See ADR `2026-05-30-op-input-sethtml.md`.
+
+- `src/types.ts` + `schemas/plan-v1.schema.json`: `InputOp.kind` enum widened
+  from `["click","type","fill","press","upload"]` to add `"setHtml"`.
+- Semantics: `{op:"input", kind:"setHtml", target, value}` assigns `value`
+  to `target.innerHTML` (rich-text / contenteditable editors), where `fill`
+  sets `.value`. `value` receives `{{$args}}` substitution as DATA, so large
+  per-run HTML flows in as an arg instead of being baked into an `op:eval`
+  literal.
+- `OP_NAMES_V2` closure unchanged (still 11 ops); no op added.
+
 ## 1.2.0 — 2026-05-17
 
 **BREAKING (silently — see below)**: schema realigned with Tap v2 plan

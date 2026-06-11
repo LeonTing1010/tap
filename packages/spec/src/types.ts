@@ -79,7 +79,15 @@ export type NavAttachMatchMode = typeof NAV_ATTACH_MATCH_MODES[number];
  *  for same-origin navigations) before running the standard nav path. */
 export type NavAttach =
   | true
-  | { match: NavAttachMatchMode };
+  | {
+    match: NavAttachMatchMode;
+    /** `false` ⇒ when a tab MATCHED, bind WITHOUT navigating (no
+     *  `tabs.update`, no reload) — preserves live page state (form
+     *  drafts) in the user's tab; the author accepts acting wherever
+     *  the matched tab currently is. 0 matches still falls through to
+     *  create + navigate. Absent/`true` ⇒ navigate-always. */
+    reload?: boolean;
+  };
 
 export interface NavOp {
   op: "nav";
@@ -100,8 +108,22 @@ export interface WaitOp {
 
 export interface InputOp {
   op: "input";
-  kind: "click" | "type" | "fill" | "press" | "upload";
+  kind:
+    | "click"
+    | "type"
+    | "fill"
+    | "press"
+    | "upload"
+    | "setHtml"
+    | "hover"
+    | "keytype"
+    | "blur";
   target?: string;
+  /** kind=type/fill → text written to `.value`; kind=setHtml → HTML assigned
+   *  to `target.innerHTML` (rich-text / contenteditable editors). Receives
+   *  `{{$args}}` substitution as DATA (unlike `eval.fn`), so large per-run
+   *  HTML flows in as an arg without baking. PUBLIC mirror of
+   *  core/types.ts:InputOp.value. */
   value?: string;
   /** Substrate-tier hint. Absent/false → L1 (JS-injection click; default;
    *  no DevTools warning bar). true → L2 (CDP trusted click at element
@@ -184,17 +206,69 @@ export interface EvalOp {
   save?: string;
 }
 
-/** The closed Op union — exactly 11 members. */
+/** Host op (1) — browser-harness management (tabs / tab-groups). Acts on
+ *  the user's own browser chrome, not a foreign substrate; tab-free,
+ *  peer-routed to the extension. Per ADR 2026-06-11-op-tab-host-op.md. */
+export interface TabOp {
+  op: "tab";
+  action: TabAction;
+  /** number[] literal OR a template string resolving to number[].
+   *  Required for group/ungroup/close/pin/unpin; omit for list. */
+  tabIds?: (number | string)[] | string;
+  title?: string;
+  color?: TabGroupColor;
+  save?: string;
+}
+
+/** Closed list of op:tab actions. Growth requires ADR amendment. */
+export const TAB_ACTIONS = [
+  "list", "group", "ungroup", "close", "pin", "unpin",
+] as const;
+export type TabAction = typeof TAB_ACTIONS[number];
+
+/** Closed tab-group color set — mirrors chrome.tabGroups.Color. */
+export const TAB_GROUP_COLORS = [
+  "grey", "blue", "red", "yellow", "green", "pink", "purple", "cyan", "orange",
+] as const;
+export type TabGroupColor = typeof TAB_GROUP_COLORS[number];
+
+/** Host op (1) — bookmark-tree management. Same tier as TabOp: acts on
+ *  the user's own browser chrome (chrome.bookmarks), not a foreign
+ *  substrate; tab-free, peer-routed to the extension. Per ADR
+ *  2026-06-11-op-bookmark-host-op.md. */
+export interface BookmarkOp {
+  op: "bookmark";
+  action: BookmarkAction;
+  /** Target node id (move/update/remove/removeTree). */
+  id?: string;
+  /** Destination parent folder id (create/move). */
+  parentId?: string;
+  /** Position within the parent (create/move). */
+  index?: number;
+  /** Title (create folder/bookmark; update). */
+  title?: string;
+  /** URL (create/update a bookmark; omit for folder). */
+  url?: string;
+  save?: string;
+}
+
+/** Closed list of op:bookmark actions. Growth requires ADR amendment. */
+export const BOOKMARK_ACTIONS = [
+  "tree", "create", "move", "update", "remove", "removeTree",
+] as const;
+export type BookmarkAction = typeof BOOKMARK_ACTIONS[number];
+
+/** The closed Op union — exactly 13 members. */
 export type Op =
   | FetchOp | NavOp | WaitOp | InputOp | ExtractOp | CookiesOp | TapOp
   | IfOp | ForeachOp | ParallelOp
-  | EvalOp;
+  | EvalOp | TabOp | BookmarkOp;
 
-/** Runtime constant for the 11-op closure. */
+/** Runtime constant for the 13-op closure. */
 export const OP_NAMES_V2 = [
   "fetch", "nav", "wait", "input", "extract", "cookies", "tap",
   "if", "foreach", "parallel",
-  "eval",
+  "eval", "tab", "bookmark",
 ] as const;
 
 export type OpName = typeof OP_NAMES_V2[number];

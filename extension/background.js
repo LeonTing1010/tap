@@ -356,7 +356,7 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
   // 'fetch' added 2026-05-04 (Framework v2.4 §二十 L2.5): SW-context fetch
   // with credentials:'include' uses Chrome's cookie jar directly — no tab
   // context needed. Same-origin enforcement is upstream (engine lint S1).
-  const noTabNeeded = ['nav', 'tab.new', 'tab.list', 'tab.close', 'capabilities', 'reload',
+  const noTabNeeded = ['nav', 'tab', 'bookmark', 'tab.new', 'tab.list', 'tab.close', 'capabilities', 'reload',
                        'session.create', 'session.destroy', 'session.info',
                        'fetch']
   if (!tabId && !noTabNeeded.includes(method)) {
@@ -466,6 +466,10 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
 
     case 'nav': {
       const origTabId = tabId
+      // created:true only at tabs.create sites; attachedNoReload = bind-only
+      // attach (reload:false — never navigate the user's live tab).
+      let createdByNav = false
+      let attachedNoReload = false
       // Resolve current tab state. If the session's tab was closed behind our
       // back, chrome.tabs.get throws — fall through to "create new tab" and
       // rebind to the sessionId below (self-heal path).
@@ -486,13 +490,19 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
         const matched = await queryAttachCandidate(params.url, mode)
         if (matched) {
           tabId = matched.id
-          try { current = await chrome.tabs.get(tabId) }
+          try {
+            current = await chrome.tabs.get(tabId)
+            if (params.attach !== true && params.attach.reload === false) attachedNoReload = true
+          }
           catch { tabId = null; current = null }
         }
       }
-      if (!tabId) {
+      if (attachedNoReload) {
+        // bind without navigating; session-sync below
+      } else if (!tabId) {
         const tab = await chrome.tabs.create({ url: params.url, active: false })
         tabId = tab.id
+        createdByNav = true
       } else {
         const isInternal = current.url?.startsWith('chrome://') || current.url?.startsWith('data:')
         // ADR 2026-05-08-failure-detection-phase-2 §2C(iii) — compute
@@ -519,12 +529,13 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
           // fetch-cross-repo).
           const tab = await chrome.tabs.create({ url: params.url, active: false })
           tabId = tab.id
+          createdByNav = true
         } else {
-          // Same-origin SPA-style nav: cheap tabs.update.
+          // Same-origin SPA-style nav: cheap tabs.update (not createdByNav).
           await chrome.tabs.update(tabId, { url: params.url })
         }
       }
-      await waitForTabLoad(tabId, params.url)
+      if (!attachedNoReload) await waitForTabLoad(tabId, params.url)
       const finalTab = await chrome.tabs.get(tabId)
       // Update session: URL always, tabId if replaced.
       let sessionUpdated = false
@@ -558,7 +569,7 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
         sessionUpdated = true
       }
       if (sessionUpdated) void persistSessions()
-      return { frameId: 'main', tabId, url: finalTab.url || params.url }
+      return { frameId: 'main', tabId, url: finalTab.url || params.url, created: createdByNav }
     }
 
     case 'wait': {
@@ -631,7 +642,7 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
         runtime: 'extension', version: '0.6.5',
         supports: [
           'eval', 'pointer', 'keyboard', 'nav', 'wait', 'screenshot', 'cookies', 'storage',
-          'input', 'click', 'type', 'fill', 'hover', 'scroll', 'pressKey', 'select',
+          'input', 'click', 'type', 'fill', 'hover', 'blur', 'scroll', 'pressKey', 'select',
           'fetch', 'find', 'download', 'waitFor', 'waitForNetwork', 'ssrState', 'copyAll',
           'upload', 'dialog', 'extract',
           'tab.new', 'tab.list', 'tab.close',
@@ -662,6 +673,22 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
             return await handleMethod('pressKey', { ...rest, key: value }, senderTabId, { fromDaemon })
           case 'upload':
             return await handleMethod('upload', { ...rest, selector: target, files: value }, senderTabId, { fromDaemon })
+          case 'hover':
+            // Trusted mouseMoved only (no press/release) — opens hover-triggered
+            // overlays (Ant Dropdown trigger=['hover'], MUI tooltips) that a JS
+            // el.click() can't, and that a trusted click would open-then-toggle-shut.
+            return await handleMethod('hover', { ...rest, selector: target }, senderTabId, { fromDaemon })
+          case 'keytype':
+            // Real CDP keystrokes (vs fill/type's value-setter) — for framework
+            // inputs whose store only commits on genuine key events.
+            return await handleMethod('keytype', { ...rest, selector: target, text: value }, senderTabId, { fromDaemon })
+          case 'blur':
+            // Commit gesture for blur-flushing form stores (Ant rc-field-form
+            // nested list items et al): typed value only enters the framework
+            // model on a REAL focus loss. el.blur() yields UA-generated
+            // (trusted) blur/focusout. End form-fill sequences with this on
+            // the last field before clicking save (2026-06-11 beian lesson).
+            return await handleMethod('blur', { ...rest, selector: target }, senderTabId, { fromDaemon })
         }
         throw new Error(`Unknown op:input kind: ${kind}`)
       } catch (e) {
@@ -698,6 +725,7 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
         const r = el.getBoundingClientRect()
         return { clicked: true, x: Math.round(r.x + r.width / 2), y: Math.round(r.y + r.height / 2) }
       }, target)
+      if (!result) throw new Error('selector_not_found: ' + target + ' (page not ready — exec returned null)')
       // CDP fallback: if site needs isTrusted events, retry with cdpClick
       // (dx/dy translate frame-relative coords to top-frame viewport space)
       if (params.trusted) {
@@ -808,6 +836,44 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       return {}
     }
 
+    case 'keytype': {
+      // Real CDP keystrokes into a real <input>/<textarea>: trusted click to
+      // focus → select-all → type char-by-char. `fill`/`type` write the DOM
+      // .value via the native setter, which updates React's tracked value but
+      // NOT every framework store — Ant rc-field-form's 特征信息 list-item fields
+      // (beian.aliyun.com 公钥/MD5) keep an EMPTY store, so save validates empty
+      // and reports "格式错误" despite the DOM showing the value. Genuine key
+      // events drive the component's own onChange, committing the store.
+      const { t: fx, sel, dx, dy } = await resolveFrame(tabId, params.selector)
+      const coords = await execFunc(fx, (s) => {
+        const el = document.querySelector(s)
+        if (!el) throw new Error('Element not found: ' + s)
+        el.scrollIntoView({ block: 'center', behavior: 'instant' })
+        el.focus()
+        const r = el.getBoundingClientRect()
+        return { x: Math.round(r.x + r.width / 2), y: Math.round(r.y + r.height / 2) }
+      }, sel)
+      if (!coords) throw new Error('selector_not_found: ' + sel + ' (page not ready — exec returned null)')
+      // Real CDP click establishes focus + caret; select-all so insertText
+      // REPLACES any existing value; Input.insertText drives the native
+      // beforeinput/input pipeline (per-char dispatchKeyEvent({text}) silently
+      // no-ops on some framework inputs — same lesson as the contenteditable
+      // path above, issue #19).
+      await cdpClick(tabId, coords.x + dx, coords.y + dy)
+      await handleMethod('keyboard', { tabId, key: 'a', action: 'press', modifiers: 4 })
+      await withDebugger(tabId, () =>
+        chrome.debugger.sendCommand({ tabId }, 'Input.insertText', { text: String(params.text ?? '') }))
+      // Verify it landed (issue #19: no error, no effect) — re-read the control.
+      const got = await execFunc(fx, (s) => {
+        const el = document.querySelector(s)
+        return el ? (el.value || '') : null
+      }, sel)
+      if ((got || '').replace(/\s+/g, '') !== String(params.text ?? '').replace(/\s+/g, '')) {
+        throw new Error(`keytype: value did not land for selector: ${sel} (got len ${(got || '').length})`)
+      }
+      return {}
+    }
+
     case 'setHtml': {
       // Rich-HTML injection for contenteditable / rich-text editors (e.g. ProseMirror).
       // Mirrors 'fill' but assigns innerHTML instead of .value. The html arrives
@@ -837,8 +903,44 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
         const r = el.getBoundingClientRect()
         return { x: Math.round(r.x + r.width / 2), y: Math.round(r.y + r.height / 2) }
       }, sel)
+      // null exec = page mid-navigation → typed miss, not "reading 'x'"
+      if (!coords) throw new Error('selector_not_found: ' + sel + ' (page not ready)')
       await withDebugger(tabId, () =>
         chrome.debugger.sendCommand({ tabId }, 'Input.dispatchMouseEvent', { type: 'mouseMoved', x: coords.x + dx, y: coords.y + dy }))
+      return {}
+    }
+
+    case 'blur': {
+      // Commit gesture: real focus loss via el.blur() — the UA generates
+      // trusted blur/focusout, which blur-flushing form stores (Ant
+      // rc-field-form list items) require before save validates the model.
+      // Pierces open shadow roots to the inner form control (same
+      // deepControl contract as fill/type, #61).
+      const { t: fx, sel } = await resolveFrame(tabId, params.selector)
+      const done = await execFunc(fx, (s) => {
+        const el = document.querySelector(s)
+        if (!el) throw new Error('Element not found: ' + s)
+        const deepControl = (n, d) => {
+          if (!n || d > 4) return null
+          if (/^(INPUT|TEXTAREA|SELECT)$/.test(n.tagName)) return n
+          const root = n.shadowRoot || n
+          const hit = root.querySelector && root.querySelector('input, textarea, select')
+          if (hit) return hit
+          for (const h of (root.querySelectorAll ? root.querySelectorAll('*') : [])) {
+            if (h.shadowRoot) { const r = deepControl(h, d + 1); if (r) return r }
+          }
+          return null
+        }
+        const C = deepControl(el, 0) || el
+        // If the control isn't the active element, focus it first so the
+        // subsequent blur is a REAL transition (blur on an unfocused node
+        // is a no-op and commits nothing).
+        const doc = C.getRootNode ? C.getRootNode() : document
+        if ((doc.activeElement || document.activeElement) !== C && C.focus) C.focus()
+        if (C.blur) C.blur()
+        return { blurred: true }
+      }, sel)
+      if (!done) throw new Error('selector_not_found: ' + sel + ' (page not ready — exec returned null)')
       return {}
     }
 
@@ -1353,6 +1455,107 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       return {}
     }
 
+    // op:tab — first-class host op (browser-harness management), per
+    // tap-core ADR 2026-06-11-op-tab-host-op.md. Sub-dispatches on
+    // `action`. Tab-free: operates on explicit tabIds or all tabs, never
+    // the session's active tab — so it's in `noTabNeeded`. The legacy
+    // tab.new/tab.list/tab.close cases above stay for back-compat.
+    case 'tab': {
+      const action = params.action
+      const ids = Array.isArray(params.tabIds) ? params.tabIds.map(Number) : []
+      switch (action) {
+        case 'list': {
+          const tabs = await chrome.tabs.query({})
+          return tabs.map(t => ({
+            tabId: t.id,
+            url: t.url,
+            title: t.title,
+            active: t.active,
+            pinned: t.pinned,
+            groupId: t.groupId,
+            windowId: t.windowId,
+          }))
+        }
+        case 'group': {
+          if (!ids.length) throw new Error('op:tab action:group requires non-empty tabIds')
+          const groupId = await chrome.tabs.group({ tabIds: ids })
+          if (params.title !== undefined || params.color !== undefined) {
+            const upd = {}
+            if (params.title !== undefined) upd.title = String(params.title)
+            if (params.color !== undefined) upd.color = String(params.color)
+            await chrome.tabGroups.update(groupId, upd)
+          }
+          return { groupId, tabIds: ids }
+        }
+        case 'ungroup': {
+          if (ids.length) await chrome.tabs.ungroup(ids)
+          return { ungrouped: ids }
+        }
+        case 'close': {
+          if (ids.length) await chrome.tabs.remove(ids).catch(() => {})
+          return { closed: ids }
+        }
+        case 'pin':
+        case 'unpin': {
+          const pinned = action === 'pin'
+          const done = []
+          for (const id of ids) {
+            try { await chrome.tabs.update(id, { pinned }); done.push(id) } catch { /* tab gone */ }
+          }
+          return { [pinned ? 'pinned' : 'unpinned']: done }
+        }
+        default:
+          throw new Error(`op:tab Unknown action: ${JSON.stringify(action)}`)
+      }
+    }
+
+    // op:bookmark — first-class host op (bookmark-tree management), per
+    // tap-core ADR 2026-06-11-op-bookmark-host-op.md. Sub-dispatches on
+    // `action`. Tab-free (operates on chrome.bookmarks node ids) → in
+    // `noTabNeeded`. Requires the `bookmarks` manifest permission.
+    case 'bookmark': {
+      const action = params.action
+      switch (action) {
+        case 'tree': {
+          return await chrome.bookmarks.getTree()
+        }
+        case 'create': {
+          const spec = {}
+          if (params.parentId !== undefined) spec.parentId = String(params.parentId)
+          if (params.index !== undefined) spec.index = Number(params.index)
+          if (params.title !== undefined) spec.title = String(params.title)
+          if (params.url !== undefined) spec.url = String(params.url)
+          return await chrome.bookmarks.create(spec)
+        }
+        case 'move': {
+          if (params.id === undefined) throw new Error('op:bookmark action:move requires id')
+          const dest = {}
+          if (params.parentId !== undefined) dest.parentId = String(params.parentId)
+          if (params.index !== undefined) dest.index = Number(params.index)
+          return await chrome.bookmarks.move(String(params.id), dest)
+        }
+        case 'update': {
+          if (params.id === undefined) throw new Error('op:bookmark action:update requires id')
+          const changes = {}
+          if (params.title !== undefined) changes.title = String(params.title)
+          if (params.url !== undefined) changes.url = String(params.url)
+          return await chrome.bookmarks.update(String(params.id), changes)
+        }
+        case 'remove': {
+          if (params.id === undefined) throw new Error('op:bookmark action:remove requires id')
+          await chrome.bookmarks.remove(String(params.id))
+          return { removed: String(params.id) }
+        }
+        case 'removeTree': {
+          if (params.id === undefined) throw new Error('op:bookmark action:removeTree requires id')
+          await chrome.bookmarks.removeTree(String(params.id))
+          return { removedTree: String(params.id) }
+        }
+        default:
+          throw new Error(`op:bookmark unknown action: ${JSON.stringify(action)}`)
+      }
+    }
+
     // ========== SESSION MANAGEMENT ==========
 
     case 'session.create': {
@@ -1773,6 +1976,8 @@ function connectBridge() {
       extract: ['root', 'per_item'],
       tap: ['site', 'name'],
       eval: ['fn', 'returns'],
+      tab: ['action'],
+      bookmark: ['action'],
     }
     const required = OP_REQUIRED_FIELDS[method] || []
     const missing = required.filter((k) => resolvedParams[k] === undefined)

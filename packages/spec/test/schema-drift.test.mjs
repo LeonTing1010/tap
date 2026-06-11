@@ -74,8 +74,8 @@ test("schema OpName.enum exactly matches OP_NAMES_V2 in src/types.ts (bidirectio
   );
 
   // Same length confirms no duplicates within either
-  assert.equal(tsOps.length, 11, `OP_NAMES_V2 must have 11 entries (got ${tsOps.length})`);
-  assert.equal(schemaOps.length, 11, `schema OpName.enum must have 11 entries (got ${schemaOps.length})`);
+  assert.equal(tsOps.length, 13, `OP_NAMES_V2 must have 13 entries (got ${tsOps.length})`);
+  assert.equal(schemaOps.length, 13, `schema OpName.enum must have 13 entries (got ${schemaOps.length})`);
 });
 
 test("every TS op interface has a matching $defs entry", () => {
