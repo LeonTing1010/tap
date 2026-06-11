@@ -147,10 +147,20 @@ async function ensureDebugger(tabId) {
   } catch (e) {
     if (e.message?.includes('Already attached')) {
       debuggerSessions.set(tabId, { ...debuggerSessions.get(tabId), attached: true })
+      await enablePageDomain(tabId)
       return
     }
     throw e
   }
+  // Enable the Page domain so Page.javascriptDialogOpening is delivered to
+  // handleDialogEvent — native dialogs fired mid-op are auto-handled instead of
+  // hanging the op ~3.5min (2026-06-11 weixin dogfood). Best-effort: a failure
+  // here must not break the attach the caller actually needs.
+  await enablePageDomain(tabId)
+}
+
+async function enablePageDomain(tabId) {
+  try { await chrome.debugger.sendCommand({ tabId }, 'Page.enable') } catch { /* benign */ }
 }
 
 async function withDebugger(tabId, fn) {
@@ -274,6 +284,27 @@ async function execFunc(t, func, ...args) {
     target, func, args, world: 'MAIN'
   })
   return result?.result
+}
+
+// Suppress the native beforeunload "Leave site?" dialog before we reload/navigate
+// an existing tab. A dirty page (unsaved form) otherwise pops a native dialog that
+// BLOCKS the navigation — and native dialogs aren't page DOM, so nothing in the op
+// set can dismiss them and the relay just waits (2026-06-11 weixin self-menu dogfood:
+// op:nav hung ~3.5 min on a dirty editor). onbeforeunload=null only covers the
+// `window.onbeforeunload = fn` style; modern pages (WeChat mp) guard via
+// addEventListener('beforeunload'), so we also add a CAPTURING listener that runs
+// before the page handler, stops propagation, and clears returnValue (a non-empty
+// returnValue is what fires the dialog). Best-effort — never block nav on failure.
+async function neutralizeBeforeUnload(tabId) {
+  const suppressBeforeUnload = () => {
+    window.onbeforeunload = null
+    window.addEventListener('beforeunload', (e) => {
+      e.stopImmediatePropagation()
+      e.preventDefault()
+      try { e.returnValue = undefined } catch (_) {}
+    }, { capture: true })
+  }
+  try { await execFunc(tabId, suppressBeforeUnload) } catch (_) { /* best-effort */ }
 }
 
 // #62 frame-piercing combinator: "<iframe-sel> >>> <inner-sel>" addresses an
@@ -532,6 +563,9 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
           createdByNav = true
         } else {
           // Same-origin SPA-style nav: cheap tabs.update (not createdByNav).
+          // Neutralize beforeunload first so a dirty page's "Leave site?" native
+          // dialog can't block the nav and hang the relay (2026-06-11 dogfood).
+          await neutralizeBeforeUnload(tabId)
           await chrome.tabs.update(tabId, { url: params.url })
         }
       }
@@ -705,8 +739,25 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
     case 'click': {
       const { t: fx, sel: target, dx, dy } = await resolveFrame(tabId, params.target || params.selector)
       // JS-first: use el.click() via execFunc — no debugger, no yellow bar, CSP-immune
-      const result = await execFunc(fx, (t) => {
+      // Named + self-contained so it injects via execFunc AND is extractable by
+      // test/visible-click.test.mjs (background.js isn't node-importable — chrome.*).
+      const clickResolver = (t) => {
+        // Prefer the first VISIBLE match. document.querySelector returns the first
+        // DOM match even if display:none/hidden — which clicked a hidden "退出登录"
+        // sharing .weui-desktop-btn_primary in the 2026-06-11 weixin self-menu
+        // dogfood and logged the session out. Below-fold (scrolled) elements keep
+        // size>0 so they still resolve; only display:none/hidden/zero-box are skipped.
+        const vis = (e) => {
+          if (!e) return false
+          const s = (typeof getComputedStyle === 'function') ? getComputedStyle(e) : null
+          if (s && (s.display === 'none' || s.visibility === 'hidden' || s.opacity === '0')) return false
+          const r = e.getBoundingClientRect()
+          return r.width > 0 && r.height > 0
+        }
         let el = document.querySelector(t)
+        if (el && !vis(el)) {
+          for (const e of document.querySelectorAll(t)) { if (vis(e)) { el = e; break } }
+        }
         if (!el) {
           for (const e of document.querySelectorAll('a, button, [role="button"], input, [onclick], [tabindex]')) {
             if ((e.textContent?.trim().toLowerCase().includes(t.toLowerCase())) ||
@@ -724,7 +775,8 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
         el.click()
         const r = el.getBoundingClientRect()
         return { clicked: true, x: Math.round(r.x + r.width / 2), y: Math.round(r.y + r.height / 2) }
-      }, target)
+      }
+      const result = await execFunc(fx, clickResolver, target)
       if (!result) throw new Error('selector_not_found: ' + target + ' (page not ready — exec returned null)')
       // CDP fallback: if site needs isTrusted events, retry with cdpClick
       // (dx/dy translate frame-relative coords to top-frame viewport space)
@@ -787,6 +839,29 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
         await cdpClick(tabId, probe.x + dx, probe.y + dy)
         await handleMethod('keyboard', { tabId, key: 'a', action: 'press', modifiers: 4 })
         await handleMethod('keyboard', { tabId, key: text, action: 'type' })
+        // issue #19's lesson, generalized: per-char dispatchKeyEvent({text}) silently
+        // no-ops on some framework editors (weixin `.emotion_editor`, 2026-06-11
+        // dogfood) — and UNLIKE the contenteditable path this branch had NO
+        // post-verify, so zero-effect typing returned success (6 attempts chasing a
+        // silent no-op). Verify the text landed, GATED to editor contexts so the
+        // key-LISTENER widgets this path exists for never false-fail.
+        const keysLanded = (s, want) => {
+          const el = document.querySelector(s)
+          if (!el) return { found: false, editorish: false, has: false }
+          const editorish = !!el.isContentEditable
+            || !!(el.querySelector && el.querySelector('[contenteditable=""],[contenteditable=true]'))
+            || !!(el.closest && el.closest('[contenteditable=""],[contenteditable=true]'))
+          const txt = (el.innerText || el.textContent || '')
+          const w = String(want == null ? '' : want).replace(/\s+/g, '')
+          return { found: true, editorish, has: w ? txt.replace(/\s+/g, '').includes(w) : true }
+        }
+        const chk = await execFunc(fx, keysLanded, selector, text)
+        if (chk && chk.found && chk.editorish && !chk.has) {
+          throw new Error(
+            'input_ineffective: per-char keystrokes did not land in editor ' + selector +
+            ' — the editor rejected synthesized key events; try op:input kind=setHtml, or capture the write API and replay via op:fetch'
+          )
+        }
       }
       return {}
     }
@@ -864,10 +939,17 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       await withDebugger(tabId, () =>
         chrome.debugger.sendCommand({ tabId }, 'Input.insertText', { text: String(params.text ?? '') }))
       // Verify it landed (issue #19: no error, no effect) — re-read the control.
-      const got = await execFunc(fx, (s) => {
+      // contenteditable has no .value — read innerText/textContent there, else .value.
+      // (2026-06-11 weixin dogfood: keytype into a contenteditable .edit_area threw a
+      // false "value did not land (len 0)" because the verify-read used .value on a
+      // <div>.) Named + self-contained so it injects AND is extractable by
+      // test/keytype-verify.test.mjs.
+      const readControlValue = (s) => {
         const el = document.querySelector(s)
-        return el ? (el.value || '') : null
-      }, sel)
+        if (!el) return null
+        return el.isContentEditable ? (el.innerText || el.textContent || '') : (el.value || '')
+      }
+      const got = await execFunc(fx, readControlValue, sel)
       if ((got || '').replace(/\s+/g, '') !== String(params.text ?? '').replace(/\s+/g, '')) {
         throw new Error(`keytype: value did not land for selector: ${sel} (got len ${(got || '').length})`)
       }
@@ -1665,6 +1747,24 @@ const KEY_MAP = {
 //
 // Don't defer CDP work to a separate command. Capture eagerly inside the
 // listener, store on the entry / in requestMeta, let networkDump just read.
+
+// RC4 (2026-06-11 weixin dogfood): native JS dialogs (alert/confirm/prompt/
+// beforeunload) are NOT page DOM — no op can dismiss them, so an unhandled one
+// hangs the op until the relay socket times out (~3.5min on the dirty self-menu
+// editor's "Leave site?"). With the Page domain enabled on every debugger attach
+// (ensureDebugger), auto-handle them at the CDP layer. Policy: ACCEPT
+// beforeunload (we navigate on purpose → leave) + alert (informational); DISMISS
+// confirm + prompt (cancel is the safe default — never auto-confirm a
+// destructive "确定删除?" the agent did not intend). Complements P0b, which
+// suppresses the beforeunload on the nav path (no debugger attached there).
+async function handleDialogEvent(source, method, params) {
+  if (method !== 'Page.javascriptDialogOpening') return
+  const accept = params?.type === 'beforeunload' || params?.type === 'alert'
+  try {
+    await chrome.debugger.sendCommand({ tabId: source.tabId }, 'Page.handleJavaScriptDialog', { accept })
+  } catch { /* dialog already gone (navigation / debugger detach) */ }
+}
+chrome.debugger.onEvent.addListener(handleDialogEvent)
 
 chrome.debugger.onEvent.addListener((source, method, params) => {
   const tabId = source.tabId
