@@ -88,7 +88,7 @@ test('selector-bearing handlers route through resolveFrame', () => {
 })
 
 test('CDP coordinate ops translate frame-relative coords (dx/dy)', () => {
-  const click = slice("case 'click': {", 2200)
+  const click = slice("case 'click': {", 3200) // window widened for the visible-match clickResolver (2026-06-11)
   assert(click.includes('result.x + dx'), 'trusted click must offset by iframe viewport position')
   const hover = slice("case 'hover': {", 800)
   assert(hover.includes('coords.x + dx'), 'hover mouseMoved must offset by iframe viewport position')

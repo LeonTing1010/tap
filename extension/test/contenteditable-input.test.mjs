@@ -61,7 +61,7 @@ test('typeIntoContentEditable helper exists', () => {
 })
 
 {
-  const helper = BG_SRC.substring(helperStart, helperStart + 1800)
+  const helper = BG_SRC.substring(helperStart, helperStart + 3200) // widened for the RC1 IME-composition pipeline + clear-selection (2026-06-12)
 
   test('helper uses CDP Input.insertText (not per-char dispatchKeyEvent)', () => {
     assert(helper.includes("'Input.insertText'") || helper.includes('"Input.insertText"'),
