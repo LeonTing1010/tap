@@ -201,8 +201,25 @@ async function typeIntoContentEditable(tabId, fx, selector, text, coords) {
   // select-all-then-type intent of the original `type` fallback). On an empty
   // editor this selects nothing and insertText just inserts at the caret.
   await handleMethod('keyboard', { tabId, key: 'a', action: 'press', modifiers: 4 })
-  await withDebugger(tabId, () =>
-    chrome.debugger.sendCommand({ tabId }, 'Input.insertText', { text }))
+  // RC1 (2026-06-12 weixin dogfood): some rich editors commit their MODEL only on
+  // the trusted IME composition pipeline (compositionstart/update/end), NOT on the
+  // `input` event a bare insertText fires — WeChat's msg-sender `.edit_area` kept an
+  // EMPTY model (确定 → "内容不能为空") though insertText filled the DOM, and
+  // op:input press (dispatchKeyEvent) / blur / op:eval-dispatch (lint-forbidden) all
+  // failed to commit it. imeSetComposition emits compositionstart/update; the
+  // following insertText commits (compositionend + input) — the exact trusted
+  // sequence a Chinese IME produces. insertText stays the commit step, so
+  // composition-agnostic editors (Quill, ProseMirror — issue #19) are unaffected.
+  await withDebugger(tabId, async () => {
+    if (text) {
+      try {
+        await chrome.debugger.sendCommand({ tabId }, 'Input.imeSetComposition', {
+          text, selectionStart: text.length, selectionEnd: text.length,
+        })
+      } catch (_) { /* composition unsupported/refused — insertText below still commits */ }
+    }
+    await chrome.debugger.sendCommand({ tabId }, 'Input.insertText', { text })
+  })
   // Verify the mutation took effect (issue #19: no error, no effect). Compare
   // whitespace-stripped so rich-text wrapping (<p>/<br>) and newline
   // normalization don't trigger a false failure.
@@ -299,9 +316,15 @@ async function neutralizeBeforeUnload(tabId) {
   const suppressBeforeUnload = () => {
     window.onbeforeunload = null
     window.addEventListener('beforeunload', (e) => {
+      // Stop the page's own guard (the common addEventListener('beforeunload')
+      // case) from running, and force returnValue empty so no dialog fires.
+      // CRITICAL: do NOT call e.preventDefault() — on a beforeunload event that
+      // REQUESTS the dialog (HTML spec), so calling it here made this suppressor
+      // pop the very "Leave site?" it exists to kill (2026-06-12 dogfood: dirty
+      // reload still hung ~3.5min). stopImmediatePropagation + returnValue=''
+      // is the correct suppression.
       e.stopImmediatePropagation()
-      e.preventDefault()
-      try { e.returnValue = undefined } catch (_) {}
+      e.returnValue = ''
     }, { capture: true })
   }
   try { await execFunc(tabId, suppressBeforeUnload) } catch (_) { /* best-effort */ }

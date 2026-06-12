@@ -72,11 +72,15 @@ test('suppressor nulls onbeforeunload AND adds a capturing listener that suppres
   const cap = bu.find(l => l.opts === true || (l.opts && l.opts.capture === true))
   assert(cap, 'beforeunload listener must be capturing (runs before the page handler)')
   // invoke it with a returnValue-setting event; assert the dialog trigger is neutralized
-  let stopped = false
-  const ev = { returnValue: 'You have unsaved changes', preventDefault() {}, stopImmediatePropagation() { stopped = true } }
+  let stopped = false, prevented = false
+  const ev = { returnValue: 'You have unsaved changes', preventDefault() { prevented = true }, stopImmediatePropagation() { stopped = true } }
   cap.fn(ev)
   assert(stopped, 'must stopImmediatePropagation so the page beforeunload handler never runs')
   assert(!ev.returnValue, `must clear returnValue (non-empty returnValue is what fires the dialog), got ${JSON.stringify(ev.returnValue)}`)
+  // Adversarial: calling preventDefault() on beforeunload REQUESTS the dialog
+  // (HTML spec) — the suppressor must NOT call it, or it pops the very dialog it
+  // exists to kill (2026-06-12 dogfood: dirty reload hung ~3.5min on exactly this).
+  assert(!prevented, 'suppressor must NOT call preventDefault() — that REQUESTS the beforeunload dialog')
 })
 
 console.log(`\n  ${passed} passed, ${failed} failed\n`)
