@@ -201,17 +201,31 @@ async function typeIntoContentEditable(tabId, fx, selector, text, coords) {
   // select-all-then-type intent of the original `type` fallback). On an empty
   // editor this selects nothing and insertText just inserts at the caret.
   await handleMethod('keyboard', { tabId, key: 'a', action: 'press', modifiers: 4 })
-  // RC1 (2026-06-12 weixin dogfood): some rich editors commit their MODEL only on
-  // the trusted IME composition pipeline (compositionstart/update/end), NOT on the
-  // `input` event a bare insertText fires — WeChat's msg-sender `.edit_area` kept an
-  // EMPTY model (确定 → "内容不能为空") though insertText filled the DOM, and
-  // op:input press (dispatchKeyEvent) / blur / op:eval-dispatch (lint-forbidden) all
-  // failed to commit it. imeSetComposition emits compositionstart/update; the
-  // following insertText commits (compositionend + input) — the exact trusted
-  // sequence a Chinese IME produces. insertText stays the commit step, so
-  // composition-agnostic editors (Quill, ProseMirror — issue #19) are unaffected.
+  // Editor-aware composition (2026-06-12 weixin dogfood). Two kinds of
+  // contenteditable need OPPOSITE handling:
+  //  - Rich editors that manage their own input and handle Input.insertText
+  //    natively (ProseMirror, Quill — issue #19 — CodeMirror) DOUBLE-insert if we
+  //    also drive an IME composition (imeSetComposition replaces the selection AND
+  //    the committing insertText adds a second copy: 被关注 ProseMirror → 2×). For
+  //    these, plain select-all + insertText replaces in a single copy.
+  //  - Custom contenteditables that commit their MODEL only on compositionend
+  //    (WeChat msg-sender `.edit_area`: insertText filled the DOM but 确定 saw an
+  //    EMPTY model; press/blur/op:eval-dispatch all failed) NEED the trusted IME
+  //    pipeline imeSetComposition (compositionstart/update) → insertText (commit:
+  //    compositionend + input).
+  // So composition is opt-IN for editors we don't recognise as native-insert.
+  const nativeInsertEditor = await execFunc(fx, (sel) => {
+    const el = document.querySelector(sel)
+    if (!el) return false
+    return !!(el.closest && el.closest('.ProseMirror, .ql-editor, .CodeMirror, .cm-editor')) ||
+      !!(el.classList && (el.classList.contains('ProseMirror') || el.classList.contains('ql-editor')))
+  }, selector)
   await withDebugger(tabId, async () => {
-    if (text) {
+    if (text && !nativeInsertEditor) {
+      // imeSetComposition composes at the caret and does NOT clear an active
+      // selection, so delete the select-all'd content first (insertText '' replaces
+      // the selection with nothing) or the composition APPENDS to it (2026-06-12).
+      await chrome.debugger.sendCommand({ tabId }, 'Input.insertText', { text: '' })
       try {
         await chrome.debugger.sendCommand({ tabId }, 'Input.imeSetComposition', {
           text, selectionStart: text.length, selectionEnd: text.length,

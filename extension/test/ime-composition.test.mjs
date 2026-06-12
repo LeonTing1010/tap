@@ -1,23 +1,21 @@
 /**
- * Constraint: op:input type/fill into a contenteditable drives the TRUSTED IME
- * composition pipeline (Input.imeSetComposition → Input.insertText), not a bare
- * insertText — so editors that commit their MODEL only on composition events
- * (compositionstart/update/end), as Chinese IME rich editors do, actually sync.
- * Classification: correctness / what — RC1, 2026-06-12 weixin dogfood: WeChat
- *   msg-sender `.edit_area` kept an EMPTY model (确定 → "内容不能为空") even though
- *   insertText filled the DOM; op:input press (dispatchKeyEvent) no-op'd, blur
- *   didn't sync, and op:eval event-dispatch is lint-forbidden — leaving NO path
- *   to commit the editor's model. imeSetComposition produces the trusted
- *   compositionstart/update; the following insertText commits (compositionend +
- *   input). insertText stays the commit step → Quill/ProseMirror unaffected.
+ * Constraint: op:input type/fill into a contenteditable is EDITOR-AWARE.
+ *  - Custom editors that commit their MODEL only on compositionend (WeChat
+ *    msg-sender `.edit_area`) get the trusted IME pipeline: select-all →
+ *    insertText('') [clear] → imeSetComposition (compositionstart/update) →
+ *    insertText (commit: compositionend + input).
+ *  - Editors that handle Input.insertText natively (ProseMirror, Quill — issue
+ *    #19 — CodeMirror) DOUBLE-insert under a composition, so they get plain
+ *    select-all → insertText (single replace), NO composition.
+ * Classification: correctness / what — RC1 (2026-06-12 weixin dogfood). The
+ *   composition fix made `.edit_area` writable (counter 300→226) but doubled
+ *   ProseMirror (被关注: pmLen 197 ≈ 2×) — so composition must be opt-in for
+ *   editors not recognised as native-insert.
  *
  * Behavioral (extract-and-run): typeIntoContentEditable is pulled from
- * background.js source and executed with stubbed deps that RECORD the CDP command
- * order, so we assert the real call sequence — not a grep.
- *
- * Phase 1a (adversarial): a half-impl that greps "imeSetComposition" into a
- * comment, or calls it AFTER insertText, fails — this checks the recorded order
- * (compose THEN commit) and the params (full text, caret at end).
+ * background.js and executed with stubbed deps + a fake execFunc that runs the
+ * injected page-functions (the native-editor probe + the verify read) against a
+ * fake editor element, so we assert the real CDP command sequence per editor kind.
  *
  * Run: node extension/test/ime-composition.test.mjs
  */
@@ -39,13 +37,30 @@ function extractAsyncFn(src, name) {
 
 const fnSrc = extractAsyncFn(BG, 'typeIntoContentEditable')
 
-async function runType(text) {
+// Fake editor element supporting the probe (closest/classList) + verify (textContent).
+function makeEditorEl(kind, text) {
+  if (kind === 'prosemirror') {
+    return {
+      closest: (s) => /ProseMirror|ql-editor|CodeMirror|cm-editor/.test(s) ? {} : null,
+      classList: { contains: (c) => c === 'ProseMirror' },
+      textContent: text,
+    }
+  }
+  return { closest: () => null, classList: { contains: () => false }, textContent: text } // custom contenteditable
+}
+
+async function runType(text, kind = 'custom') {
   const cmds = []
   const chrome = { debugger: { sendCommand: async (_t, method, params) => { cmds.push({ method, params }); return {} } } }
   const cdpClick = async () => { cmds.push({ method: 'cdpClick' }) }
   const handleMethod = async () => { cmds.push({ method: 'selectAll' }) }
   const withDebugger = async (_tabId, f) => await f()
-  const execFunc = async () => text // verify-read returns the text → DOM check passes
+  const editorEl = makeEditorEl(kind, text)
+  const execFunc = async (_fx, pageFn, ...args) => {
+    const document = { querySelector: () => editorEl }
+    const bound = new Function('document', `return (${pageFn.toString()})`)(document)
+    return bound(...args)
+  }
   const factory = new Function('cdpClick', 'handleMethod', 'withDebugger', 'chrome', 'execFunc',
     `${fnSrc}\nreturn typeIntoContentEditable`)
   const fn = factory(cdpClick, handleMethod, withDebugger, chrome, execFunc)
@@ -53,49 +68,57 @@ async function runType(text) {
   return cmds
 }
 
+const has = (cmds, method) => cmds.some(c => c.method === method)
+
 async function test(name, f) {
   try { await f(); passed++; console.log(`  \x1b[32m✓\x1b[0m ${name}`) }
   catch (e) { failed++; console.log(`  \x1b[31m✗\x1b[0m ${name}\n    ${e.message}`) }
 }
 
 async function main() {
-  console.log('\n  -- RC1: contenteditable typing drives the trusted IME composition pipeline --\n')
+  console.log('\n  -- RC1: editor-aware contenteditable input (composition opt-in) --\n')
 
   await test('typeIntoContentEditable exists', () => assert(fnSrc, 'helper must exist'))
 
-  await test('non-empty text: imeSetComposition fires BEFORE insertText (compose → commit)', async () => {
-    const cmds = await runType('你好世界')
+  // ── custom editor (.edit_area): composition pipeline ──
+  await test('custom editor: clear selection → compose → commit, in order', async () => {
+    const cmds = await runType('你好世界', 'custom')
+    const inserts = cmds.map((c, i) => ({ ...c, i })).filter(c => c.method === 'Input.insertText')
+    const clear = inserts.find(c => c.params.text === '')
+    const commit = inserts.find(c => c.params.text === '你好世界')
     const ime = cmds.findIndex(c => c.method === 'Input.imeSetComposition')
-    const ins = cmds.findIndex(c => c.method === 'Input.insertText')
-    assert(ime !== -1, 'must call Input.imeSetComposition (fires compositionstart/update the model listens for)')
-    assert(ins !== -1, 'must still call Input.insertText (commit: compositionend + input)')
-    assert(ime < ins, 'imeSetComposition must PRECEDE insertText (compose, then commit)')
+    assert(clear, 'must insertText("") to DELETE the select-all selection (composition does not clear it)')
+    assert(ime !== -1, 'must call Input.imeSetComposition (the model listens for compositionstart/update)')
+    assert(commit, 'must call Input.insertText(full text) to commit')
+    assert(clear.i < ime, 'clear must precede composition')
+    assert(ime < commit.i, 'composition must precede the commit insertText')
   })
 
-  await test('imeSetComposition carries the full text with caret collapsed at end', async () => {
-    const cmds = await runType('你好世界')
-    const ime = cmds.find(c => c.method === 'Input.imeSetComposition')
-    assert.equal(ime.params.text, '你好世界', 'composition text must be the full string')
-    assert.equal(ime.params.selectionStart, 4, 'selectionStart at end')
-    assert.equal(ime.params.selectionEnd, 4, 'selectionEnd at end (collapsed caret)')
+  await test('custom editor: imeSetComposition carries full text, caret at end', async () => {
+    const ime = (await runType('你好世界', 'custom')).find(c => c.method === 'Input.imeSetComposition')
+    assert.equal(ime.params.text, '你好世界')
+    assert.equal(ime.params.selectionStart, 4)
+    assert.equal(ime.params.selectionEnd, 4)
   })
 
-  await test('insertText still commits the same text (composition-agnostic editors unaffected)', async () => {
-    const cmds = await runType('abc')
-    const ins = cmds.find(c => c.method === 'Input.insertText')
-    assert.equal(ins.params.text, 'abc')
+  await test('custom editor: empty text skips composition', async () => {
+    assert(!has(await runType('', 'custom'), 'Input.imeSetComposition'), 'empty insert must not open a composition')
   })
 
-  await test('empty text: skips composition (no imeSetComposition on a clear)', async () => {
-    const cmds = await runType('')
-    assert(!cmds.some(c => c.method === 'Input.imeSetComposition'), 'empty insert must not open a composition')
+  // ── native-insert editor (ProseMirror/Quill/CodeMirror): NO composition ──
+  await test('ProseMirror: NO composition, NO clear — plain select-all + insertText (single replace)', async () => {
+    const cmds = await runType('你好世界', 'prosemirror')
+    assert(!has(cmds, 'Input.imeSetComposition'), 'native-insert editors must NOT get a composition (would double-insert)')
+    const inserts = cmds.filter(c => c.method === 'Input.insertText')
+    assert(!inserts.some(c => c.params.text === ''), 'must NOT do the clear-selection insertText("") (insertText replaces natively)')
+    assert(inserts.length === 1 && inserts[0].params.text === '你好世界', 'exactly one insertText carrying the full text')
   })
 
-  await test('select-all precedes composition (replaces existing content)', async () => {
-    const cmds = await runType('xy')
+  await test('ProseMirror: select-all still runs before the insert (replace existing content)', async () => {
+    const cmds = await runType('xy', 'prosemirror')
     const sel = cmds.findIndex(c => c.method === 'selectAll')
-    const ime = cmds.findIndex(c => c.method === 'Input.imeSetComposition')
-    assert(sel !== -1 && sel < ime, 'select-all must run before composition so it replaces existing content')
+    const ins = cmds.findIndex(c => c.method === 'Input.insertText')
+    assert(sel !== -1 && sel < ins, 'select-all must precede insertText so it replaces existing content')
   })
 
   console.log(`\n  ${passed} passed, ${failed} failed\n`)
