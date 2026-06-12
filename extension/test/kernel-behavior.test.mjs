@@ -32,7 +32,9 @@ function test(name, fn) {
 // ═══════════════════════════════════════════════════════════
 // Rule 1: CDP Click Event Chain
 // Why: React and other frameworks need mousePressed + mouseReleased
-// as a pair. Missing either means the click never registers.
+// as a pair. Missing either means the click never registers. Plus a
+// mouseMoved lead-in so hover/ripple-gated gesture recognizers
+// (Polymer/Wiz tap) see the pointer enter before the press (tap-core#65).
 // ═══════════════════════════════════════════════════════════
 
 console.log('\n  -- Rule 1: CDP Click Event Chain --\n')
@@ -41,7 +43,7 @@ console.log('\n  -- Rule 1: CDP Click Event Chain --\n')
   const cdpClickStart = BG_SRC.indexOf('async function cdpClick(')
   assert(cdpClickStart !== -1, 'cdpClick function must exist')
   // Find the end of cdpClick by locating the next top-level function or section
-  const cdpClickBody = BG_SRC.substring(cdpClickStart, cdpClickStart + 500)
+  const cdpClickBody = BG_SRC.substring(cdpClickStart, cdpClickStart + 700)
 
   test('cdpClick dispatches mousePressed', () => {
     assert(cdpClickBody.includes('mousePressed'),
@@ -51,6 +53,14 @@ console.log('\n  -- Rule 1: CDP Click Event Chain --\n')
   test('cdpClick dispatches mouseReleased', () => {
     assert(cdpClickBody.includes('mouseReleased'),
       'cdpClick must dispatch mouseReleased event')
+  })
+
+  test('mouseMoved leads the press (hover/ripple gate — tap-core#65)', () => {
+    const movedIdx = cdpClickBody.indexOf('mouseMoved')
+    const pressedIdx = cdpClickBody.indexOf('mousePressed')
+    assert(movedIdx !== -1, 'cdpClick must dispatch a mouseMoved lead-in')
+    assert(movedIdx < pressedIdx,
+      'mouseMoved must precede mousePressed so the pointer is over the target before the press')
   })
 
   test('mousePressed comes before mouseReleased', () => {

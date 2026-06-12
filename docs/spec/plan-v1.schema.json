@@ -129,6 +129,10 @@
         "kind": { "enum": ["click", "type", "fill", "press", "upload", "setHtml", "hover", "keytype", "blur"] },
         "target": { "type": "string" },
         "value": { "type": "string" },
+        "trusted": {
+          "type": "boolean",
+          "description": "Substrate-tier hint. Absent/false (default) → L1: JS-injection el.click() — isTrusted:false, CSP-immune, no DevTools bar. true → L2: CDP-dispatched mouse events at element coordinates (isTrusted:true). L2 is REQUIRED to activate gesture-bound framework buttons (Polymer/Wiz tap recognizers — e.g. YouTube Studio ytcp-button, Material ripple buttons) that ignore a synthetic JS click. Set by capture when forge detects L1 fails the expect predicate; authors may set it directly when a click silently no-ops on a framework button."
+        },
         "save": { "type": "string" }
       }
     },
