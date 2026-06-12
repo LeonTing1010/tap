@@ -169,13 +169,20 @@ async function withDebugger(tabId, fn) {
   finally { scheduleDetach(tabId) }
 }
 
+// mouseMoved precedes press so hover/ripple-gated gesture recognizers
+// (Polymer/Wiz `tap` — YouTube Studio ytcp-button; Material ripple) see the
+// pointer enter the element first; a bare press/release at coords they never
+// saw move to silently no-ops (#65 YouTube Studio edit-button dogfood).
 async function cdpClick(tabId, x, y) {
   await withDebugger(tabId, async () => {
     await chrome.debugger.sendCommand({ tabId }, 'Input.dispatchMouseEvent', {
-      type: 'mousePressed', x, y, button: 'left', clickCount: 1
+      type: 'mouseMoved', x, y, button: 'none', buttons: 0
     })
     await chrome.debugger.sendCommand({ tabId }, 'Input.dispatchMouseEvent', {
-      type: 'mouseReleased', x, y, button: 'left', clickCount: 1
+      type: 'mousePressed', x, y, button: 'left', buttons: 1, clickCount: 1
+    })
+    await chrome.debugger.sendCommand({ tabId }, 'Input.dispatchMouseEvent', {
+      type: 'mouseReleased', x, y, button: 'left', buttons: 0, clickCount: 1
     })
   })
 }
@@ -2019,6 +2026,11 @@ const WIRE_CODE = {
   timeout: -32012,
   wire_kind_unknown: -32013,
   tap_drifted: -32014,
+  // -32016: op:eval page-context JS exception (tap-core#65). Op-level abort
+  // (the page threw), NOT peer-transport — keeps it off the misleading
+  // reconnect_extension recovery hint. Mirrors core/core/wire-codes.ts; W4
+  // drift-guard keeps them in lockstep.
+  eval_error: -32016,
 }
 
 const NATIVE_HOST_NAME = 'dev.taprun.daemon'
@@ -2200,7 +2212,7 @@ function connectBridge() {
 // Classify extension-side error string into a JSON-RPC code via
 // WIRE_CODE. Covers the common cases the SW's handleMethod can throw;
 // unknown shapes default to peer_unreachable (back-compat).
-function classifyExtensionError(msg, _method) {
+function classifyExtensionError(msg, method) {
   const s = String(msg || '').toLowerCase()
   if (s.includes('http_error') || /\bstatus[:=]\s*[45]\d\d/.test(s)) {
     return WIRE_CODE.fetch_http
@@ -2222,6 +2234,16 @@ function classifyExtensionError(msg, _method) {
   }
   if (s.includes('permission')) {
     return WIRE_CODE.permission_denied
+  }
+  // op:eval page-context exceptions (a throw inside the fn — TypeError,
+  // ReferenceError, a bad-shape return, …) RAN on the substrate and the PAGE
+  // threw: an op-level abort, not the peer being unreachable. Pre-#65 these
+  // fell through to peer_unreachable below and mis-routed to the misleading
+  // reconnect_extension recovery hint, burying the real script bug. Gated on
+  // method==='eval' so a stray "TypeError: Failed to fetch" from another op
+  // is not swept up here. (tap-core#65)
+  if (method === 'eval') {
+    return WIRE_CODE.eval_error
   }
   return WIRE_CODE.peer_unreachable
 }
