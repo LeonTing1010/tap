@@ -13,7 +13,7 @@ Pick a cloud MCP (Stagehand/Browserbase/Playwright-MCP-hosted) when the task tar
 ## Vocabulary
 
 - **tap** — the protocol, the handle, the saved program (`<site>/<name>.plan.json`), and the product. One word, one concept.
-- **plan** — bare JSON definition of a tap (no W3C envelope). Closed 11-op union (fetch / nav / wait / input / extract / cookies / tap / if / foreach / parallel / eval). Self-declares its `$schema` URL for forward-compat.
+- **plan** — bare JSON definition of a tap (no W3C envelope). Closed 13-op union (fetch / nav / wait / input / extract / cookies / tap / if / foreach / parallel / eval / tab / bookmark). Self-declares its `$schema` URL for forward-compat.
 - **capture** — create or heal a tap from a URL × intent. AI participates once at authoring; runtime is pure data + dispatch.
 - **verify** — read-only substrate check. 4-arm verdict (`equivalent` / `drifted` / `first_snapshot` / `unreachable`).
 - **mark** — resolve an `intent_uncertain` Run to `committed` or `aborted`.
@@ -195,7 +195,7 @@ All features free during v0.x. No tier gating in the engine; `core/auth.ts` was 
 - Server features opt-in, off by default. No telemetry, no license heartbeat.
 - Local-first is the architectural default, not a fallback. Every paid feature must have a 100% local mode.
 
-Secrets live at `~/.tap/secrets` (mode 0600). `op:fetch` references them via `${VAR}` indirection expanded at the boundary, so cleartext never enters traces.
+Secrets live at `~/.tap/config/secrets` (mode 0600). `op:fetch` references them via `${VAR}` indirection expanded at the boundary, so cleartext never enters traces.
 
 ## Authoritative links
 
