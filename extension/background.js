@@ -174,7 +174,9 @@ async function withDebugger(tabId, fn) {
 // pointer enter the element first; a bare press/release at coords they never
 // saw move to silently no-ops (#65 YouTube Studio edit-button dogfood).
 async function cdpClick(tabId, x, y) {
-  await withDebugger(tabId, async () => {
+  // The move→press→release sequence on a freshly-ensured debugger session.
+  const seq = async () => {
+    await ensureDebugger(tabId)
     await chrome.debugger.sendCommand({ tabId }, 'Input.dispatchMouseEvent', {
       type: 'mouseMoved', x, y, button: 'none', buttons: 0
     })
@@ -184,7 +186,26 @@ async function cdpClick(tabId, x, y) {
     await chrome.debugger.sendCommand({ tabId }, 'Input.dispatchMouseEvent', {
       type: 'mouseReleased', x, y, button: 'left', buttons: 0, clickCount: 1
     })
-  })
+  }
+  try {
+    await seq()
+  } catch (e) {
+    // MV3 idle / navigation can SILENTLY reclaim the debugger session (see the
+    // network-listener note ~L1800) — debuggerSessions still says attached:true,
+    // so ensureDebugger no-ops and the dispatch throws "Debugger is not attached"
+    // / "Detached while handling command". This is the 2026-06-15 trusted-click-
+    // in-iframe repro: nav + ~14s idle wait before the click reclaimed the session.
+    // Force-clear the stale entry, re-attach, and re-dispatch ONCE. (op:input
+    // trusted runs from a USER command — the exact at-risk path the note calls out.)
+    if (/not attached|detached/i.test(String(e?.message || e))) {
+      const s = debuggerSessions.get(tabId)
+      if (s?.detachTimer) clearTimeout(s.detachTimer)
+      debuggerSessions.delete(tabId)
+      await seq()
+    } else throw e
+  } finally {
+    scheduleDetach(tabId)
+  }
 }
 
 // Deliver keystroke-equivalent text into a contenteditable rich-text editor
@@ -1833,6 +1854,19 @@ async function handleDialogEvent(source, method, params) {
   } catch { /* dialog already gone (navigation / debugger detach) */ }
 }
 chrome.debugger.onEvent.addListener(handleDialogEvent)
+
+// When Chrome detaches the debugger (navigation auto-detach, DevTools opening,
+// or a surfaced MV3 reclaim), clear our session map so the NEXT ensureDebugger
+// re-attaches instead of trusting a stale attached:true and throwing
+// "Debugger is not attached" on the first sendCommand. Pairs with cdpClick's
+// in-flight retry, which covers the SILENT reclaim that fires no onDetach
+// (2026-06-15 trusted-click-in-iframe detach repro).
+chrome.debugger.onDetach.addListener((source, _reason) => {
+  if (source?.tabId == null) return
+  const s = debuggerSessions.get(source.tabId)
+  if (s?.detachTimer) clearTimeout(s.detachTimer)
+  debuggerSessions.delete(source.tabId)
+})
 
 chrome.debugger.onEvent.addListener((source, method, params) => {
   const tabId = source.tabId
