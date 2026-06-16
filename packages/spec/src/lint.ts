@@ -27,7 +27,11 @@ export interface LintError {
 /** Closed enumeration of lint rule slugs the engine may emit. Consumers
  *  can type-narrow on this union; new rules require a minor version bump. */
 export const LINT_RULE_NAMES = [
-  // op:eval forbidden patterns (one slug per pattern class)
+  // op:eval forbidden patterns (one slug per pattern class).
+  // RESERVED: fetch/xhr are NOT currently emitted — the engine deliberately
+  // permits page-native HTTP in op:eval (it reflects page capability, and
+  // there is no non-eval page-HTTP op). Kept in the union for back-compat;
+  // op:eval is value-only w.r.t. DOM mutation / UI driving, not network.
   "eval-forbidden-fetch",
   "eval-forbidden-xhr",
   "eval-forbidden-click",
