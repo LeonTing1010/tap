@@ -762,6 +762,15 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
         switch (kind) {
           case 'click':
             return await handleMethod('click', { ...rest, target }, senderTabId, { fromDaemon })
+          case 'resolve':
+            // Read-only resolve probe (resolve-before-dispatch gate, Clause B
+            // click half): does `target` resolve via click's EXACT chain? Runs
+            // the resolver WITHOUT clicking and returns { resolved }. A distinct
+            // kind (not a flag) so OLD extensions reject it via the "Unknown
+            // op:input kind" default below — they never click during a probe
+            // (version-skew safe). Routed through the click handler in probe
+            // mode so the resolution chain has zero drift.
+            return await handleMethod('click', { ...rest, target, probe: true }, senderTabId, { fromDaemon })
           case 'type':
             return await handleMethod('type', { ...rest, selector: target, text: value }, senderTabId, { fromDaemon })
           case 'fill':
@@ -806,7 +815,7 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       // JS-first: use el.click() via execFunc — no debugger, no yellow bar, CSP-immune
       // Named + self-contained so it injects via execFunc AND is extractable by
       // test/visible-click.test.mjs (background.js isn't node-importable — chrome.*).
-      const clickResolver = (t) => {
+      const clickResolver = (t, probe) => {
         // Prefer the first VISIBLE match. document.querySelector returns the first
         // DOM match even if display:none/hidden — which clicked a hidden "退出登录"
         // sharing .weui-desktop-btn_primary in the 2026-06-11 weixin self-menu
@@ -835,13 +844,22 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
             if (n.textContent?.trim().toLowerCase().includes(t.toLowerCase()) && n.children.length === 0) { el = n; break }
           }
         }
+        // Probe mode (Clause B click half): report whether the target resolves
+        // via THIS exact chain, WITHOUT clicking. Placed after the full chain so
+        // the probe reflects click's real semantics (incl. semantic fallback).
+        if (probe) {
+          if (!el) return { resolved: false }
+          const rb = el.getBoundingClientRect()
+          return { resolved: true, x: Math.round(rb.x + rb.width / 2), y: Math.round(rb.y + rb.height / 2) }
+        }
         if (!el) throw new Error('Element not found: ' + t)
         el.scrollIntoView({ block: 'center', behavior: 'instant' })
         el.click()
         const r = el.getBoundingClientRect()
         return { clicked: true, x: Math.round(r.x + r.width / 2), y: Math.round(r.y + r.height / 2) }
       }
-      const result = await execFunc(fx, clickResolver, target)
+      const result = await execFunc(fx, clickResolver, target, params.probe)
+      if (params.probe) return { resolved: !!(result && result.resolved) }
       if (!result) throw new Error('selector_not_found: ' + target + ' (page not ready — exec returned null)')
       // CDP fallback: if site needs isTrusted events, retry with cdpClick
       // (dx/dy translate frame-relative coords to top-frame viewport space)

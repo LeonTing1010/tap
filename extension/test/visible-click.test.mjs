@@ -48,7 +48,7 @@ function extractClickResolver(src) {
     if (c === '{') depth++
     else if (c === '}') { depth--; if (depth === 0) { i++; break } }
   }
-  const fnSrc = src.slice(src.indexOf('(t)', start), i) // (t) => { ... }
+  const fnSrc = src.slice(src.indexOf('(', start), i) // (t[, probe]) => { ... }
   return fnSrc
 }
 
@@ -99,6 +99,38 @@ test('single visible match → unchanged behavior (clicks it)', () => {
   const factory = new Function('document', 'getComputedStyle', 'NodeFilter', `return (${resolverSrc})`)
   factory(fakeDoc, (el) => ({ display: el.__display, visibility: 'visible', opacity: '1' }), { SHOW_ELEMENT: 1 })('.x')
   assert(only.__clicked, 'single visible match must still be clicked')
+})
+
+// --- probe mode (resolve-before-dispatch gate, Clause B click half) ---
+// clickResolver(t, true) resolves via click's EXACT chain (incl. the semantic
+// text/aria fallback op:wait lacks) but returns { resolved } WITHOUT clicking.
+console.log('\n  -- op:input click probe mode (resolve, do not click) --\n')
+
+test('probe mode resolves a semantic-text-only target WITHOUT clicking', () => {
+  assert(resolverSrc, 'resolver missing')
+  const btn = makeEl('btn', { display: 'block', text: '立即打卡' })
+  const fakeDoc = {
+    body: {},
+    querySelector: () => null,                                       // literal selector misses
+    querySelectorAll: (s) => (String(s).includes('button') ? [btn] : []), // semantic scan finds it
+    createTreeWalker: () => ({ nextNode: () => null }),
+  }
+  const factory = new Function('document', 'getComputedStyle', 'NodeFilter', `return (${resolverSrc})`)
+  const resolver = factory(fakeDoc, (el) => ({ display: el.__display, visibility: 'visible', opacity: '1' }), { SHOW_ELEMENT: 1 })
+  const out = resolver('立即打卡', true)
+  assert(out && out.resolved === true, 'probe must resolve the semantic target (got ' + JSON.stringify(out) + ')')
+  assert(!btn.__clicked, 'probe must NOT click')
+})
+
+test('probe mode on a miss returns {resolved:false} and does NOT throw', () => {
+  assert(resolverSrc, 'resolver missing')
+  const fakeDoc = { body: {}, querySelector: () => null, querySelectorAll: () => [], createTreeWalker: () => ({ nextNode: () => null }) }
+  const factory = new Function('document', 'getComputedStyle', 'NodeFilter', `return (${resolverSrc})`)
+  const resolver = factory(fakeDoc, () => ({ display: 'block', visibility: 'visible', opacity: '1' }), { SHOW_ELEMENT: 1 })
+  let out, threw = false
+  try { out = resolver('nope', true) } catch { threw = true }
+  assert(!threw, 'probe must not throw on miss')
+  assert(out && out.resolved === false, 'probe returns {resolved:false} on miss')
 })
 
 console.log(`\n  ${passed} passed, ${failed} failed\n`)
