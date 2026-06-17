@@ -1,5 +1,21 @@
 # @taprun/spec — Changelog
 
+## 1.6.0 — 2026-06-16
+
+**Additive (backward-compatible).** Three new `LINT_RULE_NAMES` slugs for the
+op:eval value-only escape — DOM-mutation / form-submission verbs that have a
+clean `op:input` alternative and so stay blocked (per core ADR
+`2026-06-16-write-path-network-first-eval-value-only.md`, Clause A/D):
+
+- `eval-forbidden-execcommand` — `document.execCommand(...)` (contenteditable
+  rich-text writes)
+- `eval-forbidden-submit` — `form.submit()` (click-free form submission)
+- `eval-forbidden-requestsubmit` — `form.requestSubmit()`
+
+These join the existing DOM-mutation blocks (`click`, `dispatchEvent`).
+Page-native HTTP (`fetch` / `XMLHttpRequest`) remains intentionally permitted —
+op:eval reflects page capability and there is no non-eval page-HTTP op.
+
 ## 1.3.0 — 2026-05-30
 
 **Additive (backward-compatible).** New `InputOp.kind` member `"setHtml"`.

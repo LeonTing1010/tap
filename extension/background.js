@@ -174,7 +174,9 @@ async function withDebugger(tabId, fn) {
 // pointer enter the element first; a bare press/release at coords they never
 // saw move to silently no-ops (#65 YouTube Studio edit-button dogfood).
 async function cdpClick(tabId, x, y) {
-  await withDebugger(tabId, async () => {
+  // The move→press→release sequence on a freshly-ensured debugger session.
+  const seq = async () => {
+    await ensureDebugger(tabId)
     await chrome.debugger.sendCommand({ tabId }, 'Input.dispatchMouseEvent', {
       type: 'mouseMoved', x, y, button: 'none', buttons: 0
     })
@@ -184,7 +186,26 @@ async function cdpClick(tabId, x, y) {
     await chrome.debugger.sendCommand({ tabId }, 'Input.dispatchMouseEvent', {
       type: 'mouseReleased', x, y, button: 'left', buttons: 0, clickCount: 1
     })
-  })
+  }
+  try {
+    await seq()
+  } catch (e) {
+    // MV3 idle / navigation can SILENTLY reclaim the debugger session (see the
+    // network-listener note ~L1800) — debuggerSessions still says attached:true,
+    // so ensureDebugger no-ops and the dispatch throws "Debugger is not attached"
+    // / "Detached while handling command". This is the 2026-06-15 trusted-click-
+    // in-iframe repro: nav + ~14s idle wait before the click reclaimed the session.
+    // Force-clear the stale entry, re-attach, and re-dispatch ONCE. (op:input
+    // trusted runs from a USER command — the exact at-risk path the note calls out.)
+    if (/not attached|detached/i.test(String(e?.message || e))) {
+      const s = debuggerSessions.get(tabId)
+      if (s?.detachTimer) clearTimeout(s.detachTimer)
+      debuggerSessions.delete(tabId)
+      await seq()
+    } else throw e
+  } finally {
+    scheduleDetach(tabId)
+  }
 }
 
 // Deliver keystroke-equivalent text into a contenteditable rich-text editor
@@ -1042,8 +1063,24 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       // rc-field-form list items) require before save validates the model.
       // Pierces open shadow roots to the inner form control (same
       // deepControl contract as fill/type, #61).
+      //
+      // BUT programmatic el.blur() only DISPATCHES blur/focusout when the
+      // document has system focus. Taps run while the user is in another
+      // window (terminal), so the Tap'd tab is backgrounded and el.blur() is
+      // an activeElement-clearing no-op that fires NO events — the framework's
+      // @blur handler never runs and the model stays empty. (2026-06-15
+      // ccopyright r11 dogfood: a Vue textarea whose value commits to the
+      // submit model only on the child's blur→$emit chain; .value + input
+      // committed myTextValue but the parent params.* stayed 0 until blur.)
+      // So after el.blur() we ALSO dispatch blur + focusout explicitly. Vue
+      // (and React) attach the blur listener via addEventListener, which
+      // synthetic FocusEvents trigger regardless of tab focus or isTrusted;
+      // the handler reads the control's own state, not the event. Harmless
+      // double-fire when the UA blur DID dispatch (re-emits the same value).
       const { t: fx, sel } = await resolveFrame(tabId, params.selector)
-      const done = await execFunc(fx, (s) => {
+      // Named + self-contained so it injects via execFunc AND is extractable
+      // by test/blur-dispatch.test.mjs.
+      const blurResolver = (s) => {
         const el = document.querySelector(s)
         if (!el) throw new Error('Element not found: ' + s)
         const deepControl = (n, d) => {
@@ -1064,8 +1101,16 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
         const doc = C.getRootNode ? C.getRootNode() : document
         if ((doc.activeElement || document.activeElement) !== C && C.focus) C.focus()
         if (C.blur) C.blur()
+        // Guarantee the framework's blur handler runs even on a backgrounded
+        // tab where the UA suppressed the blur/focusout from C.blur() above.
+        try {
+          const FE = (typeof FocusEvent === 'function') ? FocusEvent : Event
+          C.dispatchEvent(new FE('blur', { bubbles: false }))
+          C.dispatchEvent(new FE('focusout', { bubbles: true }))
+        } catch (_) { /* element may be detached; UA blur already attempted */ }
         return { blurred: true }
-      }, sel)
+      }
+      const done = await execFunc(fx, blurResolver, sel)
       if (!done) throw new Error('selector_not_found: ' + sel + ' (page not ready — exec returned null)')
       return {}
     }
@@ -1809,6 +1854,19 @@ async function handleDialogEvent(source, method, params) {
   } catch { /* dialog already gone (navigation / debugger detach) */ }
 }
 chrome.debugger.onEvent.addListener(handleDialogEvent)
+
+// When Chrome detaches the debugger (navigation auto-detach, DevTools opening,
+// or a surfaced MV3 reclaim), clear our session map so the NEXT ensureDebugger
+// re-attaches instead of trusting a stale attached:true and throwing
+// "Debugger is not attached" on the first sendCommand. Pairs with cdpClick's
+// in-flight retry, which covers the SILENT reclaim that fires no onDetach
+// (2026-06-15 trusted-click-in-iframe detach repro).
+chrome.debugger.onDetach.addListener((source, _reason) => {
+  if (source?.tabId == null) return
+  const s = debuggerSessions.get(source.tabId)
+  if (s?.detachTimer) clearTimeout(s.detachTimer)
+  debuggerSessions.delete(source.tabId)
+})
 
 chrome.debugger.onEvent.addListener((source, method, params) => {
   const tabId = source.tabId
