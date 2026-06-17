@@ -515,7 +515,12 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
         if (r?.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description)
         return r?.result?.value
       }
-      throw new Error(wrapped?.error || 'eval failed')
+      // wrapped.error carries the page eval's own exception (line 497). A bare
+      // miss means chrome.scripting returned NO result — the injection itself
+      // produced nothing, i.e. the target frame navigated or closed mid-eval.
+      // Say so: actionable, and matched by the runtime's transient-retry
+      // predicate (isTransientOpFailure) so an observe-phase eval re-runs.
+      throw new Error(wrapped?.error || 'eval failed: target navigated or closed mid-eval (no injection result)')
     }
 
     case 'pointer': {
