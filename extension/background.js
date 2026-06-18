@@ -339,8 +339,15 @@ async function waitForTabLoad(tabId, url = null) {
 async function execFunc(t, func, ...args) {
   // t: tabId, or { tabId, frameId } from resolveFrame (#62 iframe targeting)
   const target = typeof t === 'object' ? { tabId: t.tabId, frameIds: [t.frameId] } : { tabId: t }
+  // chrome.scripting.executeScript REJECTS an `undefined` arg as
+  // "Value is unserializable" (e.g. click passing an absent optional `probe`).
+  // Map undefined → null positionally: null IS serializable, indices are
+  // preserved, and every injected func checks truthiness so null ≡ undefined
+  // for them. Without this, any caller leaving a trailing optional arg unset
+  // breaks the whole op (resolve-gate click-probe regression, 2026-06-18).
+  const safeArgs = args.map((a) => (a === undefined ? null : a))
   const [result] = await chrome.scripting.executeScript({
-    target, func, args, world: 'MAIN'
+    target, func, args: safeArgs, world: 'MAIN'
   })
   return result?.result
 }
@@ -1379,16 +1386,25 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
           }
         }
       }
-      await execFunc(tabId, (sel, timeout) => {
+      // NOTE: chrome.scripting MAIN-world SWALLOWS injected-promise REJECTIONS
+      // (they don't cross the world boundary — executeScript resolves with
+      // result.result === undefined instead of throwing). A `reject()` on
+      // timeout was therefore lost, so op:wait returned ok on a missing
+      // selector — silently defeating its peer-conformance contract AND the
+      // resolve-before-dispatch wait-probe arm (type/fill/setHtml). Fix: resolve
+      // a serializable `false` sentinel on timeout (crosses reliably) and throw
+      // extension-side below. (resolve-gate fill-probe gap, 2026-06-18.)
+      const found = await execFunc(tabId, (sel, timeout) => {
         if (document.querySelector(sel)) return true
-        return new Promise((resolve, reject) => {
-          const timer = setTimeout(() => { obs.disconnect(); reject(new Error('waitFor timeout: ' + sel)) }, timeout)
+        return new Promise((resolve) => {
+          const timer = setTimeout(() => { obs.disconnect(); resolve(false) }, timeout)
           const obs = new MutationObserver(() => {
             if (document.querySelector(sel)) { obs.disconnect(); clearTimeout(timer); resolve(true) }
           })
           obs.observe(document.documentElement, { childList: true, subtree: true })
         })
       }, params.selector, ms)
+      if (!found) throw new Error('waitFor timeout: ' + params.selector)
       return {}
     }
 
