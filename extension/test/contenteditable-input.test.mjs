@@ -93,7 +93,7 @@ test('typeIntoContentEditable helper exists', () => {
 console.log('\n  -- Rule 2: type/fill detect contenteditable --\n')
 
 {
-  const typeBody = slice("case 'type': {", 3400)
+  const typeBody = slice("case 'type': {", 4500)
   test('type detects el.isContentEditable', () => {
     assert(typeBody.includes('isContentEditable'),
       'type must branch on isContentEditable to pick the trusted-keystroke path')
@@ -118,11 +118,12 @@ console.log('\n  -- Rule 2: type/fill detect contenteditable --\n')
 }
 
 {
-  // Window widened 1400→2000→2800 (#61): the fill handler grew a web-component
-  // shadow-DOM value-target resolver (now recursive across nested shadow roots).
-  // The contenteditable-delegation invariant below is unchanged — it just now
-  // lives in a larger handler.
-  const fillBody = slice("case 'fill': {", 2800)
+  // Window widened 1400→2000→2800 (#61)→3800 (2026-06-23 inline deepAll shadow
+  // combinator): the fill handler grew a web-component shadow-DOM value-target
+  // resolver (now recursive across nested shadow roots) and an inline ' >> '
+  // open-shadow query helper. The contenteditable-delegation invariant below is
+  // unchanged — it just now lives in a larger handler.
+  const fillBody = slice("case 'fill': {", 3800)
   test('fill detects el.isContentEditable', () => {
     assert(fillBody.includes('isContentEditable'),
       'fill must branch on isContentEditable instead of the no-op value setter')
@@ -141,8 +142,8 @@ console.log('\n  -- Rule 2: type/fill detect contenteditable --\n')
 console.log('\n  -- Rule 4: masked / web-component inner-input resolution --\n')
 
 {
-  const typeBody = slice("case 'type': {", 3400)
-  const fillBody = slice("case 'fill': {", 2800)
+  const typeBody = slice("case 'type': {", 4500)
+  const fillBody = slice("case 'fill': {", 3800)
 
   test('type resolves the inner form control (no longer host-tagName-only)', () => {
     assert(typeBody.includes('deepControl'),
