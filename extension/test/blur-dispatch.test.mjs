@@ -27,6 +27,7 @@
 
 import { strict as assert } from 'node:assert'
 import { readFileSync } from 'node:fs'
+import './_install-deep.mjs' // sets globalThis.__tapDeep — blurResolver references it
 
 const BG_SRC = readFileSync(new URL('../background.js', import.meta.url), 'utf-8')
 

@@ -93,7 +93,7 @@ test('typeIntoContentEditable helper exists', () => {
 console.log('\n  -- Rule 2: type/fill detect contenteditable --\n')
 
 {
-  const typeBody = slice("case 'type': {", 4500)
+  const typeBody = slice("case 'type': {", 3000)
   test('type detects el.isContentEditable', () => {
     assert(typeBody.includes('isContentEditable'),
       'type must branch on isContentEditable to pick the trusted-keystroke path')
@@ -118,12 +118,11 @@ console.log('\n  -- Rule 2: type/fill detect contenteditable --\n')
 }
 
 {
-  // Window widened 1400→2000→2800 (#61)→3800 (2026-06-23 inline deepAll shadow
-  // combinator): the fill handler grew a web-component shadow-DOM value-target
-  // resolver (now recursive across nested shadow roots) and an inline ' >> '
-  // open-shadow query helper. The contenteditable-delegation invariant below is
-  // unchanged — it just now lives in a larger handler.
-  const fillBody = slice("case 'fill': {", 3800)
+  // Slice sized to the fill handler (~2.1KB). The shadow-piercing helpers that
+  // once bloated it (inline deepAll/deepControl) were extracted to the shared
+  // TAP_DEEP_INSTALL (2026-06-23), so the handler shrank back; the
+  // contenteditable-delegation invariant below is unchanged.
+  const fillBody = slice("case 'fill': {", 2098)
   test('fill detects el.isContentEditable', () => {
     assert(fillBody.includes('isContentEditable'),
       'fill must branch on isContentEditable instead of the no-op value setter')
@@ -142,30 +141,26 @@ console.log('\n  -- Rule 2: type/fill detect contenteditable --\n')
 console.log('\n  -- Rule 4: masked / web-component inner-input resolution --\n')
 
 {
-  const typeBody = slice("case 'type': {", 4500)
-  const fillBody = slice("case 'fill': {", 3800)
+  const typeBody = slice("case 'type': {", 3000)
+  const fillBody = slice("case 'fill': {", 2098)
+  // The inner-control resolver (formerly inline `deepControl` ×3) now lives ONCE
+  // in TAP_DEEP_INSTALL as __tapDeep.control. The #61 invariant is unchanged — it
+  // just moved: assert it at its new home AND that the handlers wire to it.
+  const installBody = slice('const TAP_DEEP_INSTALL =', 1200)
 
-  test('type resolves the inner form control (no longer host-tagName-only)', () => {
-    assert(typeBody.includes('deepControl'),
-      'type must resolve a nested form control, not branch solely on el.tagName === INPUT — ' +
-      'a web-component host is not an INPUT so the legacy path silently fell through to keystrokes')
+  test('type/fill resolve the inner form control via shared __tapDeep.control', () => {
+    assert(typeBody.includes('__tapDeep.control('),
+      'type must resolve the inner control via __tapDeep.control, not branch solely on el.tagName === INPUT')
+    assert(fillBody.includes('__tapDeep.control('),
+      'fill must resolve the inner control via the same shared resolver')
   })
 
-  test('fill resolves the inner form control via deepControl', () => {
-    assert(fillBody.includes('deepControl'),
-      'fill must use the shared recursive resolver (was a one-level shadowRoot.querySelector)')
+  test('__tapDeep.control pierces nested open shadow roots with a bounded depth', () => {
+    assert(/shadowRoot/.test(installBody) && /querySelectorAll/.test(installBody),
+      'control must descend into element.shadowRoot (and nested hosts) to find the inner control')
+    assert(/control\(h, d \+ 1\)/.test(installBody) && /d > \d/.test(installBody),
+      'control must recurse into nested shadow roots with a depth guard (avoid infinite walks)')
   })
-
-  for (const [name, body] of [['type', typeBody], ['fill', fillBody]]) {
-    test(`${name}'s deepControl pierces open shadow roots`, () => {
-      assert(/shadowRoot/.test(body) && /querySelectorAll/.test(body),
-        `${name} must descend into element.shadowRoot (and nested hosts) to find the inner control`)
-    })
-    test(`${name}'s deepControl recurses with a bounded depth`, () => {
-      assert(/deepControl\(\s*h,\s*d\s*\+\s*1\s*\)/.test(body) && /d\s*>\s*\d/.test(body),
-        `${name} must recurse into nested shadow roots with a depth guard (avoid infinite walks)`)
-    })
-  }
 
   test('inner-control write swallows masked-input handler throws (#60)', () => {
     // air3 currency throws "null (reading 'mode')" in its input handler AFTER the
