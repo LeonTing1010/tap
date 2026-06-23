@@ -828,6 +828,23 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       // Named + self-contained so it injects via execFunc AND is extractable by
       // test/visible-click.test.mjs (background.js isn't node-importable — chrome.*).
       const clickResolver = (t, probe) => {
+        // __TAP_DEEPALL__ '<host> >> <inner>' crosses OPEN shadow roots (frame
+        // ' >>> ' already stripped by resolveFrame; ' >> ' is not valid CSS nor a
+        // substring of ' >>> '). Plain selectors → plain querySelectorAll, no change.
+        // INLINE + self-contained (visible-click.test runs handlers via new Function);
+        // 3 copies byte-identical, drift-guarded by shadow-piercing.test.mjs.
+        const deepAll = (sel, root) => {
+          const parts = String(sel).split(' >> ')
+          let roots = [root || document]
+          for (let i = 0; i < parts.length; i++) {
+            const out = []
+            for (const r of roots) if (r && r.querySelectorAll) out.push(...r.querySelectorAll(parts[i].trim()))
+            if (i === parts.length - 1) return out
+            roots = out.map((e) => e.shadowRoot).filter(Boolean)
+            if (!roots.length) return []
+          }
+          return []
+        }
         // Prefer the first VISIBLE match. document.querySelector returns the first
         // DOM match even if display:none/hidden — which clicked a hidden "退出登录"
         // sharing .weui-desktop-btn_primary in the 2026-06-11 weixin self-menu
@@ -840,9 +857,9 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
           const r = e.getBoundingClientRect()
           return r.width > 0 && r.height > 0
         }
-        let el = document.querySelector(t)
+        let el = deepAll(t)[0] || null
         if (el && !vis(el)) {
-          for (const e of document.querySelectorAll(t)) { if (vis(e)) { el = e; break } }
+          for (const e of deepAll(t)) { if (vis(e)) { el = e; break } }
         }
         if (!el) {
           for (const e of document.querySelectorAll('a, button, [role="button"], input, [onclick], [tabindex]')) {
@@ -885,7 +902,24 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       const { text } = params
       const { t: fx, sel: selector, dx, dy } = await resolveFrame(tabId, params.selector)
       const probe = await execFunc(fx, (sel, txt) => {
-        const el = document.querySelector(sel)
+        // __TAP_DEEPALL__ '<host> >> <inner>' crosses OPEN shadow roots (frame
+        // ' >>> ' already stripped by resolveFrame; ' >> ' is not valid CSS nor a
+        // substring of ' >>> '). Plain selectors → plain querySelectorAll, no change.
+        // INLINE + self-contained (visible-click.test runs handlers via new Function);
+        // 3 copies byte-identical, drift-guarded by shadow-piercing.test.mjs.
+        const deepAll = (sel, root) => {
+          const parts = String(sel).split(' >> ')
+          let roots = [root || document]
+          for (let i = 0; i < parts.length; i++) {
+            const out = []
+            for (const r of roots) if (r && r.querySelectorAll) out.push(...r.querySelectorAll(parts[i].trim()))
+            if (i === parts.length - 1) return out
+            roots = out.map((e) => e.shadowRoot).filter(Boolean)
+            if (!roots.length) return []
+          }
+          return []
+        }
+        const el = deepAll(sel)[0]
         if (!el) throw new Error('Element not found: ' + sel)
         el.scrollIntoView({ block: 'center', behavior: 'instant' })
         el.focus()
@@ -965,7 +999,24 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       const { text } = params
       const { t: fx, sel: selector, dx, dy } = await resolveFrame(tabId, params.selector)
       const probe = await execFunc(fx, (sel, txt) => {
-        const el = document.querySelector(sel)
+        // __TAP_DEEPALL__ '<host> >> <inner>' crosses OPEN shadow roots (frame
+        // ' >>> ' already stripped by resolveFrame; ' >> ' is not valid CSS nor a
+        // substring of ' >>> '). Plain selectors → plain querySelectorAll, no change.
+        // INLINE + self-contained (visible-click.test runs handlers via new Function);
+        // 3 copies byte-identical, drift-guarded by shadow-piercing.test.mjs.
+        const deepAll = (sel, root) => {
+          const parts = String(sel).split(' >> ')
+          let roots = [root || document]
+          for (let i = 0; i < parts.length; i++) {
+            const out = []
+            for (const r of roots) if (r && r.querySelectorAll) out.push(...r.querySelectorAll(parts[i].trim()))
+            if (i === parts.length - 1) return out
+            roots = out.map((e) => e.shadowRoot).filter(Boolean)
+            if (!roots.length) return []
+          }
+          return []
+        }
+        const el = deepAll(sel)[0]
         if (!el) throw new Error('Element not found: ' + sel)
         el.scrollIntoView({ block: 'center', behavior: 'instant' })
         el.focus()
@@ -1438,6 +1489,13 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
     case 'extract': {
       const { t: fx, sel } = await resolveFrame(tabId, params.selector)
       const fields = params.fields
+      // NOTE: op:extract is NOT wired for ' >> ' shadow piercing. In the live
+      // pipeline op:extract runs ENGINE-side (deno-dom over fetched static HTML,
+      // core/handlers/extract.ts) — it never reaches this extension handler, and
+      // static HTML has no shadow roots anyway. Adding deepAll here would be dead
+      // on the live path ("looks supported but isn't"). Reading live shadow content
+      // is done via op:input-driven flows / op:eval; routing extract to the peer is
+      // a separate engine concern (Phase 2). Verified live 2026-06-23.
       return await execFunc(fx, (rowSel, fieldMap) => {
         return Array.from(document.querySelectorAll(rowSel)).map(row => {
           const obj = {}
