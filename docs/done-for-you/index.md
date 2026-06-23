@@ -57,7 +57,7 @@ rides the live session for the repetitive part.
 ## Who this is for
 
 - **Ops / admin teams** pulling documents from 5–20 supplier or vendor portals monthly
-- **Bookkeepers & accountants** chasing client bank/credit-card statements at month-end
+- **[Bookkeepers & accountants](/done-for-you/bookkeeping-bank-statements/)** chasing client bank/credit-card statements at month-end
 - **Energy / utilities brokers** downloading bills from provider reserved areas
 - Anyone who does the same login → navigate → download dance every month
 

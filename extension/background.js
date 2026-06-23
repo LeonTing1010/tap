@@ -414,6 +414,55 @@ async function resolveFrame(tabId, sel) {
   return { t: { tabId, frameId: m.frameId }, sel: inner, dx: meta.x, dy: meta.y }
 }
 
+// Single source of truth for OPEN-shadow-root traversal. Installed ONCE into the
+// page MAIN world as globalThis.__tapDeep, then REFERENCED (never re-inlined) by
+// every selector-bearing handler (click/type/fill/blur). Collapses the former 6
+// inline copies (deepAll×3 + deepControl×3) into one definition — R2: kill drift
+// sources, don't drift-guard them. Sibling to resolveFrame: that crosses iframe
+// (' >>> ') boundaries via CDP frameId; this crosses shadow-root boundaries
+// in-page. Self-contained so it injects verbatim via execFunc (CSP-immune, no
+// eval). Two views over the same primitive "descend into el.shadowRoot":
+//   all(sel, root) — resolve a ' >> '-segmented selector to ALL matches (frame
+//     ' >>> ' already stripped by resolveFrame; ' >> ' is neither valid CSS nor a
+//     substring of ' >>> '). Plain selectors → plain querySelectorAll (zero
+//     behavior change). Callers pass `document` explicitly so the helper queries
+//     the caller's document (keeps handlers testable in isolation).
+//   control(n, d) — find the inner form control (#61): masked / web-component
+//     inputs put the writable <input> inside the host's open shadow root; bounded
+//     depth (≤4) guards infinite walks. Returns null when none.
+// Drift/wiring guarded by test/shadow-piercing.test.mjs.
+const TAP_DEEP_INSTALL = () => {
+  if (globalThis.__tapDeep) return
+  const all = (sel, root) => {
+    const parts = String(sel).split(' >> ')
+    let roots = [root || document]
+    for (let i = 0; i < parts.length; i++) {
+      const out = []
+      for (const r of roots) if (r && r.querySelectorAll) out.push(...r.querySelectorAll(parts[i].trim()))
+      if (i === parts.length - 1) return out
+      roots = out.map((e) => e.shadowRoot).filter(Boolean)
+      if (!roots.length) return []
+    }
+    return []
+  }
+  const control = (n, d) => {
+    if (!n || d > 4) return null
+    if (/^(INPUT|TEXTAREA|SELECT)$/.test(n.tagName)) return n
+    const root = n.shadowRoot || n
+    const hit = root.querySelector && root.querySelector('input, textarea, select')
+    if (hit) return hit
+    for (const h of (root.querySelectorAll ? root.querySelectorAll('*') : [])) {
+      if (h.shadowRoot) { const r = control(h, d + 1); if (r) return r }
+    }
+    return null
+  }
+  globalThis.__tapDeep = { all, control }
+}
+// Idempotent: ensure globalThis.__tapDeep exists in the (frame) target before a
+// handler's injected fn references it. One extra execFunc per op — ops are
+// user-paced, not hot loops — and the install short-circuits once present.
+async function ensureDeep(fx) { await execFunc(fx, TAP_DEEP_INSTALL) }
+
 // --- Message Handler ---
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
@@ -824,27 +873,11 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
 
     case 'click': {
       const { t: fx, sel: target, dx, dy } = await resolveFrame(tabId, params.target || params.selector)
+      await ensureDeep(fx)
       // JS-first: use el.click() via execFunc — no debugger, no yellow bar, CSP-immune
       // Named + self-contained so it injects via execFunc AND is extractable by
       // test/visible-click.test.mjs (background.js isn't node-importable — chrome.*).
       const clickResolver = (t, probe) => {
-        // __TAP_DEEPALL__ '<host> >> <inner>' crosses OPEN shadow roots (frame
-        // ' >>> ' already stripped by resolveFrame; ' >> ' is not valid CSS nor a
-        // substring of ' >>> '). Plain selectors → plain querySelectorAll, no change.
-        // INLINE + self-contained (visible-click.test runs handlers via new Function);
-        // 3 copies byte-identical, drift-guarded by shadow-piercing.test.mjs.
-        const deepAll = (sel, root) => {
-          const parts = String(sel).split(' >> ')
-          let roots = [root || document]
-          for (let i = 0; i < parts.length; i++) {
-            const out = []
-            for (const r of roots) if (r && r.querySelectorAll) out.push(...r.querySelectorAll(parts[i].trim()))
-            if (i === parts.length - 1) return out
-            roots = out.map((e) => e.shadowRoot).filter(Boolean)
-            if (!roots.length) return []
-          }
-          return []
-        }
         // Prefer the first VISIBLE match. document.querySelector returns the first
         // DOM match even if display:none/hidden — which clicked a hidden "退出登录"
         // sharing .weui-desktop-btn_primary in the 2026-06-11 weixin self-menu
@@ -857,9 +890,9 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
           const r = e.getBoundingClientRect()
           return r.width > 0 && r.height > 0
         }
-        let el = deepAll(t)[0] || null
+        let el = globalThis.__tapDeep.all(t, document)[0] || null
         if (el && !vis(el)) {
-          for (const e of deepAll(t)) { if (vis(e)) { el = e; break } }
+          for (const e of globalThis.__tapDeep.all(t, document)) { if (vis(e)) { el = e; break } }
         }
         if (!el) {
           for (const e of document.querySelectorAll('a, button, [role="button"], input, [onclick], [tabindex]')) {
@@ -901,25 +934,9 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
     case 'type': {
       const { text } = params
       const { t: fx, sel: selector, dx, dy } = await resolveFrame(tabId, params.selector)
+      await ensureDeep(fx)
       const probe = await execFunc(fx, (sel, txt) => {
-        // __TAP_DEEPALL__ '<host> >> <inner>' crosses OPEN shadow roots (frame
-        // ' >>> ' already stripped by resolveFrame; ' >> ' is not valid CSS nor a
-        // substring of ' >>> '). Plain selectors → plain querySelectorAll, no change.
-        // INLINE + self-contained (visible-click.test runs handlers via new Function);
-        // 3 copies byte-identical, drift-guarded by shadow-piercing.test.mjs.
-        const deepAll = (sel, root) => {
-          const parts = String(sel).split(' >> ')
-          let roots = [root || document]
-          for (let i = 0; i < parts.length; i++) {
-            const out = []
-            for (const r of roots) if (r && r.querySelectorAll) out.push(...r.querySelectorAll(parts[i].trim()))
-            if (i === parts.length - 1) return out
-            roots = out.map((e) => e.shadowRoot).filter(Boolean)
-            if (!roots.length) return []
-          }
-          return []
-        }
-        const el = deepAll(sel)[0]
+        const el = globalThis.__tapDeep.all(sel, document)[0]
         if (!el) throw new Error('Element not found: ' + sel)
         el.scrollIntoView({ block: 'center', behavior: 'instant' })
         el.focus()
@@ -927,19 +944,7 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
         // nested inside a web component's (possibly nested) open shadow root.
         // Masked inputs (air3 currency, faceplate-text-input) expose no .value on
         // the custom-element host; the inner control is the write target.
-        // deepControl pierces open shadow roots to a bounded depth, then null.
-        const deepControl = (n, d) => {
-          if (!n || d > 4) return null
-          if (/^(INPUT|TEXTAREA|SELECT)$/.test(n.tagName)) return n
-          const root = n.shadowRoot || n
-          const hit = root.querySelector && root.querySelector('input, textarea, select')
-          if (hit) return hit
-          for (const h of (root.querySelectorAll ? root.querySelectorAll('*') : [])) {
-            if (h.shadowRoot) { const r = deepControl(h, d + 1); if (r) return r }
-          }
-          return null
-        }
-        const C = deepControl(el, 0)
+        const C = globalThis.__tapDeep.control(el, 0)
         if (C) {
           C.focus()
           const proto = C.tagName === 'SELECT' ? HTMLSelectElement.prototype
@@ -998,25 +1003,9 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
     case 'fill': {
       const { text } = params
       const { t: fx, sel: selector, dx, dy } = await resolveFrame(tabId, params.selector)
+      await ensureDeep(fx)
       const probe = await execFunc(fx, (sel, txt) => {
-        // __TAP_DEEPALL__ '<host> >> <inner>' crosses OPEN shadow roots (frame
-        // ' >>> ' already stripped by resolveFrame; ' >> ' is not valid CSS nor a
-        // substring of ' >>> '). Plain selectors → plain querySelectorAll, no change.
-        // INLINE + self-contained (visible-click.test runs handlers via new Function);
-        // 3 copies byte-identical, drift-guarded by shadow-piercing.test.mjs.
-        const deepAll = (sel, root) => {
-          const parts = String(sel).split(' >> ')
-          let roots = [root || document]
-          for (let i = 0; i < parts.length; i++) {
-            const out = []
-            for (const r of roots) if (r && r.querySelectorAll) out.push(...r.querySelectorAll(parts[i].trim()))
-            if (i === parts.length - 1) return out
-            roots = out.map((e) => e.shadowRoot).filter(Boolean)
-            if (!roots.length) return []
-          }
-          return []
-        }
-        const el = deepAll(sel)[0]
+        const el = globalThis.__tapDeep.all(sel, document)[0]
         if (!el) throw new Error('Element not found: ' + sel)
         el.scrollIntoView({ block: 'center', behavior: 'instant' })
         el.focus()
@@ -1032,18 +1021,7 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
         // `type` handler so both kinds write masked / web-component inputs (e.g.
         // air3 currency, faceplate-text-input) where .value lives on the inner
         // <input>, not the custom-element host.
-        const deepControl = (n, d) => {
-          if (!n || d > 4) return null
-          if (/^(INPUT|TEXTAREA|SELECT)$/.test(n.tagName)) return n
-          const root = n.shadowRoot || n
-          const hit = root.querySelector && root.querySelector('input, textarea, select')
-          if (hit) return hit
-          for (const h of (root.querySelectorAll ? root.querySelectorAll('*') : [])) {
-            if (h.shadowRoot) { const r = deepControl(h, d + 1); if (r) return r }
-          }
-          return null
-        }
-        const T = deepControl(el, 0) || el // #61 web-component inner input
+        const T = globalThis.__tapDeep.control(el, 0) || el // #61 web-component inner input
         if (T !== el && T.focus) T.focus()
         const proto = T.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype : T.tagName === 'SELECT' ? HTMLSelectElement.prototype : HTMLInputElement.prototype
         const setter = Object.getOwnPropertyDescriptor(proto, 'value')?.set
@@ -1159,23 +1137,13 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       // the handler reads the control's own state, not the event. Harmless
       // double-fire when the UA blur DID dispatch (re-emits the same value).
       const { t: fx, sel } = await resolveFrame(tabId, params.selector)
+      await ensureDeep(fx)
       // Named + self-contained so it injects via execFunc AND is extractable
       // by test/blur-dispatch.test.mjs.
       const blurResolver = (s) => {
         const el = document.querySelector(s)
         if (!el) throw new Error('Element not found: ' + s)
-        const deepControl = (n, d) => {
-          if (!n || d > 4) return null
-          if (/^(INPUT|TEXTAREA|SELECT)$/.test(n.tagName)) return n
-          const root = n.shadowRoot || n
-          const hit = root.querySelector && root.querySelector('input, textarea, select')
-          if (hit) return hit
-          for (const h of (root.querySelectorAll ? root.querySelectorAll('*') : [])) {
-            if (h.shadowRoot) { const r = deepControl(h, d + 1); if (r) return r }
-          }
-          return null
-        }
-        const C = deepControl(el, 0) || el
+        const C = globalThis.__tapDeep.control(el, 0) || el
         // If the control isn't the active element, focus it first so the
         // subsequent blur is a REAL transition (blur on an unfocused node
         // is a no-op and commits nothing).

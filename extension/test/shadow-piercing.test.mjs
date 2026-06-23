@@ -1,41 +1,40 @@
 /**
- * Constraint: shadow-piercing combinator "<host-sel> >> <inner-sel>"
+ * Constraint: shadow-piercing — ONE resolver, referenced not copied.
  * Classification: safety / what -- violations silently re-blind ops to shadow DOM
+ *                 OR re-introduce the drift this refactor deleted.
  *
  * Chinese enterprise consoles (微信小店, 企业微信后台, aliyun) render their real
  * content inside qiankun-style <micro-app> custom elements whose body lives in an
- * OPEN shadowRoot. Plain `document.querySelector(sel)` cannot cross that boundary,
- * so click/type/fill/extract were blind to everything inside — the dogfood that
- * forced this: reading 微信小店 客服管理/关联账号 needed a hand-written op:eval that
- * walked `.shadowRoot` recursively (op:eval is value-only, so it could observe but
- * never click/fill inside the shadow tree).
+ * OPEN shadowRoot. Plain document.querySelector can't cross that boundary.
  *
- * Sibling to the iframe combinator (#62, frame-piercing.test.mjs):
- *  - iframe  ' >>> '  crosses a DOCUMENT boundary (CDP frameId hop, background side)
- *  - shadow  ' >> '   crosses a SHADOW-ROOT boundary (in-page, inside the injected fn)
- * resolveFrame strips ' >>> ' first, so the ' >> ' split inside deepAll is unambiguous
- * (' >> ' is not a substring of ' >>> ', and neither is valid CSS).
+ * The shadow-piercing helpers (formerly inline `deepAll`×3 + `deepControl`×3 — six
+ * byte-identical copies a drift-guard had to police) now live ONCE in
+ * background.js's TAP_DEEP_INSTALL, installed into the page MAIN world as
+ * globalThis.__tapDeep and REFERENCED by every selector-bearing handler. This is
+ * the structural fix (R2: kill drift sources, don't guard copies) — the sibling of
+ * the iframe combinator (#62, frame-piercing.test.mjs):
+ *   iframe  ' >>> '  crosses a DOCUMENT boundary (CDP frameId, resolveFrame)
+ *   shadow  ' >> '   crosses a SHADOW-ROOT boundary in-page (__tapDeep.all)
  *
- * Design constraints locked here:
- *  - deepAll is INLINE + self-contained in each handler (NOT a window global): the
- *    handlers are extracted and executed in isolation by visible-click.test.mjs via
- *    `new Function(...)`, so they must not reference outer scope. The 4 inline copies
- *    are byte-identical (drift-guarded below) — duplication is machine-checked, not
- *    trusted to memory (engineering-philosophy Standard 1).
- *  - plain selectors (no ' >> ') reduce to plain querySelectorAll → zero behavior
- *    change for every existing tap.
- *  - only OPEN shadow roots are reachable (browser limit: closed roots expose no
- *    .shadowRoot). CDP `pierce:true` for closed roots is Phase 2.
- *  - Phase 1 wires click/type/fill. op:extract is deliberately NOT wired: in the
- *    live pipeline it runs ENGINE-side (deno-dom over fetched static HTML), never
- *    reaches the extension, and static HTML has no shadow roots — a ' >> ' there
- *    would be dead on the live path. setHtml/hover/select/scroll = Phase 1.5.
+ * Two kinds of constraint here:
+ *  1. SOURCE shape — exactly one definition, zero inline copies, handlers wire to
+ *     it AFTER ensureDeep installs it. (Brace-matched handler slices, not magic
+ *     lengths — the old fixed-length slices broke on every handler resize.)
+ *  2. BEHAVIOUR — the REAL shipping helper (imported via _install-deep, extracted
+ *     verbatim from background.js) crosses open shadow roots and finds inner
+ *     controls. No re-typed copy that could drift from what ships.
+ *
+ * Phase 1 wires click/type/fill/blur. op:extract is deliberately NOT wired: it runs
+ * ENGINE-side (deno-dom over fetched static HTML), never reaches the extension, and
+ * static HTML has no shadow roots. setHtml/hover/select/scroll = Phase 1.5. Closed
+ * shadow roots (CDP pierce:true) = Phase 2.
  *
  * Run: node extension/test/shadow-piercing.test.mjs
  */
 
 import { strict as assert } from 'node:assert'
 import { readFileSync } from 'node:fs'
+import { tapDeep } from './_install-deep.mjs' // the REAL helper, extracted from background.js
 
 const BG_SRC = readFileSync(new URL('../background.js', import.meta.url), 'utf-8')
 
@@ -54,132 +53,94 @@ function test(name, fn) {
   }
 }
 
-function slice(marker, len) {
-  const i = BG_SRC.indexOf(marker)
-  assert(i >= 0, `marker not found: ${marker}`)
-  return BG_SRC.slice(i, i + len)
-}
-
-// Brace-match an arrow body starting at `const deepAll = (sel, root) => {`
-// from a given index. Mirrors visible-click.test.mjs's extractClickResolver.
-const DEEP_MARKER = 'const deepAll = (sel, root) => '
-function extractDeepAllAt(start) {
-  const arrowBodyStart = BG_SRC.indexOf('{', start)
-  let depth = 0, i = arrowBodyStart
-  for (; i < BG_SRC.length; i++) {
-    const c = BG_SRC[i]
-    if (c === '{') depth++
-    else if (c === '}') { depth--; if (depth === 0) { i++; break } }
+// Brace-match a `{...}` block starting at `from` — robust to handler resizing
+// (the old slice(marker, fixedLength) broke whenever a handler grew/shrank).
+function block(from) {
+  const start = BG_SRC.indexOf(from)
+  assert(start >= 0, `not found: ${from}`)
+  const braceStart = BG_SRC.indexOf('{', start)
+  let depth = 0
+  for (let i = braceStart; i < BG_SRC.length; i++) {
+    if (BG_SRC[i] === '{') depth++
+    else if (BG_SRC[i] === '}') { depth--; if (depth === 0) return BG_SRC.slice(start, i + 1) }
   }
-  return BG_SRC.slice(BG_SRC.indexOf('(', start), i) // (sel, root) => { ... }
+  throw new Error(`unbalanced braces after: ${from}`)
 }
-function allDeepAllStarts() {
-  const out = []
-  let i = BG_SRC.indexOf(DEEP_MARKER)
-  while (i >= 0) { out.push(i); i = BG_SRC.indexOf(DEEP_MARKER, i + 1) }
-  return out
-}
-const norm = (s) => s.replace(/\s+/g, ' ').trim()
+const countOf = (needle) => BG_SRC.split(needle).length - 1
 
-console.log('\nshadow-piercing combinator " >> "\n')
+console.log('\nshadow-piercing — one resolver, referenced not copied\n')
 
-// --- Source-shape constraints ---
+// --- 1. Source shape: single definition, zero copies, wired after install ---
 
-test('deepAll is inlined in at least the 3 Phase-1 handlers', () => {
-  const starts = allDeepAllStarts()
-  assert(starts.length >= 3, `expected >=3 inline deepAll copies, found ${starts.length}`)
+test('exactly ONE resolver definition (TAP_DEEP_INSTALL)', () => {
+  assert.equal(countOf('const TAP_DEEP_INSTALL = '), 1,
+    'the shadow resolver must be defined exactly once')
 })
 
-test('all inline deepAll copies are byte-identical (drift-guarded)', () => {
-  const starts = allDeepAllStarts()
-  assert(starts.length >= 3, `need >=3 copies first (found ${starts.length})`)
-  const canonical = norm(extractDeepAllAt(starts[0]))
-  for (const s of starts) {
-    assert(norm(extractDeepAllAt(s)) === canonical,
-      'inline deepAll copies have drifted — they must stay byte-identical')
-  }
+test('ZERO inline deepAll / deepControl copies remain (drift deleted, not guarded)', () => {
+  assert.equal(countOf('const deepAll = (sel, root) =>'), 0, 'no inline deepAll copies may remain')
+  assert.equal(countOf('const deepControl = (n, d) =>'), 0, 'no inline deepControl copies may remain')
 })
 
-test('deepAll splits on the " >> " shadow separator (not CSS, not " >>> ")', () => {
-  const body = extractDeepAllAt(allDeepAllStarts()[0])
-  assert(body.includes("' >> '"), "deepAll must split the selector on the ' >> ' literal")
+test('the resolver crosses shadow via " >> " split + .shadowRoot', () => {
+  const inst = block('const TAP_DEEP_INSTALL = ')
+  assert(inst.includes("' >> '"), 'all() must split the selector on the " >> " literal')
+  assert(inst.includes('.shadowRoot'), 'must descend into element.shadowRoot')
+  assert(inst.includes('globalThis.__tapDeep'), 'must publish the resolver on globalThis.__tapDeep')
 })
 
-test('deepAll crosses .shadowRoot for non-terminal segments', () => {
-  const body = extractDeepAllAt(allDeepAllStarts()[0])
-  assert(body.includes('.shadowRoot'), 'deepAll must descend into element.shadowRoot')
-})
-
-test('Phase-1 handlers resolve their selector via deepAll', () => {
-  for (const [c, len] of [["case 'click': {", 2400], ["case 'type': {", 1200],
-                          ["case 'fill': {", 1200]]) {
-    const body = slice(c, len)
-    assert(body.includes('deepAll('), `${c} must resolve its selector through deepAll`)
+test('every selector-bearing handler installs (ensureDeep) BEFORE referencing __tapDeep', () => {
+  for (const c of ["case 'click': {", "case 'type': {", "case 'fill': {", "case 'blur': {"]) {
+    const body = block(c)
+    const install = body.indexOf('ensureDeep(fx)')
+    const use = body.indexOf('__tapDeep.')
+    assert(install >= 0, `${c} must call ensureDeep(fx)`)
+    assert(use >= 0, `${c} must reference __tapDeep`)
+    assert(install < use, `${c} must ensureDeep BEFORE referencing __tapDeep (else the global is undefined)`)
   }
 })
 
 test('op:extract is NOT wired for shadow piercing (engine-side, would be dead)', () => {
-  const body = slice("case 'extract': {", 1400)
-  assert(!body.includes('deepAll('),
-    'extract must stay plain querySelectorAll — it runs engine-side, never reaching the extension')
+  assert(!block("case 'extract': {").includes('__tapDeep'),
+    'extract runs engine-side (deno-dom) and never reaches the extension — must stay plain')
 })
 
-test('click/type/fill no longer resolve the primary target via plain document.querySelector', () => {
-  // The light-DOM heuristics (semantic text fallback, treewalker, keysLanded verify)
-  // legitimately keep document.querySelector; the PRIMARY resolve must be deepAll.
-  const click = slice("case 'click': {", 2400)
-  assert(!/let el = document\.querySelector\(t\)/.test(click),
-    'click primary resolve must use deepAll, not document.querySelector(t)')
-  const type = slice("case 'type': {", 1200)
-  assert(!/const el = document\.querySelector\(sel\)/.test(type),
-    'type primary resolve must use deepAll')
-  const fill = slice("case 'fill': {", 1200)
-  assert(!/const el = document\.querySelector\(sel\)/.test(fill),
-    'fill primary resolve must use deepAll')
-})
-
-// --- Behavioral constraints: extract the REAL inline deepAll and execute it ---
+// --- 2. Behaviour: run the REAL shipping helper (no re-typed copy) ---
 
 function mkRoot(map) {
   return { querySelectorAll: (s) => map[s] || [], querySelector: (s) => (map[s] || [])[0] || null }
 }
-function makeDeepAll(documentDouble) {
-  const src = extractDeepAllAt(allDeepAllStarts()[0])
-  return new Function('document', `return (${src})`)(documentDouble)
-}
 
-test('"<host> >> <inner>" crosses an open shadow root to the inner element', () => {
+test('all("<host> >> <inner>") crosses an open shadow root to the inner element', () => {
   const btn = { tagName: 'BUTTON', id: 'btn' }
-  const shadow = mkRoot({ 'button.foo': [btn] })
-  const host = { tagName: 'MICRO-APP', shadowRoot: shadow }
+  const host = { tagName: 'MICRO-APP', shadowRoot: mkRoot({ 'button.foo': [btn] }) }
   const doc = mkRoot({ 'micro-app': [host], 'div.plain': [{ id: 'd' }] })
-  const deepAll = makeDeepAll(doc)
-  const r = deepAll('micro-app >> button.foo')
+  const r = tapDeep.all('micro-app >> button.foo', doc)
   assert(r.length === 1 && r[0] === btn, 'must return the button inside the shadow root')
 })
 
-test('plain selector (no " >> ") reduces to plain querySelectorAll (no behavior change)', () => {
+test('all(plain selector) reduces to plain querySelectorAll (no behavior change)', () => {
   const d = { id: 'd' }
-  const doc = mkRoot({ 'div.plain': [d] })
-  const deepAll = makeDeepAll(doc)
-  const r = deepAll('div.plain')
+  const r = tapDeep.all('div.plain', mkRoot({ 'div.plain': [d] }))
   assert(r.length === 1 && r[0] === d, 'plain selector must pass through to querySelectorAll')
 })
 
-test('missing shadowRoot on a non-terminal host returns [] (graceful, no throw)', () => {
-  const host = { tagName: 'MICRO-APP', shadowRoot: null } // closed/none
-  const doc = mkRoot({ 'micro-app': [host] })
-  const deepAll = makeDeepAll(doc)
-  assert.deepEqual(deepAll('micro-app >> button.foo'), [],
+test('all() on a missing shadowRoot returns [] (graceful, no throw)', () => {
+  const host = { tagName: 'MICRO-APP', shadowRoot: null } // closed/absent
+  assert.deepEqual(tapDeep.all('micro-app >> button.foo', mkRoot({ 'micro-app': [host] })), [],
     'an unreachable (closed/absent) shadow root must yield [] not a crash')
 })
 
-test('explicit root arg scopes the query (helper capability)', () => {
-  const cell = { id: 'x1' }
-  const rowEl = mkRoot({ '.v': [cell] })
-  const deepAll = makeDeepAll(mkRoot({})) // document double is empty on purpose
-  const r = deepAll('.v', rowEl)
-  assert(r.length === 1 && r[0] === cell, 'deepAll(sel, root) must query within root, not document')
+test('control() finds an inner form control nested across open shadow roots (recursion)', () => {
+  const inp = { tagName: 'INPUT' }
+  const subHost = { tagName: 'X-INNER', shadowRoot: mkRoot({ 'input, textarea, select': [inp] }) }
+  const host = { tagName: 'MICRO-APP', shadowRoot: mkRoot({ '*': [subHost] }) } // no direct input → recurse
+  assert.equal(tapDeep.control(host, 0), inp, 'control must recurse into nested shadow roots to the <input>')
+})
+
+test('control() returns the element itself when it is already a form control', () => {
+  const inp = { tagName: 'INPUT' }
+  assert.equal(tapDeep.control(inp, 0), inp, 'an INPUT host needs no piercing')
 })
 
 console.log(`\n${passed + failed} constraints, ${passed} passed, ${failed} failed\n`)

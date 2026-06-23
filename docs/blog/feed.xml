@@ -6,7 +6,23 @@
 <description>Engineering insights on browser automation, AI agents, and deterministic programs.</description>
 <language>en-us</language>
 <atom:link href="https://taprun.dev/blog/feed.xml" rel="self" type="application/rss+xml"/>
-<lastBuildDate>Wed, 13 May 2026 00:00:00 +0000</lastBuildDate>
+<lastBuildDate>Tue, 23 Jun 2026 00:00:00 +0000</lastBuildDate>
+
+<item>
+<title>How to Get Bank Statements QuickBooks and Plaid Won't Fetch</title>
+<link>https://taprun.dev/blog/bank-statements-quickbooks-doesnt-support.html</link>
+<description>QuickBooks' bank feed connects only ~3,000 institutions and Plaid covers ~40% of US depository accounts — so small banks, credit unions, and card accounts never import, and the feed only backfills ~90 days. Where the gap is, why it's widening, and the three ways to get an unsupported statement — including the local-first one that keeps credentials off any cloud.</description>
+<pubDate>Tue, 23 Jun 2026 00:00:00 +0000</pubDate>
+<guid>https://taprun.dev/blog/bank-statements-quickbooks-doesnt-support.html</guid>
+</item>
+
+<item>
+<title>Pull Client Bank Statements Without Chasing Clients or Sharing Passwords</title>
+<link>https://taprun.dev/blog/pull-client-bank-statements-without-chasing-or-passwords.html</link>
+<description>The monthly statement chase is the real job nobody bills for — document logistics, not accounting. The three ways bookkeepers do it today and what each costs, plus the local-first alternative: automate the pull on your own machine so the credential never leaves your computer.</description>
+<pubDate>Tue, 23 Jun 2026 00:00:00 +0000</pubDate>
+<guid>https://taprun.dev/blog/pull-client-bank-statements-without-chasing-or-passwords.html</guid>
+</item>
 
 <item>
 <title>Playwright MCP vs Tap vs Browserbase: A Token-Cost Head-to-Head</title>
