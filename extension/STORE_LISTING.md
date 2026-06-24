@@ -55,6 +55,14 @@ the corresponding text field on the Privacy practices tab. Keep each under
 
 > Used to enumerate open tabs, read their URLs/titles, and switch focus between them as part of automating multi-step flows (e.g. "open the dashboard tab, scrape the table, then return to the editor tab"). The extension does not read tab content via this permission — that requires `activeTab`, `scripting`, or `debugger`. Without `tabs` the extension cannot match a user-issued automation request to the correct already-open tab.
 
+#### `tabGroups`
+
+> Used by Tap's `op:tab` host operation to organize the tabs an automation spawns or operates on into named tab groups (e.g. group every tab opened during a multi-step scrape so the user can see at a glance which tabs belong to a running automation, and collapse or close them together). The extension only creates or modifies groups for tabs the automation itself manages; it never reads the content of grouped tabs and never regroups tabs the user organized manually. Without this permission the `op:tab` grouping operations cannot run.
+
+#### `bookmarks`
+
+> Used by Tap's `op:bookmark` host operation so a user-authored automation can read or create bookmarks as an explicit, user-written step (e.g. "bookmark every product page that matches this filter"). Bookmark access is exercised only when the user's Tap program explicitly contains a bookmark operation; the extension never reads, exports, or modifies bookmarks on its own initiative, and bookmark data is never transmitted off-device — it stays in the user's local Chrome profile.
+
 #### `scripting`
 
 > Used to inject the small content-script shim that Tap programs need to read and act on page DOM (querying selectors, dispatching DOM events, reading element text/attributes). Injection is only performed against tabs the user has selected for automation; no scripts are injected into background tabs the user has not opted into. Required for any DOM-level automation operation; without it the extension can only manipulate browser-level state (tabs, cookies) and cannot fulfil its core function.
