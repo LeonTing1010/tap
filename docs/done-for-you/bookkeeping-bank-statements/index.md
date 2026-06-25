@@ -7,10 +7,18 @@ permalink: /done-for-you/bookkeeping-bank-statements/
 
 # We pull your client bank statements — so you never log into 20 bank portals at month-end
 
-Every close, you log into client bank and credit-card portals by hand to download the
-statements QuickBooks won't auto-fetch — especially the small banks and credit unions
-Plaid can't connect. Twenty clients across thirty institutions is thirty separate logins,
-every single month. It's the real job nobody bills for: *document logistics, not accounting.*
+Every close, you log into client bank and credit-card portals by hand to pull the
+statement PDFs QuickBooks won't fetch. And it isn't just the tiny banks — even when the
+feed *connects*, it grabs the **transactions** but not the actual **statement PDF** you
+need to close the reconciliation, so someone still logs into Citi, Amex, or WF every
+month *just for the rec PDF*. Add the small banks and credit unions Plaid can't connect at
+all, and twenty clients across thirty institutions is thirty separate logins, every single
+month. It's the real job nobody bills for: *document logistics, not accounting.*
+
+"Just get read-only bank access" is the usual advice — when it works. Half the time the
+bank offers no view-only role, it's hours on the phone with the client and the treasury
+desk, or the client simply freezes at *"give my accountant access to my bank."* This skips
+all of that: it rides the login you already use.
 
 **We automate that one step for you, on your own computer.** Not in our cloud. Not with
 your client passwords on our servers. The automation runs inside *your* own Chrome,
@@ -70,6 +78,7 @@ Nothing learns, nothing trains on your client data, nothing improvises on a bank
 ## Who this is for
 
 - **Solo bookkeepers & small firms** doing monthly reconciliations for small-business clients (under ~$500k topline)
+- Anyone whose **QuickBooks feed pulls the transactions but not the statement PDF** — Citi, Amex and others — and still logs in monthly *just for the rec PDF*
 - Anyone whose clients bank at **small banks or credit unions QuickBooks / Plaid can't connect**
 - Bookkeepers tired of the month-end statement chase — who'd rather buy the outcome than build the tool
 
