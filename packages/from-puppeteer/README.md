@@ -83,7 +83,7 @@ Same shape as `@taprun/from-playwright`:
 - Template-string interpolation works only for fully-literal back-tick strings.
 - Trailing line comments are visible to the regex matchers.
 - `page.screenshot()` from v0.x is **dropped** in v2 — it isn't in the
-  v2 11-op closure (per `core/types.ts`).
+  v2 13-op closure (per `core/types.ts`).
 
 Future versions will replace the regex scanner with an AST walk.
 
@@ -100,7 +100,7 @@ The output type changed from `TapAnnotation` (v1 W3C envelope) to v2
 | `body.ops` | `observe` (read variant) or `act` (write variant) |
 | `body.allowUnverifiable: true` | (gone — v2 has no op:exec to flag) |
 | `op: "exec", fn, allowUnverifiable` | `op: "eval", fn, returns: { type }` |
-| `op: "screenshot"` | (gone — not in v2 11-op closure) |
+| `op: "screenshot"` | (gone — not in v2 13-op closure) |
 
 ## Part of the Tap ecosystem
 

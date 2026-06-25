@@ -49,7 +49,7 @@
 | **故障诊断** | `tap verify` — 精确 diff 出变了什么 | 无 | 手动抽查 |
 | **检测风险** | 低（真实浏览器会话） | 高 | 高 |
 | **运行时** | 2（Chrome 扩展 + Playwright） | 1 | 1 |
-| **代码可检查** | .plan.json — 纯 JSON，11-op 闭集词汇，可 git diff | 黑盒 / 临时的 | 脆弱脚本 |
+| **代码可检查** | .plan.json — 纯 JSON，13-op 闭集词汇，可 git diff | 黑盒 / 临时的 | 脆弱脚本 |
 | **MCP 原生** | 是（仅创作层 — 执行零 token） | 否 | 否 |
 
 ## 快速开始
@@ -153,7 +153,7 @@ npx create-tap-script github/trending https://github.com/trending
 | [`@taprun/from-stagehand`](https://www.npmjs.com/package/@taprun/from-stagehand) | `.ts/.js` Stagehand 脚本 | 混合：确定性的 page.* 转 plan op；自然语言 `act/extract/observe` 被标记，让 verify 给出诚实裁定 |
 | [`create-tap-script`](https://www.npmjs.com/package/create-tap-script) | （无 — 脚手架） | 从 `<site>/<name> <url>` 生成一个起步 `.plan.json` 信封 |
 
-格式本身有完整文档：[`@taprun/spec`](https://www.npmjs.com/package/@taprun/spec) —— 公共协议接口包：v2 Plan 的 TypeScript 类型（11-op 闭集联合 + 区分式的读/写 Plan 联合）+ JSON Schema 2020-12，其 `$id` 可在 `taprun.dev/spec/plan-v1/schema.json` 解析，并与 TS 类型双向漂移校验。第三方工具（IDE `$schema` 补全、Python/Ruby/Go 中的 ajv 等价校验器、治理层、替代运行时、带 plan 感知权限作用域的 MCP host）都基于此包构建，无需依赖专有的 Tap 引擎。Plan-v1 规范：[taprun.dev/spec/plan-v1](https://taprun.dev/spec/plan-v1/)。五个包的源码：[`packages/`](packages/)（workspace 总览见 [`packages/README.md`](packages/README.md)）。
+格式本身有完整文档：[`@taprun/spec`](https://www.npmjs.com/package/@taprun/spec) —— 公共协议接口包：v2 Plan 的 TypeScript 类型（13-op 闭集联合 + 区分式的读/写 Plan 联合）+ JSON Schema 2020-12，其 `$id` 可在 `taprun.dev/spec/plan-v1/schema.json` 解析，并与 TS 类型双向漂移校验。第三方工具（IDE `$schema` 补全、Python/Ruby/Go 中的 ajv 等价校验器、治理层、替代运行时、带 plan 感知权限作用域的 MCP host）都基于此包构建，无需依赖专有的 Tap 引擎。Plan-v1 规范：[taprun.dev/spec/plan-v1](https://taprun.dev/spec/plan-v1/)。五个包的源码：[`packages/`](packages/)（workspace 总览见 [`packages/README.md`](packages/README.md)）。
 
 ## 你能用 Taprun 做什么？
 
@@ -209,7 +209,7 @@ tap capture https://arxiv.org/list/cs.AI/recent arxiv/recent --intent "recent pa
 ```
 
 1. **你描述**你想要什么（URL × 自然语言意图）
-2. **AI 编译**成 `.plan.json` 程序 — 纯 JSON，11-op 闭集词汇，可版本控制
+2. **AI 编译**成 `.plan.json` 程序 — 纯 JSON，13-op 闭集词汇，可版本控制
 3. **Taprun 运行**程序 — 两个运行时任选，永久运行，$0
 
 每次成功编译都让下一次更快。70+ 社区 tap 意味着你的 Agent 已经认识常见的网站模式。

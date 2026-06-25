@@ -13,7 +13,7 @@ Part of the **Capture** plane — one of Tap's three primitive planes (Capture /
 
 ## What this adapter does
 
-Convert Playwright tests into local-first bare v2 `Plan`s, no rewrite. Maps the deterministic page-level APIs (`page.goto`, `.click`, `.fill`, `.type`, `.press`, `.waitForSelector`, `.waitForTimeout`) to the 11-op v2 closure. Lifecycle calls (`browser.launch` / `close`) silently dropped. Anything outside the deterministic surface either throws under `strict: true` or becomes a typed `op:eval` with the original line preserved as a comment for human follow-up — never free-form JS.
+Convert Playwright tests into local-first bare v2 `Plan`s, no rewrite. Maps the deterministic page-level APIs (`page.goto`, `.click`, `.fill`, `.type`, `.press`, `.waitForSelector`, `.waitForTimeout`) to the 13-op v2 closure. Lifecycle calls (`browser.launch` / `close`) silently dropped. Anything outside the deterministic surface either throws under `strict: true` or becomes a typed `op:eval` with the original line preserved as a comment for human follow-up — never free-form JS.
 
 ## Install
 

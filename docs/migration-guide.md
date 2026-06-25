@@ -78,7 +78,7 @@ Behaviour reference: the `tap migrate` CLI verb provided by the Tap binary. The 
 
 ### `tap lint` (planned)
 
-If you author plans by hand, lint is the static gate. It rejects deleted fields (`legacy: true` on save, `intent` discriminator, `allowUnverifiable`), enforces the 11-op closure, and verifies the read/write discriminated union is well-formed.
+If you author plans by hand, lint is the static gate. It rejects deleted fields (`legacy: true` on save, `intent` discriminator, `allowUnverifiable`), enforces the 13-op closure, and verifies the read/write discriminated union is well-formed.
 
 ```bash
 tap lint                                        # whole fleet
@@ -109,14 +109,14 @@ If the plan is bespoke (no public source, no easy re-forge), open a tap-skills i
 | [`@taprun/spec`](https://www.npmjs.com/package/@taprun/spec) | Vendored v1 schema | Re-vendored v2 `core/types.ts` PUBLIC subset + JSON Schema validator | `npm install @taprun/spec@^1` |
 | [`@taprun/from-playwright`](https://www.npmjs.com/package/@taprun/from-playwright) | Compiles to v1 plan | Compiles to v2 Plan | `npm install @taprun/from-playwright@^1` |
 | [`@taprun/from-puppeteer`](https://www.npmjs.com/package/@taprun/from-puppeteer) | Compiles to v1 plan | Compiles to v2 Plan | `npm install @taprun/from-puppeteer@^1` |
-| [`@taprun/from-stagehand`](https://www.npmjs.com/package/@taprun/from-stagehand) | Compiles Stagehand → v1 | **Deprecated, no v1.0** | Pin to last v0.x; see note below |
+| [`@taprun/from-stagehand`](https://www.npmjs.com/package/@taprun/from-stagehand) | Compiles Stagehand → v1 | Compiles to v2 Plan | `npm install @taprun/from-stagehand@^1` |
 | [`create-tap-script`](https://www.npmjs.com/package/create-tap-script) | Scaffolds v1 starter | Scaffolds v2 starter | `npx create-tap-script@latest` |
 
-### Why `from-stagehand` is deprecated
+### `from-stagehand` ships v2 at 1.0.0
 
-Stagehand is cloud-coupled — it requires Browserbase to run. Tap v2 is local-first by architecture (cookies never cross a trust boundary). Rewriting `from-stagehand` to emit v2 Plans would force the substrate interface to grow a cloud implementation alongside the local one, dragging the cloud-coupling problem into the engine. We drew the line at the adapter boundary instead. Existing v0.x consumers keep their lockfiles; the integration is not maintained going forward.
+An earlier revision of this guide deprecated `from-stagehand` — Stagehand is cloud-coupled (it requires Browserbase to run) while Tap v2 is local-first by architecture (cookies never cross a trust boundary). That call was reversed once it was clear the adapter is **compile-time only**: it reads Stagehand `.ts/.js` source and emits a bare v2 `Plan`, so it never drags a cloud implementation into the engine. Deterministic Playwright calls map to plan ops; NL `act` / `extract` / `observe` land on `op:eval` with the prompt preserved as a TODO for you to finalise. Install with `npm install @taprun/from-stagehand@^1`.
 
-If you have a Stagehand script you want on Tap v2, the practical path is: capture the same flow with [`@taprun/from-playwright`](https://www.npmjs.com/package/@taprun/from-playwright) against your own Chromium, since the underlying Playwright control-flow is what Stagehand wraps anyway.
+Prefer to skip the NL steps entirely? Capture the same flow with [`@taprun/from-playwright`](https://www.npmjs.com/package/@taprun/from-playwright) against your own Chromium — the underlying Playwright control-flow is what Stagehand wraps anyway.
 
 ### v0.x is not unpublished
 

@@ -17,7 +17,7 @@ The ADRs themselves live alongside the engine source (which is closed) and are m
 
 ### [Unified tap primitive](#) — `2026-05-03-unified-tap-primitive.md`
 
-The single load-bearing ADR. Defines the v2 schema (5 storage entities — `TapId`, `Plan`, `Run`, `Intent`, `Fingerprint`), the 11-op closure, the read/write discriminated union, the 4-arm verdict enum, the 5-arm intent state machine. Source-of-truth file is `core/types.ts`. Everything else is downstream.
+The single load-bearing ADR. Defines the v2 schema (5 storage entities — `TapId`, `Plan`, `Run`, `Intent`, `Fingerprint`), the 13-op closure, the read/write discriminated union, the 4-arm verdict enum, the 5-arm intent state machine. Source-of-truth file is `core/types.ts`. Everything else is downstream.
 
 ---
 

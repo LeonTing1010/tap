@@ -99,7 +99,7 @@ A `.plan.json` plan with `runtime: "playwright"` can target any Playwright endpo
 Playwright-MCP (the Microsoft project) and Tap overlap in one specific mode: Playwright-MCP run **with `--extension`** also uses the user's Chrome via extension. In that mode the credential-safety properties match Tap's. The difference is then about the program format:
 
 - Playwright-MCP: LLM operates on a live Playwright session every call. Each agent turn costs tokens.
-- Tap: AI compiles once into an 11-op closed-union plan; every subsequent run is pure data + dispatch, zero tokens.
+- Tap: AI compiles once into an 13-op closed-union plan; every subsequent run is pure data + dispatch, zero tokens.
 
 [Full breakdown → `/blog/playwright-mcp-vs-tap.html`](/blog/playwright-mcp-vs-tap.html) — when each wins, when they compose.
 
@@ -123,7 +123,7 @@ If your task description starts with "for each customer's account" — Tap is th
 
 - [Authenticated browser MCP — what the trust boundary actually means](/blog/authenticated-browser-mcp.html)
 - [Why local-first browser automation outlasts cloud SDKs](/local-first/)
-- [Plan-v1 spec (11-op closed union)](/spec/plan-v1/)
+- [Plan-v1 spec (13-op closed union)](/spec/plan-v1/)
 - [Compile once, run forever — the four meta verbs](/blog/compile-once-diff-the-drift.html)
 
 ---

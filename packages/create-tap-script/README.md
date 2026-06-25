@@ -66,7 +66,7 @@ Pass `--write` to scaffold a mutation tap with `act` + `key` (intent dedup) inst
 
 ## Spec & op set
 
-The output is a bare Tap v2 Plan (`@taprun/spec` v1.0+) — the W3C Annotation envelope and `op:exec` from v0.x are gone. Plans use the closed 11-op union: `fetch` · `nav` · `wait` · `input` · `extract` · `cookies` · `tap` · `if` · `foreach` · `parallel` · `eval`. CEL handles all data shaping; there is no `intent: "read"|"write"` field — read vs write is encoded as the Plan discriminated union (presence of `act` + `key`).
+The output is a bare Tap v2 Plan (`@taprun/spec` v1.0+) — the W3C Annotation envelope and `op:exec` from v0.x are gone. Plans use the closed 13-op union: `fetch` · `nav` · `wait` · `input` · `extract` · `cookies` · `tap` · `if` · `foreach` · `parallel` · `eval` · `tab` · `bookmark`. CEL handles all data shaping; there is no `intent: "read"|"write"` field — read vs write is encoded as the Plan discriminated union (presence of `act` + `key`).
 
 See <https://taprun.dev/spec/> for the full reference.
 

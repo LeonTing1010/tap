@@ -53,7 +53,7 @@ Repair:  re-run capture against the same site/name; the next      (only when nee
 | **Breakage diagnostics** | `tap verify` — exact diff of what changed | None | Manual spot checks |
 | **Detection risk** | Low (real browser sessions) | High | High |
 | **Runtimes** | 2 (Chrome extension + Playwright) | 1 | 1 |
-| **Code inspectable** | .plan.json — bare JSON, 11-op closed vocabulary, git diff | Black box / ephemeral | Fragile scripts |
+| **Code inspectable** | .plan.json — bare JSON, 13-op closed vocabulary, git diff | Black box / ephemeral | Fragile scripts |
 | **MCP native** | Yes (authoring layer only — execution is zero tokens) | No | No |
 
 ## Get Started
@@ -157,7 +157,7 @@ npx create-tap-script github/trending https://github.com/trending
 | [`@taprun/from-stagehand`](https://www.npmjs.com/package/@taprun/from-stagehand) | `.ts/.js` Stagehand scripts | Hybrid: deterministic page.* mapped to plan ops; NL `act/extract/observe` flagged for honest verify verdicts |
 | [`create-tap-script`](https://www.npmjs.com/package/create-tap-script) | (none — scaffolder) | Generates a starter `.plan.json` envelope from `<site>/<name> <url>` |
 
-The format itself is documented at [`@taprun/spec`](https://www.npmjs.com/package/@taprun/spec) — the public protocol surface package: TypeScript types for the v2 Plan (11-op closed union + discriminated read/write Plan union) + JSON Schema 2020-12 with `$id` resolvable at `taprun.dev/spec/plan-v1/schema.json`, bidirectionally drift-guarded against the TS types. Third-party tooling (IDE `$schema` autocomplete, ajv-equivalent validators in Python/Ruby/Go, governance layers, alternative runtimes, MCP hosts with plan-aware permission scoping) builds against this package without depending on the proprietary Tap engine. Plan-v1 reference: [taprun.dev/spec/plan-v1](https://taprun.dev/spec/plan-v1/). Source for all five packages: [`packages/`](packages/) (see [`packages/README.md`](packages/README.md) for the workspace overview).
+The format itself is documented at [`@taprun/spec`](https://www.npmjs.com/package/@taprun/spec) — the public protocol surface package: TypeScript types for the v2 Plan (13-op closed union + discriminated read/write Plan union) + JSON Schema 2020-12 with `$id` resolvable at `taprun.dev/spec/plan-v1/schema.json`, bidirectionally drift-guarded against the TS types. Third-party tooling (IDE `$schema` autocomplete, ajv-equivalent validators in Python/Ruby/Go, governance layers, alternative runtimes, MCP hosts with plan-aware permission scoping) builds against this package without depending on the proprietary Tap engine. Plan-v1 reference: [taprun.dev/spec/plan-v1](https://taprun.dev/spec/plan-v1/). Source for all five packages: [`packages/`](packages/) (see [`packages/README.md`](packages/README.md) for the workspace overview).
 
 ## What Can You Do?
 
@@ -215,7 +215,7 @@ You → AI → Taprun ──────┤
 ```
 
 1. **You describe** what you want (URL × natural-language intent)
-2. **AI compiles** it into a `.plan.json` program — bare JSON, 11-op closed vocabulary, version-controlled
+2. **AI compiles** it into a `.plan.json` program — bare JSON, 13-op closed vocabulary, version-controlled
 3. **Taprun runs** the program on either runtime — forever, at $0
 
 Every successful compilation makes the next one faster. 70+ community taps mean your agent already knows the common patterns.

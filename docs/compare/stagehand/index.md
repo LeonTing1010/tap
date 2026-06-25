@@ -55,7 +55,7 @@ That single architectural axis — *where do logged-in cookies live during autom
 | Dimension | Stagehand | Tap |
 |---|---|---|
 | **Where it runs** | Browserbase cloud (or your machine if self-hosted) | Your local Chrome (extension) or your local CLI |
-| **Plan representation** | TypeScript code: `act()`, `extract()`, `observe()` calls embedded in your `.ts` | Bare v2 Plan — 11-op closed union, pure data, no JS in the runtime path |
+| **Plan representation** | TypeScript code: `act()`, `extract()`, `observe()` calls embedded in your `.ts` | Bare v2 Plan — 13-op closed union, pure data, no JS in the runtime path |
 | **AI in runtime?** | Yes — every `act()` calls an LLM to choose the next action (with caching) | No — LLM only at compile/`forge` time. Runtime is pure code. |
 | **Cookie / session storage** | Browserbase stores them (encrypted at rest, but they cross a boundary) | Local browser only — never serialized, never transmitted |
 | **What "self-repair" means** | LLM re-decides on retry when an `act()` fails | Per-tap CEL `snapshot_equivalent` catches drift; re-running `capture` against the same site/name re-compiles the broken op |

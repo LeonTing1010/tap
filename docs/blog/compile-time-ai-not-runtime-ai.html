@@ -149,7 +149,7 @@ hr { border: none; border-top: 1px solid rgba(20,17,12,0.15); margin: 48px 0; }
 
 <h2>This is the architecture Tap is built on</h2>
 
-<p>Tap's plan format is a <a href="/spec/plan-v1/">closed 11-op union</a>. The full vocabulary is fixed; a plan cannot, at execution time, introduce an op the runtime doesn't know. The plan runtime is mechanically prevented from loading new code paths &mdash; a static guard rejects <code>new Worker</code>, <code>new Function</code>, <code>eval</code>, and dynamic <code>.js</code> imports inside the plan-runtime module. The model that wrote the plan cannot influence what runs.</p>
+<p>Tap's plan format is a <a href="/spec/plan-v1/">closed 13-op union</a>. The full vocabulary is fixed; a plan cannot, at execution time, introduce an op the runtime doesn't know. The plan runtime is mechanically prevented from loading new code paths &mdash; a static guard rejects <code>new Worker</code>, <code>new Function</code>, <code>eval</code>, and dynamic <code>.js</code> imports inside the plan-runtime module. The model that wrote the plan cannot influence what runs.</p>
 
 <p>Read and write are unrepresentable as the wrong shape. The Plan TypeScript type is a discriminated union: the read variant has <code>act?: never; key?: never</code>; the write variant requires both. A read tap cannot quietly become a write tap; that's a different shape, fails compile, fails lint.</p>
 

@@ -61,7 +61,7 @@
   "codeRepository": "https://github.com/LeonTing1010/tap",
   "keywords": ["local-first", "browser automation", "MCP", "tap protocol", "forge", "deterministic automation", "Chrome extension", "Playwright alternative", "browser-use alternative", "Stagehand alternative", "verify", "snapshot", "drift detection"],
   "offers": [
-    {"@type": "Offer", "price": "0", "priceCurrency": "USD", "description": "Free during v0.x. @taprun/spec 1.1, {{ site.data.cli.counts.npm_packages }} npm packages, Chrome extension, tap CLI ({{ site.data.cli.verbs.capture.name }}/{{ site.data.cli.verbs.verify.name }}/{{ site.data.cli.verbs.mark.name }} + saved-tap run), {{ site.data.cli.counts.community_taps }}+ community taps. Paid tiers deferred until first paying customer."}
+    {"@type": "Offer", "price": "0", "priceCurrency": "USD", "description": "Free during v0.x. @taprun/spec 1.6, {{ site.data.cli.counts.npm_packages }} npm packages, Chrome extension, tap CLI ({{ site.data.cli.verbs.capture.name }}/{{ site.data.cli.verbs.verify.name }}/{{ site.data.cli.verbs.mark.name }} + saved-tap run), {{ site.data.cli.counts.community_taps }}+ community taps. Paid tiers deferred until first paying customer."}
   ]
 }
 </script>
@@ -96,9 +96,9 @@
   "@type": "FAQPage",
   "mainEntity": [
     {"@type": "Question", "name": "Why is local-first architectural, not just a feature?", "acceptedAnswer": {"@type": "Answer", "text": "Cloud-first SDKs (Browserbase, Apify, Stagehand) drive a browser they own — that means your cookies, auth tokens, and live session must sit in their infrastructure for the SDK to work at all. There is no technical workaround. Taprun's Chrome extension reuses your real, already-logged-in browser, so credentials never cross a trust boundary."}},
-    {"@type": "Question", "name": "What does 'compile once' mean?", "acceptedAnswer": {"@type": "Answer", "text": "AI runs once at authoring time to capture a site's stable structural addresses (JSON-LD, OpenAPI, ARIA, RSS) — not to generate fragile CSS selectors. The compiled program is an 11-op deterministic plan that replays at zero tokens per run."}},
+    {"@type": "Question", "name": "What does 'compile once' mean?", "acceptedAnswer": {"@type": "Answer", "text": "AI runs once at authoring time to capture a site's stable structural addresses (JSON-LD, OpenAPI, ARIA, RSS) — not to generate fragile CSS selectors. The compiled program is an 13-op deterministic plan that replays at zero tokens per run."}},
     {"@type": "Question", "name": "What happens when the site changes?", "acceptedAnswer": {"@type": "Answer", "text": "Run `{{ site.data.cli.verbs.verify.cli }} <site>/<name>`. The verdict is one of four — equivalent · drifted · first_snapshot · unreachable — derived from a per-tap CEL `snapshot_equivalent` predicate, so you decide what counts as drift. Re-running `{{ site.data.cli.verbs.capture.cli }}` against the same site/name overwrites the stored Plan and resets the baseline — that is the heal path."}},
-    {"@type": "Question", "name": "Is my data safe?", "acceptedAnswer": {"@type": "Answer", "text": "Everything runs on your machine. Plans are structured data — a closed 11-op vocabulary, not arbitrary JavaScript. No runtime eval, no Worker, no cloud exfiltration, no telemetry. See SECURITY.md in the public repo."}}
+    {"@type": "Question", "name": "Is my data safe?", "acceptedAnswer": {"@type": "Answer", "text": "Everything runs on your machine. Plans are structured data — a closed 13-op vocabulary, not arbitrary JavaScript. No runtime eval, no Worker, no cloud exfiltration, no telemetry. See SECURITY.md in the public repo."}}
   ]
 }
 </script>
@@ -1241,7 +1241,7 @@ footer {
             <svg width="36" height="36" viewBox="0 0 24 24" fill="var(--text)" style="margin-bottom:8px;"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V6h16v12zM6 10h8v2H6zm0-3h12v2H6z"/></svg>
             <div style="font-family:var(--font-mono);font-size:11px;color:var(--text);">Tap CLI</div>
           </div>
-          <div style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim);margin-top:8px;">11-op plan</div>
+          <div style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim);margin-top:8px;">13-op plan</div>
         </div>
 
         <!-- Arrow -->
@@ -1374,7 +1374,7 @@ footer {
     <div class="section-label reveal">The mechanism</div>
     <h2 class="reveal delay-1">Pay the AI to think <em>once</em>. Then never pay it again.</h2>
     <p class="section-deck reveal delay-2">
-      Taprun compiles your task into an 11-op deterministic plan — a small JSON program AI never re-reads. Your Chrome replays it. The bill stops at compile time.
+      Taprun compiles your task into an 13-op deterministic plan — a small JSON program AI never re-reads. Your Chrome replays it. The bill stops at compile time.
     </p>
 
     <div class="how-grid reveal delay-3">

@@ -134,6 +134,18 @@ hr::before { content: '◆ ◆ ◆'; position: absolute; left: 50%; top: -0.7em;
 <p class="meta-intro">Every Taprun release, written as if for a typesetter. For full technical notes on each version, see the <a href="https://github.com/LeonTing1010/tap/releases">GitHub releases page</a>.</p>
 
 <div class="version-block">
+<h2><a href="https://www.npmjs.com/package/@taprun/spec">npm ecosystem — @taprun/spec 1.6.0 · @taprun/from-stagehand 1.0.0</a> <span class="date">June 25, 2026</span></h2>
+<div class="version-highlight">
+<strong>The npm ecosystem catches up to the engine.</strong> <code>@taprun/spec</code> now publishes the full 13-op closed union — the 11 substrate / control / escape ops plus the <code>tab</code> and <code>bookmark</code> host ops — and three new <code>eval-forbidden-*</code> lint rules. <code>@taprun/from-stagehand</code> rejoins the line-up at 1.0.0, emitting bare v2 <code>Plan</code> objects like its <code>from-playwright</code> / <code>from-puppeteer</code> siblings. Both resolve automatically for anyone on the <code>@^1</code> caret range.
+</div>
+<h3>Changes</h3>
+<ul>
+<li><strong><code>@taprun/spec</code> 1.2.0 → 1.6.0.</strong> Additive, backward-compatible. Three new <code>LINT_RULE_NAMES</code> slugs for the op:eval value-only escape — <code>eval-forbidden-execcommand</code>, <code>eval-forbidden-submit</code>, <code>eval-forbidden-requestsubmit</code> — keep DOM-mutation / form-submission verbs blocked when a clean <code>op:input</code> alternative exists. Page-native <code>fetch</code> / <code>XMLHttpRequest</code> stay intentionally permitted. The published JSON Schema + types carry the 13-op closure (host ops <code>tab</code> / <code>bookmark</code>, ADR 2026-06-11).</li>
+<li><strong><code>@taprun/from-stagehand</code> 0.1.2 → 1.0.0.</strong> No longer deprecated. The Stagehand adapter is compile-time only — it reads <code>.ts/.js</code> source and emits a bare v2 <code>Plan</code>, never pulling Browserbase's cloud coupling into the engine. Deterministic Playwright calls compile to plan ops; natural-language <code>act</code> / <code>extract</code> / <code>observe</code> land on <code>op:eval</code> with the prompt preserved as a TODO.</li>
+</ul>
+</div>
+
+<div class="version-block">
 <h2><a href="https://github.com/LeonTing1010/tap/releases/tag/v0.16.3">v0.16.0 – v0.16.3</a> <span class="date">May 13, 2026</span></h2>
 <div class="version-highlight">
 <strong>Extension transport: WebSocket → Native Messaging.</strong> The extension no longer reaches the CLI via <code>ws://127.0.0.1:9333</code>; it speaks to a Chrome-managed native-messaging host over OS-supervised stdio. No localhost port is opened; the host is launched on demand and dies when the extension disconnects. PoC validated for 19m30s sustained port, 2.1ms graceful EOF, and clean shutdown across three failure modes. First-run flow gains a one-time <code>tap bridge setup --extension-id &lt;id&gt;</code> step that writes the native-host manifest into Chrome's profile directory; the popup walks new users through it.

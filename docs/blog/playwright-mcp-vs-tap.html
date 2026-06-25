@@ -198,7 +198,7 @@ hr { border: none; border-top: 1px solid rgba(20,17,12,0.15); margin: 48px 0; }
 
 <p>For Stagehand the shape is the same. <code>extract({ schema })</code> ships the page to an LLM; <code>act("click the submit button")</code> ships a DOM context to an LLM. The improvements over a naive agent loop are real (better selectors, better caching, fewer retries) but the per-call ceiling is set by the architecture, not by engineering effort. Stagehand's own docs publish per-call costs in the cents range, scaling linearly with calls.</p>
 
-<p>Tap's number after the first compile is <strong>0</strong>. Not 0.001, not "very small" &mdash; zero. The compiled <code>.plan.json</code> is a closed-union 11-op program that the extension replays deterministically; no model is called during execution. <a href="./compile-once-diff-the-drift.html">Across 100 queries per drift, Tap is 849&times; cheaper than Arm&nbsp;A. Across 1,000 it's 8,489&times;.</a></p>
+<p>Tap's number after the first compile is <strong>0</strong>. Not 0.001, not "very small" &mdash; zero. The compiled <code>.plan.json</code> is a closed-union 13-op program that the extension replays deterministically; no model is called during execution. <a href="./compile-once-diff-the-drift.html">Across 100 queries per drift, Tap is 849&times; cheaper than Arm&nbsp;A. Across 1,000 it's 8,489&times;.</a></p>
 
 <p>This advantage only exists because the workload is <em>repeated</em>. If you scrape HN once and never again, Tap's compile step (one LLM call) is roughly the same cost as Arm&nbsp;A's single extraction. The compiler model needs amortization to be cheap. For one-shot research tasks, runtime extraction is the right tool.</p>
 

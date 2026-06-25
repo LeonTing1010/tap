@@ -5,7 +5,7 @@ MIT, published to npm under `@taprun/*`.
 
 | Package | Version | What it is |
 |---|---|---|
-| [`@taprun/spec`](./spec) | `1.2.0` | **Public protocol surface.** TypeScript types for the v2 Plan format (11-op closed union + discriminated read/write Plan union), JSON Schema 2020-12 with `$id` resolvable at `taprun.dev/spec/plan-v1/schema.json`, lint rule names, namespace vocabulary terms. No runtime engine — pure type + schema package. Source-of-truth for third-party tooling. |
+| [`@taprun/spec`](./spec) | `1.6.0` | **Public protocol surface.** TypeScript types for the v2 Plan format (13-op closed union + discriminated read/write Plan union), JSON Schema 2020-12 with `$id` resolvable at `taprun.dev/spec/plan-v1/schema.json`, lint rule names, namespace vocabulary terms. No runtime engine — pure type + schema package. Source-of-truth for third-party tooling. |
 | [`@taprun/from-playwright`](./from-playwright) | `1.0.0` | Convert Playwright `.ts/.js` source → v2 `.plan.json` (bare Plan, no envelope). Deterministic mapping of `page.goto/click/fill/waitFor/...` → `op:nav/input/wait/...`; falls back to `op:eval` for unsupported calls (with `returns.type` declaration). |
 | [`@taprun/from-puppeteer`](./from-puppeteer) | `1.0.0` | Convert Puppeteer `.ts/.js` source → v2 `.plan.json`. Mirrors from-playwright with Puppeteer-specific API tweaks. |
 | [`@taprun/from-stagehand`](./from-stagehand) | `1.0.0` | Convert Stagehand `.ts/.js` source → v2 `.plan.json`. Deterministic Playwright calls map to plan ops; NL `stagehand.act/extract/observe` fall through to `op:eval`. |
@@ -41,7 +41,7 @@ MIT, published to npm under `@taprun/*`.
 
 **PUBLIC** (exported, MIT, version-stable):
 - `Plan` (discriminated read/write union), `ArgSpec`, `TapId`, `CelExpr`
-- `Op` (11-arm closed union) + every member interface (`FetchOp`, `NavOp`, `WaitOp`, `InputOp`, `ExtractOp`, `CookiesOp`, `TapOp`, `IfOp`, `ForeachOp`, `ParallelOp`, `EvalOp`)
+- `Op` (13-arm closed union) + every member interface (`FetchOp`, `NavOp`, `WaitOp`, `InputOp`, `ExtractOp`, `CookiesOp`, `TapOp`, `IfOp`, `ForeachOp`, `ParallelOp`, `EvalOp`, `TabOp`, `BookmarkOp`)
 - `OP_NAMES_V2`, `OpName` (runtime introspection)
 - `INTENT_STATES`, `VERDICT_VALUES` (state-machine enums)
 - `LintError`, `LintRuleName`, `LINT_RULE_NAMES` (consumer-side typing for lint surfaces)

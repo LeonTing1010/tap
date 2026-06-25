@@ -1,6 +1,6 @@
 ---
 title: "Tap Plan Format v1 — Reference"
-description: "On-disk format for Tap v2 .plan.json. Bare-JSON plan body, 11-op closed union, Plan as discriminated read/write union, expression language, verification surface. The reference for integrators building governance layers, alternative runtimes, MCP hosts, and static analyzers against compiled Tap programs."
+description: "On-disk format for Tap v2 .plan.json. Bare-JSON plan body, 13-op closed union, Plan as discriminated read/write union, expression language, verification surface. The reference for integrators building governance layers, alternative runtimes, MCP hosts, and static analyzers against compiled Tap programs."
 permalink: /spec/plan-v1/
 ---
 
@@ -246,7 +246,7 @@ Plans declare structure; external layers enforce authorization. The
 two are orthogonal:
 
 - **Plan layer (Tap)**: compile-time invariant. The Plan discriminated
-  union (`act` present = write) plus the closed 11-op union define
+  union (`act` present = write) plus the closed 13-op union define
   what a tap can possibly do. Static; verifiable without execution.
 - **Authorization layer (external)**: runtime invariant. Signs /
   permits / denies individual tap invocations. Receipts prove what

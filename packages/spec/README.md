@@ -15,8 +15,10 @@ public contract third-party tools build against.
 This is the v2 schema. v0.x targeted the legacy plan format (W3C
 Annotation envelope, 24-op union, op:exec body). v2 ships:
 
-- **11-op closed union** (was 24 ops) — `fetch`, `nav`, `wait`, `input`,
-  `extract`, `cookies`, `tap`, `if`, `foreach`, `parallel`, `eval`.
+- **13-op closed union** (was 24 ops) — `fetch`, `nav`, `wait`, `input`,
+  `extract`, `cookies`, `tap`, `if`, `foreach`, `parallel`, `eval`,
+  `tab`, `bookmark` (the last two are host ops — browser-harness
+  management, per ADR 2026-06-11).
 - **Plan discriminated union** — read variant vs write variant
   (act + key required at the type level when act is non-empty).
 - **State-machine enums** — `Verdict` (4 arms) and `IntentState` (5 arms).
@@ -30,9 +32,10 @@ Full design: [ADR 2026-05-04-ecosystem-v2-launch](https://github.com/LeonTing101
 ## What's in scope (PUBLIC)
 
 - `Plan`, `ArgSpec`, `TapId`
-- `Op` (11-arm closed union) + every member interface
+- `Op` (13-arm closed union) + every member interface
   (`FetchOp`, `NavOp`, `WaitOp`, `InputOp`, `ExtractOp`, `CookiesOp`,
-  `TapOp`, `IfOp`, `ForeachOp`, `ParallelOp`, `EvalOp`)
+  `TapOp`, `IfOp`, `ForeachOp`, `ParallelOp`, `EvalOp`, `TabOp`,
+  `BookmarkOp`)
 - `OP_NAMES_V2`, `OpName`
 - `Verdict`, `VERDICT_VALUES` — doctor outcome enum
 - `IntentState`, `INTENT_STATES` — write-tap state machine

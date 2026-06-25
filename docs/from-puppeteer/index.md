@@ -13,7 +13,7 @@ Part of the **Capture** plane — one of Tap's three primitive planes (Capture /
 
 ## What this adapter does
 
-Convert Puppeteer scripts into local-first bare v2 `Plan`s, no rewrite. Maps the most common page-level APIs (`page.goto`, `.click`, `.type`, `.keyboard.press`, `.waitForSelector`, `.waitForTimeout`) to the 11-op v2 closure. Lifecycle calls (`puppeteer.launch` / `browser.close`) silently dropped. `page.type` aligns to `op:input` with `kind:"fill"` (semantic alignment); `keyboard.press` to `op:input` with `kind:"press"` and no `target` (focused element). Anything outside the deterministic surface either throws under `strict: true` or becomes a typed `op:eval` with the original line preserved as a comment.
+Convert Puppeteer scripts into local-first bare v2 `Plan`s, no rewrite. Maps the most common page-level APIs (`page.goto`, `.click`, `.type`, `.keyboard.press`, `.waitForSelector`, `.waitForTimeout`) to the 13-op v2 closure. Lifecycle calls (`puppeteer.launch` / `browser.close`) silently dropped. `page.type` aligns to `op:input` with `kind:"fill"` (semantic alignment); `keyboard.press` to `op:input` with `kind:"press"` and no `target` (focused element). Anything outside the deterministic surface either throws under `strict: true` or becomes a typed `op:eval` with the original line preserved as a comment.
 
 ## Install
 

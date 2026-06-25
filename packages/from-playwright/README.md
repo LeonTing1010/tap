@@ -10,7 +10,7 @@ Take any Playwright `.ts/.js` script, get back a v2 `Plan` that `tap verify` and
 
 ## v1.0 — v2 schema
 
-**1.0** ships v2 plan output. Per [ADR 2026-05-04 Ecosystem v2 Launch](https://github.com/LeonTing1010/tap/blob/main/docs/adr/2026-05-04-ecosystem-v2-launch.md), the entire ecosystem moved off the v1 W3C Annotation envelope to a bare `Plan` shape with the 11-op closure. Output of v1.0 is **not** backwards compatible with v0.x — install `@taprun/spec@1.x` alongside.
+**1.0** ships v2 plan output. Per [ADR 2026-05-04 Ecosystem v2 Launch](https://github.com/LeonTing1010/tap/blob/main/docs/adr/2026-05-04-ecosystem-v2-launch.md), the entire ecosystem moved off the v1 W3C Annotation envelope to a bare `Plan` shape with the 13-op closure. Output of v1.0 is **not** backwards compatible with v0.x — install `@taprun/spec@1.x` alongside.
 
 > v0.x targets the legacy Tap v1 schema. It still compiles for users on existing lockfiles; new installs should use v1.0+.
 
@@ -51,7 +51,7 @@ await writeFile("github/search.plan.json", JSON.stringify(plan, null, 2));
 | `page.screenshot()` | dropped (no v2 op); warning emitted | retired |
 | anything else | `{ op: "eval", ..., returns: { type: "object" } }` placeholder + warning | escape hatch |
 
-The 11-op v2 closure has no `op:exec`. The eval escape hatch must declare `returns.type` per ADR 2026-05-03 §11.5 #47, so AI / human review is required to finalise an eval-fallback plan.
+The 13-op v2 closure has no `op:exec`. The eval escape hatch must declare `returns.type` per ADR 2026-05-03 §11.5 #47, so AI / human review is required to finalise an eval-fallback plan.
 
 ## Read vs write variant
 
