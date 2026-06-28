@@ -10,10 +10,10 @@ name: release-smoke
 # NOT a PR gate — npm registry propagation takes a few minutes after publish,
 # and runtime variance on hosted runners would make this flaky on every PR.
 #
-# What it does NOT cover: brew install (formula auto-bump from core happens
-# in parallel with this trigger, so brew may lag by minutes — caught by the
-# daily cron in cli-drift.yml instead). Curl install.sh path likewise
-# deferred. Windows skipped (not in release matrix).
+# What it does NOT cover: brew install (no longer smoke-tested in CI — the
+# brew-smoke.yml + cli-drift.yml drift crons were removed as unnecessary at
+# current scale; the brew formula is still auto-bumped by core/release.yml).
+# Curl install.sh path likewise deferred. Windows skipped (not in release matrix).
 on:
   release:
     types: [published]

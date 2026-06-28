@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Tap — Local-First Browser MCP",
-  "version": "0.19.0",
+  "version": "0.20.3",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwMm2U1iu9O3stoynafzLkJQ0LBcHi6l7OKHwtN9IeiAhKIgJcwR0VrqTVB5tm0b267lMytgQeYVok/3rqtATr38EajrT44FGVGuXg/CFRzvwSISUNdS/6TSrp/7QadpROyfStsHNLEWXV4oKLkn3iIv0IkyxpLrlnRExUP/GTTYqHbZnmXLurWHjXmbFKod3jyojH58Px2HSQq62dbQauuZDR9nm8iCKBpL3g1iqdrX6/N4h4RQ3nL3a+kdTRTgSsgo7MuoWDA4f6/0bWXEhuTh28GbgEGGsTu73BZhYspNM52JLQG/KN/h8jgZGDWUN5EvIx8IlmEgzKXUgsiT0jwIDAQAB",
   "description": "Browser automation MCP — runs in your own browser with your logged-in sessions. Local-first alternative to Stagehand / Browserbase.",
   "homepage_url": "https://taprun.dev/install?utm_source=chromewebstore&utm_medium=extension",
