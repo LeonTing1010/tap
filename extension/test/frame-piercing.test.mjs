@@ -103,11 +103,28 @@ test('waitFor polls frame resolution instead of one-shot throwing', () => {
 })
 
 test('upload pierces same-origin frames via objectId, errors clearly on OOPIF', () => {
-  const body = slice("case 'upload': {", 1900)
+  // window widened 1900 -> 4600: the L2 trusted chooser-intercept branch
+  // (2026-07-02) now precedes the frame-piercing branch inside the case.
+  const body = slice("case 'upload': {", 4600)
   assert(body.includes('contentDocument'), 'upload must chain through contentDocument')
   assert(body.includes('objectId'), 'upload must hand the objectId to DOM.setFileInputFiles')
   assert(body.includes('cross-origin iframes are not yet supported'),
     'OOPIF upload must fail with an explicit message, not a generic not-found')
+})
+
+test('upload trusted path intercepts the file chooser and clicks the trigger', () => {
+  const body = slice("case 'upload': {", 4600)
+  assert(body.includes('Page.setInterceptFileChooserDialog'),
+    'trusted upload must arm chooser interception before clicking')
+  assert(body.includes('Page.fileChooserOpened'),
+    'trusted upload must resolve the input from the chooser event')
+  assert(body.includes('backendNodeId'),
+    'trusted upload must feed files to the browser-reported node')
+  // listener must be armed BEFORE the trusted click fires (race guard)
+  const armIdx = body.indexOf('chrome.debugger.onEvent.addListener(onEvt)')
+  const clickIdx = body.indexOf('cdpClick(tabId, pt.x + dx')
+  assert(armIdx >= 0 && clickIdx > armIdx,
+    'chooser listener must be registered before cdpClick dispatches')
 })
 
 test('op:wait selector-mode delegates to waitFor (was silently ignored)', () => {

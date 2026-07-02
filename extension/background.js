@@ -1483,6 +1483,54 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
     }
 
     case 'upload': {
+      // L2 trusted chooser-intercept (2026-07-02, WeCom qui-uploader dogfood):
+      // legacy path (setFileInputFiles + synthetic change re-dispatch) fails on
+      // uploaders gated on isTrusted or on click-initiated internal state
+      // (WeCom app-logo crop pipeline). Structural transplant of Playwright's
+      // filechooser: intercept the dialog, TRUSTED-click the visible trigger so
+      // the uploader's own state machine runs, then feed files to the node the
+      // browser itself reports — the change event is UA-generated (isTrusted:
+      // true) exactly as if the user picked the file. Same L1→L2 tiering as
+      // kind:'click'; `target` here is the visible trigger, not the <input>.
+      if (params.trusted) {
+        const { t: fx, sel, dx, dy } = await resolveFrame(tabId, params.selector)
+        await ensureDeep(fx)
+        const pt = await execFunc(fx, (s) => {
+          const el = globalThis.__tapDeep.all(s, document)[0]
+          if (!el) return null
+          el.scrollIntoView({ block: 'center', behavior: 'instant' })
+          const r = el.getBoundingClientRect()
+          return { x: Math.round(r.x + r.width / 2), y: Math.round(r.y + r.height / 2) }
+        }, sel)
+        if (!pt) throw new Error('upload: trigger not found for selector: ' + params.selector)
+        const files = (typeof params.files === 'string' ? params.files.split(',').map(f => f.trim()) : params.files).filter(Boolean)
+        await withDebugger(tabId, async () => {
+          await chrome.debugger.sendCommand({ tabId }, 'Page.enable')
+          await chrome.debugger.sendCommand({ tabId }, 'Page.setInterceptFileChooserDialog', { enabled: true })
+          try {
+            const opened = await new Promise((resolve, reject) => {
+              const timer = setTimeout(() => {
+                cleanup()
+                reject(new Error('upload: file chooser did not open within 5s — trigger click may have missed (selector: ' + params.selector + ')'))
+              }, 5000)
+              const onEvt = (source, method, p) => {
+                if (source.tabId === tabId && method === 'Page.fileChooserOpened') { cleanup(); resolve(p) }
+              }
+              const cleanup = () => { clearTimeout(timer); chrome.debugger.onEvent.removeListener(onEvt) }
+              chrome.debugger.onEvent.addListener(onEvt)
+              // Fire the trusted click AFTER the listener is armed.
+              cdpClick(tabId, pt.x + dx, pt.y + dy).catch((e) => { cleanup(); reject(e) })
+            })
+            await chrome.debugger.sendCommand({ tabId }, 'DOM.setFileInputFiles', {
+              files, backendNodeId: opened.backendNodeId
+            })
+          } finally {
+            await chrome.debugger.sendCommand({ tabId }, 'Page.setInterceptFileChooserDialog', { enabled: false }).catch(() => {})
+          }
+        })
+        scheduleDetach(tabId)
+        return {}
+      }
       // Frame-piercing upload (#62): the pierced DOM tree does not let
       // DOM.querySelector cross document boundaries, so resolve the inner
       // input via page-JS contentDocument (same-origin frames) and hand its
@@ -1491,7 +1539,7 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       if (params.selector?.includes(FRAME_SEP)) {
         const i = params.selector.indexOf(FRAME_SEP)
         const fSel = params.selector.slice(0, i), inner = params.selector.slice(i + FRAME_SEP.length)
-        const files = typeof params.files === 'string' ? params.files.split(',').map(f => f.trim()) : params.files
+        const files = (typeof params.files === 'string' ? params.files.split(',').map(f => f.trim()) : params.files).filter(Boolean)
         const chain = `document.querySelector(${JSON.stringify(fSel)})?.contentDocument?.querySelector(${JSON.stringify(inner)})`
         await withDebugger(tabId, async () => {
           await chrome.debugger.sendCommand({ tabId }, 'DOM.enable')
@@ -1523,7 +1571,7 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
         if (!node?.nodeId) throw new Error(`upload: file input not found for selector: ${params.selector}`)
         return node.nodeId
       })
-      const files = typeof params.files === 'string' ? params.files.split(',').map(f => f.trim()) : params.files
+      const files = (typeof params.files === 'string' ? params.files.split(',').map(f => f.trim()) : params.files).filter(Boolean)
       await chrome.debugger.sendCommand({ tabId }, 'DOM.setFileInputFiles', { nodeId, files })
       // React-synthetic upload components (Ant/rc-upload, mdu) bind onChange via
       // the document-root listener and don't react to the native change that
