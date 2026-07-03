@@ -46,12 +46,30 @@ async function rehydrateSessions() {
     const map = stored?.tap_sessions
     if (!map) return
     for (const [sid, s] of Object.entries(map)) {
-      // Verify the tab still exists — user may have closed it manually while SW was down
-      try {
-        const tab = await chrome.tabs.get(s.tabId)
-        sessions.set(sid, { ...s, url: tab.url || s.url || '' })
-      } catch {
-        /* tab gone — drop the session; rewrite below prunes stale entries */
+      // Verify the tab still exists — user may have closed it manually while
+      // SW was down. 2026-07-03 dogfood D2: a SINGLE transient tabs.get
+      // failure at SW-wake used to permanently prune a LIVE session (the tab
+      // was still there) — every later op then threw "No active tab" forever.
+      // Prune only on the definitive "No tab with id" error, confirmed by a
+      // retry; keep the session on anything ambiguous (better a stale entry
+      // that self-heals than an orphaned live session).
+      let kept = false
+      for (let attempt = 0; attempt < 2 && !kept; attempt++) {
+        try {
+          const tab = await chrome.tabs.get(s.tabId)
+          sessions.set(sid, { ...s, url: tab.url || s.url || '' })
+          kept = true
+        } catch (err) {
+          const definitiveGone = /no tab with id/i.test(String(err?.message || err))
+          if (definitiveGone && attempt === 1) break // confirmed twice → prune
+          if (!definitiveGone) {
+            // Ambiguous failure (SW churn, racing browser) — keep as-is.
+            sessions.set(sid, { ...s })
+            kept = true
+            break
+          }
+          await new Promise((r) => setTimeout(r, 150))
+        }
       }
     }
     // Rewrite storage with the pruned set (drops any tab-gone sessions so
@@ -76,6 +94,42 @@ async function persistSessions() {
 const rehydrateReady = rehydrateSessions()
 
 const debuggerSessions = new Map()
+
+// ─── Nav provenance (2026-07-03 structural fix, Class-3 human-co-driving) ──
+// The session's bound tab is co-owned by the USER — they can navigate it
+// mid-flow, and DOM ops then "succeed" against the wrong page. URL/origin
+// guards miss the same-origin case (the one that actually burned us:
+// /publish → /item, same site). The structural detector: the SW knows
+// which navigations IT caused (op:nav sets an expectation; any op's click
+// can legitimately trigger a nav within a short consequence window) —
+// everything else on a bound tab is an EXTERNAL mutation → mark the
+// session dirty; write-shaped ops (op:input) hard-fail until an op:nav
+// re-syncs. Read-shaped ops (eval/extract/wait) stay allowed: probing a
+// changed page is how an agent re-orients, and co-pilot flows (human
+// deliberately helping) must not brick the session.
+const expectedNavs = new Map() // tabId → epoch-ms deadline for an op-caused nav
+const OP_NAV_EXPECT_MS = 30000
+const OP_CONSEQUENCE_MS = 8000 // click-induced nav (submit → success page)
+
+chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
+  if (!changeInfo.url) return
+  for (const [, s] of sessions) {
+    if (s.tabId !== tabId) continue
+    const exp = expectedNavs.get(tabId)
+    const now = Date.now()
+    if (exp && now < exp) {
+      // op:nav-driven — attributed, single-shot per expectation window.
+      s.url = changeInfo.url
+    } else if (s.lastOpAt && (now - s.lastOpAt) < OP_CONSEQUENCE_MS) {
+      // Consequence of an op we just ran (form submit → redirect).
+      s.url = changeInfo.url
+    } else {
+      s.dirty = { from: s.url, to: changeInfo.url, at: now }
+    }
+    persistSessions()
+    break
+  }
+})
 
 // Network capture state (per-tab)
 // Each capture: { entries: [], listening: boolean, pendingBodies: Set<Promise> }
@@ -299,6 +353,23 @@ async function typeIntoContentEditable(tabId, fx, selector, text, coords) {
   }
 }
 
+// --- Upload param normalization (2026-07-03 dogfood F1) ---
+// File path(s) travel in op:input `value` (comma-separated for multiple) —
+// plan-v1 InputOp has NO `files` field, and an empty list used to reach CDP
+// setFileInputFiles as [] ("clear the input") = silent no-op that reads as
+// success (cost 2h of misdiagnosis on the goofish publish flow). Normalize
+// once + fail loud so every upload branch (trusted chooser-intercept /
+// frame-piercing / default) inherits the guard.
+function normalizeUploadFiles(value) {
+  const fileList = (typeof value === 'string'
+    ? value.split(',').map(f => f.trim())
+    : (Array.isArray(value) ? value : [])).filter(Boolean)
+  if (fileList.length === 0) {
+    throw new Error('upload: no files — put absolute file path(s) in op:input `value` (comma-separated for multiple). plan-v1 has no `files` field.')
+  }
+  return fileList
+}
+
 // --- Navigation Helper ---
 
 // ADR 2026-05-14-op-nav-attach §2 — find an existing tab matching the
@@ -329,11 +400,16 @@ async function queryAttachCandidate(url, mode) {
   }
 
   if (candidates.length === 0) return null
-  // Pick the most-recently-accessed candidate. `lastAccessed` is
+  // Multi-match resolution (2026-07-03 dogfood): prefer the ACTIVE tab
+  // over raw recency — with N same-origin candidates, binding a
+  // background one surprises the user mid-flow; the visible tab is the
+  // one they mean. Tiebreak: most-recently-accessed. `lastAccessed` is
   // a chrome.tabs.Tab field (ms since epoch); fall back to 0 when
   // absent (Chrome <122) — older tabs sort behind newer ones with
   // the field set.
-  candidates.sort((a, b) => (b.lastAccessed || 0) - (a.lastAccessed || 0))
+  candidates.sort((a, b) =>
+    ((b.active ? 1 : 0) - (a.active ? 1 : 0)) ||
+    ((b.lastAccessed || 0) - (a.lastAccessed || 0)))
   return candidates[0]
 }
 
@@ -678,6 +754,7 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       } else if (!tabId) {
         const tab = await chrome.tabs.create({ url: params.url, active: false })
         tabId = tab.id
+        expectedNavs.set(tabId, Date.now() + OP_NAV_EXPECT_MS) // nav provenance: op-caused
         createdByNav = true
       } else {
         const isInternal = current.url?.startsWith('chrome://') || current.url?.startsWith('data:')
@@ -705,11 +782,13 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
           // fetch-cross-repo).
           const tab = await chrome.tabs.create({ url: params.url, active: false })
           tabId = tab.id
+          expectedNavs.set(tabId, Date.now() + OP_NAV_EXPECT_MS) // nav provenance: op-caused
           createdByNav = true
         } else {
           // Same-origin SPA-style nav: cheap tabs.update (not createdByNav).
           // Neutralize beforeunload first so a dirty page's "Leave site?" native
           // dialog can't block the nav and hang the relay (2026-06-11 dogfood).
+          expectedNavs.set(tabId, Date.now() + OP_NAV_EXPECT_MS) // nav provenance: op-caused
           await neutralizeBeforeUnload(tabId)
           await chrome.tabs.update(tabId, { url: params.url })
         }
@@ -722,6 +801,7 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
         if (s.tabId === origTabId || s.tabId === tabId) {
           s.url = finalTab.url || params.url
           s.tabId = tabId
+          delete s.dirty // op:nav re-syncs a hijack-dirtied session (nav provenance)
           sessionUpdated = true
           break
         }
@@ -860,7 +940,7 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
           case 'press':
             return await handleMethod('pressKey', { ...rest, key: value }, senderTabId, { fromDaemon })
           case 'upload':
-            return await handleMethod('upload', { ...rest, selector: target, files: value }, senderTabId, { fromDaemon })
+            return await handleMethod('upload', { ...rest, selector: target, files: normalizeUploadFiles(value) }, senderTabId, { fromDaemon })
           case 'hover':
             // Trusted mouseMoved only (no press/release) — opens hover-triggered
             // overlays (Ant Dropdown trigger=['hover'], MUI tooltips) that a JS
@@ -2263,6 +2343,13 @@ function connectBridge() {
     // no JSON.parse needed (unlike ws.onmessage with e.data).
     if (!msg || msg.jsonrpc !== '2.0') return
 
+    // 2026-07-03 dogfood D1: the rehydrateReady comment ("everything that
+    // reads `sessions` must await this") was never enforced — an op arriving
+    // on a cold-started SW raced rehydrateSessions(), found the sessions map
+    // empty, skipped tabId resolution and died with "No active tab". Await
+    // is a no-op microtask once rehydration has settled.
+    try { await rehydrateReady } catch { /* rehydrate logs its own failure */ }
+
     // ─── Notification: host_unavailable (B1) ──────────────────────────
     // Per ADR 2026-05-30-bind-host-lifetime-to-nm-port §5: the host we
     // just spawned lost the singleton lock — another Chrome profile owns
@@ -2354,11 +2441,49 @@ function connectBridge() {
     if (params.sessionId) {
       resolvedParams._sessionId = params.sessionId
       if (sessions.has(params.sessionId)) {
-        resolvedParams.tabId = sessions.get(params.sessionId).tabId
+        const sStamp = sessions.get(params.sessionId)
+        resolvedParams.tabId = sStamp.tabId
+        // Nav-provenance consequence window: a nav on the bound tab within
+        // OP_CONSEQUENCE_MS of ANY op is attributed to that op (submit →
+        // redirect), not to the user. Stamp before dispatch.
+        sStamp.lastOpAt = Date.now()
       }
     }
     let response
     try {
+      // Tab-hijack guard (2026-07-03 dogfood F3): the user can navigate the
+      // session's bound tab while an agent drives it — DOM ops then "succeed"
+      // against whatever page now occupies that tabId (two live hits on
+      // 2026-07-03: fills/evals ran on a wrong page with ok:true). Hard-fail
+      // only on ORIGIN drift (unambiguous hijack); same-origin drift is legal
+      // (SPA routes, op-driven navs) and is refreshed into s.url instead.
+      // nav/fetch/tab/bookmark are exempt: nav legitimately changes origin,
+      // the rest are tab-free.
+      const TAB_GUARDED_OPS = new Set(['input', 'extract', 'eval', 'wait'])
+      if (params.sessionId && sessions.has(params.sessionId) && TAB_GUARDED_OPS.has(method)) {
+        const s = sessions.get(params.sessionId)
+        if (typeof s.tabId === 'number' && s.url) {
+          let liveTab = null
+          try { liveTab = await chrome.tabs.get(s.tabId) } catch { /* tab gone → downstream self-heal paths handle it */ }
+          if (liveTab && liveTab.url) {
+            let expected = null, actual = null
+            try { expected = new URL(s.url).origin; actual = new URL(liveTab.url).origin } catch { /* non-parseable → skip guard */ }
+            if (expected && actual && expected !== actual) {
+              throw new Error(`tab_hijacked: session tab left ${expected} (now at ${actual}) — the bound tab was likely navigated by the user; re-nav or begin a new session`)
+            }
+            s.url = liveTab.url
+          }
+          // Nav-provenance dirty flag (same-origin external navigation —
+          // the case the origin guard cannot see). Write-shaped ops are
+          // blocked until an op:nav re-syncs; read-shaped ops (eval/
+          // extract/wait) stay allowed so the agent can re-orient and
+          // co-pilot flows (human deliberately assisting) don't brick.
+          if (method === 'input' && s.dirty) {
+            const d = s.dirty
+            throw new Error(`tab_hijacked: external navigation detected on the bound tab (${d.from} -> ${d.to}); op:input is blocked — re-nav (op:nav) to re-sync, or begin a new session`)
+          }
+        }
+      }
       const result = await handleMethod(method, resolvedParams, null, { fromDaemon: true })
       response = { jsonrpc: '2.0', id: msg.id, result }
     } catch (error) {
