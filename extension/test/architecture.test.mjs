@@ -231,6 +231,60 @@ console.log('\n  -- Rule 5: Full Operation Coverage --\n')
   })
 }
 
+// ═══════════════════════════════════════════════════════════
+// Rule 8: Session lifecycle invariants (2026-07-03 dogfood)
+// Why: the SW is ephemeral (MV3) and the bound tab is co-owned by the
+// user. Four load-bearing invariants moved from comments/discipline to
+// machine checks — per house rule, every load-bearing structural claim
+// is a static check, not English.
+// ═══════════════════════════════════════════════════════════
+
+console.log('\n  -- Rule 8: Session lifecycle invariants --\n')
+
+test('D1: nm dispatch awaits rehydrateReady before reading sessions', () => {
+  const h = BG_SRC.indexOf("port.onMessage.addListener(async (msg)")
+  assert(h !== -1, 'nm port.onMessage async handler must exist')
+  const body = BG_SRC.substring(h, h + 6000)
+  const awaitIdx = body.indexOf('await rehydrateReady')
+  const sessRead = body.indexOf('sessions.')
+  assert(awaitIdx !== -1,
+    'nm dispatch must await rehydrateReady (SW cold-start race: op arrives before session map is rehydrated)')
+  assert(sessRead === -1 || awaitIdx < sessRead,
+    'await rehydrateReady must precede the first sessions.* read in the nm dispatch handler')
+})
+
+test('D2: rehydrate prunes only on definitive "No tab with id" (no transient-failure pruning)', () => {
+  const h = BG_SRC.indexOf('async function rehydrateSessions')
+  assert(h !== -1, 'rehydrateSessions must exist')
+  const body = BG_SRC.substring(h, h + 2200)
+  assert(/no tab with id/i.test(body),
+    'rehydrate must discriminate the definitive tab-gone error; a transient tabs.get failure must NOT permanently prune a live session')
+})
+
+test('F1a: upload param normalization fails loud on empty file list', () => {
+  const h = BG_SRC.indexOf('function normalizeUploadFiles(')
+  assert(h !== -1, 'normalizeUploadFiles must exist (single-point guard all upload branches inherit)')
+  const body = BG_SRC.substring(h, h + 800)
+  assert(body.includes('throw new Error'),
+    'empty upload file list must throw, never reach CDP setFileInputFiles as [] (silent "clear the input")')
+  assert(BG_SRC.includes('files: normalizeUploadFiles(value)'),
+    'the op:input upload route must pass value through normalizeUploadFiles')
+})
+
+test('Nav provenance: external navigation dirties the session; op:input blocked while dirty', () => {
+  assert(BG_SRC.includes('const expectedNavs = new Map()'),
+    'expectedNavs map must exist (op-caused navigation attribution)')
+  assert(BG_SRC.includes('chrome.tabs.onUpdated.addListener'),
+    'tabs.onUpdated listener must exist to observe bound-tab navigations')
+  assert(/s\.dirty = \{ from:/.test(BG_SRC),
+    'unattributed navigation on a bound tab must set the session dirty flag')
+  const guard = BG_SRC.indexOf("if (method === 'input' && s.dirty)")
+  assert(guard !== -1,
+    'op:input must hard-fail while the session is dirty (same-origin hijack — the case the origin guard cannot see)')
+  assert(BG_SRC.includes('delete s.dirty'),
+    'op:nav must clear the dirty flag (re-sync path)')
+})
+
 // --- Summary ---
 console.log(`\n${passed + failed} constraints, ${passed} passed, ${failed} failed\n`)
 process.exit(failed > 0 ? 1 : 0)
