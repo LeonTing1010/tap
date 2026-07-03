@@ -169,6 +169,25 @@ async function withDebugger(tabId, fn) {
   finally { scheduleDetach(tabId) }
 }
 
+// Chrome refuses to open a file-chooser dialog for a tab that is not the
+// active tab of a focused window — a background/unfocused tab's trusted click
+// silently "misses" and Page.fileChooserOpened never fires (the trusted-upload
+// path's 5s timeout). Tap creates its session tabs in the background, so the
+// L2 chooser-intercept upload could never fire unless the user manually
+// foregrounded the tab. Bring the tab (and its window) forward first; skip when
+// already foreground so we don't needlessly steal OS focus, and settle briefly
+// so the visibilitychange lands before the chooser-gated click.
+async function ensureForeground(tabId) {
+  const tab = await chrome.tabs.get(tabId)
+  let moved = false
+  if (!tab.active) { await chrome.tabs.update(tabId, { active: true }); moved = true }
+  try {
+    const win = await chrome.windows.get(tab.windowId)
+    if (!win.focused) { await chrome.windows.update(tab.windowId, { focused: true }); moved = true }
+  } catch { /* windowId may be gone; tab.update above is enough */ }
+  if (moved) await new Promise(r => setTimeout(r, 150))
+}
+
 // mouseMoved precedes press so hover/ripple-gated gesture recognizers
 // (Polymer/Wiz `tap` — YouTube Studio ytcp-button; Material ripple) see the
 // pointer enter the element first; a bare press/release at coords they never
@@ -1493,6 +1512,10 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       // true) exactly as if the user picked the file. Same L1→L2 tiering as
       // kind:'click'; `target` here is the visible trigger, not the <input>.
       if (params.trusted) {
+        // The chooser only opens for a foreground tab — foreground ours first
+        // (no-op if already active/focused) so this path works on the
+        // background session tabs Tap creates.
+        await ensureForeground(tabId)
         const { t: fx, sel, dx, dy } = await resolveFrame(tabId, params.selector)
         await ensureDeep(fx)
         const pt = await execFunc(fx, (s) => {
