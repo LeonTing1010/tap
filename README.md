@@ -5,7 +5,7 @@
 <h1 align="center">Taprun</h1>
 
 <h4 align="center">
-  Browser automation that runs in your Chrome, not someone else's cloud.
+  Capture a logged-in browser task once. Replay it forever — zero LLM tokens.
 </h4>
 
 <p align="center">
@@ -29,9 +29,9 @@
 
 ---
 
-**Local-first browser automation. Compile once, run forever at zero LLM tokens.**
+**High-frequency, logged-in, repetitive browser work — captured once, replayed forever at zero LLM tokens.**
 
-Point Taprun at any site. Your AI agent inspects the page once and emits a deterministic `.plan.json` program. Replay it forever — same result every call, $0 in tokens. Cookies and login sessions stay in your real Chrome — by architecture, not policy. `tap verify` catches breakage before your data goes stale.
+Every other browser agent re-runs a live LLM — and re-burns tokens — on every execution. Taprun's AI agent inspects the page **once** and emits a deterministic `.plan.json` program; every replay after that is pure data dispatch — same result every call, **$0 in tokens, no agent in the loop**. It runs in your real Chrome, so cookies and login sessions stay on your machine by architecture. `tap verify` catches breakage before your data goes stale.
 
 Works with Claude Code, Cursor, Cline, Windsurf, and any MCP host. 70+ pre-built taps, or forge your own from any URL.
 
@@ -240,7 +240,7 @@ tap show <site>/<name>     # Print the saved tap's plan as JSON
 
 ## Local-first by architecture
 
-Taprun runs in **your** browser, not someone else's cloud. The Chrome extension reuses your live login sessions; cookies, auth tokens, and credentials never leave your machine. This is a structural choice, not a marketing claim:
+Zero-token replay is the headline; local-first is the guarantee underneath it. Taprun runs in **your** browser — the Chrome extension reuses your live login sessions, so cookies, auth tokens, and credentials never leave your machine. A structural choice, not a marketing claim:
 
 | Concern | Cloud-first browser SDKs | Taprun (local-first) |
 |---|---|---|

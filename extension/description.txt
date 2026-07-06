@@ -1,6 +1,6 @@
-# Tap — Browser Automation MCP for Your Real Browser
+# Tap — Capture a Logged-In Browser Task Once, Replay Forever at Zero Tokens
 
-Tap is a local-first MCP browser-automation runtime. Claude Code, Cursor, Continue, Windsurf, or any MCP-compatible AI agent can drive your real Chrome with your own logged-in sessions — no cloud credentials, no per-step LLM cost, no vendor lock-in.
+Tap captures a recurring, logged-in browser task once, then replays it forever at zero LLM tokens — with no agent in the loop. Claude Code, Cursor, Continue, Windsurf, or any MCP-compatible AI agent compiles the task a single time; every run after that is deterministic data dispatch in your own real Chrome — no per-step LLM cost, no cloud credentials, no vendor lock-in.
 
 AI participates at compile time only: saved plans replay deterministically at zero LLM token cost.
 

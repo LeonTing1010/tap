@@ -1,6 +1,6 @@
 # Taprun
 
-> The MCP server for browser tasks that need login. Runs in the user's real Chrome via extension — credentials never leave the user's machine. Cloud-hosted MCP servers (Stagehand, Browserbase, Playwright-MCP-as-a-service) architecturally can't do this; they need session in their database to function. AI compiles a plan once at authoring time, the plan replays deterministically at zero tokens per run. The `verify` verb catches substrate drift before production breaks.
+> Capture a recurring, logged-in browser task once; replay it forever at zero tokens per run — no agent in the loop. Every other browser MCP (Stagehand, Browserbase, Playwright-MCP, mcp-chrome, Browser MCP) re-runs a live model on every execution and re-burns tokens; Taprun compiles the plan once at authoring time, then replays deterministically. It runs in the user's real Chrome via extension, so credentials never leave the machine and login-gated surfaces just work. The `verify` verb catches substrate drift before production breaks.
 
 Taprun is the tool layer, not an AI layer. Any MCP host (Claude Desktop, Claude Code, Cursor, Windsurf, Cline, Continue, VS Code, Zed) connects and gets the four meta verbs `capture / verify / mark / run` plus N saved-tap Resources. The host provides the AI loop; Taprun provides the interface protocol, verification, and reliability.
 

@@ -5,7 +5,7 @@
 <h1 align="center">Taprun</h1>
 
 <h4 align="center">
-  跑在你自己浏览器里的浏览器自动化，而不是别人的云里。
+  登录态浏览器操作，录一次，永久零 token 重放。
 </h4>
 
 <p align="center">
@@ -25,9 +25,9 @@
 
 ---
 
-**本地优先（local-first）的浏览器自动化。编译一次，永久零 LLM token 重放。**
+**高频、登录态、重复的浏览器操作 —— 录一次，永久零 LLM token 重放。**
 
-把 Taprun 指向任何网站。你的 AI agent 把页面分析一次，产出一个确定性的 `.plan.json` 程序。之后永久重放 — 每次调用结果完全一致，$0 token。cookie 和登录会话留在你自己真实的 Chrome 里 — 这是架构决定，不是政策承诺。`tap verify` 在你的数据变质前就发现页面变化。
+别的浏览器 agent 每跑一次都要现场调一次大模型、反复烧 token。Taprun 让 AI 把页面分析**一次**，产出确定性的 `.plan.json` 程序；之后每次重放都是纯数据派发 —— 每次结果完全一致，**$0 token，agent 不在运行路径**。它跑在你自己真实的 Chrome 里，cookie 和登录会话因此留在你机器上（架构决定）。`tap verify` 在数据变质前发现页面变化。
 
 适用于 Claude Code、Cursor、Cline、Windsurf 以及任何 MCP host。70+ 预建 tap，或从任意 URL 锻造你自己的。
 

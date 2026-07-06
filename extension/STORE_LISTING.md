@@ -18,7 +18,7 @@ description (the "Description" textarea). Everything else lives in this file.
 | Field | Value |
 |---|---|
 | Item name | `Tap — Local-First Browser MCP` |
-| Summary (132 chars max) | `Browser automation MCP — runs in your own browser with your logged-in sessions. Local-first alternative to Stagehand / Browserbase.` |
+| Summary (132 chars max) | `Capture a logged-in browser task once; replay it forever at zero LLM tokens. Local-first, runs in your own Chrome.` |
 | Detailed description | see `description.txt` |
 | Category | `Developer Tools` |
 | Language | English (en) |
