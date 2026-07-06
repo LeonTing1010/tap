@@ -198,8 +198,10 @@ test('daemon NM dispatch passes fromDaemon: true', () => {
   // Window covers the onMessage listener body down to the handleMethod
   // call; sized generously so unrelated additions to the listener (e.g.
   // the B1 host_unavailable notification handler) don't push the call
-  // out of range.
-  const section = BG_SRC.substring(dispatchStart, dispatchStart + 8000)
+  // out of range. Widened 8000 -> 11000 on 2026-07-03: the D1
+  // rehydrateReady await + tab-hijack guard + nav-provenance dirty check
+  // now precede the handleMethod call inside the same listener.
+  const section = BG_SRC.substring(dispatchStart, dispatchStart + 11000)
   const callsHandleMethod = /handleMethod\([^)]*\{\s*fromDaemon:\s*true\s*\}/.test(section)
   assert(callsHandleMethod,
     'port.onMessage must call handleMethod(..., { fromDaemon: true }) so daemon commands hit the gated path')

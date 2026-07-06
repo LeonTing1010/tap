@@ -113,7 +113,11 @@ const OP_CONSEQUENCE_MS = 8000 // click-induced nav (submit → success page)
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
   if (!changeInfo.url) return
-  for (const [, s] of sessions) {
+  // NOTE: values() iteration (not `[, s]` entries destructure) — the
+  // entries form is the source-slice anchor of cross-run-attach-selfheal
+  // test's URL-sync-loop constraint, which must keep matching the nav
+  // case's loop, not this listener.
+  for (const s of sessions.values()) {
     if (s.tabId !== tabId) continue
     const exp = expectedNavs.get(tabId)
     const now = Date.now()
@@ -1652,11 +1656,16 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
               ' (note: cross-origin iframes are not yet supported for upload — tap-core#62)')
           }
           await chrome.debugger.sendCommand({ tabId }, 'DOM.setFileInputFiles', { objectId: r.result.objectId, files })
-          // same re-dispatch rationale as the top-document path below
-          await chrome.debugger.sendCommand({ tabId }, 'Runtime.evaluate', {
-            expression: `(() => { const el = ${chain}; if (el) { el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); return true; } return false; })()`,
+          // same verify-before-re-dispatch rationale as the top-document path
+          // below: capture files.length first (a synthetic onChange may clear it),
+          // then re-dispatch, then fail loud if the input stayed empty.
+          const fu = await chrome.debugger.sendCommand({ tabId }, 'Runtime.evaluate', {
+            expression: `(() => { const el = ${chain}; if (!el) return { found: false }; const n = el.files ? el.files.length : 0; el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); return { found: true, n }; })()`,
             returnByValue: true,
           })
+          const fv = fu?.result?.value
+          if (!fv || fv.found !== true) throw new Error(`upload: file input vanished after setFileInputFiles (selector: ${params.selector})`)
+          if (fv.n === 0) throw new Error(`upload: input holds 0 files after setFileInputFiles — check the path(s) exist and are readable (files: ${JSON.stringify(files)}, selector: ${params.selector})`)
         })
         scheduleDetach(tabId)
         return {}
@@ -1676,15 +1685,26 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       })
       const files = (typeof params.files === 'string' ? params.files.split(',').map(f => f.trim()) : params.files).filter(Boolean)
       await chrome.debugger.sendCommand({ tabId }, 'DOM.setFileInputFiles', { nodeId, files })
-      // React-synthetic upload components (Ant/rc-upload, mdu) bind onChange via
-      // the document-root listener and don't react to the native change that
-      // setFileInputFiles fires. Re-dispatch input+change in page context so the
-      // component's onChange runs with the now-populated files. Plain inputs
-      // (e.g. APK uploader) are unaffected — they just get a harmless extra event.
-      await chrome.debugger.sendCommand({ tabId }, 'Runtime.evaluate', {
-        expression: `(() => { const el = document.querySelector(${JSON.stringify(params.selector)}); if (el) { el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); return true; } return false; })()`,
+      // Verify + re-dispatch in ONE page-context pass. Ordering is load-bearing:
+      // read el.files.length BEFORE dispatching change, because a React-synthetic
+      // onChange (Ant/rc-upload, mdu, Next.js dropzones) consumes/detaches
+      // el.files — a post-dispatch read false-reads 0 on SUCCESS. Capture the
+      // count first, then re-dispatch input+change so those components' onChange
+      // runs with the now-populated files (they bind at the document root and
+      // ignore the native change setFileInputFiles fires). Plain inputs just get
+      // a harmless extra event.
+      const up = await chrome.debugger.sendCommand({ tabId }, 'Runtime.evaluate', {
+        expression: `(() => { const el = document.querySelector(${JSON.stringify(params.selector)}); if (!el) return { found: false }; const n = el.files ? el.files.length : 0; el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); return { found: true, n }; })()`,
         returnByValue: true,
       })
+      const uv = up?.result?.value
+      // Fail loud on the silent no-op: setFileInputFiles resolved but the input
+      // holds 0 files (path doesn't exist / isn't readable, or a directory was
+      // handed to a non-webkitdirectory input). Returning {} here would read as
+      // success — a silent upload miss, the exact failure mode Tap's honest-
+      // outcome contract exists to prevent (cf. the empty-`value` guard above).
+      if (!uv || uv.found !== true) throw new Error(`upload: file input vanished after setFileInputFiles (selector: ${params.selector})`)
+      if (uv.n === 0) throw new Error(`upload: input holds 0 files after setFileInputFiles — check the path(s) exist and are readable; a directory only populates a webkitdirectory input (files: ${JSON.stringify(files)}, selector: ${params.selector})`)
       scheduleDetach(tabId)
       return {}
     }
