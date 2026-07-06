@@ -39,6 +39,9 @@ jobs:
         with:
           deno-version: v2.x
       - name: Ping IndexNow (Bing, Yandex, Seznam, Naver)
+        # Best-effort SEO ping — a transient CDN 5xx (e.g. 526 before the deploy
+        # propagates) must never fail the pipeline.
+        continue-on-error: true
         run: deno run --allow-net scripts/indexnow-ping.ts
 
   cf-purge:
