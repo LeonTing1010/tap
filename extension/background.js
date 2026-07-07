@@ -246,6 +246,105 @@ async function ensureForeground(tabId) {
   if (moved) await new Promise(r => setTimeout(r, 150))
 }
 
+// --- Visible mode (opt-in operation trace) ---------------------------------
+// Default OFF: normal replay stays invisible / background-capable / zero-token.
+// When ON (chrome.storage.local.tapVisibleMode), every tab-bound op (a) brings
+// its own driven tab to the foreground via ensureForeground — so the tab Tap
+// drives IS the tab a screen recorder captures (kills the focus/binding mess) —
+// and (b) paints a red highlight box + step label over the target element just
+// before acting, giving the run a visible, recordable "operation trace".
+let VISIBLE_MODE = false
+try {
+  chrome.storage?.local?.get?.(['tapVisibleMode']).then((o) => { VISIBLE_MODE = !!o?.tapVisibleMode }).catch(() => {})
+  chrome.storage?.onChanged?.addListener?.((changes, area) => {
+    if (area === 'local' && changes && 'tapVisibleMode' in changes) VISIBLE_MODE = !!changes.tapVisibleMode.newValue
+  })
+} catch { /* storage unavailable in some contexts — stays OFF */ }
+
+// Injected into the page MAIN world (self-contained — no closure refs). Draws a
+// fixed-position red box + label chip over the first CSS match of `sel`, then
+// fades it out. pointer-events:none so it never intercepts the real op's click.
+function __tapDrawTrace(sel, label) {
+  try {
+    var el = document.querySelector(sel)
+    if (!el) return { ok: false, reason: 'no-match' }
+    var r = el.getBoundingClientRect()
+    var id = '__tap_trace_overlay'
+    var prev = document.getElementById(id); if (prev) prev.remove()
+    var box = document.createElement('div')
+    box.id = id
+    box.style.cssText = [
+      'position:fixed', 'z-index:2147483647', 'pointer-events:none',
+      'left:' + (r.left - 4) + 'px', 'top:' + (r.top - 4) + 'px',
+      'width:' + (r.width + 8) + 'px', 'height:' + (r.height + 8) + 'px',
+      'border:3px solid #ff2d55', 'border-radius:8px',
+      'box-shadow:0 0 0 3px rgba(255,45,85,.22),0 6px 22px rgba(255,45,85,.38)',
+      'transition:opacity .22s ease', 'opacity:0'
+    ].join(';')
+    var tag = document.createElement('div')
+    tag.textContent = label || 'tap'
+    tag.style.cssText = [
+      'position:absolute', 'left:-3px', 'top:-27px',
+      'background:#ff2d55', 'color:#fff',
+      'font:600 12px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif',
+      'padding:2px 9px', 'border-radius:6px', 'white-space:nowrap',
+      'box-shadow:0 2px 8px rgba(0,0,0,.25)'
+    ].join(';')
+    box.appendChild(tag)
+    document.documentElement.appendChild(box)
+    // fade-in next frame, then auto fade-out + remove
+    requestAnimationFrame(function () { box.style.opacity = '1' })
+    setTimeout(function () {
+      var b = document.getElementById(id)
+      if (b) { b.style.opacity = '0'; setTimeout(function () { if (b.parentNode) b.remove() }, 260) }
+    }, 950)
+    return { ok: true }
+  } catch (e) { return { ok: false, err: String(e) } }
+}
+
+// Foreground the driven tab + paint the trace, then hold briefly so it's
+// visible before the op fires. Best-effort: never let tracing break an op.
+// Set by showOpTrace (frame grabbed WHILE the box is lit) and consumed by
+// withVisibleFrame for the SAME op, so the trace lands in the returned frame.
+let __pendingTraceFrame = null
+async function showOpTrace(tabId, selector, label) {
+  __pendingTraceFrame = null
+  try { await ensureForeground(tabId) } catch { /* tab gone — op will surface its own error */ }
+  try { await execFunc(tabId, __tapDrawTrace, selector, 'Tap ▸ ' + String(label || 'op')) } catch { /* selector not resolvable as plain CSS — skip overlay */ }
+  await new Promise(r => setTimeout(r, 260))
+  // Capture with the box still lit, BEFORE the op mutates the page — this frame
+  // (target highlighted) is the "operation trace"; the effect shows next step.
+  try {
+    const tab = await chrome.tabs.get(tabId)
+    __pendingTraceFrame = await chrome.tabs.captureVisibleTab(tab.windowId, { format: 'jpeg', quality: 55 })
+  } catch { __pendingTraceFrame = null }
+}
+
+// Chrome-native frame grab: foreground the driven tab, then capture ITS rendered
+// pixels via chrome.tabs.captureVisibleTab — independent of which OS window is
+// frontmost (no OS screencapture, no terminal focus-steal, no debugger banner).
+// Returns a data:image/jpeg;base64 URL, or null on failure.
+async function captureTabFrame(tabId) {
+  try {
+    await ensureForeground(tabId)
+    const tab = await chrome.tabs.get(tabId)
+    return await chrome.tabs.captureVisibleTab(tab.windowId, { format: 'jpeg', quality: 55 })
+  } catch { return null }
+}
+
+// In visible mode, attach the driven tab's Chrome-captured frame to a tab-bound
+// op result so the caller (agent) receives real pixels through the existing op
+// channel — no OS-level capture, focus-independent. Best-effort; only augments
+// plain-object results (arrays/primitives pass through untouched).
+async function withVisibleFrame(result, tabId, hint) {
+  if ((!VISIBLE_MODE && !hint) || !tabId) { __pendingTraceFrame = null; return result }
+  if (!result || typeof result !== 'object' || Array.isArray(result)) { __pendingTraceFrame = null; return result }
+  let frame = __pendingTraceFrame  // box-lit frame from showOpTrace (input ops)
+  __pendingTraceFrame = null
+  if (!frame) frame = await captureTabFrame(tabId)  // eval/other: fresh grab
+  return frame ? { ...result, _frame: frame } : result
+}
+
 // mouseMoved precedes press so hover/ripple-gated gesture recognizers
 // (Polymer/Wiz `tap` — YouTube Studio ytcp-button; Material ripple) see the
 // pointer enter the element first; a bare press/release at coords they never
@@ -631,7 +730,7 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
   // context needed. Same-origin enforcement is upstream (engine lint S1).
   const noTabNeeded = ['nav', 'tab', 'bookmark', 'tab.new', 'tab.list', 'tab.close', 'capabilities', 'reload',
                        'session.create', 'session.destroy', 'session.info',
-                       'fetch']
+                       'visualize', 'fetch']
   if (!tabId && !noTabNeeded.includes(method)) {
     throw new Error('No active tab. Call nav first or use session.create.')
   }
@@ -642,6 +741,15 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       // Daemon broadcast: reload extension after tap update
       chrome.runtime.reload()
       return { ok: true }
+    }
+
+    case 'visualize': {
+      // Runtime, per-invocation visualize toggle — the clean control layer for
+      // "should THIS run be visualized" (e.g. the engine's run({visualize:true})
+      // wraps a run with on→…→off). Never a stored-plan field; not persisted —
+      // the popup's global toggle owns chrome.storage.
+      VISIBLE_MODE = !!params.on
+      return { visualize: VISIBLE_MODE }
     }
 
     // ========== CORE (8) — CDP for input, chrome.scripting for eval ==========
@@ -944,6 +1052,10 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
     // (peer-conformance.ts requires this kind for selector miss).
     case 'input': {
       const { kind, target, value, ...rest } = params
+      // Visible mode: foreground the driven tab + paint the op trace before acting.
+      // Enabled by the global toggle OR a per-invocation `visualize` hint on the op
+      // (runtime-layer control — never a stored-plan field).
+      if ((VISIBLE_MODE || params.visualize) && target) await showOpTrace(tabId, target, kind)
       try {
         switch (kind) {
           case 'click':
@@ -2520,7 +2632,7 @@ function connectBridge() {
         }
       }
       const result = await handleMethod(method, resolvedParams, null, { fromDaemon: true })
-      response = { jsonrpc: '2.0', id: msg.id, result }
+      response = { jsonrpc: '2.0', id: msg.id, result: await withVisibleFrame(result, resolvedParams.tabId, resolvedParams.visualize) }
     } catch (error) {
       const errMsg = (error && error.message) || String(error)
       response = {

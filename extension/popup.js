@@ -132,6 +132,18 @@ document.addEventListener('click', (e) => {
   }
 })
 
+// Visible mode toggle — persisted in chrome.storage.local; background.js reads
+// it (+ storage.onChanged) to foreground the driven tab and paint op traces.
+const $visible = document.getElementById('visible-mode')
+if ($visible) {
+  chrome.storage?.local?.get?.(['tapVisibleMode']).then((o) => {
+    $visible.checked = !!o?.tapVisibleMode
+  }).catch(() => {})
+  $visible.addEventListener('change', () => {
+    chrome.storage?.local?.set?.({ tapVisibleMode: $visible.checked })
+  })
+}
+
 refresh()
 const tick = setInterval(refresh, 2000)
 window.addEventListener('unload', () => clearInterval(tick))
