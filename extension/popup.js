@@ -136,11 +136,18 @@ document.addEventListener('click', (e) => {
 // it (+ storage.onChanged) to foreground the driven tab and paint op traces.
 const $visible = document.getElementById('visible-mode')
 if ($visible) {
-  chrome.storage?.local?.get?.(['tapVisibleMode']).then((o) => {
-    $visible.checked = !!o?.tapVisibleMode
+  const VISIBLE_WINDOW_MS = 30 * 60 * 1000  // must match background.js idle window
+  chrome.storage?.local?.get?.(['tapVisibleMode', 'tapVisibleUntil']).then((o) => {
+    // Reflect auto-expiry: a lapsed toggle reads as off.
+    $visible.checked = !!o?.tapVisibleMode &&
+      (!o?.tapVisibleUntil || Date.now() < Number(o.tapVisibleUntil))
   }).catch(() => {})
   $visible.addEventListener('change', () => {
-    chrome.storage?.local?.set?.({ tapVisibleMode: $visible.checked })
+    const on = $visible.checked
+    chrome.storage?.local?.set?.({
+      tapVisibleMode: on,
+      tapVisibleUntil: on ? Date.now() + VISIBLE_WINDOW_MS : 0,
+    })
   })
 }
 

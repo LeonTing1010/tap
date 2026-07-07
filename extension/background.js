@@ -253,13 +253,41 @@ async function ensureForeground(tabId) {
 // drives IS the tab a screen recorder captures (kills the focus/binding mess) —
 // and (b) paints a red highlight box + step label over the target element just
 // before acting, giving the run a visible, recordable "operation trace".
+const VISIBLE_WINDOW_MS = 30 * 60 * 1000  // idle auto-off window; refreshed on activity
 let VISIBLE_MODE = false
+let visibleUntil = 0
 try {
-  chrome.storage?.local?.get?.(['tapVisibleMode']).then((o) => { VISIBLE_MODE = !!o?.tapVisibleMode }).catch(() => {})
+  chrome.storage?.local?.get?.(['tapVisibleMode', 'tapVisibleUntil']).then((o) => {
+    VISIBLE_MODE = !!o?.tapVisibleMode
+    visibleUntil = Number(o?.tapVisibleUntil) || 0
+  }).catch(() => {})
   chrome.storage?.onChanged?.addListener?.((changes, area) => {
-    if (area === 'local' && changes && 'tapVisibleMode' in changes) VISIBLE_MODE = !!changes.tapVisibleMode.newValue
+    if (area !== 'local' || !changes) return
+    if ('tapVisibleMode' in changes) VISIBLE_MODE = !!changes.tapVisibleMode.newValue
+    if ('tapVisibleUntil' in changes) visibleUntil = Number(changes.tapVisibleUntil.newValue) || 0
   })
 } catch { /* storage unavailable in some contexts — stays OFF */ }
+
+// Effective per-op visibility check + auto-expiry. A per-op `visualize` hint always
+// wins (explicit, self-scoped). The global toggle applies only within its idle
+// window; once lapsed it self-clears, so a forgotten switch can't silently
+// foreground/slow every future run (the toggle's only real foot-gun). Activity
+// extends the window; timestamp-based (not a live timer) so it survives MV3 SW
+// suspension. Visualization is a substrate-side MODE — the engine never sees it.
+function visibleActive(hint) {
+  if (hint) return true
+  if (!VISIBLE_MODE) return false
+  const now = Date.now()
+  if (visibleUntil && now >= visibleUntil) {
+    VISIBLE_MODE = false
+    visibleUntil = 0
+    try { chrome.storage?.local?.set?.({ tapVisibleMode: false, tapVisibleUntil: 0 }) } catch { /* */ }
+    return false
+  }
+  visibleUntil = now + VISIBLE_WINDOW_MS
+  try { chrome.storage?.local?.set?.({ tapVisibleUntil: visibleUntil }) } catch { /* */ }
+  return true
+}
 
 // Injected into the page MAIN world (self-contained — no closure refs). Draws a
 // fixed-position red box + label chip over the first CSS match of `sel`, then
@@ -337,7 +365,7 @@ async function captureTabFrame(tabId) {
 // channel — no OS-level capture, focus-independent. Best-effort; only augments
 // plain-object results (arrays/primitives pass through untouched).
 async function withVisibleFrame(result, tabId, hint) {
-  if ((!VISIBLE_MODE && !hint) || !tabId) { __pendingTraceFrame = null; return result }
+  if (!visibleActive(hint) || !tabId) { __pendingTraceFrame = null; return result }
   if (!result || typeof result !== 'object' || Array.isArray(result)) { __pendingTraceFrame = null; return result }
   let frame = __pendingTraceFrame  // box-lit frame from showOpTrace (input ops)
   __pendingTraceFrame = null
@@ -749,6 +777,7 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       // wraps a run with on→…→off). Never a stored-plan field; not persisted —
       // the popup's global toggle owns chrome.storage.
       VISIBLE_MODE = !!params.on
+      visibleUntil = VISIBLE_MODE ? Date.now() + VISIBLE_WINDOW_MS : 0
       return { visualize: VISIBLE_MODE }
     }
 
@@ -1053,9 +1082,9 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
     case 'input': {
       const { kind, target, value, ...rest } = params
       // Visible mode: foreground the driven tab + paint the op trace before acting.
-      // Enabled by the global toggle OR a per-invocation `visualize` hint on the op
-      // (runtime-layer control — never a stored-plan field).
-      if ((VISIBLE_MODE || params.visualize) && target) await showOpTrace(tabId, target, kind)
+      // Enabled by the global toggle (idle-expiring) OR a per-invocation `visualize`
+      // hint on the op (runtime-layer control — never a stored-plan field).
+      if (visibleActive(params.visualize) && target) await showOpTrace(tabId, target, kind)
       try {
         switch (kind) {
           case 'click':
