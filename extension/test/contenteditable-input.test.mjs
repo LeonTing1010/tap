@@ -51,6 +51,22 @@ function slice(marker, len) {
   return BG_SRC.substring(i, i + len)
 }
 
+// Brace-match the whole {...} block after `marker` — robust to the block gaining
+// helpers. (A fixed-length slice silently truncated when TAP_DEEP_INSTALL grew a
+// `deep` fallback helper, hiding `control` from the assertions below — the exact
+// magic-length fragility shadow-piercing.test.mjs already moved away from.)
+function blockAfter(marker) {
+  const start = BG_SRC.indexOf(marker)
+  assert(start !== -1, `marker not found in background.js: ${marker}`)
+  const braceStart = BG_SRC.indexOf('{', start)
+  let depth = 0
+  for (let i = braceStart; i < BG_SRC.length; i++) {
+    if (BG_SRC[i] === '{') depth++
+    else if (BG_SRC[i] === '}') { depth--; if (depth === 0) return BG_SRC.slice(start, i + 1) }
+  }
+  throw new Error(`unbalanced braces after: ${marker}`)
+}
+
 // ── Rule 1: contenteditable helper uses Input.insertText + verifies ──
 console.log('\n  -- Rule 1: trusted contenteditable insertion --\n')
 
@@ -146,7 +162,7 @@ console.log('\n  -- Rule 4: masked / web-component inner-input resolution --\n')
   // The inner-control resolver (formerly inline `deepControl` ×3) now lives ONCE
   // in TAP_DEEP_INSTALL as __tapDeep.control. The #61 invariant is unchanged — it
   // just moved: assert it at its new home AND that the handlers wire to it.
-  const installBody = slice('const TAP_DEEP_INSTALL =', 1200)
+  const installBody = blockAfter('const TAP_DEEP_INSTALL =')
 
   test('type/fill resolve the inner form control via shared __tapDeep.control', () => {
     assert(typeBody.includes('__tapDeep.control('),

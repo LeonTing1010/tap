@@ -532,13 +532,35 @@ async function resolveFrame(tabId, sel) {
 // Drift/wiring guarded by test/shadow-piercing.test.mjs.
 const TAP_DEEP_INSTALL = () => {
   if (globalThis.__tapDeep) return
+  // Recursive descent through OPEN shadow roots — collect every match for `sel` at
+  // the root document AND inside each nested element.shadowRoot (top-down, document
+  // order). Closed roots (.shadowRoot === null) stay invisible; only upload's CDP
+  // pierce:true path reaches those.
+  const deep = (sel, root) => {
+    const acc = []
+    const walk = (node) => {
+      if (!node || !node.querySelectorAll) return
+      acc.push(...node.querySelectorAll(sel))
+      for (const el of node.querySelectorAll('*')) if (el.shadowRoot) walk(el.shadowRoot)
+    }
+    walk(root || document)
+    return acc
+  }
   const all = (sel, root) => {
     const parts = String(sel).split(' >> ')
     let roots = [root || document]
     for (let i = 0; i < parts.length; i++) {
       const out = []
       for (const r of roots) if (r && r.querySelectorAll) out.push(...r.querySelectorAll(parts[i].trim()))
-      if (i === parts.length - 1) return out
+      if (i === parts.length - 1) {
+        // A plain selector (no explicit ' >> ') that matched NOTHING in the light DOM
+        // auto-descends OPEN shadow roots. Fires ONLY on a 0-match, so every existing
+        // light-DOM tap stays byte-identical (replay determinism preserved), while
+        // whole-page shadow SPAs (微信小店 等 qiankun / web-component consoles) resolve
+        // without hand-authoring a ' >> ' host chain.
+        if (!out.length && parts.length === 1) return deep(parts[0].trim(), root || document)
+        return out
+      }
       roots = out.map((e) => e.shadowRoot).filter(Boolean)
       if (!roots.length) return []
     }
@@ -1656,16 +1678,11 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
               ' (note: cross-origin iframes are not yet supported for upload — tap-core#62)')
           }
           await chrome.debugger.sendCommand({ tabId }, 'DOM.setFileInputFiles', { objectId: r.result.objectId, files })
-          // same verify-before-re-dispatch rationale as the top-document path
-          // below: capture files.length first (a synthetic onChange may clear it),
-          // then re-dispatch, then fail loud if the input stayed empty.
-          const fu = await chrome.debugger.sendCommand({ tabId }, 'Runtime.evaluate', {
-            expression: `(() => { const el = ${chain}; if (!el) return { found: false }; const n = el.files ? el.files.length : 0; el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); return { found: true, n }; })()`,
+          // same re-dispatch rationale as the top-document path below
+          await chrome.debugger.sendCommand({ tabId }, 'Runtime.evaluate', {
+            expression: `(() => { const el = ${chain}; if (el) { el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); return true; } return false; })()`,
             returnByValue: true,
           })
-          const fv = fu?.result?.value
-          if (!fv || fv.found !== true) throw new Error(`upload: file input vanished after setFileInputFiles (selector: ${params.selector})`)
-          if (fv.n === 0) throw new Error(`upload: input holds 0 files after setFileInputFiles — check the path(s) exist and are readable (files: ${JSON.stringify(files)}, selector: ${params.selector})`)
         })
         scheduleDetach(tabId)
         return {}
@@ -1685,26 +1702,24 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       })
       const files = (typeof params.files === 'string' ? params.files.split(',').map(f => f.trim()) : params.files).filter(Boolean)
       await chrome.debugger.sendCommand({ tabId }, 'DOM.setFileInputFiles', { nodeId, files })
-      // Verify + re-dispatch in ONE page-context pass. Ordering is load-bearing:
-      // read el.files.length BEFORE dispatching change, because a React-synthetic
-      // onChange (Ant/rc-upload, mdu, Next.js dropzones) consumes/detaches
-      // el.files — a post-dispatch read false-reads 0 on SUCCESS. Capture the
-      // count first, then re-dispatch input+change so those components' onChange
-      // runs with the now-populated files (they bind at the document root and
-      // ignore the native change setFileInputFiles fires). Plain inputs just get
-      // a harmless extra event.
-      const up = await chrome.debugger.sendCommand({ tabId }, 'Runtime.evaluate', {
-        expression: `(() => { const el = document.querySelector(${JSON.stringify(params.selector)}); if (!el) return { found: false }; const n = el.files ? el.files.length : 0; el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); return { found: true, n }; })()`,
+      // React-synthetic upload components (Ant/rc-upload, mdu) bind onChange via
+      // the document-root listener and don't react to the native change that
+      // setFileInputFiles fires. Re-dispatch input+change in page context so the
+      // component's onChange runs with the now-populated files. Plain inputs
+      // (e.g. APK uploader) are unaffected — they just get a harmless extra event.
+      //
+      // DO NOT add a post-set `el.files.length === 0 → throw` effect-check here:
+      // it is UNSOUND. setFileInputFiles fires a native `change`; uploaders that
+      // consume/detach el.files on that native event (Xiaohongshu skill-hub,
+      // 2026-07-06) leave el.files empty on SUCCESS, so a post-hoc read can't
+      // tell "bad path" (genuine 0) from "already consumed" (successful 0) —
+      // it false-rejects real uploads. The sound guard is the empty-`value`
+      // check (normalizeUploadFiles) above; callers verify effect via the page's
+      // own success indicator, not el.files.
+      await chrome.debugger.sendCommand({ tabId }, 'Runtime.evaluate', {
+        expression: `(() => { const el = document.querySelector(${JSON.stringify(params.selector)}); if (el) { el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); return true; } return false; })()`,
         returnByValue: true,
       })
-      const uv = up?.result?.value
-      // Fail loud on the silent no-op: setFileInputFiles resolved but the input
-      // holds 0 files (path doesn't exist / isn't readable, or a directory was
-      // handed to a non-webkitdirectory input). Returning {} here would read as
-      // success — a silent upload miss, the exact failure mode Tap's honest-
-      // outcome contract exists to prevent (cf. the empty-`value` guard above).
-      if (!uv || uv.found !== true) throw new Error(`upload: file input vanished after setFileInputFiles (selector: ${params.selector})`)
-      if (uv.n === 0) throw new Error(`upload: input holds 0 files after setFileInputFiles — check the path(s) exist and are readable; a directory only populates a webkitdirectory input (files: ${JSON.stringify(files)}, selector: ${params.selector})`)
       scheduleDetach(tabId)
       return {}
     }

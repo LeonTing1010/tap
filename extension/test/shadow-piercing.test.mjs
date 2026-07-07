@@ -121,8 +121,38 @@ test('all("<host> >> <inner>") crosses an open shadow root to the inner element'
 
 test('all(plain selector) reduces to plain querySelectorAll (no behavior change)', () => {
   const d = { id: 'd' }
-  const r = tapDeep.all('div.plain', mkRoot({ 'div.plain': [d] }))
+  const r = tapDeep.all('div.plain', mkRoot({ 'div.plain': [d], '*': [] }))
   assert(r.length === 1 && r[0] === d, 'plain selector must pass through to querySelectorAll')
+})
+
+test('all(plain selector) AUTO-descends open shadow roots when the light DOM has zero matches', () => {
+  // The 微信小店 case: <span.page> tabs live inside a web-component open shadowRoot,
+  // 0 matches at document level. A plain selector must fall back to a deep walk.
+  const tab = { tagName: 'SPAN', className: 'page' }
+  const host = { tagName: 'MICRO-APP', shadowRoot: mkRoot({ 'span.page': [tab], '*': [] }) }
+  const doc = mkRoot({ 'span.page': [], '*': [host] }) // 0 light-DOM matches + one shadow host
+  const r = tapDeep.all('span.page', doc)
+  assert(r.length === 1 && r[0] === tab, 'plain selector must fall back to shadow descent on a 0-match')
+})
+
+test('all(plain selector) does NOT descend shadow when the light DOM already matches (determinism)', () => {
+  // Guard: fallback fires ONLY on 0-match. A light-DOM hit must win unchanged, so no
+  // existing tap silently starts resolving a deeper shadow element (replay drift).
+  const light = { id: 'light' }
+  const deep = { id: 'deep' }
+  const host = { tagName: 'MICRO-APP', shadowRoot: mkRoot({ 'div.x': [deep], '*': [] }) }
+  const doc = mkRoot({ 'div.x': [light], '*': [host] })
+  const r = tapDeep.all('div.x', doc)
+  assert(r.length === 1 && r[0] === light, 'existing light-DOM match must win — no shadow descent')
+})
+
+test('all(" >> " chain) with a 0-match final segment does NOT trigger the auto-fallback', () => {
+  // Explicit chains keep their exact scoped semantics — a miss stays a miss, never
+  // silently widens to a whole-page deep walk (that would defeat the author's intent).
+  const host = { tagName: 'MICRO-APP', shadowRoot: mkRoot({ 'button.gone': [], '*': [] }) }
+  const doc = mkRoot({ 'micro-app': [host], 'button.gone': [{ id: 'elsewhere' }] })
+  assert.deepEqual(tapDeep.all('micro-app >> button.gone', doc), [],
+    'a scoped chain miss must stay [] — no fallback to a global deep walk')
 })
 
 test('all() on a missing shadowRoot returns [] (graceful, no throw)', () => {
