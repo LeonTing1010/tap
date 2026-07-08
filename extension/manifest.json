@@ -20,7 +20,10 @@
     "bookmarks",
     "scripting",
     "cookies",
-    "storage"
+    "storage",
+    "downloads",
+    "contextMenus",
+    "sidePanel"
   ],
   "host_permissions": [
     "<all_urls>"
@@ -31,6 +34,9 @@
       "32": "icons/icon32.png"
     },
     "default_popup": "popup.html"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
   },
   "background": {
     "service_worker": "background.js",

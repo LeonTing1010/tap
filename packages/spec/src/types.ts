@@ -98,10 +98,51 @@ export interface NavOp {
   save?: string;
 }
 
+/** Resolver for a tab-bound element target (ADR
+ *  `2026-07-08-target-resolver.md`). Widens the historic bare-`string`
+ *  selector — "first `querySelectorAll` match, hidden or not" — into an
+ *  explicit predicate over the match set, so the "first match is a hidden
+ *  template/duplicate" footgun is authorable rather than memory-dependent.
+ *  A bare `string` is still accepted and is sugar for `{ selector, visible:
+ *  true }`. Selection: deepQueryAll(selector) → filter `visible` → filter
+ *  `text` → filter `inViewport` → index `nth` (0-based; negatives from the
+ *  end, `-1` = last). PUBLIC mirror of core/types.ts:TargetResolver. */
+export interface TargetResolver {
+  /** CSS selector (supports the ` >>> ` shadow-piercing combinator).
+   *  Optional when `role` is given. At least one of `selector` / `role`
+   *  is required. */
+  selector?: string;
+  /** ARIA role (explicit `role=` or implicit from tag) — selector-free
+   *  semantic targeting that survives React class/DOM churn. A pragmatic
+   *  in-page getByRole, not the full CDP AX tree. */
+  role?: string;
+  /** Accessible-name substring (aria-label → aria-labelledby → <label> →
+   *  alt/title → textContent), trimmed + case-insensitive. Pairs with `role`. */
+  name?: string;
+  /** Keep only rendered matches. Default true for a resolver object. */
+  visible?: boolean;
+  /** 0-based index into the filtered set; negatives from the end (-1 = last). */
+  nth?: number;
+  /** Keep only matches whose `textContent` includes this substring. */
+  text?: string;
+  /** Keep only matches intersecting the viewport (trusted-click precondition). */
+  inViewport?: boolean;
+}
+
+/** A tab-bound element target: bare selector string (sugar for
+ *  `{ selector, visible: true }`) or an explicit {@link TargetResolver}.
+ *  PUBLIC mirror of core/types.ts:Target. */
+export type Target = string | TargetResolver;
+
 export interface WaitOp {
   op: "wait";
   ms?: number;
-  selector?: string;
+  /** Element to wait for: bare selector, or a {@link TargetResolver} that
+   *  waits until the *resolved* (e.g. visible) match exists. */
+  selector?: Target;
+  /** Wait until `location.href` includes this substring — deterministic SPA
+   *  route-change wait (ADR 2026-07-08-op-capabilities). Tab-bound. */
+  url?: string;
   timeout_ms?: number;
   save?: string;
 }
@@ -118,7 +159,10 @@ export interface InputOp {
     | "hover"
     | "keytype"
     | "blur";
-  target?: string;
+  /** Bare selector string or a {@link TargetResolver} (ADR
+   *  `2026-07-08-target-resolver.md`). PUBLIC mirror of
+   *  core/types.ts:InputOp.target. */
+  target?: Target;
   /** kind=type/fill → text written to `.value`; kind=setHtml → HTML assigned
    *  to `target.innerHTML` (rich-text / contenteditable editors). Receives
    *  `{{$args}}` substitution as DATA (unlike `eval.fn`), so large per-run
@@ -259,16 +303,73 @@ export const BOOKMARK_ACTIONS = [
 export type BookmarkAction = typeof BOOKMARK_ACTIONS[number];
 
 /** The closed Op union — exactly 13 members. */
+/** Host op: capture the tab as a PDF (CDP Page.printToPDF). base64 binds via
+ *  `save`. PUBLIC mirror of core/types.ts:PdfOp (ADR 2026-07-08-op-capabilities). */
+export interface PdfOp {
+  op: "pdf";
+  landscape?: boolean;
+  printBackground?: boolean;
+  paperWidth?: number;
+  paperHeight?: number;
+  save?: string;
+}
+
+/** Host op: native CDP Overlay.highlightNode on a target (survives re-render).
+ *  Reuses {@link Target}. PUBLIC mirror of core/types.ts:HighlightOp. */
+export interface HighlightOp {
+  op: "highlight";
+  target: Target;
+  ms?: number;
+  save?: string;
+}
+
+/** Host op: record the tab via CDP Page.startScreencast for `ms`; returns
+ *  base64 JPEG frames. PUBLIC mirror of core/types.ts:ScreencastOp. */
+export interface ScreencastOp {
+  op: "screencast";
+  ms: number;
+  quality?: number;
+  everyNthFrame?: number;
+  save?: string;
+}
+
+/** Host op: human clicks (points at) an element; returns a TargetResolver via
+ *  `save`. Human-in-the-loop element picking as a plan primitive. PUBLIC
+ *  mirror of core/types.ts:PointOp (ADR 2026-07-08-op-capabilities). */
+export interface PointOp {
+  op: "point";
+  timeout_ms?: number;
+  save?: string;
+}
+
+/** Host op: push a `message` to the Tap side panel (plan→human output).
+ *  PUBLIC mirror of core/types.ts:NotifyOp. */
+export interface NotifyOp {
+  op: "notify";
+  message: string;
+  save?: string;
+}
+
 export type Op =
   | FetchOp | NavOp | WaitOp | InputOp | ExtractOp | CookiesOp | TapOp
   | IfOp | ForeachOp | ParallelOp
-  | EvalOp | TabOp | BookmarkOp;
+  | EvalOp | TabOp | BookmarkOp
+  | PdfOp
+  | HighlightOp
+  | ScreencastOp
+  | PointOp
+  | NotifyOp;
 
 /** Runtime constant for the 13-op closure. */
 export const OP_NAMES_V2 = [
   "fetch", "nav", "wait", "input", "extract", "cookies", "tap",
   "if", "foreach", "parallel",
   "eval", "tab", "bookmark",
+  "pdf",
+  "highlight",
+  "screencast",
+  "point",
+  "notify",
 ] as const;
 
 export type OpName = typeof OP_NAMES_V2[number];

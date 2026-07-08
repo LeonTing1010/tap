@@ -134,11 +134,10 @@ console.log('\n  -- Rule 2: type/fill detect contenteditable --\n')
 }
 
 {
-  // Slice sized to the fill handler (~2.1KB). The shadow-piercing helpers that
-  // once bloated it (inline deepAll/deepControl) were extracted to the shared
-  // TAP_DEEP_INSTALL (2026-06-23), so the handler shrank back; the
+  // Slice sized to the fill handler. Widened 2098 -> 2400 (2026-07-08) when the
+  // TargetResolver branch (resolver-aware element pick) grew the case; the
   // contenteditable-delegation invariant below is unchanged.
-  const fillBody = slice("case 'fill': {", 2098)
+  const fillBody = slice("case 'fill': {", 2400)
   test('fill detects el.isContentEditable', () => {
     assert(fillBody.includes('isContentEditable'),
       'fill must branch on isContentEditable instead of the no-op value setter')
@@ -158,7 +157,7 @@ console.log('\n  -- Rule 4: masked / web-component inner-input resolution --\n')
 
 {
   const typeBody = slice("case 'type': {", 3000)
-  const fillBody = slice("case 'fill': {", 2098)
+  const fillBody = slice("case 'fill': {", 2400)
   // The inner-control resolver (formerly inline `deepControl` ×3) now lives ONCE
   // in TAP_DEEP_INSTALL as __tapDeep.control. The #61 invariant is unchanged — it
   // just moved: assert it at its new home AND that the handlers wire to it.

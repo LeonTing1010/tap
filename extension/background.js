@@ -28,6 +28,7 @@ console.log('[tap] extension runtime ready')
 // --- Session Manager ---
 // Each MCP session owns a dedicated tab. Commands route via sessionId → tabId.
 const sessions = new Map()  // sessionId → { tabId, url, interceptActive, networkCapturing }
+const screencastBuckets = new Map()  // tabId → { frames, max, onEvt } (ADR 2026-07-08-op-capabilities)
 
 // --- Session persistence ---
 //
@@ -219,6 +220,66 @@ async function ensureDebugger(tabId) {
 
 async function enablePageDomain(tabId) {
   try { await chrome.debugger.sendCommand({ tabId }, 'Page.enable') } catch { /* benign */ }
+  await enableFocusEmulation(tabId)
+}
+
+// Document-start "presence shim" installed via Page.addScriptToEvaluateOnNewDocument.
+// Emulation.setFocusEmulationEnabled covers document.hasFocus() and :focus, but it
+// does NOT change document.visibilityState — a background tab still reports 'hidden',
+// so a site that gates purely on Page Visibility (小红书 publish reads document.
+// visibilityState read-only) stays blocked under pure focus emulation. This shim
+// makes the tab report visible/present at the JS layer: it runs BEFORE page scripts
+// on every new document and re-applies on SPA full-navs / iframe loads, so it is the
+// robust replacement for the fragile per-op `defineProperty` spoof that raced page
+// load (memory: xhs-publish-visibilitystate-spoof). Idempotent getters (configurable)
+// — redefining is safe. hasFocus is re-asserted here too so a page that overwrites it
+// still sees true.
+const PRESENCE_SHIM_SRC = `(() => { try {
+  const def = (o, p, v) => { try { Object.defineProperty(o, p, { configurable: true, get: () => v }) } catch (_) {} };
+  def(document, 'visibilityState', 'visible');
+  def(document, 'webkitVisibilityState', 'visible');
+  def(document, 'hidden', false);
+  def(document, 'webkitHidden', false);
+  try { document.hasFocus = () => true } catch (_) {}
+} catch (_) {} })();`
+
+// Make a BACKGROUND tab behave as if it were the focused, foreground, VISIBLE tab —
+// the root fix for the whole "background tab isn't real enough" footgun family
+// (2026-07-08): sites that gate on document.hasFocus() (focus emulation) or
+// document.visibilityState (presence shim), gesture-bound buttons that need
+// foreground, and rAF/timer throttling on hidden tabs. Three complementary levers:
+//   • Emulation.setFocusEmulationEnabled — renderer reports focus without the OS
+//     window actually being focused (same mechanism Puppeteer/Playwright use).
+//   • Page.setWebLifecycleState('active') — lifts the frozen/throttled lifecycle so
+//     timers and network run at foreground rates.
+//   • PRESENCE_SHIM_SRC — document.visibilityState/hidden = visible (the piece
+//     focus emulation can't do; see above).
+// Best-effort + idempotent — a failure (old Chrome, domain unavailable) must never
+// break the attach the caller needs, exactly like Page.enable above. Runs on EVERY
+// debugger attach, so trusted clicks / uploads / eval on a background tab all get a
+// real, present tab.
+async function enableFocusEmulation(tabId) {
+  try { await chrome.debugger.sendCommand({ tabId }, 'Emulation.setFocusEmulationEnabled', { enabled: true }) } catch { /* benign: pre-M89 or domain off */ }
+  try { await chrome.debugger.sendCommand({ tabId }, 'Page.setWebLifecycleState', { state: 'active' }) } catch { /* benign */ }
+  await installPresenceShim(tabId)
+}
+
+// Install PRESENCE_SHIM_SRC as a document-start script (covers future navigations)
+// AND apply it once to the CURRENTLY-loaded document (addScriptToEvaluateOnNewDocument
+// only affects NEW documents, so the already-loaded page needs a direct evaluate).
+// addScriptToEvaluateOnNewDocument STACKS on repeat calls, so register it only once
+// per debugger session — tracked on the debuggerSessions entry, which is deleted on
+// every detach path, so a reattach (fresh CDP session, script gone) reinstalls. The
+// current-doc apply is cheap + idempotent, so it runs every attach regardless.
+async function installPresenceShim(tabId) {
+  const session = debuggerSessions.get(tabId)
+  if (session && !session.presenceShim) {
+    try {
+      await chrome.debugger.sendCommand({ tabId }, 'Page.addScriptToEvaluateOnNewDocument', { source: PRESENCE_SHIM_SRC })
+      debuggerSessions.set(tabId, { ...debuggerSessions.get(tabId), presenceShim: true })
+    } catch { /* benign: domain off / pre-M89 */ }
+  }
+  try { await chrome.debugger.sendCommand({ tabId }, 'Runtime.evaluate', { expression: PRESENCE_SHIM_SRC }) } catch { /* benign */ }
 }
 
 async function withDebugger(tabId, fn) {
@@ -704,7 +765,111 @@ const TAP_DEEP_INSTALL = () => {
     }
     return null
   }
-  globalThis.__tapDeep = { all, control }
+  // Resolve a target — bare selector STRING or a TargetResolver OBJECT
+  // { selector, visible?, nth?, text?, inViewport? } — to the ONE chosen
+  // element (ADR 2026-07-08-target-resolver). A string keeps the historic
+  // "first match, prefer a visible one" contract; a resolver object applies
+  // the explicit predicate in order: visible (default true) → text →
+  // inViewport → nth (0-based; negatives count from the end, -1 = last =
+  // newest in append-ordered chat/list UIs). Out-of-range → null (no silent
+  // first-match — the whole point). Single source of truth for element
+  // selection across the selector-bearing write handlers + op:wait resolver;
+  // clickResolver keeps its own inline bare-string path (the visible-click
+  // test injects getComputedStyle into IT) but routes the OBJECT path here.
+  const vis = (e) => {
+    if (!e) return false
+    const s = (typeof getComputedStyle === 'function') ? getComputedStyle(e) : null
+    if (s && (s.display === 'none' || s.visibility === 'hidden' || s.opacity === '0')) return false
+    const r = e.getBoundingClientRect ? e.getBoundingClientRect() : { width: 1, height: 1 }
+    return r.width > 0 && r.height > 0
+  }
+  const inView = (e) => {
+    const r = e.getBoundingClientRect ? e.getBoundingClientRect() : null
+    if (!r) return true
+    const vh = (typeof innerHeight === 'number') ? innerHeight : 1e9
+    const vw = (typeof innerWidth === 'number') ? innerWidth : 1e9
+    return r.width > 0 && r.height > 0 && r.bottom > 0 && r.right > 0 && r.top < vh && r.left < vw
+  }
+  // Pragmatic in-page getByRole (ADR 2026-07-08-target-resolver-ax): explicit
+  // role= wins, else a common-subset implicit-role map. Not the full CDP AX
+  // tree, but stable enough to survive the class/DOM churn that breaks CSS
+  // selectors across React re-renders.
+  const implicitRole = (el) => {
+    if (!el || !el.getAttribute) return ''
+    const explicit = el.getAttribute('role')
+    if (explicit && explicit.trim()) return explicit.trim().toLowerCase().split(/\s+/)[0]
+    const tag = (el.tagName || '').toLowerCase()
+    switch (tag) {
+      case 'a': case 'area': return el.hasAttribute && el.hasAttribute('href') ? 'link' : ''
+      case 'button': case 'summary': return 'button'
+      case 'select': return el.multiple ? 'listbox' : 'combobox'
+      case 'textarea': return 'textbox'
+      case 'img': return 'img'
+      case 'nav': return 'navigation'
+      case 'main': return 'main'
+      case 'header': return 'banner'
+      case 'footer': return 'contentinfo'
+      case 'aside': return 'complementary'
+      case 'h1': case 'h2': case 'h3': case 'h4': case 'h5': case 'h6': return 'heading'
+      case 'input': {
+        const t = ((el.getAttribute('type') || 'text')).toLowerCase()
+        if (t === 'button' || t === 'submit' || t === 'reset' || t === 'image') return 'button'
+        if (t === 'checkbox') return 'checkbox'
+        if (t === 'radio') return 'radio'
+        if (t === 'range') return 'slider'
+        if (t === 'number') return 'spinbutton'
+        if (t === 'search') return 'searchbox'
+        return 'textbox'
+      }
+      default: return ''
+    }
+  }
+  // Accessible name: aria-label → aria-labelledby → <label> → alt/title → text.
+  const accName = (el) => {
+    if (!el || !el.getAttribute) return ''
+    const al = el.getAttribute('aria-label'); if (al && al.trim()) return al.trim()
+    const lb = el.getAttribute('aria-labelledby')
+    const doc = (el.ownerDocument || (typeof document !== 'undefined' ? document : null))
+    if (lb && doc && doc.getElementById) {
+      const txt = lb.trim().split(/\s+/).map((id) => { const n = doc.getElementById(id); return n ? (n.textContent || '') : '' }).join(' ').trim()
+      if (txt) return txt
+    }
+    if (el.id && doc && doc.querySelector) {
+      try { const esc = (typeof CSS !== 'undefined' && CSS.escape) ? CSS.escape(el.id) : el.id; const lab = doc.querySelector('label[for="' + esc + '"]'); if (lab && (lab.textContent || '').trim()) return lab.textContent.trim() } catch (_) {}
+    }
+    const wrap = el.closest && el.closest('label'); if (wrap && (wrap.textContent || '').trim()) return wrap.textContent.trim()
+    const alt = el.getAttribute('alt'); if (alt && alt.trim()) return alt.trim()
+    const title = el.getAttribute('title'); if (title && title.trim()) return title.trim()
+    return (el.textContent || '').trim()
+  }
+  const ROLE_CANDIDATES = 'a,area,button,summary,input,select,textarea,img,nav,main,header,footer,aside,h1,h2,h3,h4,h5,h6,[role],[aria-label],[tabindex],[onclick]'
+  const pick = (target, root) => {
+    const isObj = target && typeof target === 'object'
+    if (!isObj) {
+      const list = all(target, root)
+      let el = list[0] || null
+      if (el && !vis(el)) { for (const e of list) { if (vis(e)) { el = e; break } } }
+      return el
+    }
+    const wantRole = target.role ? String(target.role).trim().toLowerCase() : ''
+    // Candidates: the selector's matches, or (role-only) the common-role set.
+    let list = target.selector ? all(target.selector, root) : (wantRole ? all(ROLE_CANDIDATES, root) : [])
+    if (wantRole) list = list.filter((e) => implicitRole(e) === wantRole)
+    if (target.name) {
+      const nm = String(target.name).trim().toLowerCase()
+      list = list.filter((e) => accName(e).toLowerCase().includes(nm))
+    }
+    if (target.visible !== false) list = list.filter(vis)
+    if (target.text) {
+      const tx = String(target.text).trim()
+      list = list.filter((e) => (e.textContent || '').trim().includes(tx))
+    }
+    if (target.inViewport) list = list.filter(inView)
+    let idx = (typeof target.nth === 'number') ? target.nth : 0
+    if (idx < 0) idx = list.length + idx
+    return list[idx] || null
+  }
+  globalThis.__tapDeep = { all, control, pick, implicitRole, accName }
 }
 // Idempotent: ensure globalThis.__tapDeep exists in the (frame) target before a
 // handler's injected fn references it. One extra execFunc per op — ops are
@@ -1002,14 +1167,31 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       // also gives selector-waits >>> frame piercing, #62) and map its
       // timeout onto the contracted wire code.
       if (params.selector) {
+        // selector may be a string or a TargetResolver object (ADR 2026-07-08);
+        // waitFor handles both. Use the selector string only for the error text.
+        const selStr = (params.selector && typeof params.selector === 'object')
+          ? params.selector.selector : params.selector
         try {
           await handleMethod('waitFor', { tabId, selector: params.selector, ms: params.timeout_ms }, senderTabId, { fromDaemon })
         } catch (e) {
           const m = String(e?.message || e)
-          if (m.startsWith('waitFor timeout')) throw new Error('selector_not_found: ' + params.selector + ' (wait timed out)')
+          if (m.startsWith('waitFor timeout')) throw new Error('selector_not_found: ' + selStr + ' (wait timed out)')
           throw e
         }
         return {}
+      }
+      // op:wait url-mode (ADR 2026-07-08-op-capabilities): poll location.href
+      // until it includes the substring — a deterministic SPA route-change
+      // wait (kills the "wait on a route-specific element then hope" pattern).
+      if (params.url) {
+        const budget = Math.min(params.timeout_ms || 10000, 25000)
+        const end = Date.now() + budget
+        for (;;) {
+          const hit = await execFunc(tabId, (sub) => location.href.includes(sub), params.url)
+          if (hit) return {}
+          if (Date.now() > end) throw new Error('selector_not_found: url~=' + params.url + ' (route wait timed out)')
+          await new Promise(r => setTimeout(r, 250))
+        }
       }
       await new Promise(r => setTimeout(r, Math.min(params.ms, 25000)))
       return {}
@@ -1049,6 +1231,134 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       return { data }
     }
 
+    // ── Chrome-capability peer methods (ADR 2026-07-08-op-capabilities) ──
+    // Substrate-side artifacts/effects exposed to the host. Browser-live:
+    // exercised only against a real Chrome, guarded structurally by
+    // test/chrome-capabilities.test.mjs.
+
+    case 'pdf': {
+      // op:pdf → CDP Page.printToPDF → base64 PDF of the current page. For statement /
+      // invoice / report capture (the bookkeeping done-for-you取数环). The host
+      // writes the bytes under ~/.tap. Landscape / paper size passthrough.
+      const data = await withDebugger(tabId, async () => {
+        const r = await chrome.debugger.sendCommand({ tabId }, 'Page.printToPDF', {
+          landscape: !!params.landscape,
+          printBackground: params.printBackground !== false,
+          preferCSSPageSize: true,
+          ...(params.paperWidth ? { paperWidth: params.paperWidth } : {}),
+          ...(params.paperHeight ? { paperHeight: params.paperHeight } : {}),
+        })
+        return r.data // base64
+      })
+      return { data, mime: 'application/pdf' }
+    }
+
+    case 'highlight': {
+      // CDP Overlay.highlightNode — a NATIVE element highlight that survives
+      // React re-renders (unlike the injected red box, whose data-tap marker
+      // React drops). Best-effort visualize aid; auto-clears after ms.
+      const sel = (params.target && typeof params.target === 'object') ? params.target.selector : params.target
+      await withDebugger(tabId, async () => {
+        await chrome.debugger.sendCommand({ tabId }, 'DOM.enable').catch(() => {})
+        await chrome.debugger.sendCommand({ tabId }, 'Overlay.enable').catch(() => {})
+        const doc = await chrome.debugger.sendCommand({ tabId }, 'DOM.getDocument', { depth: 0 })
+        const found = await chrome.debugger.sendCommand({ tabId }, 'DOM.querySelector', {
+          nodeId: doc.root.nodeId, selector: String(sel),
+        })
+        if (!found?.nodeId) throw new Error('highlight: node not found: ' + sel)
+        await chrome.debugger.sendCommand({ tabId }, 'Overlay.highlightNode', {
+          highlightConfig: {
+            contentColor: { r: 111, g: 66, b: 193, a: 0.28 },
+            borderColor: { r: 111, g: 66, b: 193, a: 0.9 },
+          },
+          nodeId: found.nodeId,
+        })
+        return {}
+      })
+      const ms = Math.min(params.ms || 1200, 10000)
+      setTimeout(() => { chrome.debugger.sendCommand({ tabId }, 'Overlay.hideHighlight').catch(() => {}) }, ms)
+      return { highlighted: true }
+    }
+
+    case 'screencast': {
+      // op:screencast → CDP Page.startScreencast for `ms`, then stop and return
+      // the JPEG frames (base64). Self-contained (start → wait → stop) so no
+      // cross-op recording state exists. Real frame stream vs single
+      // captureVisibleTab; works on background tabs.
+      const bucket = { frames: [], max: Math.min(params.maxFrames || 600, 1200), onEvt: null }
+      screencastBuckets.set(tabId, bucket)
+      await ensureDebugger(tabId)
+      const onEvt = (src, method, p) => {
+        if (src.tabId !== tabId || method !== 'Page.screencastFrame') return
+        if (bucket.frames.length < bucket.max) bucket.frames.push(p.data)
+        chrome.debugger.sendCommand({ tabId }, 'Page.screencastFrameAck', { sessionId: p.sessionId }).catch(() => {})
+      }
+      bucket.onEvt = onEvt
+      chrome.debugger.onEvent.addListener(onEvt)
+      await chrome.debugger.sendCommand({ tabId }, 'Page.startScreencast', {
+        format: 'jpeg', quality: params.quality || 50, everyNthFrame: params.everyNthFrame || 1,
+      })
+      await new Promise((r) => setTimeout(r, Math.min(Math.max(params.ms || 2000, 0), 25000)))
+      await chrome.debugger.sendCommand({ tabId }, 'Page.stopScreencast').catch(() => {})
+      chrome.debugger.onEvent.removeListener(onEvt)
+      screencastBuckets.delete(tabId)
+      scheduleDetach(tabId)
+      return { frames: bucket.frames, count: bucket.frames.length }
+    }
+
+    case 'focusEmulate': {
+      // Explicitly (re)assert focus/active emulation on demand — the attach
+      // path already does this, but a plan can re-arm it after a nav.
+      await withDebugger(tabId, () => enableFocusEmulation(tabId))
+      return { focusEmulated: true }
+    }
+
+    case 'point': {
+      // op:point → ask the human to click an element in the bound tab; return
+      // the computed TargetResolver (selector + implicit role + accessible
+      // name). Human-in-the-loop element picking as a plan primitive (ADR
+      // 2026-07-08-op-capabilities). Same one-shot capture-phase listener the
+      // context-menu picker uses, so the emitted resolver matches pick() at
+      // replay. Times out (→ resolver:null) after timeout_ms.
+      await ensureDeep(tabId)
+      const budget = Math.min(params.timeout_ms || 30000, 120000)
+      const [res] = await chrome.scripting.executeScript({
+        target: { tabId }, world: 'MAIN',
+        args: [budget],
+        func: (ms) => new Promise((resolve) => {
+          const D = globalThis.__tapDeep
+          const onClick = (e) => {
+            e.preventDefault(); e.stopPropagation()
+            document.removeEventListener('click', onClick, true)
+            const el = e.target
+            const role = (D && D.implicitRole) ? D.implicitRole(el) : (el.getAttribute('role') || '')
+            let selector = ''
+            if (el.id) selector = '#' + CSS.escape(el.id)
+            else {
+              const cls = (el.className && typeof el.className === 'string')
+                ? el.className.trim().split(/\s+/).slice(0, 2).filter(Boolean).map((c) => '.' + CSS.escape(c)).join('') : ''
+              selector = el.tagName.toLowerCase() + cls
+            }
+            const name = (el.getAttribute('aria-label') || el.textContent || '').trim().slice(0, 40)
+            resolve({ selector, role: role || undefined, name: name || undefined, visible: true })
+          }
+          document.addEventListener('click', onClick, true)
+          setTimeout(() => { document.removeEventListener('click', onClick, true); resolve(null) }, ms)
+        }),
+      })
+      const resolver = res?.result || null
+      if (resolver) chrome.storage.local.set({ 'tap:lastPickedResolver': resolver, 'tap:lastPickedAt': Date.now() }).catch(() => {})
+      return { resolver }
+    }
+
+    case 'notify': {
+      // op:notify → push a message to the Tap side panel (plan → human output).
+      // Stored under chrome.storage.local['tap:notify']; sidepanel.js reflects it.
+      const msg = String(params.message ?? '')
+      await chrome.storage.local.set({ 'tap:notify': { message: msg, at: Date.now() } }).catch(() => {})
+      return { notified: true }
+    }
+
     case 'cookies': {
       const tab = await chrome.tabs.get(tabId)
       return { cookies: await chrome.cookies.getAll({ url: tab.url }) }
@@ -1080,15 +1390,24 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
     // so classifyExtensionError maps to WIRE_CODE.selector_not_found
     // (peer-conformance.ts requires this kind for selector miss).
     case 'input': {
-      const { kind, target, value, ...rest } = params
+      const { kind, target: rawTarget, value, ...rest } = params
+      // Target widening (ADR 2026-07-08-target-resolver): `target` is a bare
+      // selector STRING or a TargetResolver OBJECT { selector, visible?, nth?,
+      // text?, inViewport? }. Split into the selector STRING (for frame math /
+      // trace / messages) and the `resolver` object threaded to the handlers,
+      // which resolve the chosen element via globalThis.__tapDeep.pick. A bare
+      // string leaves `resolver` null → historic behaviour byte-identical.
+      const isResolver = rawTarget && typeof rawTarget === 'object'
+      const selStr = isResolver ? rawTarget.selector : rawTarget
+      const resolver = isResolver ? rawTarget : null
       // Visible mode: foreground the driven tab + paint the op trace before acting.
       // Enabled by the global toggle (idle-expiring) OR a per-invocation `visualize`
       // hint on the op (runtime-layer control — never a stored-plan field).
-      if (visibleActive(params.visualize) && target) await showOpTrace(tabId, target, kind)
+      if (visibleActive(params.visualize) && selStr) await showOpTrace(tabId, selStr, kind)
       try {
         switch (kind) {
           case 'click':
-            return await handleMethod('click', { ...rest, target }, senderTabId, { fromDaemon })
+            return await handleMethod('click', { ...rest, target: selStr, resolver }, senderTabId, { fromDaemon })
           case 'resolve':
             // Read-only resolve probe (resolve-before-dispatch gate, Clause B
             // click half): does `target` resolve via click's EXACT chain? Runs
@@ -1097,39 +1416,39 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
             // op:input kind" default below — they never click during a probe
             // (version-skew safe). Routed through the click handler in probe
             // mode so the resolution chain has zero drift.
-            return await handleMethod('click', { ...rest, target, probe: true }, senderTabId, { fromDaemon })
+            return await handleMethod('click', { ...rest, target: selStr, resolver, probe: true }, senderTabId, { fromDaemon })
           case 'type':
-            return await handleMethod('type', { ...rest, selector: target, text: value }, senderTabId, { fromDaemon })
+            return await handleMethod('type', { ...rest, selector: selStr, resolver, text: value }, senderTabId, { fromDaemon })
           case 'fill':
-            return await handleMethod('fill', { ...rest, selector: target, text: value }, senderTabId, { fromDaemon })
+            return await handleMethod('fill', { ...rest, selector: selStr, resolver, text: value }, senderTabId, { fromDaemon })
           case 'setHtml':
-            return await handleMethod('setHtml', { ...rest, selector: target, html: value }, senderTabId, { fromDaemon })
+            return await handleMethod('setHtml', { ...rest, selector: selStr, resolver, html: value }, senderTabId, { fromDaemon })
           case 'press':
             return await handleMethod('pressKey', { ...rest, key: value }, senderTabId, { fromDaemon })
           case 'upload':
-            return await handleMethod('upload', { ...rest, selector: target, files: normalizeUploadFiles(value) }, senderTabId, { fromDaemon })
+            return await handleMethod('upload', { ...rest, selector: selStr, resolver, files: normalizeUploadFiles(value) }, senderTabId, { fromDaemon })
           case 'hover':
             // Trusted mouseMoved only (no press/release) — opens hover-triggered
             // overlays (Ant Dropdown trigger=['hover'], MUI tooltips) that a JS
             // el.click() can't, and that a trusted click would open-then-toggle-shut.
-            return await handleMethod('hover', { ...rest, selector: target }, senderTabId, { fromDaemon })
+            return await handleMethod('hover', { ...rest, selector: selStr, resolver }, senderTabId, { fromDaemon })
           case 'keytype':
             // Real CDP keystrokes (vs fill/type's value-setter) — for framework
             // inputs whose store only commits on genuine key events.
-            return await handleMethod('keytype', { ...rest, selector: target, text: value }, senderTabId, { fromDaemon })
+            return await handleMethod('keytype', { ...rest, selector: selStr, resolver, text: value }, senderTabId, { fromDaemon })
           case 'blur':
             // Commit gesture for blur-flushing form stores (Ant rc-field-form
             // nested list items et al): typed value only enters the framework
             // model on a REAL focus loss. el.blur() yields UA-generated
             // (trusted) blur/focusout. End form-fill sequences with this on
             // the last field before clicking save (2026-06-11 beian lesson).
-            return await handleMethod('blur', { ...rest, selector: target }, senderTabId, { fromDaemon })
+            return await handleMethod('blur', { ...rest, selector: selStr, resolver }, senderTabId, { fromDaemon })
         }
         throw new Error(`Unknown op:input kind: ${kind}`)
       } catch (e) {
         const msg = String(e?.message || e)
         if (msg.startsWith('Element not found')) {
-          throw new Error(`selector_not_found: ${target}`)
+          throw new Error(`selector_not_found: ${selStr}`)
         }
         throw e
       }
@@ -1138,8 +1457,12 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
     // ========== BUILT-IN (17) — chrome.scripting func injection, zero CSP issues ==========
 
     case 'click': {
-      const { t: fx, sel: target, dx, dy } = await resolveFrame(tabId, params.target || params.selector)
+      const { t: fx, sel: innerSel, dx, dy } = await resolveFrame(tabId, params.target || params.selector)
       await ensureDeep(fx)
+      // Frame-inner target: a resolver object keeps its predicate but swaps the
+      // selector to the post-`>>>`-strip inner one (ADR 2026-07-08). A bare
+      // string stays a string → clickResolver's historic path is byte-identical.
+      const innerTarget = params.resolver ? { ...params.resolver, selector: innerSel } : innerSel
       // JS-first: use el.click() via execFunc — no debugger, no yellow bar, CSP-immune
       // Named + self-contained so it injects via execFunc AND is extractable by
       // test/visible-click.test.mjs (background.js isn't node-importable — chrome.*).
@@ -1149,6 +1472,7 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
         // sharing .weui-desktop-btn_primary in the 2026-06-11 weixin self-menu
         // dogfood and logged the session out. Below-fold (scrolled) elements keep
         // size>0 so they still resolve; only display:none/hidden/zero-box are skipped.
+        const isObj = t && typeof t === 'object'
         const vis = (e) => {
           if (!e) return false
           const s = (typeof getComputedStyle === 'function') ? getComputedStyle(e) : null
@@ -1156,22 +1480,32 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
           const r = e.getBoundingClientRect()
           return r.width > 0 && r.height > 0
         }
-        let el = globalThis.__tapDeep.all(t, document)[0] || null
-        if (el && !vis(el)) {
-          for (const e of globalThis.__tapDeep.all(t, document)) { if (vis(e)) { el = e; break } }
-        }
-        if (!el) {
-          for (const e of document.querySelectorAll('a, button, [role="button"], input, [onclick], [tabindex]')) {
-            if ((e.textContent?.trim().toLowerCase().includes(t.toLowerCase())) ||
-                (e.getAttribute('aria-label')?.toLowerCase().includes(t.toLowerCase()))) { el = e; break }
+        let el = null
+        if (isObj) {
+          // Explicit TargetResolver → the shared predicate picker (single source
+          // of truth). NO semantic text/aria fallback: an explicit resolver is
+          // precise intent; out-of-range must fail loudly, never silently click
+          // a different node (the whole point of ADR 2026-07-08).
+          el = globalThis.__tapDeep.pick(t, document)
+        } else {
+          el = globalThis.__tapDeep.all(t, document)[0] || null
+          if (el && !vis(el)) {
+            for (const e of globalThis.__tapDeep.all(t, document)) { if (vis(e)) { el = e; break } }
+          }
+          if (!el) {
+            for (const e of document.querySelectorAll('a, button, [role="button"], input, [onclick], [tabindex]')) {
+              if ((e.textContent?.trim().toLowerCase().includes(t.toLowerCase())) ||
+                  (e.getAttribute('aria-label')?.toLowerCase().includes(t.toLowerCase()))) { el = e; break }
+            }
+          }
+          if (!el) {
+            const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_ELEMENT)
+            let n; while (n = walk.nextNode()) {
+              if (n.textContent?.trim().toLowerCase().includes(t.toLowerCase()) && n.children.length === 0) { el = n; break }
+            }
           }
         }
-        if (!el) {
-          const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_ELEMENT)
-          let n; while (n = walk.nextNode()) {
-            if (n.textContent?.trim().toLowerCase().includes(t.toLowerCase()) && n.children.length === 0) { el = n; break }
-          }
-        }
+        const label = isObj ? (t.selector || '[resolver]') : t
         // Probe mode (Clause B click half): report whether the target resolves
         // via THIS exact chain, WITHOUT clicking. Placed after the full chain so
         // the probe reflects click's real semantics (incl. semantic fallback).
@@ -1180,15 +1514,15 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
           const rb = el.getBoundingClientRect()
           return { resolved: true, x: Math.round(rb.x + rb.width / 2), y: Math.round(rb.y + rb.height / 2) }
         }
-        if (!el) throw new Error('Element not found: ' + t)
+        if (!el) throw new Error('Element not found: ' + label)
         el.scrollIntoView({ block: 'center', behavior: 'instant' })
         el.click()
         const r = el.getBoundingClientRect()
         return { clicked: true, x: Math.round(r.x + r.width / 2), y: Math.round(r.y + r.height / 2) }
       }
-      const result = await execFunc(fx, clickResolver, target, params.probe)
+      const result = await execFunc(fx, clickResolver, innerTarget, params.probe)
       if (params.probe) return { resolved: !!(result && result.resolved) }
-      if (!result) throw new Error('selector_not_found: ' + target + ' (page not ready — exec returned null)')
+      if (!result) throw new Error('selector_not_found: ' + (innerSel ?? '[resolver]') + ' (page not ready — exec returned null)')
       // CDP fallback: if site needs isTrusted events, retry with cdpClick
       // (dx/dy translate frame-relative coords to top-frame viewport space)
       if (params.trusted) {
@@ -1201,9 +1535,14 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       const { text } = params
       const { t: fx, sel: selector, dx, dy } = await resolveFrame(tabId, params.selector)
       await ensureDeep(fx)
+      // Resolver object → predicate pick; bare string → historic first-match
+      // (byte-identical replay). ADR 2026-07-08-target-resolver.
+      const picker = params.resolver ? { ...params.resolver, selector } : selector
       const probe = await execFunc(fx, (sel, txt) => {
-        const el = globalThis.__tapDeep.all(sel, document)[0]
-        if (!el) throw new Error('Element not found: ' + sel)
+        const el = (sel && typeof sel === 'object')
+          ? globalThis.__tapDeep.pick(sel, document)
+          : globalThis.__tapDeep.all(sel, document)[0]
+        if (!el) throw new Error('Element not found: ' + (sel && typeof sel === 'object' ? sel.selector : sel))
         el.scrollIntoView({ block: 'center', behavior: 'instant' })
         el.focus()
         // #61: resolve the real form control — directly, or the native <input>
@@ -1231,7 +1570,7 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
         // the legacy per-char dispatchKeyEvent path — insertText would not fire
         // their keydown handlers.
         return { mode: el.isContentEditable ? 'contenteditable' : 'keys', x, y }
-      }, selector, text)
+      }, picker, text)
       if (!probe) throw new Error('type: page-context value-set failed for selector: ' + selector)
       if (probe.mode === 'contenteditable') {
         await typeIntoContentEditable(tabId, fx, selector, text, { x: probe.x + dx, y: probe.y + dy })
@@ -1270,9 +1609,14 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       const { text } = params
       const { t: fx, sel: selector, dx, dy } = await resolveFrame(tabId, params.selector)
       await ensureDeep(fx)
+      // Resolver object → predicate pick; bare string → historic first-match
+      // (byte-identical replay). ADR 2026-07-08-target-resolver.
+      const picker = params.resolver ? { ...params.resolver, selector } : selector
       const probe = await execFunc(fx, (sel, txt) => {
-        const el = globalThis.__tapDeep.all(sel, document)[0]
-        if (!el) throw new Error('Element not found: ' + sel)
+        const el = (sel && typeof sel === 'object')
+          ? globalThis.__tapDeep.pick(sel, document)
+          : globalThis.__tapDeep.all(sel, document)[0]
+        if (!el) throw new Error('Element not found: ' + (sel && typeof sel === 'object' ? sel.selector : sel))
         el.scrollIntoView({ block: 'center', behavior: 'instant' })
         el.focus()
         // contenteditable rich-text editors have no .value — the value-setter
@@ -1294,7 +1638,7 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
         try { setter ? setter.call(T, txt) : (T.value = txt) } catch (_) { try { T.value = txt } catch (_) {} }
         try { T.dispatchEvent(new Event('input', { bubbles: true })); T.dispatchEvent(new Event('change', { bubbles: true })) } catch (_) {}
         return { mode: 'done' }
-      }, selector, text)
+      }, picker, text)
       if (probe?.mode === 'contenteditable') {
         await typeIntoContentEditable(tabId, fx, selector, text, { x: probe.x + dx, y: probe.y + dy })
       }
@@ -1658,19 +2002,25 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
 
     case 'waitFor': {
       const ms = Math.min(params.ms || 10000, 25000)
+      // Target widening (ADR 2026-07-08): selector may be a string OR a
+      // TargetResolver object (waits until the *resolved* match exists).
+      const rawSel = params.selector
+      const isObj = rawSel && typeof rawSel === 'object'
+      const selStr = isObj ? rawSel.selector : rawSel
       // Frame-piercing wait: resolveFrame's probe hit IS the wait condition
       // (element exists in some frame) — poll it instead of one-shot resolving,
       // since the iframe itself may still be loading (#62).
-      if (params.selector?.includes(FRAME_SEP)) {
+      if (typeof selStr === 'string' && selStr.includes(FRAME_SEP)) {
         const end = Date.now() + ms
         for (;;) {
-          try { await resolveFrame(tabId, params.selector); return {} }
+          try { await resolveFrame(tabId, selStr); return {} }
           catch (e) {
-            if (Date.now() > end) throw new Error('waitFor timeout: ' + params.selector)
+            if (Date.now() > end) throw new Error('waitFor timeout: ' + selStr)
             await new Promise(r => setTimeout(r, 300))
           }
         }
       }
+      if (isObj) await ensureDeep(tabId) // resolver poll needs globalThis.__tapDeep.pick
       // NOTE: chrome.scripting MAIN-world SWALLOWS injected-promise REJECTIONS
       // (they don't cross the world boundary — executeScript resolves with
       // result.result === undefined instead of throwing). A `reject()` on
@@ -1680,16 +2030,21 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       // a serializable `false` sentinel on timeout (crosses reliably) and throw
       // extension-side below. (resolve-gate fill-probe gap, 2026-06-18.)
       const found = await execFunc(tabId, (sel, timeout) => {
-        if (document.querySelector(sel)) return true
+        // Bare string → light-DOM querySelector (historic, byte-identical).
+        // Resolver object → the shared predicate picker (visible/text/nth).
+        const hit = () => (sel && typeof sel === 'object')
+          ? !!globalThis.__tapDeep.pick(sel, document)
+          : !!document.querySelector(sel)
+        if (hit()) return true
         return new Promise((resolve) => {
           const timer = setTimeout(() => { obs.disconnect(); resolve(false) }, timeout)
           const obs = new MutationObserver(() => {
-            if (document.querySelector(sel)) { obs.disconnect(); clearTimeout(timer); resolve(true) }
+            if (hit()) { obs.disconnect(); clearTimeout(timer); resolve(true) }
           })
           obs.observe(document.documentElement, { childList: true, subtree: true })
         })
-      }, params.selector, ms)
-      if (!found) throw new Error('waitFor timeout: ' + params.selector)
+      }, rawSel, ms)
+      if (!found) throw new Error('waitFor timeout: ' + selStr)
       return {}
     }
 
@@ -2409,6 +2764,14 @@ function setBadge(ok) {
   if (!ok) chrome.action.setBadgeBackgroundColor({ color: '#EF4444' })
   // User-facing string says "bridge", not "daemon" (CLAUDE.md vocab rule).
   chrome.action.setTitle({ title: ok ? 'Tap — connected' : 'Tap — bridge not running' })
+  // Mirror the SINGLE source of truth for bridge liveness into storage so the
+  // side panel reflects the real state (2026-07-08 false-negative fix). The
+  // popup asks the SW live via sendMessage({type:'tap-status'}); the panel is a
+  // storage reflection and had NO producer for tap:bridgeConnected — so it read
+  // undefined and permanently showed "bridge not running" even while the bridge
+  // was up and running runs. setBadge is the one chokepoint every connect/throw/
+  // disconnect funnels through, so writing here keeps panel == badge == popup.
+  chrome.storage.local.set({ 'tap:bridgeConnected': ok, 'tap:bridgeReason': ok ? '' : lastDisconnectReason }).catch(() => {})
 }
 
 // Icon click is owned by the popup (manifest.action.default_popup) —
@@ -2747,6 +3110,69 @@ function classifyExtensionError(msg, method) {
 // chrome.tabs.onActivated → active_tab_changed forwarder is deleted.
 // Daemon's lastActiveTab cache was deleted by parent SAA ADR; tab
 // routing flows through sessionId/sessions[] only.
+
+// ── Side panel + context-menu element picker (ADR 2026-07-08-op-capabilities) ──
+// Browser-live UX surfaces; guarded structurally by test/chrome-capabilities.
+// The picker closes the capture-time disambiguation gap: a human clicks the
+// exact element and the extension emits a TargetResolver (selector + role +
+// name), stored under chrome.storage.local['tap:lastPickedResolver'] for the
+// host/agent to read — replacing the ad-hoc data-tap dance.
+try {
+  chrome.runtime.onInstalled.addListener(() => {
+    try {
+      // Minimal, agent-first menu (2026-07-08 re-analysis): the human menu is a
+      // fallback for authoring-time disambiguation, NOT the main path — the agent
+      // self-targets from the affordance-map read (web/affordances) + op:point when
+      // it's genuinely stuck. So exactly two items: pick one element, open panel.
+      chrome.contextMenus.create({ id: 'tap-pick', title: 'Tap: pick this element → resolver', contexts: ['all'] })
+      chrome.contextMenus.create({ id: 'tap-panel', title: 'Tap: open control panel', contexts: ['all'] })
+    } catch (_) { /* menus already exist */ }
+  })
+  chrome.contextMenus?.onClicked.addListener(async (info, tab) => {
+    if (!tab?.id) return
+    if (info.menuItemId === 'tap-panel') {
+      try { await chrome.sidePanel.open({ tabId: tab.id }) } catch (_) {}
+      return
+    }
+    if (info.menuItemId === 'tap-pick') {
+      try {
+        await ensureDeep(tab.id)
+        // Arm a one-shot capture-phase click listener; the NEXT click emits a
+        // resolver for the clicked element and is swallowed (not delivered to
+        // the page). Uses __tapDeep for role/name so the resolver matches what
+        // pick() will resolve at replay.
+        const [res] = await chrome.scripting.executeScript({
+          target: { tabId: tab.id }, world: 'MAIN',
+          func: () => new Promise((resolve) => {
+            const D = globalThis.__tapDeep
+            const onClick = (e) => {
+              e.preventDefault(); e.stopPropagation()
+              document.removeEventListener('click', onClick, true)
+              const el = e.target
+              const role = (D && D.implicitRole) ? D.implicitRole(el) : (el.getAttribute('role') || '')
+              // Build a stable-ish selector: prefer id, else tag + up to 2 classes.
+              let selector = ''
+              if (el.id) selector = '#' + CSS.escape(el.id)
+              else {
+                const cls = (el.className && typeof el.className === 'string')
+                  ? el.className.trim().split(/\s+/).slice(0, 2).map((c) => '.' + CSS.escape(c)).join('') : ''
+                selector = el.tagName.toLowerCase() + cls
+              }
+              const name = (el.getAttribute('aria-label') || el.textContent || '').trim().slice(0, 40)
+              resolve({ selector, role: role || undefined, name: name || undefined, visible: true })
+            }
+            document.addEventListener('click', onClick, true)
+            setTimeout(() => { document.removeEventListener('click', onClick, true); resolve(null) }, 15000)
+          }),
+        })
+        const resolver = res?.result
+        if (resolver) await chrome.storage.local.set({ 'tap:lastPickedResolver': resolver, 'tap:lastPickedAt': Date.now() })
+      } catch (_) { /* page not scriptable */ }
+    }
+  })
+  // Make the toolbar action / panel co-exist: panel opens on demand only.
+  chrome.sidePanel?.setPanelBehavior?.({ openPanelOnActionClick: false }).catch(() => {})
+} catch (_) { /* APIs unavailable on this Chrome */ }
 
 // Connect the native-messaging bridge on SW spawn. Per ADR 2026-05-13:
 // the Port itself keeps the SW alive (PoC T1: >19 min idle with 0
