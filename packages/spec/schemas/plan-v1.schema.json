@@ -775,9 +775,6 @@
         "return": {
           "$ref": "#/$defs/CelExpr"
         },
-        "expects": {
-          "$ref": "#/$defs/CelExpr"
-        },
         "source_url": {
           "type": "string"
         },
@@ -808,17 +805,7 @@
               },
               {
                 "required": [
-                  "precondition"
-                ]
-              },
-              {
-                "required": [
                   "postcondition"
-                ]
-              },
-              {
-                "required": [
-                  "return_when_skipped"
                 ]
               },
               {
@@ -865,13 +852,7 @@
                 "$ref": "#/$defs/Op"
               }
             },
-            "precondition": {
-              "$ref": "#/$defs/CelExpr"
-            },
             "postcondition": {
-              "$ref": "#/$defs/CelExpr"
-            },
-            "return_when_skipped": {
               "$ref": "#/$defs/CelExpr"
             },
             "dedup_ttl_seconds": {

@@ -415,12 +415,6 @@ interface PlanCommon {
   observe?: Op[];
   /** What the tap returns. CEL over $args + phase outputs. */
   return: CelExpr;
-  /** CEL boolean evaluated after `observe` and before `act`, declaring
-   *  substrate-state that must hold for the plan to proceed. When false,
-   *  runtime emits `precondition_unmet` and the user-action arm names
-   *  what the user must do. Scope = `$args` + `$observe`. Per ADR
-   *  `2026-05-04-user-recoverable-failures.md`. */
-  expects?: CelExpr;
   /** The source URL the tap was originally captured from. Set by
    *  `capture` so subsequent calls (heal-by-recapture, drift diagnosis)
    *  know where the substrate lives without manual passing. */
@@ -438,9 +432,7 @@ export type Plan =
       // Pure read variant — write fields unrepresentable
       act?: never;
       key?: never;
-      precondition?: never;
       postcondition?: never;
-      return_when_skipped?: never;
       dedup_ttl_seconds?: never;
       confirm?: never;
     })
@@ -449,9 +441,7 @@ export type Plan =
       act: Op[];
       key: CelExpr;
       confirm?: Op[];
-      precondition?: CelExpr;
       postcondition?: CelExpr;
-      return_when_skipped?: CelExpr;
       dedup_ttl_seconds?: number;
     });
 
