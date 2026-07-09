@@ -6,7 +6,15 @@
 <description>Engineering insights on browser automation, AI agents, and deterministic programs.</description>
 <language>en-us</language>
 <atom:link href="https://taprun.dev/blog/feed.xml" rel="self" type="application/rss+xml"/>
-<lastBuildDate>Tue, 23 Jun 2026 00:00:00 +0000</lastBuildDate>
+<lastBuildDate>Thu, 09 Jul 2026 00:00:00 +0000</lastBuildDate>
+
+<item>
+<title>The API Got Metered. The Browser Didn't.</title>
+<link>https://taprun.dev/blog/social-api-enclosure-local-first.html</link>
+<description>In 2026 X moved its API to pay-per-use — $0.20 per post containing a link, ~13× a plain post — and Reddit gated commercial access behind approval and $0.24/1k calls, while Bluesky stayed free and open. Exact figures from each platform's own docs, and the one access path the meter structurally can't reach: the logged-in browser session you already hold. Plus the honest limits — this is not a firehose and not a way around rate limits or ToS.</description>
+<pubDate>Thu, 09 Jul 2026 00:00:00 +0000</pubDate>
+<guid>https://taprun.dev/blog/social-api-enclosure-local-first.html</guid>
+</item>
 
 <item>
 <title>How to Get Bank Statements QuickBooks and Plaid Won't Fetch</title>
