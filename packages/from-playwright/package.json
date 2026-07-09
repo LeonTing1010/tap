@@ -1,6 +1,6 @@
 {
   "name": "@taprun/from-playwright",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Convert Playwright scripts into Tap v2 plans. Compile .spec.ts / .test.ts files into deterministic v2 Plan JSON that runs at zero LLM tokens in Claude Code, Cursor, and any MCP host.",
   "publishConfig": {
     "access": "public"

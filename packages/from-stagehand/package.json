@@ -1,6 +1,6 @@
 {
   "name": "@taprun/from-stagehand",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Migrate Stagehand (Browserbase) AI flows to MCP-compatible plans. Deterministic Playwright calls compile to plan ops; stagehand.act/extract/observe preserve their natural-language prompts. Run agent flows at zero LLM tokens in Claude Code, Cursor, and any MCP host.",
   "publishConfig": {
     "access": "public"

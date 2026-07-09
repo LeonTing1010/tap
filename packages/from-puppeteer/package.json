@@ -1,6 +1,6 @@
 {
   "name": "@taprun/from-puppeteer",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Convert Puppeteer scripts to Tap Plan v2 — deterministic browser-automation plans for Claude Code, Cursor, and any MCP host. Zero LLM tokens at replay.",
   "publishConfig": {
     "access": "public"
