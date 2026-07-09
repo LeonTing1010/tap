@@ -112,6 +112,13 @@ The output type changed from `TapAnnotation` (v1 W3C envelope) to v2
 - Run locally: [Tap Chrome extension](https://taprun.dev?utm_source=npm&utm_medium=readme&utm_campaign=from-puppeteer)
 - Source: <https://github.com/LeonTing1010/tap>
 
+## Rather have it run for you?
+
+If your scraper keeps breaking and you'd rather buy the outcome than
+maintain the tool, we set up the automation on *your* machine and keep it
+working when sites change — flat monthly, cancel anytime:
+**[taprun.dev/done-for-you](https://taprun.dev/done-for-you/?utm_source=npm&utm_medium=readme&utm_campaign=from-puppeteer)**.
+
 ## License
 
 MIT.

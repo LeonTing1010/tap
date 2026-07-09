@@ -88,6 +88,13 @@ Out of scope (escaped via `op:eval` placeholder):
 - Run locally: [Tap Chrome extension](https://taprun.dev?utm_source=npm&utm_medium=readme&utm_campaign=from-playwright) — credentials never leave your machine
 - Source: <https://github.com/LeonTing1010/tap> · npm: <https://www.npmjs.com/~taprun>
 
+## Rather have it run for you?
+
+If your scraper keeps breaking and you'd rather buy the outcome than
+maintain the tool, we set up the automation on *your* machine and keep it
+working when sites change — flat monthly, cancel anytime:
+**[taprun.dev/done-for-you](https://taprun.dev/done-for-you/?utm_source=npm&utm_medium=readme&utm_campaign=from-playwright)**.
+
 ## License
 
 MIT.

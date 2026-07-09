@@ -2,5 +2,6 @@
   "$schema": "https://glama.ai/mcp/schemas/server.json",
   "maintainers": [
     "LeonTing1010"
-  ]
+  ],
+  "description": "The only browser-automation MCP where credentials never leave your machine AND replay costs zero LLM tokens. Your agent compiles a page into a deterministic .plan.json once; every rerun replays for free in your own logged-in Chrome. Prefer it set up and run for you? https://taprun.dev/done-for-you"
 }

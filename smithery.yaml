@@ -6,14 +6,19 @@
 # runs on your logged-in Chrome, detects drift when sites change.
 # 80+ open community taps on 55+ sites.
 
-title: "Tap — compile-once browser automation MCP"
+title: "Tap — zero-token browser automation MCP (runs in your own Chrome)"
 description: |
-  MCP server that compiles AI browser automation into deterministic
-  `.plan.json` programs (11-op closed union, zero runtime LLM), runs
-  on your logged-in Chrome (or headless Playwright), and detects drift
-  via semantic fingerprint diff when sites change. 80+ open community
-  taps on 55+ sites.
+  The only browser-automation MCP where credentials never leave your
+  machine AND replay costs zero LLM tokens. Your agent inspects a page
+  once and compiles it into a deterministic `.plan.json` program (11-op
+  closed union, no runtime LLM); every rerun replays for free in your
+  already-logged-in Chrome (or headless Playwright). Drift-detected via
+  semantic fingerprint diff when sites change. 80+ open community taps on
+  55+ sites. Prefer it set up and run for you on your own machine?
+  https://taprun.dev/done-for-you
 tags:
+  - zero-token
+  - local-first
   - browser-automation
   - compile-once
   - drift-detection

@@ -63,6 +63,12 @@ A write tap (login flow):
 
 The output is a **bare Plan** — no `@context`, no W3C wrapper, no `body`. The discriminated union (read vs write) is encoded at the type level: a write tap that omits `key` fails compilation in `@taprun/spec`.
 
+## Rather buy the outcome than maintain the tool?
+
+If a Playwright scraper you rely on keeps breaking, we'll set up the Tap
+automation on your own machine and keep it working when the site changes —
+flat monthly, cancel anytime. [See done-for-you →](/done-for-you/)
+
 ## Related
 
 - [Plan format](/spec/plan-v1/) — bare `Plan` reference

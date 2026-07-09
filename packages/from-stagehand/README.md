@@ -72,6 +72,13 @@ await writeFile("github/browserbase-search.plan.json", JSON.stringify(plan, null
 - Why Tap vs Stagehand / Browserbase: <https://taprun.dev/compare/stagehand/?utm_source=jsr&utm_medium=readme&utm_campaign=from-stagehand>
 - Source: <https://github.com/LeonTing1010/tap> · npm: <https://www.npmjs.com/~taprun>
 
+## Rather have it run for you?
+
+If your scraper keeps breaking and you'd rather buy the outcome than
+maintain the tool, we set up the automation on *your* machine and keep it
+working when sites change — flat monthly, cancel anytime:
+**[taprun.dev/done-for-you](https://taprun.dev/done-for-you/?utm_source=jsr&utm_medium=readme&utm_campaign=from-stagehand)**.
+
 ## License
 
 MIT.

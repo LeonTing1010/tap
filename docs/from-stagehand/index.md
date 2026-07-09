@@ -31,6 +31,13 @@ For the natural-language `stagehand.act()` / `.extract()` parts, the recommended
 
 `v0.x` is not unpublished. If you have a lockfile pinned to a `0.x` version of `@taprun/from-stagehand`, nothing changes; the package keeps resolving from npm. The only difference is the `npm deprecate` notice that points back here.
 
+## Rather buy the outcome than maintain the tool?
+
+If a Stagehand/Browserbase flow you rely on keeps breaking (or the cloud
+egress bill stings), we'll set up the local-first Tap automation on your own
+machine and keep it working when the site changes — flat monthly, cancel
+anytime. [See done-for-you →](/done-for-you/)
+
 ## Related
 
 - [Migration guide](/migration-guide/) — full v1 → v2 walkthrough

@@ -48,6 +48,12 @@ npm install @taprun/from-puppeteer@^1 @taprun/spec@^1
 
 The output is a **bare Plan** — no `@context`, no W3C wrapper, no `body`. The read/write discriminated union is encoded at the type level.
 
+## Rather buy the outcome than maintain the tool?
+
+If a Puppeteer scraper you rely on keeps breaking, we'll set up the Tap
+automation on your own machine and keep it working when the site changes —
+flat monthly, cancel anytime. [See done-for-you →](/done-for-you/)
+
 ## Related
 
 - [Plan format](/spec/plan-v1/) — bare `Plan` reference

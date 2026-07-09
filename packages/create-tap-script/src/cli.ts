@@ -191,6 +191,15 @@ Use one of the @taprun/from-* adapters to convert it:
 
 (Stagehand is cloud-coupled and is not supported in v2 — see ADR
 2026-05-04 §6.2.)
+
+---
+
+Made with **[Tap](https://taprun.dev?utm_source=scaffold&utm_medium=readme&utm_campaign=create-tap-script)** — browser automation that
+runs in *your* browser, not someone else's cloud. Credentials never leave
+your machine; compiled plans replay at **zero LLM tokens**.
+
+Doing this every month and would rather not? We set it up and run it for
+you on your own machine — **[taprun.dev/done-for-you](https://taprun.dev/done-for-you/?utm_source=scaffold&utm_medium=readme&utm_campaign=create-tap-script)**.
 `;
 }
 
