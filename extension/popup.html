@@ -26,18 +26,20 @@
 
   <!-- Disconnect mode: native messaging manifest not installed.
        Triggered by lastError "Specified native messaging host not found".
-       Fix: register the per-user manifest via `tap bridge setup`. -->
+       Fix: one-step `embed` (installs the binary, registers this manifest,
+       wires the agent's MCP config); `tap bridge setup` alone suffices
+       when the CLI is already installed. -->
   <section id="dc-not-installed" hidden>
     <div class="row">
       <span class="dot dot-warn"></span>
       <span><strong>Setup required</strong></span>
     </div>
-    <p>Register the native messaging manifest:</p>
-    <pre><code>tap bridge setup</code><button class="copy" data-copy="tap bridge setup" title="Copy">⧉</button></pre>
-    <p class="muted">One-time. The extension ID is pinned in the manifest, so the command takes no flag — copy &amp; run.</p>
+    <p>One command finishes setup — installs the tap binary, registers this extension, wires your agent:</p>
+    <pre><code>npx -y @taprun/cli embed claude-code</code><button class="copy" data-copy="npx -y @taprun/cli embed claude-code" title="Copy">⧉</button></pre>
+    <p class="muted">Swap <code>claude-code</code> for <code>cursor</code> / <code>vscode</code> / <code>claude-desktop</code>. Already have the CLI? <code>tap bridge setup</code> alone registers the manifest — the extension ID is pinned, no flag needed.</p>
     <div class="actions">
       <button class="retry">Retry connection</button>
-      <a id="install" href="https://taprun.dev/install?utm_source=chrome-ext&utm_medium=extension&utm_campaign=popup-setup" target="_blank" rel="noopener">Don't have Tap installed?</a>
+      <a id="install" href="https://taprun.dev/add?utm_source=chrome-ext&utm_medium=extension&utm_campaign=popup-setup" target="_blank" rel="noopener">Other install options</a>
     </div>
   </section>
 

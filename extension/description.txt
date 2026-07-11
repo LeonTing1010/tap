@@ -35,26 +35,19 @@ Every cloud-first browser-automation MCP forces a tradeoff: ship your credential
 
 This extension is the browser half of Tap. It talks to the Tap CLI on your machine via Chrome's Native Messaging transport. No code runs without the CLI.
 
-1. Install the Tap CLI on your machine.
+1. Install this Chrome extension (you may have just done that).
 
-   # macOS (Homebrew)
-   brew install LeonTing1010/tap/taprun
+2. Run one command on your machine (any platform with Node 18+):
 
-   # macOS / Linux (curl)
-   curl -fsSL https://taprun.dev/install.sh | sh
+   npx -y @taprun/cli embed claude-code
 
-   # any platform with Node 18+
-   npx -y @taprun/cli --version
+   (or: cursor | vscode | claude-desktop)
 
-2. Install this Chrome extension from the Chrome Web Store.
+   This one step installs the tap binary, writes your agent's MCP config, and registers the Chrome native-messaging manifest that authorises this extension to launch the tap binary. No network ports are opened. No OS service is installed.
 
-3. Register the native-messaging manifest (one-time per Chrome profile):
+3. Click the Tap toolbar icon. The popup should say "Connected to local bridge". Done.
 
-   tap bridge setup
-
-   This writes the Chrome native-messaging manifest that authorises this extension to launch the tap binary. No network ports are opened. No OS service is installed.
-
-4. Click the Tap toolbar icon. The popup should say "Connected to local bridge". Done.
+Prefer manual installs? brew install LeonTing1010/tap/taprun, or curl -fsSL https://taprun.dev/install.sh | sh — then run `tap bridge setup` once to register the manifest.
 
 The bridge only runs while Chrome is open — closing every window shuts it down; re-opening Chrome (or clicking the toolbar icon) wakes it back up.
 
@@ -62,7 +55,7 @@ The bridge only runs while Chrome is open — closing every window shuts it down
 
 Tap exposes 4 meta verbs (capture / verify / mark / run) as MCP tools and every saved plan as an MCP Resource.
 
-**Claude Code / Cursor / Windsurf / Continue / Cline** — add to your MCP host config:
+`npx -y @taprun/cli embed <agent>` already wrote this config for you. Setting it up by hand instead — **Claude Code / Cursor / Windsurf / Continue / Cline** — add to your MCP host config:
 
    {
      "mcpServers": {
@@ -107,7 +100,7 @@ Source (MIT, includes this extension): https://github.com/LeonTing1010/tap
 ## Troubleshooting
 
 **Popup shows "Not connected to local bridge"**
-The Tap CLI either isn't installed or the native-messaging manifest isn't registered. Run `tap --version` to confirm install, then `tap bridge setup` to register. Restart Chrome.
+The Tap CLI either isn't installed or the native-messaging manifest isn't registered. One command fixes both: `npx -y @taprun/cli embed claude-code` (or your agent). Then restart Chrome.
 
 **`tap bridge setup` says "extension not found"**
 The extension must be installed in the same Chrome profile you're configuring. If you use multiple profiles, switch to the one you want Tap on, then re-run `tap bridge setup`.
