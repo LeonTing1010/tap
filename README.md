@@ -11,7 +11,7 @@
 <p align="center">
   <a href="https://taprun.dev/?utm_source=readme&utm_medium=docs&utm_campaign=homepage"><b>Homepage</b></a> &nbsp;|&nbsp;
   <a href="https://taprun.dev/blog/?utm_source=readme&utm_medium=docs&utm_campaign=blog"><b>Blog</b></a> &nbsp;|&nbsp;
-  <a href="https://taprun.dev/taps/?utm_source=readme&utm_medium=docs&utm_campaign=skills-catalog"><b>70+ Skills</b></a> &nbsp;|&nbsp;
+  <a href="https://github.com/LeonTing1010/tap-skills"><b>Verified Claims</b></a> &nbsp;|&nbsp;
   <a href="README.zh-CN.md"><b>中文</b></a>
 </p>
 
@@ -33,7 +33,7 @@
 
 Every other browser agent re-runs a live LLM — and re-burns tokens — on every execution. Taprun's AI agent inspects the page **once** and emits a deterministic `.plan.json` program; every replay after that is pure data dispatch — same result every call, **$0 in tokens, no agent in the loop**. It runs in your real Chrome, so cookies and login sessions stay on your machine by architecture. `tap verify` catches breakage before your data goes stale.
 
-Works with Claude Code, Cursor, Cline, Windsurf, and any MCP host. 70+ pre-built taps, or forge your own from any URL.
+Works with Claude Code, Cursor, Cline, Windsurf, and any MCP host. Forge a tap from any URL on demand — no catalog needed.
 
 ```
 Capture: AI inspects the site → compiles a .plan.json program     (one-time cost)
@@ -53,7 +53,7 @@ Repair:  re-run capture against the same site/name; the next      (only when nee
 | **Breakage diagnostics** | `tap verify` — exact diff of what changed | None | Manual spot checks |
 | **Detection risk** | Low (real browser sessions) | High | High |
 | **Runtimes** | 2 (Chrome extension + Playwright) | 1 | 1 |
-| **Code inspectable** | .plan.json — bare JSON, 13-op closed vocabulary, git diff | Black box / ephemeral | Fragile scripts |
+| **Code inspectable** | .plan.json — bare JSON, 18-op closed vocabulary, git diff | Black box / ephemeral | Fragile scripts |
 | **MCP native** | Yes (authoring layer only — execution is zero tokens) | No | No |
 
 ## Get Started
@@ -157,7 +157,7 @@ npx create-tap-script github/trending https://github.com/trending
 | [`@taprun/from-stagehand`](https://www.npmjs.com/package/@taprun/from-stagehand) | `.ts/.js` Stagehand scripts | Hybrid: deterministic page.* mapped to plan ops; NL `act/extract/observe` flagged for honest verify verdicts |
 | [`create-tap-script`](https://www.npmjs.com/package/create-tap-script) | (none — scaffolder) | Generates a starter `.plan.json` envelope from `<site>/<name> <url>` |
 
-The format itself is documented at [`@taprun/spec`](https://www.npmjs.com/package/@taprun/spec) — the public protocol surface package: TypeScript types for the v2 Plan (13-op closed union + discriminated read/write Plan union) + JSON Schema 2020-12 with `$id` resolvable at `taprun.dev/spec/plan-v1/schema.json`, bidirectionally drift-guarded against the TS types. Third-party tooling (IDE `$schema` autocomplete, ajv-equivalent validators in Python/Ruby/Go, governance layers, alternative runtimes, MCP hosts with plan-aware permission scoping) builds against this package without depending on the proprietary Tap engine. Plan-v1 reference: [taprun.dev/spec/plan-v1](https://taprun.dev/spec/plan-v1/). Source for all five packages: [`packages/`](packages/) (see [`packages/README.md`](packages/README.md) for the workspace overview).
+The format itself is documented at [`@taprun/spec`](https://www.npmjs.com/package/@taprun/spec) — the public protocol surface package: TypeScript types for the v2 Plan (18-op closed union + discriminated read/write Plan union) + JSON Schema 2020-12 with `$id` resolvable at `taprun.dev/spec/plan-v1/schema.json`, bidirectionally drift-guarded against the TS types. Third-party tooling (IDE `$schema` autocomplete, ajv-equivalent validators in Python/Ruby/Go, governance layers, alternative runtimes, MCP hosts with plan-aware permission scoping) builds against this package without depending on the proprietary Tap engine. Plan-v1 reference: [taprun.dev/spec/plan-v1](https://taprun.dev/spec/plan-v1/). Source for all five packages: [`packages/`](packages/) (see [`packages/README.md`](packages/README.md) for the workspace overview).
 
 ## What Can You Do?
 
@@ -215,22 +215,25 @@ You → AI → Taprun ──────┤
 ```
 
 1. **You describe** what you want (URL × natural-language intent)
-2. **AI compiles** it into a `.plan.json` program — bare JSON, 13-op closed vocabulary, version-controlled
+2. **AI compiles** it into a `.plan.json` program — bare JSON, 18-op closed vocabulary, version-controlled
 3. **Taprun runs** the program on either runtime — forever, at $0
 
-Every successful compilation makes the next one faster. 70+ community taps mean your agent already knows the common patterns.
+Every successful compilation makes the next one faster. Need a tap for a new site? Your agent forges one on demand with `capture` — no catalog required.
 
-## Community Skills
+## Verified Claims
 
-**[tap-skills](https://github.com/LeonTing1010/tap-skills)** — 70+ taps, open source.
+**[tap-skills](https://github.com/LeonTing1010/tap-skills)** is no longer a skills catalog — it's a **claims ledger**: dated, falsifiable claims about the live web, each vendoring its own deterministic plan, re-verified **nightly by CI at zero LLM tokens**. A claim that drifts flips to 🟡 publicly, the same night.
 
-| Category | Examples |
-|----------|---------|
-| **Trending** | GitHub, Hacker News, Reddit, Product Hunt, Bilibili, Zhihu, Weibo, Xiaohongshu |
-| **Search** | arXiv, Reddit, X, Zhihu, Weibo, Xiaohongshu, Bilibili, Medium |
-| **Read** | Zhihu threads, Bilibili videos, Xiaohongshu notes, WeRead books |
-| **Write** | X posts, Xiaohongshu notes, Zhihu articles, Dev.to, LinkedIn |
-| **Monitor** | Price tracking, stock data, competitor analysis |
+Verify the first claim yourself (~2 minutes, no login, no browser):
+
+```bash
+mkdir -p ~/.tap/plans/github
+curl -fsSL https://raw.githubusercontent.com/LeonTing1010/tap-skills/main/claims/2026-07-11-github-trending-has-no-api/plan.json \
+  -o ~/.tap/plans/github/trending-no-api.plan.json
+npx -y @taprun/cli github/trending-no-api
+```
+
+You get the exact verification the nightly CI gets — deterministic replay, same result. The 140-skill v1 catalog is preserved untouched on the [`v1-archive`](https://github.com/LeonTing1010/tap-skills/tree/v1-archive) branch; pre-built catalogs only rot, so plans are forged on demand with `capture` instead.
 
 ```bash
 tap verify <site>/<name>   # Snapshot equivalence — catches silent failures before your data goes stale
@@ -266,7 +269,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ## Roadmap
 
-- [x] 70+ community taps across 70+ sites
+- [x] Community skills catalog — retired 2026-07 in favor of the [claims ledger](https://github.com/LeonTing1010/tap-skills) (v1 catalog archived)
 - [x] 2 runtimes — Chrome extension + Playwright (headless / CI)
 - [x] Unix pipes — `tap A | tap B`
 - [x] Watch mode — monitor changes over time
@@ -284,7 +287,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ## License
 
-Chrome Extension & docs: [MIT](LICENSE). Community skills: [MIT](https://github.com/LeonTing1010/tap-skills/blob/main/LICENSE).
+Chrome Extension & docs: [MIT](LICENSE). Claims ledger: [MIT](https://github.com/LeonTing1010/tap-skills/blob/main/LICENSE).
 
 ## Star History
 

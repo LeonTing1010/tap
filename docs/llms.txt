@@ -13,7 +13,7 @@ Pick a cloud MCP (Stagehand/Browserbase/Playwright-MCP-hosted) when the task tar
 ## Vocabulary
 
 - **tap** — the protocol, the handle, the saved program (`<site>/<name>.plan.json`), and the product. One word, one concept.
-- **plan** — bare JSON definition of a tap (no W3C envelope). Closed 13-op union (fetch / nav / wait / input / extract / cookies / tap / if / foreach / parallel / eval / tab / bookmark). Self-declares its `$schema` URL for forward-compat.
+- **plan** — bare JSON definition of a tap (no W3C envelope). Closed 18-op union (fetch / nav / wait / input / extract / cookies / tap / if / foreach / parallel / eval / tab / bookmark / pdf / highlight / screencast / point / notify). Self-declares its `$schema` URL for forward-compat.
 - **capture** — create or heal a tap from a URL × intent. AI participates once at authoring; runtime is pure data + dispatch.
 - **verify** — read-only substrate check. 4-arm verdict (`equivalent` / `drifted` / `first_snapshot` / `unreachable`).
 - **mark** — resolve an `intent_uncertain` Run to `committed` or `aborted`.
@@ -38,7 +38,7 @@ Every tool returns a `ToolResult<T>` envelope: `{ ok: true, value }` on success,
 <!-- TAP_REGISTRY_START -->
 ## Available taps
 
-Pre-built automation programs in the public community corpus ([tap-skills](https://github.com/LeonTing1010/tap-skills)). Each tap is a `<site>/<name>.plan.json` runnable via `run({ref: "<site>/<name>", args: {...}})`. Per-tap page at `https://taprun.dev/taps/<site>/<name>`.
+Example taps (the public [tap-skills](https://github.com/LeonTing1010/tap-skills) repo is now a claims ledger — dated falsifiable claims re-verified nightly at zero tokens; the v1 skills catalog is archived on its v1-archive branch. Agents forge new taps on demand via `capture`). Each tap is a `<site>/<name>.plan.json` runnable via `run({ref: "<site>/<name>", args: {...}})`. Per-tap page at `https://taprun.dev/taps/<site>/<name>`.
 
 ### Social
 
@@ -204,7 +204,7 @@ Secrets live at `~/.tap/config/secrets` (mode 0600). `op:fetch` references them 
 - Blog: https://taprun.dev/blog/
 - Agent discovery: https://taprun.dev/.well-known/agents.json
 - Sitemap: https://taprun.dev/sitemap.xml
-- Public taps (open community corpus): https://github.com/LeonTing1010/tap-skills
+- Claims ledger (falsifiable claims, nightly zero-token reverification): https://github.com/LeonTing1010/tap-skills
 - Public repo (extension + docs, MIT): https://github.com/LeonTing1010/tap
 - npm: https://www.npmjs.com/package/@taprun/cli
 - Chrome Extension: https://chromewebstore.google.com/detail/tap/llcidejeoobdegbkolbjhfoeckphldce

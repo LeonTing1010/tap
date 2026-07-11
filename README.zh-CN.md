@@ -11,7 +11,7 @@
 <p align="center">
   <a href="https://taprun.dev/?utm_source=readme-cn&utm_medium=docs&utm_campaign=homepage"><b>主页</b></a> &nbsp;|&nbsp;
   <a href="https://taprun.dev/blog/?utm_source=readme-cn&utm_medium=docs&utm_campaign=blog"><b>博客</b></a> &nbsp;|&nbsp;
-  <a href="https://taprun.dev/taps/?utm_source=readme-cn&utm_medium=docs&utm_campaign=skills-catalog"><b>70+ Skills</b></a> &nbsp;|&nbsp;
+  <a href="https://github.com/LeonTing1010/tap-skills"><b>已验证判断</b></a> &nbsp;|&nbsp;
   <a href="README.md"><b>English</b></a>
 </p>
 
@@ -29,7 +29,7 @@
 
 别的浏览器 agent 每跑一次都要现场调一次大模型、反复烧 token。Taprun 让 AI 把页面分析**一次**，产出确定性的 `.plan.json` 程序；之后每次重放都是纯数据派发 —— 每次结果完全一致，**$0 token，agent 不在运行路径**。它跑在你自己真实的 Chrome 里，cookie 和登录会话因此留在你机器上（架构决定）。`tap verify` 在数据变质前发现页面变化。
 
-适用于 Claude Code、Cursor、Cline、Windsurf 以及任何 MCP host。70+ 预建 tap，或从任意 URL 锻造你自己的。
+适用于 Claude Code、Cursor、Cline、Windsurf 以及任何 MCP host。任意 URL 按需锻造 tap——不需要目录。
 
 ```
 捕获：  AI 分析网站 → 编译成 .plan.json 程序        （一次性成本）
@@ -49,7 +49,7 @@
 | **故障诊断** | `tap verify` — 精确 diff 出变了什么 | 无 | 手动抽查 |
 | **检测风险** | 低（真实浏览器会话） | 高 | 高 |
 | **运行时** | 2（Chrome 扩展 + Playwright） | 1 | 1 |
-| **代码可检查** | .plan.json — 纯 JSON，13-op 闭集词汇，可 git diff | 黑盒 / 临时的 | 脆弱脚本 |
+| **代码可检查** | .plan.json — 纯 JSON，18-op 闭集词汇，可 git diff | 黑盒 / 临时的 | 脆弱脚本 |
 | **MCP 原生** | 是（仅创作层 — 执行零 token） | 否 | 否 |
 
 ## 快速开始
@@ -153,7 +153,7 @@ npx create-tap-script github/trending https://github.com/trending
 | [`@taprun/from-stagehand`](https://www.npmjs.com/package/@taprun/from-stagehand) | `.ts/.js` Stagehand 脚本 | 混合：确定性的 page.* 转 plan op；自然语言 `act/extract/observe` 被标记，让 verify 给出诚实裁定 |
 | [`create-tap-script`](https://www.npmjs.com/package/create-tap-script) | （无 — 脚手架） | 从 `<site>/<name> <url>` 生成一个起步 `.plan.json` 信封 |
 
-格式本身有完整文档：[`@taprun/spec`](https://www.npmjs.com/package/@taprun/spec) —— 公共协议接口包：v2 Plan 的 TypeScript 类型（13-op 闭集联合 + 区分式的读/写 Plan 联合）+ JSON Schema 2020-12，其 `$id` 可在 `taprun.dev/spec/plan-v1/schema.json` 解析，并与 TS 类型双向漂移校验。第三方工具（IDE `$schema` 补全、Python/Ruby/Go 中的 ajv 等价校验器、治理层、替代运行时、带 plan 感知权限作用域的 MCP host）都基于此包构建，无需依赖专有的 Tap 引擎。Plan-v1 规范：[taprun.dev/spec/plan-v1](https://taprun.dev/spec/plan-v1/)。五个包的源码：[`packages/`](packages/)（workspace 总览见 [`packages/README.md`](packages/README.md)）。
+格式本身有完整文档：[`@taprun/spec`](https://www.npmjs.com/package/@taprun/spec) —— 公共协议接口包：v2 Plan 的 TypeScript 类型（18-op 闭集联合 + 区分式的读/写 Plan 联合）+ JSON Schema 2020-12，其 `$id` 可在 `taprun.dev/spec/plan-v1/schema.json` 解析，并与 TS 类型双向漂移校验。第三方工具（IDE `$schema` 补全、Python/Ruby/Go 中的 ajv 等价校验器、治理层、替代运行时、带 plan 感知权限作用域的 MCP host）都基于此包构建，无需依赖专有的 Tap 引擎。Plan-v1 规范：[taprun.dev/spec/plan-v1](https://taprun.dev/spec/plan-v1/)。五个包的源码：[`packages/`](packages/)（workspace 总览见 [`packages/README.md`](packages/README.md)）。
 
 ## 你能用 Taprun 做什么？
 
@@ -209,22 +209,25 @@ tap capture https://arxiv.org/list/cs.AI/recent arxiv/recent --intent "recent pa
 ```
 
 1. **你描述**你想要什么（URL × 自然语言意图）
-2. **AI 编译**成 `.plan.json` 程序 — 纯 JSON，13-op 闭集词汇，可版本控制
+2. **AI 编译**成 `.plan.json` 程序 — 纯 JSON，18-op 闭集词汇，可版本控制
 3. **Taprun 运行**程序 — 两个运行时任选，永久运行，$0
 
-每次成功编译都让下一次更快。70+ 社区 tap 意味着你的 Agent 已经认识常见的网站模式。
+每次成功编译都让下一次更快。要给新网站建 tap？你的 Agent 用 `capture` 按需锻造——不需要目录。
 
-## 社区 Skills
+## 已验证判断（Claims Ledger）
 
-**[tap-skills](https://github.com/LeonTing1010/tap-skills)** — 70+ tap，开源。
+**[tap-skills](https://github.com/LeonTing1010/tap-skills)** 不再是 skills 目录——它现在是一份**判断台账**：一条条带日期、可证伪的关于真实网络的判断，每条自带确定性 plan，由 CI **每晚零 token 重放复验**。哪条漂移了，当晚公开翻 🟡。
 
-| 分类 | 示例 |
-|------|------|
-| **热门/趋势** | GitHub, Hacker News, Reddit, Product Hunt, Bilibili, Zhihu, Weibo, Xiaohongshu |
-| **搜索** | arXiv, Reddit, X, Zhihu, Weibo, Xiaohongshu, Bilibili, Medium |
-| **阅读** | Zhihu 问答, Bilibili 视频, Xiaohongshu 笔记, 微信读书 |
-| **写入** | X 发推, Xiaohongshu 笔记, Zhihu 文章, Dev.to, LinkedIn |
-| **监控** | 价格追踪, 股票数据, 竞品分析 |
+亲手验证第一条（约 2 分钟，无需登录、无需浏览器）：
+
+```bash
+mkdir -p ~/.tap/plans/github
+curl -fsSL https://raw.githubusercontent.com/LeonTing1010/tap-skills/main/claims/2026-07-11-github-trending-has-no-api/plan.json \
+  -o ~/.tap/plans/github/trending-no-api.plan.json
+npx -y @taprun/cli github/trending-no-api
+```
+
+你得到的就是每晚 CI 得到的同一份验证——确定性重放，结果一致。140 条 v1 skills 完整封存在 [`v1-archive`](https://github.com/LeonTing1010/tap-skills/tree/v1-archive) 分支；预制目录只会腐烂，plan 改为按需 `capture` 锻造。
 
 ```bash
 tap verify <site>/<name>   # 快照等价 — 在数据变质前捕获静默故障
@@ -260,7 +263,7 @@ Taprun 跑在 **你的** 浏览器，不是别人的云。Chrome 扩展复用你
 
 ## 路线图
 
-- [x] 70+ 社区 tap，覆盖 70+ 网站
+- [x] 社区 skills 目录 — 2026-07 退役，改为[判断台账](https://github.com/LeonTing1010/tap-skills)（v1 目录已封存）
 - [x] 2 个运行时 — Chrome 扩展 + Playwright（无头 / CI）
 - [x] Unix 管道 — `tap A | tap B`
 - [x] Watch 模式 — 随时间监控变化
@@ -278,7 +281,7 @@ Taprun 跑在 **你的** 浏览器，不是别人的云。Chrome 扩展复用你
 
 ## 许可证
 
-Chrome 扩展和文档：[MIT](LICENSE)。社区 skills：[MIT](https://github.com/LeonTing1010/tap-skills/blob/main/LICENSE)。
+Chrome 扩展和文档：[MIT](LICENSE)。判断台账：[MIT](https://github.com/LeonTing1010/tap-skills/blob/main/LICENSE)。
 
 ## Star History
 
