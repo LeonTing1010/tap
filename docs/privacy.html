@@ -126,9 +126,17 @@ code { font-family: var(--font-mono); font-size: 14px; color: var(--indigo); bac
 <p>Taprun stores data only on your local filesystem:</p>
 <ul>
   <li>Compiled plans in <code>~/.tap/plans/&lt;site&gt;/&lt;name&gt;.plan.json</code></li>
-  <li>Execution logs and intent records in <code>~/.tap/intents/</code> and <code>~/.tap/snapshots/</code></li>
+  <li>Execution logs, intent records, and capture traces in <code>~/.tap/intents/</code> and <code>~/.tap/traces/</code></li>
   <li>Local-only secret store (if used) in <code>~/.tap/config/secrets</code></li>
   <li>No cloud storage or sync</li>
+</ul>
+
+<h2>Data Retention</h2>
+<p>Because Taprun collects nothing and uses no remote servers, <strong>there is no server-side data to retain</strong> — Anthropic and Taprun retain none of your data. Everything Taprun writes lives under <code>~/.tap/</code> on your own machine, and its retention is entirely under your control:</p>
+<ul>
+  <li><strong>You decide how long it lives.</strong> Plans, intents, traces, and secrets persist locally until you delete them.</li>
+  <li><strong>Automatic local cleanup.</strong> Transient artifacts (traces, intent records) age out on a local time-to-live sweep; they are never uploaded before or after deletion.</li>
+  <li><strong>Full deletion any time.</strong> Removing the <code>~/.tap/</code> directory (or uninstalling the CLI and extension) erases all locally stored Taprun data permanently. There is no copy anywhere else to delete.</li>
 </ul>
 
 <h2>Open Source</h2>
