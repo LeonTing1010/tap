@@ -54,84 +54,83 @@
 
 ## 快速开始
 
-### 1. 安装
-
-**零安装** —— 任何装了 Node 的机器都能直接跑：
+### 1. 接入你的 Agent —— 一条命令
 
 ```bash
-npx -y @taprun/cli --version
+npx -y @taprun/cli embed claude-code   # 或：cursor | vscode | claude-desktop
 ```
 
-第一次会自动下载对应平台的二进制（~30MB）并缓存，之后每次秒启动。
+这就是全部安装：二进制自动拷贝到 `~/.tap/bin`，Agent 的 MCP 配置自动写好，浏览器桥自动注册。随时用 `tap embed --verify` 复查。
 
-**永久安装** —— macOS / Linux 一行命令：
+- **需要登录的站点**（小红书、知乎等）：按提示装 [Chrome 扩展](https://chromewebstore.google.com/detail/tap/llcidejeoobdegbkolbjhfoeckphldce)——点一次即可，装好后进行中的调用自动续跑。
+- **不装扩展 / CI**：加 `--no-extension`（Playwright 运行时，独立 profile）。
+- **Claude Desktop**：下载 [`tap.mcpb`](https://github.com/LeonTing1010/tap/releases/latest) 双击安装。
+
+<details>
+<summary><b>其他安装方式</b>（brew · curl · 手写 MCP JSON · 原始二进制）</summary>
 
 ```bash
-curl -fsSL https://taprun.dev/install.sh | sh
+brew install LeonTing1010/tap/taprun            # Homebrew（macOS / Linux）
+curl -fsSL https://taprun.dev/install.sh | sh   # 永久安装
+npx -y @taprun/cli --version                    # 零安装（任何 Node 环境）
 ```
 
-**或通过 Homebrew**（macOS / Linux）：
-
-```bash
-brew install LeonTing1010/tap/taprun
-```
-
-| 平台 | 下载 |
-|------|------|
-| macOS (Apple Silicon) | [tap-macos-arm64](https://github.com/LeonTing1010/tap/releases/latest) |
-| macOS (Intel) | [tap-macos-x64](https://github.com/LeonTing1010/tap/releases/latest) |
-| Linux | [tap-linux-x64](https://github.com/LeonTing1010/tap/releases/latest) |
-| Windows | [tap-windows-x64.exe](https://github.com/LeonTing1010/tap/releases/latest) |
-
-### 2. 连接 AI Agent
-
-适用于 Claude Code、Cursor、Windsurf 或任何 MCP 兼容的 Agent — 不需要浏览器扩展：
+想手写 MCP 配置的话：
 
 ```json
 { "mcpServers": { "tap": { "command": "npx", "args": ["-y", "@taprun/cli", "mcp", "stdio"] } } }
 ```
 
-或直接运行服务：
+| 平台 | 下载 |
+|------|------|
+| macOS（Apple Silicon） | [tap-macos-arm64](https://github.com/LeonTing1010/tap/releases/latest) |
+| macOS（Intel） | [tap-macos-x64](https://github.com/LeonTing1010/tap/releases/latest) |
+| Linux | [tap-linux-x64](https://github.com/LeonTing1010/tap/releases/latest) |
+| Windows | [tap-windows-x64.exe](https://github.com/LeonTing1010/tap/releases/latest) |
+
+</details>
+
+### 2. 验证它真的能跑（约 2 分钟，无需登录）
+
+跑一下[判断台账](https://github.com/LeonTing1010/tap-skills)的第一条——和它每晚 CI 跑的是同一份验证：
 
 ```bash
-tap mcp stdio    # 默认；管道接入你的 MCP host
-tap mcp http     # 在 127.0.0.1:7891 上跑 streamable-HTTP（bearer 鉴权）
+mkdir -p ~/.tap/plans/github
+curl -fsSL https://raw.githubusercontent.com/LeonTing1010/tap-skills/main/claims/2026-07-11-github-trending-has-no-api/plan.json \
+  -o ~/.tap/plans/github/trending-no-api.plan.json
+tap github/trending-no-api
 ```
 
-### 3. 开始使用
+看到 `"state": "committed"` 和今天的 trending 仓库列表（零 token）= 安装成功**且**判断成立。
+
+### 3. 锻造你自己的 tap
 
 ```bash
-tap github/trending              # GitHub 热门仓库
-tap hackernews/hot               # Hacker News 首页
-tap weibo/hot                    # 微博热搜
-tap xiaohongshu/search --keyword "AI"  # 小红书搜索
+tap capture https://news.ycombinator.com hn/front --intent "首页热帖标题和分数"
+tap hn/front        # 永久重放，$0
 ```
 
-或直接让 AI Agent 操作：
+或者直接让你的 AI Agent 来：
 
 ```
-你：   今天 GitHub 有什么热门？
-Agent：今天最热门的仓库是... React compiler 已达 734 stars...
+你：   今天 GitHub 上什么在热榜？
+Agent: 这是今天的热门仓库 —— React compiler 涨了 734 star...
 
-你：   给我捕获一个豆瓣 Top250 的 tap
-Agent：好了。随时运行 `tap douban/top250`，每次 $0。
+你：   给豆瓣电影 Top 250 建一个 tap
+Agent: 搞定。以后随时跑 `tap douban/top250` —— 每次 $0。
 ```
 
-### 可选：Chrome 扩展（需要登录的站点）
+### 可选：从你自己的代码驱动（TypeScript / Python）
 
-大部分 tap 不需要登录即可运行。如需访问小红书、知乎等需要会话的站点，从 [Chrome Web Store](https://chromewebstore.google.com/detail/tap/llcidejeoobdegbkolbjhfoeckphldce) 安装扩展。
-
-### 可选：嵌入你自己的 agent 代码（TypeScript / Python）
-
-跳过 MCP — 在你自己的循环里直接调用 `tap` 二进制：
+跳过 MCP，直接在你的循环里调 `tap` 二进制：
 
 ```bash
-tap hackernews/top --args '{}'    # JSON 输出到 stdout，成功 exit 0
-tap verify hackernews/top         # 四态裁定（equivalent / drifted / first_snapshot / unreachable）
-tap capture <url> hackernews/top --intent "front-page top stories"
+tap capture <url> hackernews/top --intent "首页热帖"
+tap hackernews/top --args '{}'    # stdout 输出 JSON，成功 exit 0
+tap verify hackernews/top         # 3 臂判定（live / drifted / unreachable）
 ```
 
-CLI 以 JSON 形式输出 `ToolResult<T>` 信封 —— 和 MCP 接口返回的形状一致 —— 任何有子进程库的语言都能驱动它。完整 verb 列表见 `tap --help`。
+CLI 输出 `ToolResult<T>` JSON 信封——与 MCP 接口同构——任何有 subprocess 的语言都能驱动。完整动词表见 `tap --help`。
 
 ### 已有 Playwright / Puppeteer / Stagehand 脚本？
 

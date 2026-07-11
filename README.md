@@ -58,26 +58,31 @@ Repair:  re-run capture against the same site/name; the next      (only when nee
 
 ## Get Started
 
-### 1. Install
-
-**Zero-install** via npx (any machine with Node):
+### 1. Attach to your agent — one command
 
 ```bash
-npx -y @taprun/cli --version
+npx -y @taprun/cli embed claude-code   # or: cursor | vscode | claude-desktop
 ```
 
-The first run downloads the matching platform binary (~30MB) and caches it. Subsequent calls are instant.
+That's the whole install: the binary self-copies to `~/.tap/bin`, your agent's MCP config is written, and the browser bridge is registered. Re-check anytime with `tap embed --verify`.
 
-**Permanent install** via curl (macOS / Linux):
+- **Logged-in sites** (Xiaohongshu, Zhihu, …): add the [Chrome extension](https://chromewebstore.google.com/detail/tap/llcidejeoobdegbkolbjhfoeckphldce) when prompted — one click, and the in-flight call resumes automatically once it lands.
+- **No extension / CI**: append `--no-extension` (Playwright runtime, isolated profile).
+- **Claude Desktop**: download [`tap.mcpb`](https://github.com/LeonTing1010/tap/releases/latest) and double-click.
+
+<details>
+<summary><b>Other install paths</b> (brew · curl · manual MCP JSON · raw binaries)</summary>
 
 ```bash
-curl -fsSL https://taprun.dev/install.sh | sh
+brew install LeonTing1010/tap/taprun            # Homebrew (macOS / Linux)
+curl -fsSL https://taprun.dev/install.sh | sh   # permanent binary
+npx -y @taprun/cli --version                    # zero-install (any Node host)
 ```
 
-**Or via Homebrew** (macOS / Linux):
+Manual MCP config, if you'd rather write it yourself:
 
-```bash
-brew install LeonTing1010/tap/taprun
+```json
+{ "mcpServers": { "tap": { "command": "npx", "args": ["-y", "@taprun/cli", "mcp", "stdio"] } } }
 ```
 
 | Platform | Download |
@@ -87,28 +92,26 @@ brew install LeonTing1010/tap/taprun
 | Linux | [tap-linux-x64](https://github.com/LeonTing1010/tap/releases/latest) |
 | Windows | [tap-windows-x64.exe](https://github.com/LeonTing1010/tap/releases/latest) |
 
-### 2. Connect to Your AI Agent
+</details>
 
-Works with Claude Code, Cursor, Windsurf, or any MCP-compatible agent — no extension needed:
+### 2. Prove it works (~2 minutes, no login)
 
-```json
-{ "mcpServers": { "tap": { "command": "npx", "args": ["-y", "@taprun/cli", "mcp", "stdio"] } } }
-```
-
-Or run the server directly:
+Run the first entry of the [claims ledger](https://github.com/LeonTing1010/tap-skills) — the exact verification its nightly CI runs:
 
 ```bash
-tap mcp stdio    # default; pipe to your MCP host
-tap mcp http     # streamable-HTTP on 127.0.0.1:7891 (bearer auth)
+mkdir -p ~/.tap/plans/github
+curl -fsSL https://raw.githubusercontent.com/LeonTing1010/tap-skills/main/claims/2026-07-11-github-trending-has-no-api/plan.json \
+  -o ~/.tap/plans/github/trending-no-api.plan.json
+tap github/trending-no-api
 ```
 
-### 3. Go
+`"state": "committed"` plus today's trending repos at zero tokens = your install works **and** the claim holds.
+
+### 3. Forge your own
 
 ```bash
-tap github/trending              # GitHub trending repos
-tap hackernews/hot               # Hacker News front page
-tap weibo/hot                    # 微博热搜
-tap xiaohongshu/search --keyword "AI"  # 小红书搜索
+tap capture https://news.ycombinator.com hn/front --intent "front-page stories with points"
+tap hn/front        # replay forever, $0
 ```
 
 Or just ask your AI agent:
@@ -121,18 +124,14 @@ You:   Capture a tap for Douban top 250 movies
 Agent: Done. Run `tap douban/top250` anytime — $0 per run.
 ```
 
-### Optional: Chrome Extension (for login-required sites)
-
-Most taps work without login. For sites that need your session (Xiaohongshu, Zhihu, etc.), install the [Chrome Extension](https://chromewebstore.google.com/detail/tap/llcidejeoobdegbkolbjhfoeckphldce) from the Chrome Web Store.
-
-### Optional: Embed in your agent code (TypeScript / Python)
+### Optional: Drive the binary from your own code (TypeScript / Python)
 
 Skip MCP — call the `tap` binary from your own loop:
 
 ```bash
-tap hackernews/top --args '{}'    # JSON-on-stdout, exit 0 on success
-tap verify hackernews/top         # 4-arm verdict (equivalent / drifted / first_snapshot / unreachable)
 tap capture <url> hackernews/top --intent "front-page top stories"
+tap hackernews/top --args '{}'    # JSON-on-stdout, exit 0 on success
+tap verify hackernews/top         # 3-arm verdict (live / drifted / unreachable)
 ```
 
 The CLI emits `ToolResult<T>` envelopes as JSON — same shape the MCP surface returns — so any language with a subprocess library can drive it. See `tap --help` for the full verb list.

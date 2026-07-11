@@ -150,6 +150,7 @@ Example taps (the public [tap-skills](https://github.com/LeonTing1010/tap-skills
 ## Install
 
 ```
+npx -y @taprun/cli embed claude-code          # ONE-STEP attach: binary + MCP config + bridge (also: cursor | vscode | claude-desktop; add --no-extension for CI)
 npx -y @taprun/cli                            # zero-install (any Node host)
 curl -fsSL https://taprun.dev/install.sh | sh # permanent binary (macOS / Linux)
 brew install LeonTing1010/tap/taprun          # macOS / Linux via Homebrew

@@ -1560,14 +1560,17 @@ footer {
 
       <div class="reveal delay-4">
         <div class="install-tabs">
-          <button class="install-tab active" data-tab="curl">curl</button>
+          <button class="install-tab active" data-tab="embed">one-step</button>
+          <button class="install-tab" data-tab="curl">curl</button>
           <button class="install-tab" data-tab="brew">brew</button>
           <button class="install-tab" data-tab="npm">npx</button>
           <button class="install-tab" data-tab="mcp">mcp.json</button>
         </div>
         <div class="install-pane" style="position:relative;">
           <button id="install-copy-btn" type="button" aria-label="Copy install command" style="position:absolute;top:12px;right:12px;background:transparent;color:var(--text-muted);border:1px solid var(--ink-rule);padding:6px 12px;font-family:var(--font-mono);font-size:11px;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:all 0.15s ease;z-index:2;">Copy</button>
-          <div class="pane active" data-pane="curl"><span class="prompt">$</span><span class="cmd">{{ site.data.cli.install.curl }}</span>
+          <div class="pane active" data-pane="embed"><span class="prompt">$</span><span class="cmd">{{ site.data.cli.install.embed }}</span>      <span class="comment"># or: cursor | vscode | claude-desktop</span>
+<span class="comment"># binary + MCP config + browser bridge — all written for you</span></div>
+          <div class="pane" data-pane="curl"><span class="prompt">$</span><span class="cmd">{{ site.data.cli.install.curl }}</span>
 <span class="prompt">$</span><span class="cmd">{{ site.data.cli.mcp.stdio }}</span>      <span class="comment"># point your MCP host at this command</span></div>
           <div class="pane" data-pane="brew"><span class="prompt">$</span><span class="cmd">{{ site.data.cli.install.brew }}</span>
 <span class="prompt">$</span><span class="cmd">{{ site.data.cli.mcp.stdio }}</span></div>

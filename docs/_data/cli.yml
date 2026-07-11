@@ -85,6 +85,7 @@ version: "0.20.4"
 
 # ─── Install ─────────────────────────────────────────────────────────────
 install:
+  embed: "npx -y @taprun/cli embed claude-code"
   npx: "npx -y @taprun/cli --version"
   curl: "curl -fsSL https://taprun.dev/install.sh | sh"
   brew: "brew install LeonTing1010/tap/taprun"
