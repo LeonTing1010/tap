@@ -284,6 +284,12 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 - [support@taprun.dev](mailto:support@taprun.dev) — licensing, private feedback, consulting
 - [Issues](https://github.com/LeonTing1010/tap/issues) — bug reports
 
+## Privacy
+
+Tap is local-first by architecture. It drives **your own** browser on **your own** machine — credentials, cookies, and page data never leave it. The engine ships no telemetry and makes no outbound network calls except the ones your own saved taps explicitly direct (`op:fetch`). Saved taps, secrets, and traces live under `~/.tap/` on your machine only.
+
+Full policy: **[taprun.dev/privacy](https://taprun.dev/privacy)**.
+
 ## License
 
 Chrome Extension & docs: [MIT](LICENSE). Claims ledger: [MIT](https://github.com/LeonTing1010/tap-skills/blob/main/LICENSE).

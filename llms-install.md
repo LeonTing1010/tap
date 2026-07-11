@@ -1,37 +1,27 @@
-# Tap (Taprun) MCP Server Installation Guide
+# Tap (Taprun) MCP Server — Installation Guide
 
-This guide is for AI agents (Cline, Claude Desktop, Cursor, Windsurf, Roo Code) installing the Tap MCP server programmatically. Human readers should start with the [README](README.md).
+This guide is for AI agents (Cline, Claude Code, Claude Desktop, Cursor, Windsurf, Roo Code) installing the Tap MCP server programmatically. Human readers should start with the [README](README.md).
 
 ## Overview
 
-Tap turns "browse this site" into a deterministic program. Your agent runs `capture` once on a URL × intent — Tap inspects the page, picks the strongest structural address (JSON API / RSS / JSON-LD / OpenGraph / HTML list), and emits a bare v2 Plan. Every saved plan is auto-projected as the MCP tool `<site>.<name>` and replays at zero AI tokens. Run `verify` to detect drift before your pipeline notices. ~70 community taps via [tap-skills](https://github.com/LeonTing1010/tap-skills); forge new ones from any URL.
+Tap turns "do this in my browser" into a deterministic program. Your agent runs `capture` once on a URL × intent — Tap inspects the page, picks the most stable address (open API / session API / in-page fetch / DOM), and emits a bare `.plan.json`. Saved plans replay at **zero LLM tokens** (the AI runs only at capture time), in the user's **own** browser, so credentials never leave the machine.
 
 ## Prerequisites
 
-1. **Node.js 16+** (for `npx`-based zero-install — recommended)
-2. Network access to `registry.npmjs.org` (first run downloads ~30MB platform binary, cached afterwards)
-3. Optional: a real Chrome window for login-required sites (Xiaohongshu, Zhihu, LinkedIn). Public sites work headless out of the box.
+1. **Node.js 18+** (for `npx`-based zero-install — recommended).
+2. Network access to `registry.npmjs.org` (first run downloads the platform binary, cached afterwards).
+3. Optional: the Tap Chrome extension for login-required sites. Public sites and open APIs work without it via the `playwright` runtime.
 
-## Installation and Configuration
+## Installation
 
-### Step 1 — Add Tap to your MCP host
-
-Add this block to the appropriate config file for the host:
-
-| Host | Config file path |
-|------|------------------|
-| Cline (VS Code) | `~/Library/Application Support/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json` |
-| Claude Desktop | `~/Library/Application Support/Claude/claude_desktop_config.json` |
-| Cursor | `<project>/.cursor/mcp.json` (or `~/.cursor/mcp.json` for global) |
-| Roo Code | `~/Library/Application Support/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/cline_mcp_settings.json` |
-| Windsurf | `~/.codeium/windsurf/mcp_config.json` |
+Add this block to the MCP host's config file (for Cline: `cline_mcp_settings.json`, under `mcpServers`):
 
 ```json
 {
   "mcpServers": {
     "tap": {
       "command": "npx",
-      "args": ["-y", "@taprun/cli", "mcp", "stdio"],
+      "args": ["-y", "@taprun/cli", "mcp", "start"],
       "disabled": false,
       "autoApprove": []
     }
@@ -39,65 +29,64 @@ Add this block to the appropriate config file for the host:
 }
 ```
 
-### Step 2 — Verify
+No API key is required — Tap ships no server-side model and no secrets to configure.
 
-After restarting the MCP host, ask the agent:
+Config file paths by host:
 
-> Call the `capture` tool with `{ url: "https://news.ycombinator.com" }` (preview only) and tell me what `inspection.source_class` it returned.
+| Host | Config file |
+|------|-------------|
+| Cline (VS Code) | `~/Library/Application Support/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json` |
+| Claude Desktop | `~/Library/Application Support/Claude/claude_desktop_config.json` |
+| Cursor | `<project>/.cursor/mcp.json` (or `~/.cursor/mcp.json`) |
+| Windsurf | `~/.codeium/windsurf/mcp_config.json` |
 
-Expected: a `ToolResult<CaptureValue>` with `inspection.source_class` (e.g. `html-list`, `json-api`, `rss`). Any error in stdout means the host can't start the server — most commonly a stale Node cache; retry with `npm cache clean --force`.
+### Runtime options (optional)
 
-## MCP Tool Surface (v2 — 3 meta verbs + N saved-tap projections)
+- **extension** (default) — drives the user's real, logged-in Chrome via the Tap Chrome extension (install once from the Chrome Web Store). Full power; reuses existing logins.
+- **playwright** — no extension; the engine launches its own dedicated Chrome profile at `~/.tap/profile` (log in once per site). Best for a first-run test with no extension, or headless/CI. Enable with `"env": { "TAP_RUNTIME": "playwright" }` in the block above.
 
-The Tap MCP server exposes a flat surface: 3 meta verbs and one auto-projected tool per saved tap.
+## Verify the install (~1 minute, no login)
 
-### Meta verbs
+After the host restarts, confirm the server started end-to-end:
 
-#### `capture`
-Create a tap from a URL × intent. Args: `{ url, intent?, site?, name? }`. With `site+name`, persists the resulting Plan to `~/.tap/plans/<site>/<name>.plan.json`; without them, returns a preview only. Re-calling with an existing `site+name` overwrites — this is the heal path for `tap_drifted` failures. Use when the user describes a task and no `<site>.<name>` tool covers it, or when a tap call returned `tap_drifted`.
+> List MCP resources — you should see `tap://…` entries — then call `capture` with `{ "url": "https://news.ycombinator.com", "intent": "list the top stories" }` and report the returned `inspection.source_class`.
 
-#### `verify`
-Read-only substrate check. Args: `{ site, name, args? }`. Runs the tap's observe phase, captures a Snapshot, compares to the prior baseline. Returns `verdict ∈ {equivalent | drifted | first_snapshot | unreachable}` derived from the per-tap CEL `snapshot_equivalent` predicate. Does NOT execute the act phase — safe for write taps. Use before retrying a failed tap or when the user asks "is my tap still working?".
+Expected: a structured `ToolResult` (e.g. `inspection.source_class` = `html-list` / `json-api` / `rss`). Any error in stdout means the host couldn't start the server — usually a stale Node cache; retry after `npm cache clean --force`.
 
-#### `mark`
-Resolve an `intent_uncertain` record. Args: `{ site, name, key, as: "committed" | "aborted" }`. The runtime hit a state where it cannot determine if a side effect committed (process aborted mid-act, heartbeat lost). After observing the actual outcome, mark resolves the intent state machine. Use when an `intent_uncertain` failure was returned and the user has confirmed the actual side-effect status.
+## MCP Tool Surface (v2 — 4 meta verbs + saved taps as Resources)
 
-### Saved-tap projections
+Tap exposes a **constant** surface of 4 meta verbs. Saved taps are **MCP Resources** (`tap://{site}/{name}`), not per-tap tools — discover them via `resources/list`, read the arg schema via `resources/read`, and execute with `run`.
 
-Every saved plan auto-exposes as the MCP tool `<site>.<name>` (e.g. `github.trending`, `hackernews.hot`). Args follow the plan's declared `args` schema. Calling executes the plan deterministically — zero AI tokens.
+- **`capture`** — `{ url, intent?, site?, name? }`. Create a tap from URL × intent. With `site+name`, persists to `~/.tap/plans/<site>/<name>.plan.json` and it becomes a `tap://{site}/{name}` resource; without them, returns a preview. Re-capturing the same `site+name` overwrites — the heal path for `tap_drifted`.
+- **`verify`** — `{ site, name, args? }`. Read-only substrate health check; runs the observe phase only (safe for write taps). Returns `verdict ∈ { live | drifted | unreachable }` derived from op outcomes.
+- **`mark`** — `{ site, name, key, as: "committed" | "aborted" }`. Resolve an `intent_uncertain` record after observing the real side-effect outcome.
+- **`run`** — `{ ref, args }` where `ref` is `tap://{site}/{name}` or `{site}/{name}`. Execute a saved tap deterministically — zero AI tokens.
 
-### Closed error envelope (9 kinds)
+Discovery flow: `resources/list` → match by name/description → `resources/read({uri})` for the args schema → `run({ ref, args })`.
 
-Every failure returns a structured envelope with `kind` ∈ `{ tap_not_found, tap_invalid, tap_aborted, tap_drifted, intent_running, intent_uncertain, runtime_unavailable, credential_missing, arg_invalid }`. When `next` is set, it is the single rational recovery action — issue that tool call. When `next` is missing, escalate to the user.
+### Closed error envelope
 
-## Optional: Chrome Extension for Login-Required Sites
+Every failure returns `{ ok:false, kind, message, detail, next? }` with `kind ∈ { tap_not_found, tap_invalid, tap_aborted, tap_drifted, intent_running, intent_uncertain, runtime_unavailable, credential_missing, arg_invalid }`. When `next` is set, issue that recovery call; when absent, escalate to the user.
 
-Most read-only public sites work via the headless `playwright` peer. For sites that require an authenticated session (Xiaohongshu, Zhihu, LinkedIn, banking, internal dashboards), install the [Chrome Extension](https://chromewebstore.google.com/detail/tap/llcidejeoobdegbkolbjhfoeckphldce) and declare `requires.runtime: "extension"` on the plan. Auth is whatever's already in the user's browser — Tap never asks for or transmits credentials.
+## Pricing
 
-## License Tiers
+**All features are free during v0.x.** There is no tier gating, no license token, and no telemetry in the engine.
 
-| Marketing tier | Internal | Plan-fleet cap | What it adds |
-|---|---|---|---|
-| **Spec & Run** (Free) | `free` | 3 saved plans | All meta verbs + `<site>.<name>` execution + community taps |
-| **Capture** ($19/mo) | `hacker` | 5 saved plans | AI-assisted forge for the long-tail of sites; BYOK AI key |
-| **Repair** ($49/mo) | `pro` | 20 saved plans | 3-path repair pipeline (cache → minimal-patch → full rewrite) |
+## Chrome Extension for login-required sites
 
-Saved-plan caps are enforced in `core/auth.ts:gateCaptureSave`. Re-saving an existing `site+name` (overwrite / heal) does NOT consume budget. License token cached at `~/.tap/license`; unknown product / expired / canceled → safe-failure to `free`.
-
-Purchase at https://taprun.dev/#pricing (Creem). Multi-seat / on-prem / SOC2 / HIPAA buyers contact sales via the footer link.
+For sites that need an authenticated session (banking, internal dashboards, social platforms), install the [Tap Chrome Extension](https://chromewebstore.google.com/detail/tap/llcidejeoobdegbkolbjhfoeckphldce) and declare `requires.runtime: "extension"` on the plan. Auth is whatever is already in the user's browser — Tap never asks for or transmits credentials.
 
 ## Troubleshooting
 
-- **"Command not found: npx"** — install Node.js 16+ from https://nodejs.org.
-- **`tap_drifted` returned** — call `capture { url: <plan.source_url>, intent: <plan.source_intent>, site, name }` to overwrite the plan. The next `verify` rebaselines.
-- **`runtime_unavailable` returned** — the plan declares `requires.runtime: "extension"` but the Chrome extension isn't running. Install the extension and reload the host.
-- **`credential_missing` returned** — the plan's `op:fetch` references a `${VAR}` not in `~/.tap/secrets`. Run `tap secret <KEY>` to set it (value via stdin).
-- **MCP host can't start the server** — verify `npx -y @taprun/cli --version` works directly in the user's terminal. Most failures are network or Node-cache issues.
+- **"Command not found: npx"** — install Node.js 18+ from https://nodejs.org.
+- **`tap_drifted`** — call `capture { url: <plan.source_url>, intent: <plan.source_intent>, site, name }` to overwrite (heal) the plan.
+- **`runtime_unavailable`** — the plan needs `requires.runtime: "extension"` but the Chrome extension isn't running; install it and reload the host, or use `TAP_RUNTIME=playwright`.
+- **`credential_missing`** — the plan's `op:fetch` references a `${VAR}` not set. Run `tap secret set <KEY>` (value via stdin); secrets live at `~/.tap/config/secrets`.
+- **Host can't start the server** — verify `npx -y @taprun/cli --version` works directly in the user's terminal (usually a network or Node-cache issue).
 
 ## References
 
-- Homepage: https://taprun.dev/?utm_source=llms-install&utm_medium=docs&utm_campaign=cline-homepage
+- Homepage / install: https://taprun.dev/add
 - README: https://github.com/LeonTing1010/tap
-- npm package: https://www.npmjs.com/package/@taprun/cli
-- GitHub Issues: https://github.com/LeonTing1010/tap/issues
+- npm: https://www.npmjs.com/package/@taprun/cli
 - Security: see `SECURITY.md`
