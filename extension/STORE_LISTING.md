@@ -75,6 +75,14 @@ the corresponding text field on the Privacy practices tab. Keep each under
 
 > Used to persist user-facing settings (popup state, connection status, the last-known CLI version) in `chrome.storage.local`. No user content, page data, cookies, or credentials are written to extension storage. Storage is local to the user's profile and is cleared when the extension is uninstalled.
 
+#### `contextMenus`
+
+> Adds exactly two right-click menu items, both authoring-time helpers the user invokes deliberately: "Tap: pick this element" — the user right-clicks the precise element they want an automation step to target, and the extension records a selector/role/name descriptor for it locally (this closes the "which of these five identical buttons did you mean" gap when a Tap program is being authored); and "Tap: open control panel" — opens the extension's side panel. The menu items trigger nothing on their own; no page content is read until the user explicitly picks an element, and the recorded descriptor stays in `chrome.storage.local` on the user's machine. Without this permission the element-picking flow has no entry point.
+
+#### `sidePanel`
+
+> Hosts Tap's control console as a docked side panel: live status of the currently-running automation, bridge-connection state, and the last element the user picked via the context menu. Unlike the ephemeral popup, the panel stays visible while a multi-step automation runs, which is what makes human-in-the-loop moments workable (e.g. the automation pauses and asks the user to click one confirmation button themselves). The panel is a read-only reflection of extension state from `chrome.storage`; it reads no page content and makes no network requests. Without this permission there is no persistent surface to supervise a running automation from.
+
 #### `host_permissions: <all_urls>`
 
 > Tap is a general-purpose browser automation tool — the user decides at runtime which site to automate. We cannot enumerate sites in advance because the value of the product is that it works against any site the user has access to. Host access is exercised only on tabs the user has explicitly selected for automation (via the popup or an explicit CLI command). No data is read, scraped, or transmitted from tabs the user has not opted into.

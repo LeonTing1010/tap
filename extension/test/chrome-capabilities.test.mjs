@@ -113,9 +113,17 @@ test('side panel is declared + files present', () => {
 
 test('manifest grants the permissions the capabilities need (and NOT the deleted keepalive ones)', () => {
   const p = new Set(MANIFEST.permissions)
-  for (const need of ['downloads', 'contextMenus', 'sidePanel']) {
+  for (const need of ['contextMenus', 'sidePanel']) {
     assert(p.has(need), `manifest.permissions must include ${need}`)
   }
+  // `downloads` was declared speculatively in the 2026-07-08 capabilities
+  // commit but chrome.downloads is consumed NOWHERE — op:pdf/screencast
+  // return base64 over native messaging, no browser-download path. An
+  // unused permission is a CWS review liability (removed 2026-07-11);
+  // re-adding it requires an actual chrome.downloads consumer in the
+  // same commit.
+  assert(!p.has('downloads'),
+    'must NOT declare unused downloads permission (no chrome.downloads consumer)')
   // SW keepalive was deleted (ADR 2026-05-13) — the NM port keeps the SW alive.
   // Re-adding alarms/offscreen would revert that deliberate decision.
   assert(!p.has('alarms') && !p.has('offscreen'),
