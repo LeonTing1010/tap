@@ -1,0 +1,252 @@
+---
+permalink: /add
+robots: "index,follow"
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Add Tap to your agent — one step, your browser, zero-token replays</title>
+<meta name="description" content="Give Claude Desktop, Claude Code, Cursor, or VS Code a pair of hands in YOUR logged-in browser. One-click bundle or one command. Credentials never leave your machine; saved taps replay at zero tokens.">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://taprun.dev/add">
+<meta property="og:title" content="Add Tap to your agent — one step">
+<meta property="og:description" content="Your agent is the brain. Tap is the hands — in your own logged-in browser. One-click install, zero-token replays.">
+<meta property="og:url" content="https://taprun.dev/add">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://taprun.dev/social-preview.png">
+<meta name="twitter:card" content="summary_large_image">
+<!-- Analytics — production host only. Mirrors index.html. -->
+<script>
+  (function() {
+    if (location.hostname !== 'taprun.dev') return;
+    var ga = document.createElement('script');
+    ga.async = true;
+    ga.src = 'https://www.googletagmanager.com/gtag/js?id=G-RH14PQ10QK';
+    document.head.appendChild(ga);
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function(){ dataLayer.push(arguments); };
+    gtag('js', new Date());
+    gtag('config', 'G-RH14PQ10QK');
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-deep: #0a0a0f;
+    --bg-surface: #11111a;
+    --bg-card: #1a1a26;
+    --white: #fafafa;
+    --text: #e5e5ec;
+    --text-dim: #a8a8b8;
+    --text-muted: #6e6e80;
+    --indigo: #6366f1;
+    --indigo-bright: #a5b4fc;
+    --gold: #fbbf24;
+    --green: #34d399;
+    --border: rgba(255,255,255,.08);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg-deep);
+    color: var(--text);
+    font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+    line-height: 1.65;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 48px 20px 96px; }
+  h1 {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: clamp(1.9rem, 5vw, 2.8rem);
+    font-weight: 800; color: var(--white); line-height: 1.15;
+    margin-bottom: 12px;
+  }
+  .sub { color: var(--text-dim); font-size: 1.05rem; max-width: 620px; margin-bottom: 8px; }
+  .kicker { color: var(--indigo-bright); font-weight: 600; font-size: .85rem;
+    text-transform: uppercase; letter-spacing: .08em; margin-bottom: 10px; }
+  .trust { color: var(--text-muted); font-size: .85rem; margin-bottom: 40px; }
+  .trust b { color: var(--green); font-weight: 600; }
+
+  .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 0; }
+  .tab {
+    font: 600 .9rem 'Plus Jakarta Sans', sans-serif;
+    padding: 10px 18px; border-radius: 10px 10px 0 0; cursor: pointer;
+    background: transparent; color: var(--text-dim);
+    border: 1px solid var(--border); border-bottom: none;
+  }
+  .tab.active { background: var(--bg-card); color: var(--white); }
+  .panel {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 0 14px 14px 14px; padding: 28px; display: none;
+  }
+  .panel.active { display: block; }
+  .panel h2 { font-family: 'Bricolage Grotesque', sans-serif; color: var(--white);
+    font-size: 1.25rem; margin-bottom: 6px; }
+  .panel h3 { color: var(--indigo-bright); font-size: .95rem; margin: 22px 0 8px; }
+  .panel p { color: var(--text-dim); font-size: .95rem; margin-bottom: 10px; }
+  .steps { counter-reset: s; list-style: none; margin: 14px 0; }
+  .steps li { counter-increment: s; position: relative; padding: 0 0 14px 44px; }
+  .steps li::before {
+    content: counter(s); position: absolute; left: 0; top: 0;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--indigo); color: #fff; font-weight: 700; font-size: .85rem;
+    display: flex; align-items: center; justify-content: center;
+  }
+  pre {
+    background: var(--bg-deep); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 16px; overflow-x: auto;
+    font: 500 .82rem/1.6 'JetBrains Mono', monospace; color: var(--text);
+    margin: 8px 0 4px; position: relative;
+  }
+  .copybtn {
+    position: absolute; top: 8px; right: 8px;
+    font: 600 .7rem 'Plus Jakarta Sans', sans-serif;
+    background: var(--bg-card); color: var(--text-dim);
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 3px 9px; cursor: pointer;
+  }
+  .copybtn:hover { color: var(--white); }
+  .btn {
+    display: inline-block; font: 700 .95rem 'Plus Jakarta Sans', sans-serif;
+    background: var(--indigo); color: #fff; text-decoration: none;
+    padding: 12px 22px; border-radius: 10px; margin: 6px 8px 6px 0;
+  }
+  .btn.ghost { background: transparent; border: 1px solid var(--indigo);
+    color: var(--indigo-bright); }
+  .note {
+    background: rgba(99,102,241,.08); border-left: 3px solid var(--indigo);
+    border-radius: 0 8px 8px 0; padding: 10px 14px; font-size: .87rem;
+    color: var(--text-dim); margin: 14px 0;
+  }
+  .note.warn { background: rgba(251,191,36,.07); border-left-color: var(--gold); }
+  a { color: var(--indigo-bright); }
+  .foot { margin-top: 42px; color: var(--text-muted); font-size: .85rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="kicker">Add Tap to your agent</div>
+  <h1>Your agent is the brain.<br>Give it hands in <em>your</em> browser.</h1>
+  <p class="sub">Tap is a local MCP server that drives your own logged-in Chrome — and saves
+  every task as a <b>tap</b> that replays deterministically at <b>zero tokens</b>.</p>
+  <p class="trust"><b>Local-first:</b> credentials never leave your machine. No cloud proxy,
+  no API key inside the engine, no telemetry. <a href="https://github.com/LeonTing1010/tap/blob/main/SECURITY.md">Threat model →</a></p>
+
+  <div class="tabs" role="tablist">
+    <button class="tab active" data-panel="p-agent">① Your agent + your Chrome</button>
+    <button class="tab" data-panel="p-noext">② No extension</button>
+    <button class="tab" data-panel="p-remote">③ Try it remote (zero install)</button>
+  </div>
+
+  <!-- ① The moat path: local + extension -->
+  <section class="panel active" id="p-agent">
+    <h2>Full power: your real, logged-in browser</h2>
+    <p>Two actions total. The Chrome Web Store click is the trust step — you are
+    consciously handing your agent your browser. Nothing else is manual.</p>
+
+    <h3>Claude Desktop — one-click bundle</h3>
+    <ol class="steps">
+      <li><a class="btn" href="https://github.com/LeonTing1010/tap/releases/latest/download/tap.mcpb">Download tap.mcpb</a>
+        then double-click it (Claude Desktop installs it as an extension).</li>
+      <li><a class="btn ghost" href="https://chromewebstore.google.com/detail/llcidejeoobdegbkolbjhfoeckphldce">Add the Tap extension to Chrome</a>
+        — the one manual click.</li>
+    </ol>
+    <p>That's it. The bundle installs the engine to <code>~/.tap/bin</code> on first
+    run; the bridge registers itself; your next message to Claude can drive the browser.</p>
+
+    <h3>Claude Code</h3>
+    <pre><button class="copybtn">copy</button><code>brew install LeonTing1010/tap/taprun && tap embed claude-code</code></pre>
+    <p>…or with npx (no brew): <code>npx -y @taprun/cli embed claude-code</code>
+    — the binary self-installs to <code>~/.tap/bin</code> so the bridge survives version bumps.</p>
+
+    <h3>Cursor / VS Code</h3>
+    <pre><button class="copybtn">copy</button><code>npx -y @taprun/cli embed cursor   # or: embed vscode</code></pre>
+    <p>Prints a one-click deep link + the <code>mcp.json</code> snippet.</p>
+
+    <div class="note">
+      Verify any time: <code>tap embed --verify</code> walks the ladder —
+      stable binary → bridge manifest → extension → live socket — and names
+      the exact fix for the first missing rung.
+    </div>
+  </section>
+
+  <!-- ② No-extension local path -->
+  <section class="panel" id="p-noext">
+    <h2>No extension: a dedicated local Chrome profile</h2>
+    <p>For CI, headless boxes, or if you'd rather not install a browser extension.
+    Still 100% local — the engine launches its own Chrome with a persistent profile
+    at <code>~/.tap/profile</code>. Log in to each site once; sessions persist.</p>
+    <pre><button class="copybtn">copy</button><code>npx -y @taprun/cli embed claude-code --no-extension</code></pre>
+    <p>Or add the config manually to any MCP host:</p>
+    <pre><button class="copybtn">copy</button><code>{
+  "mcpServers": {
+    "taprun": {
+      "command": "npx",
+      "args": ["-y", "@taprun/cli", "mcp", "stdio"],
+      "env": { "TAP_RUNTIME": "playwright", "TAP_PROFILE": "own" }
+    }
+  }
+}</code></pre>
+    <div class="note warn">
+      Trade-off vs ①: a separate profile means logging in again once per site,
+      and a few sites treat fresh profiles more suspiciously. Attaching your
+      REAL Chrome profile is also possible (<code>TAP_PROFILE=chrome</code> +
+      <code>TAP_CHROME_PROFILE=&lt;dir&gt;</code>) but Chrome must be closed —
+      the engine will tell you exactly that if it finds Chrome running.
+    </div>
+  </section>
+
+  <!-- ③ Remote demo funnel -->
+  <section class="panel" id="p-remote">
+    <h2>Zero install: try 208 pre-built taps on our demo browser</h2>
+    <p>Point any remote-capable MCP client at:</p>
+    <pre><button class="copybtn">copy</button><code>https://taprun.dev/mcp</code></pre>
+    <p>100 free calls/day. Read-only, public-page taps only — the demo browser has
+    no logins and accepts no credentials, <em>by design</em>.</p>
+    <div class="note">
+      This is the test drive, not the product. Everything that makes Tap
+      worth keeping — <b>your</b> logged-in sessions, write actions,
+      zero-token local replays — requires the local install. When a demo tap
+      does something useful, tab ① makes it run in your own browser in two
+      actions.
+    </div>
+  </section>
+
+  <div class="foot">
+    <p>What you get in every case: 4 MCP verbs (<code>capture / verify / mark / run</code>) +
+    your saved taps as resources. AI participates only at compile time —
+    replays are pure data, <b>zero tokens</b>.</p>
+    <p style="margin-top:8px"><a href="/">Home</a> · <a href="/install">Extension install detail</a> ·
+    <a href="https://github.com/LeonTing1010/tap">GitHub</a></p>
+  </div>
+</div>
+<script>
+  document.querySelectorAll('.tab').forEach(function (t) {
+    t.addEventListener('click', function () {
+      document.querySelectorAll('.tab').forEach(function (x) { x.classList.remove('active'); });
+      document.querySelectorAll('.panel').forEach(function (x) { x.classList.remove('active'); });
+      t.classList.add('active');
+      document.getElementById(t.dataset.panel).classList.add('active');
+    });
+  });
+  document.querySelectorAll('.copybtn').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var code = b.parentElement.querySelector('code');
+      navigator.clipboard.writeText(code.textContent).then(function () {
+        b.textContent = 'copied';
+        setTimeout(function () { b.textContent = 'copy'; }, 1200);
+      });
+    });
+  });
+  // Deep-linkable tabs (#noext / #remote) — the remote-MCP upgrade hint and
+  // docs link straight to a specific path.
+  var frag = location.hash.replace('#', '');
+  var map = { agent: 'p-agent', noext: 'p-noext', remote: 'p-remote' };
+  if (map[frag]) {
+    document.querySelector('[data-panel="' + map[frag] + '"]').click();
+  }
+</script>
+</body>
+</html>
