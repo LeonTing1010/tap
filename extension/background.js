@@ -288,6 +288,40 @@ async function withDebugger(tabId, fn) {
   finally { scheduleDetach(tabId) }
 }
 
+// op:ax pure filter (extracted for ax-observation.test.mjs — same
+// verbatim-extraction pattern as the closed-shadow pierce helpers).
+// AXNode wire shape: { ignored, role: {value}, name: {value}, backendDOMNodeId }.
+// No filter → interactive roles only (the digest default); any explicit
+// role/name filter → searches ALL roles. Candidates hard-capped at 400 so
+// the per-node DOM.getBoxModel loop in case 'ax' stays bounded.
+const AX_INTERACTIVE_ROLES = new Set([
+  'button', 'link', 'textbox', 'combobox', 'checkbox', 'radio', 'searchbox',
+  'tab', 'menuitem', 'menuitemcheckbox', 'menuitemradio', 'switch', 'slider',
+  'option', 'listbox', 'spinbutton', 'textfield'
+])
+function axPickNodes (nodes, opts) {
+  const roleFilter = opts && opts.role ? String(opts.role).toLowerCase() : null
+  const nameFilter = opts && opts.name ? String(opts.name).toLowerCase() : null
+  const explicit = !!(roleFilter || nameFilter)
+  const out = []
+  for (const n of nodes || []) {
+    if (!n || n.ignored) continue
+    if (typeof n.backendDOMNodeId !== 'number') continue
+    const role = n.role && n.role.value ? String(n.role.value) : ''
+    if (!role) continue
+    const name = n.name && n.name.value ? String(n.name.value).trim() : ''
+    if (explicit) {
+      if (roleFilter && role.toLowerCase() !== roleFilter) continue
+      if (nameFilter && !name.toLowerCase().includes(nameFilter)) continue
+    } else if (!AX_INTERACTIVE_ROLES.has(role.toLowerCase())) {
+      continue
+    }
+    out.push({ role, name: name.slice(0, 80), backendDOMNodeId: n.backendDOMNodeId })
+    if (out.length >= 400) break
+  }
+  return out
+}
+
 // Chrome refuses to open a file-chooser dialog for a tab that is not the
 // active tab of a focused window — a background/unfocused tab's trusted click
 // silently "misses" and Page.fileChooserOpened never fires (the trusted-upload
@@ -1091,9 +1125,12 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
   // 'fetch' added 2026-05-04 (Framework v2.4 §二十 L2.5): SW-context fetch
   // with credentials:'include' uses Chrome's cookie jar directly — no tab
   // context needed. Same-origin enforcement is upstream (engine lint S1).
+  // 'notify' added 2026-07-12: handler is chrome.storage-only (side panel),
+  // never touches tabId — core reclassified op:notify TAB_FREE the same day
+  // (tap-core notify_tab_free_test.ts). Guard: test/notify-tab-free.test.mjs.
   const noTabNeeded = ['nav', 'tab', 'bookmark', 'tab.new', 'tab.list', 'tab.close', 'capabilities', 'reload',
                        'session.create', 'session.destroy', 'session.info',
-                       'visualize', 'fetch']
+                       'visualize', 'fetch', 'notify']
   if (!tabId && !noTabNeeded.includes(method)) {
     throw new Error('No active tab. Call nav first or use session.create.')
   }
@@ -1406,6 +1443,39 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
     // exercised only against a real Chrome, guarded structurally by
     // test/chrome-capabilities.test.mjs.
 
+    case 'ax': {
+      // op:ax (ADR 2026-07-12-op-ax-observation) → CDP Accessibility.getFullAXTree.
+      // The AX tree is render-based: it carries role + accessible name for nodes
+      // INSIDE closed shadow roots that page-context JS (op:eval, MAIN world) can
+      // never see. AX for the eye; the pierce tree (closed-shadow click path) is
+      // the hand. Items return viewport coords so a trusted:true click can act on
+      // what the survey found.
+      return await withDebugger(tabId, async () => {
+        try { await chrome.debugger.sendCommand({ tabId }, 'Accessibility.enable') } catch { /* older Chrome: getFullAXTree may still work */ }
+        const { nodes } = await chrome.debugger.sendCommand({ tabId }, 'Accessibility.getFullAXTree', {})
+        const picked = axPickNodes(nodes, { role: params.role, name: params.name })
+        const limit = Math.min(Math.max(params.limit || 120, 1), 400)
+        const items = []
+        for (const n of picked) {
+          if (items.length >= limit) break
+          let box = null
+          try {
+            const bm = await chrome.debugger.sendCommand({ tabId }, 'DOM.getBoxModel', { backendNodeId: n.backendDOMNodeId })
+            const q = bm.model.content
+            box = {
+              x: Math.round(Math.min(q[0], q[2], q[4], q[6])),
+              y: Math.round(Math.min(q[1], q[3], q[5], q[7])),
+              w: Math.round(bm.model.width),
+              h: Math.round(bm.model.height)
+            }
+          } catch { /* no layout box (display:none / detached) — not observable, skip */ }
+          if (!box || box.w <= 0 || box.h <= 0) continue
+          items.push({ role: n.role, name: n.name, ...box, backendId: n.backendDOMNodeId })
+        }
+        return { total: picked.length, items }
+      })
+    }
+
     case 'pdf': {
       // op:pdf → CDP Page.printToPDF → base64 PDF of the current page. For statement /
       // invoice / report capture (the bookkeeping done-for-you取数环). The host
@@ -1548,6 +1618,7 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
           'fetch', 'find', 'download', 'waitFor', 'waitForNetwork', 'ssrState', 'copyAll',
           'upload', 'dialog', 'extract',
           'tab.new', 'tab.list', 'tab.close',
+          'ax',
           'inspect.page', 'inspect.networkStart', 'inspect.networkDump', 'inspect.networkStop',
           'intercept.on', 'intercept.off',
           'session.create', 'session.destroy', 'session.info'
@@ -1574,7 +1645,15 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       // Enabled by the global toggle (idle-expiring) OR a per-invocation `visualize`
       // hint on the op (runtime-layer control — never a stored-plan field).
       if (visibleActive(params.visualize) && selStr) await showOpTrace(tabId, selStr, kind)
-      try {
+      // Declarative-target retry (2026-07-12 north-star-human-speed): a
+      // resolver miss is often a transient re-render race (React/Vue swap
+      // the node between page-ready and act). "Element not found" means
+      // NOTHING acted, so re-dispatch is safe by construction — the loop
+      // lives here at ms cost instead of surfacing to the agent at a
+      // 3–15s round-trip (or failing a replay). Bounded: 1500ms budget,
+      // 150ms step. `resolve` probes answer "does it resolve NOW" and
+      // never retry. Non-miss errors rethrow immediately.
+      const dispatchKind = async () => {
         switch (kind) {
           case 'click':
             return await handleMethod('click', { ...rest, target: selStr, resolver }, senderTabId, { fromDaemon })
@@ -1615,6 +1694,39 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
             return await handleMethod('blur', { ...rest, selector: selStr, resolver }, senderTabId, { fromDaemon })
         }
         throw new Error(`Unknown op:input kind: ${kind}`)
+      }
+      const isMiss = (err) => String(err?.message || err).startsWith('Element not found')
+      // Anomaly piggyback (core lifts value._tap_anomalies into the OpResult
+      // envelope and strips the key): success-after-retry is a LEADING drift
+      // indicator — report it so the agent/log sees "ok, but the target took
+      // n retries to appear" before it becomes next week's hard failure.
+      const withRetryAnomaly = (res, n, ms) => {
+        if (n > 0 && res && typeof res === 'object' && !Array.isArray(res)) {
+          return { ...res, _tap_anomalies: { ...(res._tap_anomalies || {}), retries: { n, ms } } }
+        }
+        return res
+      }
+      try {
+        try {
+          return await dispatchKind()
+        } catch (e) {
+          if (kind === 'resolve' || !isMiss(e)) throw e
+          const retryStart = Date.now()
+          const deadline = retryStart + 1500
+          let lastErr = e
+          let attempts = 0
+          while (Date.now() < deadline) {
+            await new Promise(r => setTimeout(r, 150))
+            attempts++
+            try {
+              return withRetryAnomaly(await dispatchKind(), attempts, Date.now() - retryStart)
+            } catch (e2) {
+              if (!isMiss(e2)) throw e2
+              lastErr = e2
+            }
+          }
+          throw lastErr
+        }
       } catch (e) {
         const msg = String(e?.message || e)
         if (msg.startsWith('Element not found')) {
@@ -2803,8 +2915,34 @@ async function handleDialogEvent(source, method, params) {
   try {
     await chrome.debugger.sendCommand({ tabId: source.tabId }, 'Page.handleJavaScriptDialog', { accept })
   } catch { /* dialog already gone (navigation / debugger detach) */ }
+  // Auto-handling is correct but must not be SILENT (2026-07-12): the agent
+  // otherwise never learns a dialog fired — "弹窗关没关 tap 看不出来".
+  // Ring-buffer per tab; the next op response drains it into
+  // _tap_anomalies.dialogs (core lifts that into the OpResult envelope).
+  if (typeof source?.tabId === 'number') {
+    const list = pendingDialogEvents.get(source.tabId) || []
+    list.push({
+      type: params?.type || 'dialog',
+      message: String(params?.message || '').slice(0, 120),
+      accepted: accept,
+      at: Date.now()
+    })
+    pendingDialogEvents.set(source.tabId, list.slice(-5))
+  }
 }
 chrome.debugger.onEvent.addListener(handleDialogEvent)
+
+// tabId -> auto-handled native dialogs not yet reported on an op response.
+const pendingDialogEvents = new Map()
+function attachDialogAnomalies (result, tabId) {
+  if (typeof tabId !== 'number') return result
+  const evs = pendingDialogEvents.get(tabId)
+  if (!evs || !evs.length) return result
+  pendingDialogEvents.delete(tabId)
+  if (!result || typeof result !== 'object' || Array.isArray(result)) return result
+  return { ...result, _tap_anomalies: { ...(result._tap_anomalies || {}), dialogs: evs } }
+}
+chrome.tabs.onRemoved.addListener((tabId) => pendingDialogEvents.delete(tabId))
 
 // When Chrome detaches the debugger (navigation auto-detach, DevTools opening,
 // or a surfaced MV3 reclaim), clear our session map so the NEXT ensureDebugger
@@ -3265,7 +3403,8 @@ function connectBridge() {
         }
       }
       const result = await handleMethod(method, resolvedParams, null, { fromDaemon: true })
-      response = { jsonrpc: '2.0', id: msg.id, result: await withVisibleFrame(result, resolvedParams.tabId, resolvedParams.visualize) }
+      const withDialogs = attachDialogAnomalies(result, resolvedParams.tabId)
+      response = { jsonrpc: '2.0', id: msg.id, result: await withVisibleFrame(withDialogs, resolvedParams.tabId, resolvedParams.visualize) }
     } catch (error) {
       const errMsg = (error && error.message) || String(error)
       // Click-detach consequence-nav classifier (ADR 2026-07-12-click-detach
@@ -3299,6 +3438,9 @@ function connectBridge() {
               from: preDispatchUrl,
               to: (live && live.url) || null,
               note: 'click dispatched; the page navigated during handling (frame detached) — consequence navigation, not a failure. Verify the effect via confirm/postcondition.',
+              // Anomaly piggyback: ok-but-reclassified is a drift signal —
+              // the plan assumed an in-page click; the substrate navigated.
+              _tap_anomalies: { reclassified: 'click_detach_consequence_nav' },
             },
           }
           reclassified = true

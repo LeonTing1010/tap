@@ -84,7 +84,8 @@
         "highlight",
         "screencast",
         "point",
-        "notify"
+        "notify",
+        "ax"
       ]
     },
     "NavAttachMatchMode": {
@@ -710,6 +711,9 @@
         },
         {
           "$ref": "#/$defs/NotifyOp"
+        },
+        {
+          "$ref": "#/$defs/AxOp"
         }
       ]
     },
@@ -972,6 +976,36 @@
         },
         "timeout_ms": {
           "type": "number"
+        },
+        "save": {
+          "type": "string"
+        }
+      }
+    },
+    "AxOp": {
+      "type": "object",
+      "required": [
+        "op"
+      ],
+      "additionalProperties": false,
+      "description": "Host-observation op (ADR 2026-07-12-op-ax-observation): CDP accessibility-tree survey of the bound tab. Returns {total, items:[{role,name,x,y,w,h,backendId}]} — role+name for every rendered node INCLUDING closed shadow roots page JS cannot reach. {role,name} is a ready-made input target; x/y feed a trusted:true coordinate click. No filter -> interactive roles only; role/name filter -> all roles.",
+      "properties": {
+        "op": {
+          "const": "ax"
+        },
+        "role": {
+          "type": "string",
+          "description": "Exact AX role, case-insensitive (e.g. \"button\")."
+        },
+        "name": {
+          "type": "string",
+          "description": "Accessible-name substring, case-insensitive."
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 400,
+          "description": "Max items returned. Default 120."
         },
         "save": {
           "type": "string"

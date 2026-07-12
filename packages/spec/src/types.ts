@@ -350,6 +350,21 @@ export interface NotifyOp {
   save?: string;
 }
 
+/** Host-observation op: CDP accessibility-tree survey of the bound tab —
+ *  role + accessible name for every rendered node, including closed
+ *  shadow roots page JS cannot reach. PUBLIC mirror of
+ *  core/types.ts:AxOp (ADR 2026-07-12-op-ax-observation). */
+export interface AxOp {
+  op: "ax";
+  /** Exact AX role, case-insensitive (e.g. "button"). */
+  role?: string;
+  /** Accessible-name substring, case-insensitive. */
+  name?: string;
+  /** Max items returned. Default 120; peer hard-caps candidates at 400. */
+  limit?: number;
+  save?: string;
+}
+
 export type Op =
   | FetchOp | NavOp | WaitOp | InputOp | ExtractOp | CookiesOp | TapOp
   | IfOp | ForeachOp | ParallelOp
@@ -358,9 +373,10 @@ export type Op =
   | HighlightOp
   | ScreencastOp
   | PointOp
-  | NotifyOp;
+  | NotifyOp
+  | AxOp;
 
-/** Runtime constant for the 13-op closure. */
+/** Runtime constant for the 19-op closure. */
 export const OP_NAMES_V2 = [
   "fetch", "nav", "wait", "input", "extract", "cookies", "tap",
   "if", "foreach", "parallel",
@@ -370,6 +386,7 @@ export const OP_NAMES_V2 = [
   "screencast",
   "point",
   "notify",
+  "ax",
 ] as const;
 
 export type OpName = typeof OP_NAMES_V2[number];
