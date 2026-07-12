@@ -18,7 +18,7 @@ description (the "Description" textarea). Everything else lives in this file.
 | Field | Value |
 |---|---|
 | Item name | `Tap — Local-First Browser MCP` |
-| Summary (132 chars max) | `Capture a logged-in browser task once; replay it forever at zero LLM tokens. Local-first, runs in your own Chrome.` |
+| Summary (132 chars max) | `Your agent's action layer in your own logged-in Chrome — the login/compliance last 20% APIs can't reach. Zero-token replay.` |
 | Detailed description | see `description.txt` |
 | Category | `Developer Tools` |
 | Language | English (en) |

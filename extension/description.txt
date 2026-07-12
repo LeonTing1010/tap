@@ -1,6 +1,6 @@
-# Tap — Capture a Logged-In Browser Task Once, Replay Forever at Zero Tokens
+# Tap — Your Agent's Action Layer in Your Own Logged-In Browser
 
-Tap captures a recurring, logged-in browser task once, then replays it forever at zero LLM tokens — with no agent in the loop. Claude Code, Cursor, Continue, Windsurf, or any MCP-compatible AI agent compiles the task a single time; every run after that is deterministic data dispatch in your own real Chrome — no per-step LLM cost, no cloud credentials, no vendor lock-in.
+Tap is the action layer your AI agent drives inside your own already-logged-in Chrome — built for the login-gated, exception-heavy, compliance-critical last 20% that clean APIs and cloud agents can't reach. Claude Code, Cursor, Continue, Windsurf, or any MCP-compatible AI agent compiles the task a single time; every run after that is deterministic data dispatch in your own real Chrome — no per-step LLM cost, no cloud credentials, no vendor lock-in. It closes the loop: act, verify the effect, re-run on drift.
 
 AI participates at compile time only: saved plans replay deterministically at zero LLM token cost.
 

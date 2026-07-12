@@ -5,7 +5,7 @@
 <h1 align="center">Taprun</h1>
 
 <h4 align="center">
-  Capture a logged-in browser task once. Replay it forever — zero LLM tokens.
+  The action layer your agent drives in your own logged-in browser — for the exception-heavy, compliance-critical last 20% that clean APIs can't reach. Compiled once, replayed forever at zero LLM tokens.
 </h4>
 
 <p align="center">
@@ -29,7 +29,9 @@
 
 ---
 
-**High-frequency, logged-in, repetitive browser work — captured once, replayed forever at zero LLM tokens.**
+**Your agent's closed-loop action layer for the browser — the login-gated, exception-heavy, compliance-critical last 20% that clean APIs and cloud agents can't reach. Driven in your own Chrome, captured once, replayed forever at zero LLM tokens.**
+
+As APIs get walled off and metered, the work that survives lives behind logins, OTP walls, and human-gesture gates — the exceptions, approvals, and compliance steps a cloud agent architecturally can't touch. Taprun is the action layer for exactly that: your agent drives your real, already-logged-in Chrome, closes the loop (act → verify the effect → re-run on drift), and hands you a deterministic replay you own.
 
 Every other browser agent re-runs a live LLM — and re-burns tokens — on every execution. Taprun's AI agent inspects the page **once** and emits a deterministic `.plan.json` program; every replay after that is pure data dispatch — same result every call, **$0 in tokens, no agent in the loop**. It runs in your real Chrome, so cookies and login sessions stay on your machine by architecture. `tap verify` catches breakage before your data goes stale.
 
