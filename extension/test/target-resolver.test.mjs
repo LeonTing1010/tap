@@ -147,6 +147,51 @@ test('TR-role-input — input[type=checkbox] → checkbox role', () => {
   assert.equal(el && el.getAttribute('type'), 'checkbox')
 })
 
+console.log('\n  -- within: relational scoping (ADR 2026-07-12-target-resolver-within) --\n')
+
+// Why: the relational query ("the 删除 button INSIDE the card whose text
+// includes X") previously forced the eval-marker dance — an op:eval stamping
+// data-tap-* + an op:input clicking the marker, a two-op TOCTOU broken by
+// any React/Vue re-render between the ops. within resolves it in ONE op.
+// ADVERSARIAL: a half-impl that resolved within but ran the outer query on
+// document anyway would return delB's sibling reachable from document —
+// TR-within asserts the pick comes from INSIDE the scoped card only.
+test('TR-within — resolves the outer target INSIDE the within match subtree', () => {
+  const delInCardA = makeEl('delA', { text: '删除' })
+  const delInCardB = makeEl('delB', { text: '删除' })
+  const cardA = makeEl('cardA', { text: '标题X … 删除' })
+  const cardB = makeEl('cardB', { text: '其他 … 删除' })
+  cardA.querySelectorAll = () => [delInCardA]
+  cardB.querySelectorAll = () => [delInCardB]
+  const el = pick(
+    { selector: '.del', within: { selector: '.card', text: '标题X' } },
+    docOf([cardA, cardB]),
+  )
+  assert.equal(el && el.__id, 'delA', 'must resolve inside the text-matched card only')
+})
+
+test('TR-within-miss — unresolved within scope → null (no fallback to document-wide match)', () => {
+  const stray = makeEl('stray', { text: '删除' })
+  const el = pick(
+    { selector: '.del', within: { selector: '.card', text: '不存在的标题' } },
+    docOf([stray]),
+  )
+  assert.equal(el, null, 'scope miss must be a miss, not a silent document-wide fallback')
+})
+
+test('TR-within-nested — within chains recursively (section → card → button)', () => {
+  const btn = makeEl('btn', { text: '确定' })
+  const card = makeEl('card', { text: '目标卡 确定' })
+  const section = makeEl('section', { text: '列表区 目标卡 确定' })
+  card.querySelectorAll = () => [btn]
+  section.querySelectorAll = () => [card]
+  const el = pick(
+    { selector: 'button', within: { selector: '.card', within: { selector: 'section', text: '列表区' } } },
+    docOf([section]),
+  )
+  assert.equal(el && el.__id, 'btn', 'nested within must scope level by level')
+})
+
 console.log('\n  -- op:input click routes OBJECT target through pick --\n')
 
 function extractClickResolver(src) {

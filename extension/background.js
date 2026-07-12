@@ -766,13 +766,22 @@ const TAP_DEEP_INSTALL = () => {
     return null
   }
   // Resolve a target — bare selector STRING or a TargetResolver OBJECT
-  // { selector, visible?, nth?, text?, inViewport? } — to the ONE chosen
-  // element (ADR 2026-07-08-target-resolver). A string keeps the historic
+  // { selector, visible?, nth?, text?, inViewport?, within? } — to the ONE
+  // chosen element (ADR 2026-07-08-target-resolver + within amendment
+  // 2026-07-12-target-resolver-within). A string keeps the historic
   // "first match, prefer a visible one" contract; a resolver object applies
-  // the explicit predicate in order: visible (default true) → text →
-  // inViewport → nth (0-based; negatives count from the end, -1 = last =
-  // newest in append-ordered chat/list UIs). Out-of-range → null (no silent
-  // first-match — the whole point). Single source of truth for element
+  // the explicit predicate in order: within (scope subtree) → role/name →
+  // visible (default true) → text → inViewport → nth (0-based; negatives
+  // count from the end, -1 = last = newest in append-ordered chat/list UIs).
+  // Out-of-range → null (no silent first-match — the whole point).
+  // `within` is itself a Target, resolved recursively; the outer query runs
+  // inside the resolved element's subtree. This expresses the relational
+  // queries ("the 删除 button INSIDE the card whose text includes X") that
+  // previously forced the eval-marker dance: an op:eval stamping
+  // data-tap-* attributes + a follow-up op:input clicking the marker — a
+  // two-op TOCTOU that a React/Vue re-render between the ops silently
+  // broke. within resolves relationally IN ONE OP at act time.
+  // Single source of truth for element
   // selection across the selector-bearing write handlers + op:wait resolver;
   // clickResolver keeps its own inline bare-string path (the visible-click
   // test injects getComputedStyle into IT) but routes the OBJECT path here.
@@ -843,8 +852,17 @@ const TAP_DEEP_INSTALL = () => {
     return (el.textContent || '').trim()
   }
   const ROLE_CANDIDATES = 'a,area,button,summary,input,select,textarea,img,nav,main,header,footer,aside,h1,h2,h3,h4,h5,h6,[role],[aria-label],[tabindex],[onclick]'
-  const pick = (target, root) => {
+  const pick = (target, root, depth) => {
     const isObj = target && typeof target === 'object'
+    if (isObj && target.within) {
+      // Scope: resolve the within Target first, then run the outer query
+      // inside its subtree. Depth-capped defensively (JSON can't cycle,
+      // but a pathological deep nest shouldn't stack-overflow the page).
+      if ((depth || 0) > 8) return null
+      const scope = pick(target.within, root, (depth || 0) + 1)
+      if (!scope) return null
+      root = scope
+    }
     if (!isObj) {
       const list = all(target, root)
       let el = list[0] || null
@@ -2989,6 +3007,13 @@ function connectBridge() {
       }
     }
     let response
+    // Pre-dispatch URL snapshot for the click-detach consequence-nav
+    // classifier below (read BEFORE dispatch so an onUpdated firing
+    // mid-op can't overwrite the baseline we compare against).
+    let preDispatchUrl = null
+    if (typeof resolvedParams.tabId === 'number') {
+      try { preDispatchUrl = (await chrome.tabs.get(resolvedParams.tabId))?.url || null } catch { /* tab state read is best-effort */ }
+    }
     try {
       // Tab-hijack guard (2026-07-03 dogfood F3): the user can navigate the
       // session's bound tab while an agent drives it — DOM ops then "succeed"
@@ -3003,7 +3028,37 @@ function connectBridge() {
         const s = sessions.get(params.sessionId)
         if (typeof s.tabId === 'number' && s.url) {
           let liveTab = null
-          try { liveTab = await chrome.tabs.get(s.tabId) } catch { /* tab gone → downstream self-heal paths handle it */ }
+          try { liveTab = await chrome.tabs.get(s.tabId) } catch { /* tab gone → declarative rebind below (read ops) or downstream error (write ops) */ }
+          // Declarative rebind (ADR 2026-07-12-click-detach-consequence-nav
+          // §D2): the bound tab is a LEASE, not a durable handle — the user
+          // can close it while the session record (and its last-known URL)
+          // survives. For READ-shaped ops the session's own URL is the
+          // declarative binding spec: re-query live tabs for a same-origin
+          // match (prefer active, then most-recently-accessed — the op:nav
+          // attach tiebreak) and rebind once. WRITE-shaped ops (input) are
+          // NEVER auto-rebound: acting on a tab that merely shares the
+          // origin risks writing into the wrong page state — a human/agent
+          // re-nav is the only safe rebind for a mutation.
+          if (!liveTab && method !== 'input') {
+            let origin = null
+            try { origin = new URL(s.url).origin } catch { /* non-parseable → no rebind */ }
+            if (origin) {
+              const candidates = (await chrome.tabs.query({})).filter((t) => {
+                if (!t.url) return false
+                try { return new URL(t.url).origin === origin } catch { return false }
+              })
+              candidates.sort((a, b) =>
+                ((b.active ? 1 : 0) - (a.active ? 1 : 0)) ||
+                ((b.lastAccessed || 0) - (a.lastAccessed || 0)))
+              if (candidates[0]) {
+                s.tabId = candidates[0].id
+                s.url = candidates[0].url || s.url
+                resolvedParams.tabId = s.tabId
+                liveTab = candidates[0]
+                void persistSessions()
+              }
+            }
+          }
           if (liveTab && liveTab.url) {
             let expected = null, actual = null
             try { expected = new URL(s.url).origin; actual = new URL(liveTab.url).origin } catch { /* non-parseable → skip guard */ }
@@ -3027,13 +3082,51 @@ function connectBridge() {
       response = { jsonrpc: '2.0', id: msg.id, result: await withVisibleFrame(result, resolvedParams.tabId, resolvedParams.visualize) }
     } catch (error) {
       const errMsg = (error && error.message) || String(error)
-      response = {
-        jsonrpc: '2.0',
-        id: msg.id,
-        error: {
-          code: classifyExtensionError(errMsg, method),
-          message: errMsg,
-        },
+      // Click-detach consequence-nav classifier (ADR 2026-07-12-click-detach
+      // -consequence-nav, public-repo side): a click that triggers navigation
+      // destroys the frame handling it — the SUCCESS-shaped outcome of a
+      // submit/publish button surfaced as a hard "detached" error and aborted
+      // the run. If (a) the op was a navigating gesture (click/press), (b) the
+      // failure is a detach shape, and (c) the bound tab actually navigated
+      // away from the pre-dispatch URL within the consequence window, the
+      // dispatch DID land: report dispatched+navigated instead of an error.
+      // Effect verification stays with the plan's confirm/postcondition —
+      // this classifier never claims the effect, only the dispatch.
+      const kindStr = String(resolvedParams?.kind || '')
+      const isNavGesture = method === 'input' && (kindStr === 'click' || kindStr === 'press')
+      const isDetachShape = /detached|context (was )?destroyed|no frame|frame.*(gone|removed)|execution context/i.test(errMsg)
+      let reclassified = false
+      if (isNavGesture && isDetachShape && typeof resolvedParams.tabId === 'number') {
+        // Give the consequence navigation a beat to commit before probing.
+        await new Promise((r) => setTimeout(r, 300))
+        let live = null
+        try { live = await chrome.tabs.get(resolvedParams.tabId) } catch { /* tab closed → keep the original error */ }
+        const navigated = !!(live && live.url && preDispatchUrl && live.url !== preDispatchUrl)
+        const loading = !!(live && live.status === 'loading')
+        if (navigated || loading) {
+          response = {
+            jsonrpc: '2.0',
+            id: msg.id,
+            result: {
+              dispatched: true,
+              navigated: true,
+              from: preDispatchUrl,
+              to: (live && live.url) || null,
+              note: 'click dispatched; the page navigated during handling (frame detached) — consequence navigation, not a failure. Verify the effect via confirm/postcondition.',
+            },
+          }
+          reclassified = true
+        }
+      }
+      if (!reclassified) {
+        response = {
+          jsonrpc: '2.0',
+          id: msg.id,
+          error: {
+            code: classifyExtensionError(errMsg, method),
+            message: errMsg,
+          },
+        }
       }
     }
     try { port.postMessage(response) } catch { /* port gone */ }
