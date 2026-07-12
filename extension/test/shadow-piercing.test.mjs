@@ -27,7 +27,8 @@
  * Phase 1 wires click/type/fill/blur. op:extract is deliberately NOT wired: it runs
  * ENGINE-side (deno-dom over fetched static HTML), never reaches the extension, and
  * static HTML has no shadow roots. setHtml/hover/select/scroll = Phase 1.5. Closed
- * shadow roots (CDP pierce:true) = Phase 2.
+ * shadow roots (CDP pierce:true) = Phase 2 — SHIPPED 2026-07-10 for trusted clicks
+ * (pierceClosedShadowClick; see closed-shadow-pierce.test.mjs).
  *
  * Run: node extension/test/shadow-piercing.test.mjs
  */

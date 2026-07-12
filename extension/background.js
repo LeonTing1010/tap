@@ -473,6 +473,158 @@ async function cdpClick(tabId, x, y) {
   }
 }
 
+// ─── Closed-shadow pierce (shadow-piercing Phase 2, 2026-07-10) ─────────────
+//
+// JS-world resolution (__tapDeep) is structurally blind to CLOSED shadow
+// roots: host.shadowRoot === null, zero light children, empty textContent.
+// A TargetResolver with `text`/`name` therefore legitimately resolves to
+// NOTHING in-page even though the wanted control is visibly there — the
+// 2026-07-10 xhs dogfood shape: <xhs-publish-btn> (closed root, two inner
+// pills) where {selector:'xhs-publish-btn', text:'发布'} threw Element-not-
+// found and a bare host click landed in the gap BETWEEN the pills.
+//
+// CDP's DOM domain pierces closed roots: DOM.getDocument({pierce:true})
+// returns them as `shadowRoots` (shadowRootType:'closed') on the host node.
+// So for TRUSTED clicks (the only tier that dispatches real coordinates) we
+// refine: mark the opaque host in-page → find it in the pierced CDP tree →
+// pick the SMALLEST shadow descendant whose subtree text matches the
+// resolver's text/name (smallest = most specific, the pill not the bar) →
+// DOM.getContentQuads → cdpClick its center (Puppeteer's clickablePoint
+// path). Fires ONLY on: trusted + resolver text/name + main frame + in-page
+// resolution already failed — every existing tap is byte-identical.
+//
+// Named + self-contained pure helpers so test/closed-shadow-pierce.test.mjs
+// extracts them verbatim (background.js isn't node-importable — chrome.*).
+function findCdpNodeByAttr(node, key, val) {
+  if (!node) return null
+  if (node.nodeType === 1 && Array.isArray(node.attributes)) {
+    const a = node.attributes
+    for (let i = 0; i + 1 < a.length; i += 2) {
+      if (a[i] === key && a[i + 1] === val) return node
+    }
+  }
+  const kids = [...(node.children || []), ...(node.shadowRoots || []), ...(node.contentDocument ? [node.contentDocument] : [])]
+  for (const k of kids) { const r = findCdpNodeByAttr(k, key, val); if (r) return r }
+  return null
+}
+function pierceCandidatesFromCdpTree(hostNode, want) {
+  // Walk a CDP DOM.getDocument({pierce:true}) subtree (element nodeType 1
+  // carries children + shadowRoots; text nodeType 3 carries nodeValue).
+  // Returns element nodes whose subtree text (or aria-label/title) matches
+  // want.text / want.name, sorted most-specific-first (smallest subtree
+  // text): the '发布' pill sorts before the whole action bar containing
+  // '暂存离开发布'. Pure over the node tree — unit-testable in node.
+  const text = want && want.text ? String(want.text).trim() : ''
+  const name = want && want.name ? String(want.name).trim().toLowerCase() : ''
+  if (!text && !name) return []
+  const kidsOf = (n) => [...(n.children || []), ...(n.shadowRoots || [])]
+  const subtreeText = (n) => {
+    let s = ''
+    for (const k of kidsOf(n)) {
+      if (k.nodeType === 3) s += (k.nodeValue || '')
+      else if (k.nodeType === 1 || k.nodeType === 11) s += subtreeText(k)
+    }
+    return s
+  }
+  const attr = (n, key) => {
+    const a = n.attributes || []
+    for (let i = 0; i + 1 < a.length; i += 2) if (a[i] === key) return a[i + 1]
+    return ''
+  }
+  const out = []
+  const walk = (n) => {
+    if (!n) return
+    if (n.nodeType === 1) {
+      const st = subtreeText(n).trim()
+      const aria = (attr(n, 'aria-label') || attr(n, 'title') || '').trim()
+      const textHit = !!text && st.includes(text)
+      const nameHit = !!name && (aria.toLowerCase().includes(name) || st.toLowerCase().includes(name))
+      if (textHit || nameHit) out.push({ node: n, textLen: st.length || (aria.length + 1e6) })
+    }
+    for (const k of kidsOf(n)) walk(k)
+  }
+  walk(hostNode)
+  out.sort((a, b) => a.textLen - b.textLen)
+  return out.map((o) => o.node)
+}
+// In-page marker: resolve the SELECTOR-ONLY target (text/name dropped — they
+// can't match an opaque host) and stamp a nonce attr IFF the element has the
+// opaque-host signature (no light children, no text — the closed-shadow tell).
+// Self-contained for execFunc injection.
+const PIERCE_MARK = (t, nonce) => {
+  const el = globalThis.__tapDeep.pick(t, document)
+  if (!el) return { marked: false, reason: 'selector_no_match' }
+  if (el.childElementCount > 0 || (el.textContent || '').trim()) {
+    return { marked: false, reason: 'not_opaque_host' }
+  }
+  el.setAttribute('data-tap-pierce', nonce)
+  return { marked: true }
+}
+const PIERCE_UNMARK = (nonce) => {
+  const el = document.querySelector('[data-tap-pierce="' + nonce + '"]')
+  if (el) el.removeAttribute('data-tap-pierce')
+  return {}
+}
+// Read-only reachability diagnosis, run at the single input-failure choke
+// point (case 'input' catch) so ONE probe explains the miss for every input
+// kind (click/type/fill/keytype/blur/hover/upload). Answers WHY __tapDeep
+// couldn't resolve the target — the dimension `selector_not_found` used to
+// drop on the floor. Vocabulary mirrors core/op-result.ts TARGET_REACHABILITY
+// (drift-guarded by closed-shadow-pierce.test.mjs). Pure __tapDeep, no CDP,
+// no side effects — never masks or worsens the original failure.
+const DIAGNOSE_REACHABILITY = (t) => {
+  const D = globalThis.__tapDeep
+  if (!D || !t || !t.selector) return { reach: 'absent' }
+  // Strip discriminators: does the HOST the selector names exist at all?
+  const host = D.pick({ selector: t.selector, visible: false }, document)
+  const hadDiscriminator = !!(t.text || t.name)
+  if (!host) {
+    // selector matched nothing even bare. A ' >>> ' frame chain that got
+    // here (frame resolved, inner selector missed) is still absent from the
+    // reachable DOM; a cross-origin frame would have failed earlier with a
+    // frame-probe error, not reached this choke point.
+    return { reach: 'absent' }
+  }
+  // Host exists. Opaque host (no light children, no own text) + the resolver
+  // carried a text/name that matched nothing ⇒ the wanted node lives in the
+  // host's CLOSED shadow root (invisible to __tapDeep). This is the xhs
+  // <xhs-publish-btn> shape.
+  const opaque = host.childElementCount === 0 && !(host.textContent || '').trim()
+  if (opaque && hadDiscriminator) return { reach: 'closed_shadow' }
+  // Host has light content but the discriminator (text/name/nth) filtered
+  // everything out — a resolver-precision miss, not a DOM-domain problem.
+  // Leave untagged so the failure stays a plain selector_not_found.
+  return { reach: null }
+}
+async function pierceClosedShadowClick(tabId, fx, target) {
+  const nonce = 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7)
+  const bare = { selector: target.selector }
+  if (target.visible === false) bare.visible = false
+  const marked = await execFunc(fx, PIERCE_MARK, bare, nonce)
+  if (!marked || !marked.marked) return false
+  try {
+    await ensureDebugger(tabId)
+    const doc = await chrome.debugger.sendCommand({ tabId }, 'DOM.getDocument', { depth: -1, pierce: true })
+    const host = findCdpNodeByAttr(doc?.root, 'data-tap-pierce', nonce)
+    if (!host) return false
+    const picked = pierceCandidatesFromCdpTree(host, { text: target.text, name: target.name })[0]
+    if (!picked) return false
+    try { await chrome.debugger.sendCommand({ tabId }, 'DOM.scrollIntoViewIfNeeded', { nodeId: picked.nodeId }) } catch (_) { /* best-effort */ }
+    const q = await chrome.debugger.sendCommand({ tabId }, 'DOM.getContentQuads', { nodeId: picked.nodeId })
+    const quad = q?.quads?.[0]
+    if (!quad || quad.length < 8) return false
+    const cx = Math.round((quad[0] + quad[2] + quad[4] + quad[6]) / 4)
+    const cy = Math.round((quad[1] + quad[3] + quad[5] + quad[7]) / 4)
+    await cdpClick(tabId, cx, cy)
+    return true
+  } catch (_) {
+    return false // fall through to the original element-not-found
+  } finally {
+    try { await execFunc(fx, PIERCE_UNMARK, nonce) } catch (_) { /* page may have navigated */ }
+    scheduleDetach(tabId)
+  }
+}
+
 // Deliver keystroke-equivalent text into a contenteditable rich-text editor
 // (Quill / ProseMirror / etc). The earlier `type` fallback dispatched per-char
 // Input.dispatchKeyEvent({text}), which silently no-op'd on Quill (issue #19):
@@ -1466,7 +1618,22 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       } catch (e) {
         const msg = String(e?.message || e)
         if (msg.startsWith('Element not found')) {
-          throw new Error(`selector_not_found: ${selStr}`)
+          // Reachability enrichment (2026-07-10): tag WHY the resolver missed
+          // so core/api.ts parseReachability can hand the agent a concrete
+          // fix (closed_shadow → add text+trusted, etc.) instead of a mute
+          // selector_not_found. Best-effort + read-only — a diagnosis failure
+          // must never change or hide the underlying selector miss.
+          let detail = `selector_not_found: ${selStr}`
+          try {
+            await ensureDeep(tabId)
+            const diag = await execFunc(tabId, DIAGNOSE_REACHABILITY, {
+              selector: selStr,
+              text: resolver ? resolver.text : undefined,
+              name: resolver ? resolver.name : undefined,
+            })
+            if (diag && diag.reach) detail += ` [reach=${diag.reach}]`
+          } catch (_) { /* diagnosis is best-effort */ }
+          throw new Error(detail)
         }
         throw e
       }
@@ -1538,7 +1705,26 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
         const r = el.getBoundingClientRect()
         return { clicked: true, x: Math.round(r.x + r.width / 2), y: Math.round(r.y + r.height / 2) }
       }
-      const result = await execFunc(fx, clickResolver, innerTarget, params.probe)
+      let result
+      try {
+        result = await execFunc(fx, clickResolver, innerTarget, params.probe)
+      } catch (e) {
+        // Closed-shadow pierce fallback (Phase 2; see pierceClosedShadowClick).
+        // Trusted + resolver-with-discriminator + main-frame only: an explicit
+        // text/name that found nothing in-page may live inside a CLOSED shadow
+        // root the JS world cannot see. dx/dy≠0 (iframe targets) is excluded —
+        // pierced quads are top-frame coords; mixing frames mis-clicks.
+        const t = params.resolver
+        if (
+          params.trusted && !params.probe && t && typeof t === 'object' &&
+          (t.text || t.name) && t.selector && !dx && !dy &&
+          /Element not found/.test(String((e && e.message) || e))
+        ) {
+          const pierced = await pierceClosedShadowClick(tabId, fx, { ...t, selector: innerSel })
+          if (pierced) return {}
+        }
+        throw e
+      }
       if (params.probe) return { resolved: !!(result && result.resolved) }
       if (!result) throw new Error('selector_not_found: ' + (innerSel ?? '[resolver]') + ' (page not ready — exec returned null)')
       // CDP fallback: if site needs isTrusted events, retry with cdpClick
