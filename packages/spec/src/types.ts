@@ -314,34 +314,6 @@ export interface PdfOp {
   save?: string;
 }
 
-/** Host op: native CDP Overlay.highlightNode on a target (survives re-render).
- *  Reuses {@link Target}. PUBLIC mirror of core/types.ts:HighlightOp. */
-export interface HighlightOp {
-  op: "highlight";
-  target: Target;
-  ms?: number;
-  save?: string;
-}
-
-/** Host op: record the tab via CDP Page.startScreencast for `ms`; returns
- *  base64 JPEG frames. PUBLIC mirror of core/types.ts:ScreencastOp. */
-export interface ScreencastOp {
-  op: "screencast";
-  ms: number;
-  quality?: number;
-  everyNthFrame?: number;
-  save?: string;
-}
-
-/** Host op: human clicks (points at) an element; returns a TargetResolver via
- *  `save`. Human-in-the-loop element picking as a plan primitive. PUBLIC
- *  mirror of core/types.ts:PointOp (ADR 2026-07-08-op-capabilities). */
-export interface PointOp {
-  op: "point";
-  timeout_ms?: number;
-  save?: string;
-}
-
 /** Host op: push a `message` to the Tap side panel (plan→human output).
  *  PUBLIC mirror of core/types.ts:NotifyOp. */
 export interface NotifyOp {
@@ -370,21 +342,16 @@ export type Op =
   | IfOp | ForeachOp | ParallelOp
   | EvalOp | TabOp | BookmarkOp
   | PdfOp
-  | HighlightOp
-  | ScreencastOp
-  | PointOp
   | NotifyOp
   | AxOp;
 
-/** Runtime constant for the 19-op closure. */
+/** Runtime constant for the 16-op closure (highlight/screencast/point retired
+ *  per ADR 2026-07-13-op-union-minimization). */
 export const OP_NAMES_V2 = [
   "fetch", "nav", "wait", "input", "extract", "cookies", "tap",
   "if", "foreach", "parallel",
   "eval", "tab", "bookmark",
   "pdf",
-  "highlight",
-  "screencast",
-  "point",
   "notify",
   "ax",
 ] as const;

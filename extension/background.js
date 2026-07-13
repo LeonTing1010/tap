@@ -220,6 +220,10 @@ async function ensureDebugger(tabId) {
 
 async function enablePageDomain(tabId) {
   try { await chrome.debugger.sendCommand({ tabId }, 'Page.enable') } catch { /* benign */ }
+  // Runtime → Runtime.exceptionThrown (slice 6, see handlePageExceptionEvent). Benign.
+  try { await chrome.debugger.sendCommand({ tabId }, 'Runtime.enable') } catch { /* benign */ }
+  // Network → write oracle (slice 4, see handleWriteRequestEvent). Observation-only, write-filtered.
+  try { await chrome.debugger.sendCommand({ tabId }, 'Network.enable') } catch { /* benign */ }
   await enableFocusEmulation(tabId)
 }
 
@@ -2944,6 +2948,85 @@ function attachDialogAnomalies (result, tabId) {
 }
 chrome.tabs.onRemoved.addListener((tabId) => pendingDialogEvents.delete(tabId))
 
+// slice 6 (ADR 2026-07-13-cdp-native-execution): a page exception during an op
+// is a VACUOUS-SUCCESS signal — the op can mechanically succeed (click dispatched,
+// eval returned) while the page's own handler threw, so the intended effect never
+// landed. Runtime.exceptionThrown (Runtime domain enabled in enablePageDomain)
+// surfaces it. Same discipline as dialogs: auto-observed but must NOT be silent.
+// Advisory anomaly, not a hard fail — core's anti-vacuous gate weighs it; the op
+// outcome shape is unchanged so existing plans run.
+async function handlePageExceptionEvent(source, method, params) {
+  if (method !== 'Runtime.exceptionThrown') return
+  if (typeof source?.tabId !== 'number') return
+  const d = params?.exceptionDetails || {}
+  const message = String(d.exception?.description || d.text || 'uncaught exception')
+    .split('\n')[0].slice(0, 160)
+  const list = pendingPageExceptions.get(source.tabId) || []
+  list.push({
+    message,
+    url: String(d.url || '').slice(0, 200),
+    line: typeof d.lineNumber === 'number' ? d.lineNumber : null,
+    at: Date.now(),
+  })
+  pendingPageExceptions.set(source.tabId, list.slice(-5))
+}
+chrome.debugger.onEvent.addListener(handlePageExceptionEvent)
+
+// tabId -> uncaught page exceptions not yet reported on an op response.
+const pendingPageExceptions = new Map()
+function attachPageExceptionAnomalies (result, tabId) {
+  if (typeof tabId !== 'number') return result
+  const evs = pendingPageExceptions.get(tabId)
+  if (!evs || !evs.length) return result
+  pendingPageExceptions.delete(tabId)
+  if (!result || typeof result !== 'object' || Array.isArray(result)) return result
+  return { ...result, _tap_anomalies: { ...(result._tap_anomalies || {}), page_exception: evs } }
+}
+chrome.tabs.onRemoved.addListener((tabId) => pendingPageExceptions.delete(tabId))
+
+// slice 4 (ADR 2026-07-13-cdp-native-execution): the write-request oracle. A DOM
+// readback proves neither persistence nor visibility-to-others; the HTTP response
+// the action produced is the only cross-site acceptance truth (RFC 9110: unsafe
+// methods = the writes). Capture the request the op fired (method+url from
+// requestWillBeSent) merged with its status (responseReceived), ring-buffered per
+// tab; the next op response drains it into _tap_anomalies.writes (core lifts it),
+// so a write's postcondition can assert `...writes` fired 2xx. Observation-only:
+// filtered to unsafe methods, so the GET flood is dropped at the listener.
+const WRITE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
+const pendingWriteMeta = new Map()   // tabId -> Map(requestId -> {method, url})
+const pendingWriteEvents = new Map() // tabId -> [{method, url, status, at}]
+async function handleWriteRequestEvent(source, method, params) {
+  const tabId = source?.tabId
+  if (typeof tabId !== 'number') return
+  if (method === 'Network.requestWillBeSent') {
+    const m = String(params?.request?.method || 'GET').toUpperCase()
+    if (!WRITE_METHODS.has(m)) return // drop the GET flood at the source
+    let meta = pendingWriteMeta.get(tabId)
+    if (!meta) { meta = new Map(); pendingWriteMeta.set(tabId, meta) }
+    if (meta.size > 50) meta.clear() // bound: never a leak on a chatty page
+    meta.set(params.requestId, { method: m, url: String(params.request?.url || '').slice(0, 200) })
+    return
+  }
+  if (method === 'Network.responseReceived') {
+    const meta = pendingWriteMeta.get(tabId)?.get(params?.requestId)
+    if (!meta) return // not a tracked write
+    pendingWriteMeta.get(tabId).delete(params.requestId)
+    const list = pendingWriteEvents.get(tabId) || []
+    list.push({ method: meta.method, url: meta.url, status: params?.response?.status ?? null, at: Date.now() })
+    pendingWriteEvents.set(tabId, list.slice(-10))
+  }
+}
+chrome.debugger.onEvent.addListener(handleWriteRequestEvent)
+function attachWriteAnomalies (result, tabId) {
+  if (typeof tabId !== 'number') return result
+  const evs = pendingWriteEvents.get(tabId)
+  if (!evs || !evs.length) return result
+  pendingWriteEvents.delete(tabId)
+  if (!result || typeof result !== 'object' || Array.isArray(result)) return result
+  return { ...result, _tap_anomalies: { ...(result._tap_anomalies || {}), writes: evs } }
+}
+chrome.tabs.onRemoved.addListener((tabId) => { pendingWriteMeta.delete(tabId); pendingWriteEvents.delete(tabId) })
+
 // When Chrome detaches the debugger (navigation auto-detach, DevTools opening,
 // or a surfaced MV3 reclaim), clear our session map so the NEXT ensureDebugger
 // re-attaches instead of trusting a stale attached:true and throwing
@@ -3404,7 +3487,9 @@ function connectBridge() {
       }
       const result = await handleMethod(method, resolvedParams, null, { fromDaemon: true })
       const withDialogs = attachDialogAnomalies(result, resolvedParams.tabId)
-      response = { jsonrpc: '2.0', id: msg.id, result: await withVisibleFrame(withDialogs, resolvedParams.tabId, resolvedParams.visualize) }
+      const withExceptions = attachPageExceptionAnomalies(withDialogs, resolvedParams.tabId)
+      const withAnomalies = attachWriteAnomalies(withExceptions, resolvedParams.tabId)
+      response = { jsonrpc: '2.0', id: msg.id, result: await withVisibleFrame(withAnomalies, resolvedParams.tabId, resolvedParams.visualize) }
     } catch (error) {
       const errMsg = (error && error.message) || String(error)
       // Click-detach consequence-nav classifier (ADR 2026-07-12-click-detach

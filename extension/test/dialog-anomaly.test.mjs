@@ -52,8 +52,12 @@ test('op success path drains the buffer into _tap_anomalies.dialogs', () => {
     'the daemon-op success path must drain dialog events')
   assert(/_tap_anomalies: \{ \.\.\.\(result\._tap_anomalies \|\| \{\}\), dialogs: evs \}/.test(BG_SRC),
     'drained events must ride the reserved anomaly key core lifts')
-  assert(BG_SRC.indexOf('attachDialogAnomalies(result') < BG_SRC.indexOf('withVisibleFrame(withDialogs'),
-    'drain must happen before the visible-frame wrap so the frame rides the SAME result object')
+  // page-exception drain (ADR 2026-07-13 slice 6) now sits between dialogs and
+  // the frame wrap: attachDialogAnomalies(result) → attachPageExceptionAnomalies
+  // → withVisibleFrame(withAnomalies). Dialogs still drain before the frame wrap
+  // and ride the same result object (page-exception derives from withDialogs).
+  assert(BG_SRC.indexOf('attachDialogAnomalies(result') < BG_SRC.indexOf('withVisibleFrame(withAnomalies'),
+    'dialog drain must happen before the visible-frame wrap so the frame rides the SAME result object')
 })
 
 test('pass-through safety: non-object results and unknown tabs untouched', () => {

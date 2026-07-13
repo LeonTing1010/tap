@@ -52,7 +52,9 @@ test('focus emulation is best-effort (both commands in try/catch, benign)', () =
 })
 
 test('attach path wires it: enablePageDomain calls enableFocusEmulation', () => {
-  const body = slice('async function enablePageDomain(', 300)
+  // window widened 300→800: enablePageDomain grew Runtime.enable (slice 6) +
+  // Network.enable (slice 4) between Page.enable and the enableFocusEmulation call.
+  const body = slice('async function enablePageDomain(', 800)
   assert(body.includes('enableFocusEmulation('),
     'enablePageDomain (the single attach hook, both branches) must call enableFocusEmulation')
 })
