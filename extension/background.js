@@ -3369,7 +3369,7 @@ function connectBridge() {
       input: ['kind'],
       extract: ['root', 'per_item'],
       tap: ['site', 'name'],
-      eval: ['fn', 'returns'],
+      eval: ['fn'],
       tab: ['action'],
       bookmark: ['action'],
     }

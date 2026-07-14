@@ -90,7 +90,7 @@ const EXPECTED = {
   input: ['kind'],
   extract: ['root', 'per_item'],
   tap: ['site', 'name'],
-  eval: ['fn', 'returns'],
+  eval: ['fn'], // `returns` is OPTIONAL (ADR 2026-07-14-op-eval-returns-optional-infer)
   tab: ['action'],
   bookmark: ['action'],
 }

@@ -503,11 +503,10 @@
     },
     "EvalOp": {
       "type": "object",
-      "description": "Page-context JS escape hatch. `returns.type` is MANDATORY — runtime schema-validates output before binding.",
+      "description": "Page-context JS escape hatch. `returns.type` is OPTIONAL — when present the runtime schema-validates output before binding; when omitted the value is bound as-is.",
       "required": [
         "op",
-        "fn",
-        "returns"
+        "fn"
       ],
       "additionalProperties": false,
       "properties": {

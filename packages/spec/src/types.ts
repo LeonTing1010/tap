@@ -241,11 +241,13 @@ export interface ParallelOp {
 }
 
 /** Escape (1) — value-only; lint forbids side effects in `fn`.
- *  `returns.type` is MANDATORY (runtime schema-validates output). */
+ *  `returns.type` is OPTIONAL — when present the runtime schema-validates the
+ *  output before binding; when omitted the value is bound as-is (ADR
+ *  2026-07-14-op-eval-returns-optional-infer). */
 export interface EvalOp {
   op: "eval";
   fn: string;
-  returns: { type: "string" | "number" | "boolean" | "object" | "array" };
+  returns?: { type: "string" | "number" | "boolean" | "object" | "array" };
   args?: Json[];
   save?: string;
 }
