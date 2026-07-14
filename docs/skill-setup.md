@@ -1,90 +1,46 @@
-# 安装 Tap 技能 (skill-setup)
+# 安装 Tap（skill-setup）
 
-> **一次录制，永久零 token 重放。** 把「每天/每周都要在某个登录网站上做的重复浏览器活」录一次成 Tap，之后每次跑都在你自己的浏览器里确定性重放 —— 不再让一个 live 模型每次重跑、每次重烧 token，凭证也永远不离开你的机器。
+> **一次录制，永久零 token 重放。** 把每天/每周都要在某个登录网站上做的重复浏览器活录一次成 Tap，之后每次都在你自己的浏览器里确定性重放 —— 不再让 live 模型每次重跑、每次重烧 token，凭证也永远不离开你的机器。
 
 ---
 
-## 方式一：自动安装（推荐）
+## 最简：Claude Code 插件（全程在聊天里，零终端）
 
-打开任意本地 agent（Claude Code / Cursor / Codex / Windsurf / Cline 等），直接在对话框发送这句话：
+在 Claude Code 里依次发这三条 slash 命令：
 
 ```
-读取 https://taprun.dev/skill-setup.md 并按照说明安装 Tap 技能
+/plugin marketplace add LeonTing1010/taprun
+/plugin install tap@taprun
+/reload-plugins
 ```
 
-agent 会读到本文件下方的 **AGENT INSTRUCTIONS**，自动完成 MCP 连接 + 技能安装 + 验证。
+完事。这一个插件把 **Tap MCP server + 判断技能一起装好**——不用 `claude mcp add`、不写 JSON、不单独写 SKILL.md、不重启 Claude Code。agent 现在能 `capture` / `run` 公开网页与开放 API,零 token 重放。（首次 `capture` 时 `npx` 拉一次引擎并缓存。）
 
-## 方式二：手动安装
+**登录态网站**再多一步:跑 `/tap:setup`(插件自带命令,装 CLI + 注册 Chrome 桥 + 打开扩展页),然后从应用店点一次「添加至 Chrome」并授权——那一次点击是唯一必须你亲手做的(信任边界)。
 
-打开终端，二选一：
+想让 tap 定时跑 / 当传感器,再装配套:`/plugin install tap-skills@taprun`(tap-triggers + thesis-monitor)。
+
+其他 host(Cursor / VS Code / Cline / Windsurf):见下面「方式二」。
+
+## 方式二：其他 host / 手动（终端）
+
+不用 Claude Code 插件时（Cursor / VS Code / Cline / Windsurf，或想手动）：
 
 ```bash
-# 有 Node（推荐，零安装）
-npx -y @taprun/cli mcp stdio    # 供 MCP host 直接调用，见下方 JSON
-
-# 或装成命令
-npm install -g @taprun/cli      # 之后二进制名为 tap
-# 或
-brew install LeonTing1010/tap/taprun
+# 1. 装稳定二进制（首次连接时会自动补好扩展桥，无需手动 bridge setup）
+brew install LeonTing1010/tap/taprun     # 或： curl -fsSL https://taprun.dev/install.sh | sh
+tap embed claude-code                      # 或： cursor | vscode | claude-desktop
 ```
 
-把下面这块加进你的 MCP host 配置文件，然后重启 host：
+**2.**（仅登录态网站）从 Chrome 应用店点一下装扩展 —— 唯一必须你亲手点的一步（信任边界，认证全用浏览器里已有登录态，Tap 从不索取或传输凭证）：
+`https://chromewebstore.google.com/detail/tap/llcidejeoobdegbkolbjhfoeckphldce`
 
-```json
-{
-  "mcpServers": {
-    "tap": {
-      "command": "npx",
-      "args": ["-y", "@taprun/cli", "mcp", "stdio"]
-    }
-  }
-}
-```
+出任何问题，一条命令自检：`tap embed --verify`（`binary → NM manifest → extension → bridge` 四级，绿到哪查到哪）。
 
-| Host | 配置文件路径 |
-|------|------|
-| Claude Code | `claude mcp add tap -- npx -y @taprun/cli mcp stdio` |
-| Claude Desktop | `~/Library/Application Support/Claude/claude_desktop_config.json` |
-| Cursor | `<project>/.cursor/mcp.json`（或 `~/.cursor/mcp.json` 全局） |
-| Windsurf | `~/.codeium/windsurf/mcp_config.json` |
-| Cline / Roo | `.../globalStorage/.../cline_mcp_settings.json` |
+> 判断技能（下面的 `SKILL.md`）在**方式一**里随插件自动装好，无需手动。走方式二时，支持 Agent Skills 的 host（Claude Code）可把下面 `SKILL.md` 原样写到 `~/.claude/skills/tap-capture-replay/SKILL.md`。
 
-重启后让 agent 调 `capture { url: "https://news.ycombinator.com" }`（仅预览），返回 `inspection.source_class` 即安装成功。
-
----
----
-
-## AGENT INSTRUCTIONS
-
-**读到这里的 agent，请依次执行以下三步，然后向用户汇报结果。**
-
-### Step 1 — 连接 Tap MCP server
-
-检测当前 host，用对应方式接入 Tap（能力层：4 个 meta verb `capture / verify / mark / run` + 每个已存 tap 作为 Resource）。
-
-- **已装 `tap`/`taprun` 二进制的用户**：最简单 —— 运行 `tap mcp connect`，它自动检测 host 并改好配置。
-- **Claude Code（无二进制）**：运行 `claude mcp add tap -- npx -y @taprun/cli mcp stdio`
-- **其他 host（Cursor / Windsurf / Cline / Claude Desktop）**：把下面这块合并进该 host 的 MCP 配置文件（路径见方式二表格），保留其它已有的 `mcpServers` 条目，然后提示用户重启 host：
-
-```json
-{ "mcpServers": { "tap": { "command": "npx", "args": ["-y", "@taprun/cli", "mcp", "stdio"] } } }
-```
-
-前置条件：Node 16+（`npx` 首次会下载 ~30MB 平台二进制并缓存）。登录态网站（小红书 / 知乎 / LinkedIn / 内部后台）需要用户已安装 Tap 的 [Chrome 扩展](https://chromewebstore.google.com/detail/tap/llcidejeoobdegbkolbjhfoeckphldce) —— 认证用的是浏览器里已有的登录态，Tap 从不索取或传输凭证。
-
-### Step 2 — 安装 Tap 技能（行为层）
-
-MCP 给的是**能力**；这一步给的是**判断力** —— 让你在合适的时机主动选择 Tap，而不是每次重新驱动浏览器。
-
-**如果当前 host 支持 Agent Skills（Claude Code）**：把下面代码块里 `SKILL.md` 的内容**原样**写到：
-
-```
-~/.claude/skills/tap-capture-replay/SKILL.md
-```
-
-（若用户希望只在某个项目生效，改写到 `<project>/.claude/skills/tap-capture-replay/SKILL.md`。）
-
-**如果 host 不支持 Agent Skills**：跳过写文件，但把下面 SKILL.md 的「何时用 Tap」规则记入你本次会话的工作准则。
+<details>
+<summary>SKILL.md（点开复制）</summary>
 
 ```markdown
 ---
@@ -131,8 +87,20 @@ metadata:
 - 错误信封 `{ ok:false, kind, message, next? }`：有 `next` 就照它走，没有就升级给用户。
 ```
 
-### Step 3 — 验证
+</details>
 
-调 `capture { url: "https://news.ycombinator.com" }`（仅预览，不存），报告返回的 `inspection.source_class`（如 `html-list` / `json-api` / `rss`）。拿到即三步全部完成。
+---
+---
 
-向用户汇报：MCP 已连接、技能已安装到哪个路径、验证返回的 `source_class`，并给一句下一步引导 —— 「告诉我你每天/每周都要在哪个登录网站上重复做什么，我把它录成一个零 token 的重放。」
+## AGENT INSTRUCTIONS
+
+**读到这里的 agent：自己把命令跑掉（别让用户去终端敲），只有「装 Chrome 扩展」那一下要用户亲手点。做完汇报。**
+
+> **先建议插件路（Claude Code）**：最简是让用户自己发三条 slash 命令 `/plugin marketplace add LeonTing1010/taprun` → `/plugin install tap@taprun` → `/reload-plugins`（agent 无法代发 slash 命令）。用户已试过或用别的 host,再走下面的 bash 兜底。
+
+1. **接入**（能力层，一条）：当前是 Claude Code → 跑 `claude mcp add taprun -- npx -y @taprun/cli mcp stdio`。其他 host → 跑 `npx -y @taprun/cli embed <cursor|vscode|claude-desktop>` 并把它打印的一键链接/JSON 交给用户。提示重启 host（或用户用 `/reload-plugins`）。
+2. **验证**：让 agent 调 `capture { url: "https://news.ycombinator.com" }`（仅预览），拿到 `inspection.source_class` 即公开页链路通。
+3. **仅当用户要做登录态网站**：让用户 `brew install LeonTing1010/tap/taprun`（或 curl 装），跑 `tap embed claude-code`，并从应用店点装扩展 `https://chromewebstore.google.com/detail/tap/llcidejeoobdegbkolbjhfoeckphldce`；`tap embed --verify` 应四级全绿。
+4. **（可选）判断层**：host 支持 Agent Skills 就把上面 `SKILL.md` 原样写到 `~/.claude/skills/tap-capture-replay/SKILL.md`；不支持就把「何时用 Tap」记入本会话准则。
+
+汇报：MCP 已接入、冒烟 `source_class`、（若装了）扩展四级自检结果、一句引导 ——「告诉我你每天/每周都要在哪个登录网站上重复做什么，我把它录成一个零 token 的重放。」

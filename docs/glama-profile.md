@@ -147,10 +147,10 @@ replay for snapshot equivalence, flagging drift the moment a site changes.
 }
 ```
 
-Or auto-configure all installed agents:
+Or wire your agent in one step:
 
 ```bash
-npx -y @taprun/cli mcp connect
+npx -y @taprun/cli embed claude-code   # or: cursor | vscode | claude-desktop
 ```
 
 ### What you get

@@ -103,9 +103,10 @@
   <h2>MCP hosts</h2>
 
   <p>
-    Tap ships its own MCP server. Run <code>tap mcp connect</code> to
-    auto-register with whichever host you use, or follow the host-specific
-    notes:
+    Tap ships its own MCP server. Run <code>tap embed &lt;agent&gt;</code>
+    (<code>claude-code</code> · <code>cursor</code> · <code>vscode</code> ·
+    <code>claude-desktop</code>) to wire that host in one step, or follow the
+    host-specific notes:
   </p>
 
   <div class="int-grid">
@@ -114,9 +115,10 @@
       <span class="badge badge-live">LIVE</span>
       <h3>Claude Code · Cursor · Cline · Windsurf</h3>
       <p>
-        One <code>tap mcp connect</code> registers the server with all
-        common MCP hosts. The blog post covers manual config for hosts
-        that don't auto-discover.
+        One <code>tap embed claude-code</code> wires Claude Code in one
+        step (swap in <code>cursor</code> / <code>vscode</code> /
+        <code>claude-desktop</code>). The blog post covers manual config
+        for other hosts.
       </p>
     </a>
 

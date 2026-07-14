@@ -237,7 +237,7 @@ ${siblings.map((s) => `    <tr><td><a href="/taps/${b.site}/${s.name}"><code>${b
   <h2>Install Taprun once</h2>
   <p>Taprun ships as a single MCP server exposing a catalog of compiled taps. One-time setup on macOS / Linux:</p>
   <pre><code>brew install LeonTing1010/tap/taprun
-tap mcp connect</code></pre>
+tap embed claude-code   # or: cursor | vscode | claude-desktop</code></pre>
   <p>Or drop this into your <code>claude_desktop_config.json</code> (works identically in Claude Code, Cursor, Cline, Windsurf — any MCP host):</p>
   <pre><code>${escapeHtml(mcpConfig)}</code></pre>
 </section>
