@@ -379,6 +379,32 @@ export function resolveLifecycle(plan: { lifecycle?: PlanLifecycle }): PlanLifec
   return plan.lifecycle ?? "scoped";
 }
 
+/** The DURABLE half of a Plan — the verifiable intent that survives when the
+ *  ops are re-crystallized (per ADR `2026-07-14-intent-first-class.md`).
+ *
+ *  `observe`/`act`/`confirm` are a CACHE: a compiled realization of this intent
+ *  against the substrate's current shape. When the substrate drifts and that
+ *  cache goes stale, THIS is the regeneration target:
+ *    - `goal`       — what the tap is FOR (what to re-author toward)
+ *    - `oracle`     — the effect predicate that DEFINES success, independent of
+ *                     the ops that achieve it (a healed plan must re-establish
+ *                     `oracle`, not merely re-run stale ops)
+ *    - `source_url` — where the substrate lives (regeneration entry point)
+ *
+ *  The flat `source_intent` / `source_url` / write-`postcondition` fields are
+ *  the GRANDFATHERED projection of this object. Read via `resolveIntent(plan)`
+ *  / `effectiveOracle(plan)`, never the flat fields directly. */
+export interface PlanIntent {
+  /** The user's intent in natural language. Supersedes flat `source_intent`. */
+  goal: string;
+  /** The effect claim that defines success, independent of the ops that
+   *  achieve it. Honored at run time via `effectiveOracle(plan)`. */
+  oracle?: CelExpr;
+  /** Where the substrate lives — regeneration entry point. Supersedes flat
+   *  `source_url`. */
+  source_url?: string;
+}
+
 /** Common Plan fields (shared by read and write variants). */
 interface PlanCommon {
   /** Self-declared schema URL for forward-compatibility (per ADR
@@ -404,9 +430,14 @@ interface PlanCommon {
    *  know where the substrate lives without manual passing. */
   source_url?: string;
   /** The user's intent expressed in natural language at capture time.
-   *  Forge consumes this for template selection + AI-fallback routing.
-   *  Plan.description may be derived from intent if absent. */
+   *  GRANDFATHERED — new plans carry `intent.goal`; read via
+   *  `resolveIntent(plan)`, never this field directly. */
   source_intent?: string;
+  /** The DURABLE verifiable intent (goal + oracle + source_url). First-class
+   *  as of ADR `2026-07-14-intent-first-class.md`: the ops are a regenerable
+   *  cache OF this. Optional for backward compatibility — pre-migration plans
+   *  project their flat fields via `resolveIntent(plan)`. */
+  intent?: PlanIntent;
 }
 
 /** Discriminated union: act non-empty ⇒ key required at type level.
@@ -428,6 +459,36 @@ export type Plan =
       postcondition?: CelExpr;
       dedup_ttl_seconds?: number;
     });
+
+/** Resolve the DURABLE intent of a Plan, unifying the first-class `intent`
+ *  object with the grandfathered flat fields (per ADR
+ *  `2026-07-14-intent-first-class.md`). THE single read path — callers never
+ *  read `plan.intent` / `plan.source_intent` directly, so a plan authored
+ *  first-class and a grandfathered flat plan project identically. Mirrors
+ *  `resolveLifecycle`. */
+export function resolveIntent(
+  plan: { intent?: PlanIntent; source_intent?: string; source_url?: string },
+): { goal?: string; oracle?: CelExpr; source_url?: string } {
+  const it = plan.intent;
+  const post = (plan as { postcondition?: CelExpr }).postcondition;
+  return {
+    goal: it?.goal ?? plan.source_intent,
+    oracle: it?.oracle ?? post,
+    source_url: it?.source_url ?? plan.source_url,
+  };
+}
+
+/** The EFFECTIVE effect-oracle a Plan verifies — first-class `intent.oracle`
+ *  when present, else the grandfathered write `postcondition`. THE read site
+ *  for "what predicate defines this write's success". */
+export function effectiveOracle(
+  plan: { intent?: PlanIntent; postcondition?: CelExpr },
+): CelExpr | undefined {
+  const o = plan.intent?.oracle;
+  if (typeof o === "string" && o.trim() !== "") return o;
+  const post = plan.postcondition;
+  return typeof post === "string" && post.trim() !== "" ? post : undefined;
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // L5 — Intent state enum (PUBLIC; full IntentRecord is INTERNAL)

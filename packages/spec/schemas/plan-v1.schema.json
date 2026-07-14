@@ -772,6 +772,29 @@
         },
         "source_intent": {
           "type": "string"
+        },
+        "intent": {
+          "$ref": "#/$defs/PlanIntent"
+        }
+      }
+    },
+    "PlanIntent": {
+      "type": "object",
+      "description": "The durable verifiable intent (goal + oracle + source_url) — the regeneration target when ops drift stale. Ops are a cache OF this. ADR tap-core 2026-07-14-intent-first-class.",
+      "required": [
+        "goal"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "goal": {
+          "type": "string",
+          "description": "The user's intent in natural language. Supersedes flat source_intent."
+        },
+        "oracle": {
+          "$ref": "#/$defs/CelExpr"
+        },
+        "source_url": {
+          "type": "string"
         }
       }
     },
