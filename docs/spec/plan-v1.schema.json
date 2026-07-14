@@ -65,7 +65,7 @@
     },
     "OpName": {
       "type": "string",
-      "description": "Closed 18-op union (substrate 7 + control 3 + escape 1 + host 2 + host-capability 3 + host-interaction 2). Mirrors OP_NAMES_V2.",
+      "description": "Closed 16-op union (substrate 7 + control 3 + escape 1 + host 2 + output 2 + observation 1). Mirrors OP_NAMES_V2. highlight/screencast/point retired per ADR 2026-07-13-op-union-minimization.",
       "enum": [
         "fetch",
         "nav",
@@ -81,9 +81,6 @@
         "tab",
         "bookmark",
         "pdf",
-        "highlight",
-        "screencast",
-        "point",
         "notify",
         "ax"
       ]
@@ -700,15 +697,6 @@
           "$ref": "#/$defs/PdfOp"
         },
         {
-          "$ref": "#/$defs/HighlightOp"
-        },
-        {
-          "$ref": "#/$defs/ScreencastOp"
-        },
-        {
-          "$ref": "#/$defs/PointOp"
-        },
-        {
           "$ref": "#/$defs/NotifyOp"
         },
         {
@@ -782,6 +770,29 @@
           "type": "string"
         },
         "source_intent": {
+          "type": "string"
+        },
+        "intent": {
+          "$ref": "#/$defs/PlanIntent"
+        }
+      }
+    },
+    "PlanIntent": {
+      "type": "object",
+      "description": "The durable verifiable intent (goal + oracle + source_url) — the regeneration target when ops drift stale. Ops are a cache OF this. ADR tap-core 2026-07-14-intent-first-class.",
+      "required": [
+        "goal"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "goal": {
+          "type": "string",
+          "description": "The user's intent in natural language. Supersedes flat source_intent."
+        },
+        "oracle": {
+          "$ref": "#/$defs/CelExpr"
+        },
+        "source_url": {
           "type": "string"
         }
       }
@@ -893,55 +904,6 @@
         }
       }
     },
-    "HighlightOp": {
-      "type": "object",
-      "required": [
-        "op",
-        "target"
-      ],
-      "additionalProperties": false,
-      "description": "Host op: native CDP Overlay.highlightNode on a target (survives React re-render). Reuses Target. Auto-clears after ms.",
-      "properties": {
-        "op": {
-          "const": "highlight"
-        },
-        "target": {
-          "$ref": "#/$defs/Target"
-        },
-        "ms": {
-          "type": "number"
-        },
-        "save": {
-          "type": "string"
-        }
-      }
-    },
-    "ScreencastOp": {
-      "type": "object",
-      "required": [
-        "op",
-        "ms"
-      ],
-      "additionalProperties": false,
-      "description": "Host op: record the tab via CDP Page.startScreencast for ms; returns base64 JPEG frames. Self-contained start->wait->stop.",
-      "properties": {
-        "op": {
-          "const": "screencast"
-        },
-        "ms": {
-          "type": "number"
-        },
-        "quality": {
-          "type": "number"
-        },
-        "everyNthFrame": {
-          "type": "number"
-        },
-        "save": {
-          "type": "string"
-        }
-      }
-    },
     "NotifyOp": {
       "type": "object",
       "required": [
@@ -956,25 +918,6 @@
         },
         "message": {
           "type": "string"
-        },
-        "save": {
-          "type": "string"
-        }
-      }
-    },
-    "PointOp": {
-      "type": "object",
-      "required": [
-        "op"
-      ],
-      "additionalProperties": false,
-      "description": "Host op: human clicks (points at) an element; returns a TargetResolver via save. Human-in-the-loop pick (ADR 2026-07-08-op-capabilities).",
-      "properties": {
-        "op": {
-          "const": "point"
-        },
-        "timeout_ms": {
-          "type": "number"
         },
         "save": {
           "type": "string"
