@@ -96,11 +96,10 @@ metadata:
 
 **读到这里的 agent：自己把命令跑掉（别让用户去终端敲），只有「装 Chrome 扩展」那一下要用户亲手点。做完汇报。**
 
-> **先建议插件路（Claude Code）**：最简是让用户自己发三条 slash 命令 `/plugin marketplace add LeonTing1010/taprun` → `/plugin install tap@taprun` → `/reload-plugins`（agent 无法代发 slash 命令）。用户已试过或用别的 host,再走下面的 bash 兜底。
-
-1. **接入**（能力层，一条）：当前是 Claude Code → 跑 `claude mcp add taprun -- npx -y @taprun/cli mcp stdio`。其他 host → 跑 `npx -y @taprun/cli embed <cursor|vscode|claude-desktop>` 并把它打印的一键链接/JSON 交给用户。提示重启 host（或用户用 `/reload-plugins`）。
+1. **接入 + 装技能（Claude Code,一条链,agent 自己跑）**：跑 `claude plugin marketplace add LeonTing1010/taprun`,再跑 `claude plugin install tap@taprun`（都是 CLI,agent 可直接执行；MCP server + tap-capture-replay 技能一起装好——**这是 Cloudflare prompt.md 的做法,比 `claude mcp add` 好,因为顺带带上判断技能**）。装完提示用户发 `/reload-plugins` 连上 MCP（slash 命令 agent 代不了）。
+   - 其他 host（Cursor / VS Code / Cline / Windsurf）或机器无 `claude` CLI → 跑 `npx -y @taprun/cli embed <cursor|vscode|claude-desktop>`,把它打印的一键链接/JSON 交给用户,提示重启 host。
 2. **验证**：让 agent 调 `capture { url: "https://news.ycombinator.com" }`（仅预览），拿到 `inspection.source_class` 即公开页链路通。
 3. **仅当用户要做登录态网站**：让用户 `brew install LeonTing1010/tap/taprun`（或 curl 装），跑 `tap embed claude-code`，并从应用店点装扩展 `https://chromewebstore.google.com/detail/tap/llcidejeoobdegbkolbjhfoeckphldce`；`tap embed --verify` 应四级全绿。
-4. **（可选）判断层**：host 支持 Agent Skills 就把上面 `SKILL.md` 原样写到 `~/.claude/skills/tap-capture-replay/SKILL.md`；不支持就把「何时用 Tap」记入本会话准则。
+4. **判断层**：走插件路（Claude Code）已随 `tap` 插件自动装好,跳过。仅当走 embed / 其他 host 时——支持 Agent Skills 就把上面 `SKILL.md` 原样写到 `~/.claude/skills/tap-capture-replay/SKILL.md`；不支持就把「何时用 Tap」记入本会话准则。
 
 汇报：MCP 已接入、冒烟 `source_class`、（若装了）扩展四级自检结果、一句引导 ——「告诉我你每天/每周都要在哪个登录网站上重复做什么，我把它录成一个零 token 的重放。」

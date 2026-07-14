@@ -156,10 +156,16 @@ robots: "index,follow"
     <p>That's it. The bundle installs the engine to <code>~/.tap/bin</code> on first
     run; the bridge registers itself; your next message to Claude can drive the browser.</p>
 
-    <h3>Claude Code</h3>
-    <pre><button class="copybtn">copy</button><code>brew install LeonTing1010/tap/taprun && tap embed claude-code</code></pre>
-    <p>…or with npx (no brew): <code>npx -y @taprun/cli embed claude-code</code>
-    — the binary self-installs to <code>~/.tap/bin</code> so the bridge survives version bumps.</p>
+    <h3>Claude Code — one-step plugin (recommended)</h3>
+    <pre><button class="copybtn">copy</button><code>/plugin marketplace add LeonTing1010/taprun
+/plugin install tap@taprun
+/reload-plugins</code></pre>
+    <p>Three slash commands, all inside Claude Code — no terminal, no JSON, no restart.
+    Installs the Tap MCP server <em>and</em> the capture-replay skill together. For
+    logged-in sites, then run <code>/tap:setup</code> (installs the CLI + Chrome bridge
+    and opens the extension page).</p>
+    <p>Prefer the terminal? <code>brew install LeonTing1010/tap/taprun &amp;&amp; tap embed claude-code</code>
+    — …or with npx (no brew): <code>npx -y @taprun/cli embed claude-code</code>.</p>
 
     <h3>Cursor / VS Code</h3>
     <pre><button class="copybtn">copy</button><code>npx -y @taprun/cli embed cursor   # or: embed vscode</code></pre>

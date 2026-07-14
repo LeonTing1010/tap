@@ -435,9 +435,14 @@ robots: "index,follow"
       <div class="step-num">2</div>
       <h2>Optional · Wire your AI agent</h2>
       <div class="step-targets">Claude Code · Cursor · Windsurf · Codex · any MCP host</div>
-      <p>Auto-edit your MCP host's config so it can call Tap as an MCP tool. Independent from Step 1 — these are two separate channels.</p>
-<pre><span class="prompt">$ </span><span class="k">tap embed claude-code</span>     <span class="cmt"># or: cursor | vscode | claude-desktop — edits that host's config</span></pre>
-      <p style="font-size:12.5px; color: var(--text-muted); margin: 0;">Then quit and reopen your AI agent (it only re-reads MCP config on launch). After that you can ask it "run the github-stars tap" and it dispatches via MCP.</p>
+      <p>Get your MCP host to call Tap as a tool. Independent from Step 1 — these are two separate channels.</p>
+      <p style="font-size:12.5px; color: var(--text-muted); margin: 0 0 6px;"><strong>Claude Code — simplest (no terminal, no restart, skill bundled):</strong></p>
+<pre><span class="prompt">&gt; </span><span class="k">/plugin marketplace add LeonTing1010/taprun</span>
+<span class="prompt">&gt; </span><span class="k">/plugin install tap@taprun</span>
+<span class="prompt">&gt; </span><span class="k">/reload-plugins</span></pre>
+      <p style="font-size:12.5px; color: var(--text-muted); margin: 10px 0 6px;">Other hosts (or the terminal route) — auto-edits that host's config:</p>
+<pre><span class="prompt">$ </span><span class="k">tap embed claude-code</span>     <span class="cmt"># or: cursor | vscode | claude-desktop</span></pre>
+      <p style="font-size:12.5px; color: var(--text-muted); margin: 0;">For the <code>embed</code> route, quit and reopen your AI agent (it only re-reads MCP config on launch). After that you can ask it "run the github-stars tap" and it dispatches via MCP.</p>
     </div>
 
     <div class="step">
