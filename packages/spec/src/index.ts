@@ -53,6 +53,7 @@ export type {
   BookmarkAction,
   // Plan
   Plan,
+  PlanIntent,
   // State-machine enums
   IntentState,
   Verdict,
