@@ -84,6 +84,7 @@
       {"@type": "SiteNavigationElement", "name": "Receipts", "description": "100-rerun cost comparison vs cloud SDKs", "url": "https://taprun.dev/#receipts"},
       {"@type": "SiteNavigationElement", "name": "Install", "description": "Install Taprun in 2 minutes", "url": "https://taprun.dev/#install"},
       {"@type": "SiteNavigationElement", "name": "Skills", "description": "Browse {{ site.data.cli.counts.community_taps }}+ ready-to-run taps", "url": "https://taprun.dev/taps/"},
+      {"@type": "SiteNavigationElement", "name": "Done-for-you", "description": "We build and maintain your recurring portal pulls — free pilot, flat retainer", "url": "https://taprun.dev/done-for-you/"},
       {"@type": "SiteNavigationElement", "name": "Blog", "description": "Read our blog", "url": "https://taprun.dev/blog/"},
       {"@type": "SiteNavigationElement", "name": "GitHub", "description": "View source on GitHub", "url": "https://github.com/LeonTing1010/tap"}
     ]
@@ -531,6 +532,84 @@ code, pre { font-family: var(--font-mono); }
   max-width: 60ch;
   margin-bottom: 64px;
 }
+
+/* ===================== Paths (three ways to delegate) ===================== */
+.paths-section {
+  padding: 96px 0;
+}
+.paths-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  border: 1px solid var(--ink-rule);
+}
+@media (max-width: 980px) { .paths-grid { grid-template-columns: 1fr; } }
+.path-cell {
+  display: block;
+  padding: 40px 36px 44px;
+  border-right: 1px solid var(--ink-rule);
+  position: relative;
+  transition: background 0.3s;
+}
+.path-cell:last-child { border-right: none; }
+.path-cell:hover { background: var(--ink-soft); }
+@media (max-width: 980px) {
+  .path-cell { border-right: none; border-bottom: 1px solid var(--ink-rule); }
+  .path-cell:last-child { border-bottom: none; }
+}
+.path-who {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+}
+.path-h {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-style: italic;
+  font-size: 27px;
+  letter-spacing: -0.015em;
+  margin-bottom: 14px;
+  font-variation-settings: "opsz" 60, "SOFT" 50;
+}
+.path-p {
+  font-size: 15.5px;
+  line-height: 1.55;
+  color: var(--text-dim);
+  margin-bottom: 26px;
+  min-height: 3.2em;
+}
+.path-link {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--signal);
+}
+.path-cell:hover .path-link { border-bottom: 1px solid var(--signal); }
+.path-price {
+  position: absolute;
+  top: 18px; right: 18px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.path-price.open { color: var(--emerald); }
+.paths-tell {
+  margin-top: 28px;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--text-muted);
+  max-width: 62ch;
+  font-variation-settings: "opsz" 24;
+}
+.paths-tell strong { color: var(--text-dim); font-weight: 500; font-style: normal; }
 
 /* ===================== The Problem (cloud SDK leak) ===================== */
 .problem-grid {
@@ -1218,6 +1297,45 @@ footer {
     <span class="stamp-line">Zero tokens · in your browser</span>
   </div>
 </header>
+
+<!-- ============== PATHS (three ways to delegate) ============== -->
+<section class="paths-section" id="paths">
+  <div class="container">
+    <div class="section-label reveal">Three ways in</div>
+    <h2 class="reveal delay-1">One engine. <em>Three delegators.</em></h2>
+    <p class="section-deck reveal delay-2" style="margin-bottom:48px;">
+      A browser task is delegable the moment its intent is frozen and no judgment is needed mid-run. The one who froze the intent can be a client, your past self, or your agent — the same compiled plan does the work either way.
+    </p>
+
+    <div class="paths-grid reveal delay-3">
+      <a class="path-cell" href="/done-for-you/">
+        <span class="path-price open">free pilot · $99/mo</span>
+        <div class="path-who">Clients hand you their logins</div>
+        <div class="path-h">Done for you.</div>
+        <p class="path-p">We build, run, and maintain your recurring portal pulls — statements, invoices, filings — inside your own browser. Flat retainer, breakage fixes included.</p>
+        <span class="path-link">Start a free pilot →</span>
+      </a>
+      <a class="path-cell" href="/taps/">
+        <span class="path-price">free · MIT</span>
+        <div class="path-who">You repeat the same browser chore</div>
+        <div class="path-h">The Library.</div>
+        <p class="path-p">Community taps for the routines you keep doing by hand — named, reproducible, verified against the live site. Install one instead of writing it.</p>
+        <span class="path-link">Browse {{ site.data.cli.counts.community_taps }}+ taps →</span>
+      </a>
+      <a class="path-cell" href="#install">
+        <span class="path-price">open source</span>
+        <div class="path-who">Your agent re-browses the same site</div>
+        <div class="path-h">The compiler.</div>
+        <p class="path-p">This page. Give your agent a compile target over MCP: capture once, replay forever at zero tokens, verify on drift. Two minutes to install.</p>
+        <span class="path-link">Install the CLI ↓</span>
+      </a>
+    </div>
+
+    <p class="paths-tell reveal delay-4">
+      The tell for the first door: <strong>does someone hand you their logins for this work?</strong> That handover proves everything at once — the task recurs, it's delegated, and the outcome matters. If that's your inbox, skip the docs and take the pilot.
+    </p>
+  </div>
+</section>
 
 <!-- ============== TAP DEMO ============== -->
 <section class="section" id="demo" style="background:linear-gradient(180deg, var(--ink) 0%, var(--ink-soft) 100%);border-top:1px solid var(--ink-rule);padding:64px 0;">

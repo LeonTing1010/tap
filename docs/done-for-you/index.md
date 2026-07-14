@@ -61,6 +61,20 @@ rides the live session for the repetitive part.
 - **Energy / utilities brokers** downloading bills from provider reserved areas
 - Anyone who does the same login → navigate → download dance every month
 
+The pattern is the same in every trade where clients hand a professional their logins:
+a portal with no API, a deadline with a price on it, and a person doing the mechanical
+part by hand. We're queuing the next playbooks now — **vote with an email** and the
+one that fills first gets built first:
+
+- **Medical billing** — payer portals: eligibility, claim status, remittance PDFs
+  ([I do this](mailto:hello@taprun.dev?subject=Portal%20pulls%20—%20medical%20billing))
+- **Compliance filings** — VAT / payroll-tax / license portals ahead of statutory deadlines
+  ([I do this](mailto:hello@taprun.dev?subject=Portal%20pulls%20—%20compliance%20filings))
+- **Property management** — utility & municipal bills per unit, filed per property
+  ([I do this](mailto:hello@taprun.dev?subject=Portal%20pulls%20—%20property%20management))
+- **Freight forwarding** — PODs, BOLs, status pulls across carrier portals
+  ([I do this](mailto:hello@taprun.dev?subject=Portal%20pulls%20—%20freight%20docs))
+
 ## Start the free pilot
 
 Email **[hello@taprun.dev](mailto:hello@taprun.dev?subject=Portal%20pulls%20pilot)**
