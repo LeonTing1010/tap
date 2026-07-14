@@ -67,13 +67,13 @@ part by hand. We're queuing the next playbooks now — **vote with an email** an
 one that fills first gets built first:
 
 - **Medical billing** — payer portals: eligibility, claim status, remittance PDFs
-  ([I do this](mailto:hello@taprun.dev?subject=Portal%20pulls%20—%20medical%20billing))
+  ([I do this](mailto:hello@taprun.dev?subject=Portal%20pulls%20-%20medical%20billing))
 - **Compliance filings** — VAT / payroll-tax / license portals ahead of statutory deadlines
-  ([I do this](mailto:hello@taprun.dev?subject=Portal%20pulls%20—%20compliance%20filings))
+  ([I do this](mailto:hello@taprun.dev?subject=Portal%20pulls%20-%20compliance%20filings))
 - **Property management** — utility & municipal bills per unit, filed per property
-  ([I do this](mailto:hello@taprun.dev?subject=Portal%20pulls%20—%20property%20management))
+  ([I do this](mailto:hello@taprun.dev?subject=Portal%20pulls%20-%20property%20management))
 - **Freight forwarding** — PODs, BOLs, status pulls across carrier portals
-  ([I do this](mailto:hello@taprun.dev?subject=Portal%20pulls%20—%20freight%20docs))
+  ([I do this](mailto:hello@taprun.dev?subject=Portal%20pulls%20-%20freight%20docs))
 
 ## Start the free pilot
 
