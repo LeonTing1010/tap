@@ -29,7 +29,7 @@
 ```bash
 # 1. 装稳定二进制（首次连接时会自动补好扩展桥，无需手动 bridge setup）
 brew install LeonTing1010/tap/taprun     # 或： curl -fsSL https://taprun.dev/install.sh | sh
-tap embed claude-code                      # 或： cursor | vscode | claude-desktop
+tap embed claude-code                      # 或： codebuddy | cursor | vscode | claude-desktop
 ```
 
 **2.**（仅登录态网站）从 Chrome 应用店点一下装扩展 —— 唯一必须你亲手点的一步（信任边界，认证全用浏览器里已有登录态，Tap 从不索取或传输凭证）：

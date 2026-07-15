@@ -35,7 +35,7 @@ As APIs get walled off and metered, the work that survives lives behind logins, 
 
 Every other browser agent re-runs a live LLM — and re-burns tokens — on every execution. Taprun's AI agent inspects the page **once** and emits a deterministic `.plan.json` program; every replay after that is pure data dispatch — same result every call, **$0 in tokens, no agent in the loop**. It runs in your real Chrome, so cookies and login sessions stay on your machine by architecture. `tap verify` catches breakage before your data goes stale.
 
-Works with Claude Code, Cursor, Cline, Windsurf, and any MCP host. Forge a tap from any URL on demand — no catalog needed.
+Works with Claude Code, CodeBuddy, Cursor, Cline, Windsurf, and any MCP host — install straight from the chat window. Forge a tap from any URL on demand — no catalog needed.
 
 ```
 Capture: AI inspects the site → compiles a .plan.json program     (one-time cost)
@@ -60,16 +60,31 @@ Repair:  re-run capture against the same site/name; the next      (only when nee
 
 ## Get Started
 
-### 1. Attach to your agent — one command
+### 1. Attach to your agent — from the chat window
 
-```bash
-npx -y @taprun/cli embed claude-code   # or: cursor | vscode | claude-desktop
+**Claude Code / CodeBuddy** — paste two lines into the chat, nothing else:
+
+```
+/plugin marketplace add LeonTing1010/taprun
+/plugin install tap@taprun
 ```
 
-That's the whole install: the binary self-copies to `~/.tap/bin`, your agent's MCP config is written, and the browser bridge is registered. Re-check anytime with `tap embed --verify`.
+That installs the Tap MCP server **plus** the skills that teach your agent when to use it and the hook that routes walled fetches to Tap — no terminal, no config file. (CodeBuddy wires plugin MCP servers at startup only, so **fully restart it once** after installing; Claude Code picks them up with `/reload-plugins`.)
 
-- **Logged-in sites** (Xiaohongshu, Zhihu, …): add the [Chrome extension](https://chromewebstore.google.com/detail/tap/llcidejeoobdegbkolbjhfoeckphldce) when prompted — one click, and the in-flight call resumes automatically once it lands.
-- **No extension / CI**: append `--no-extension` (Playwright runtime, isolated profile).
+**Any other MCP host** (Cursor · VS Code · Claude Desktop) — one command writes the config for you:
+
+```bash
+npx -y @taprun/cli embed cursor   # or: vscode | claude-desktop | claude-code | codebuddy | qwen
+```
+
+The binary self-copies to `~/.tap/bin` and your agent's MCP config is written. Re-check anytime with `tap embed --verify`.
+
+> **Using a coding agent that isn't in that list?** `tap embed` targets are *data, not code*: drop a row into `~/.tap/embed-targets.json` and the new agent works immediately — no engine release. Each row names one of four install *kinds* (`cc-plugin` for Claude-Code-plugin hosts, `cli-mcp-add` for CLIs with a `<cli> mcp add`, `ide-deeplink`, `desktop-bundle`), e.g. `[{"id":"kode","kind":"cc-plugin","display":"Kode CLI","tier":1,"cli":"kode"}]`. Same doctrine as the rest of Tap — the engine stays closed and mechanical; you extend it in local data.
+
+Now pick your runtime — **the extension is only needed to reuse your *live* logged-in Chrome:**
+
+- **Public pages / open APIs / CI — nothing more to install.** The MCP server runs over `npx`; you're done. Append `--no-extension` for a fully in-chat Playwright runtime with its own isolated profile (no browser gesture, no click).
+- **Logged-in sites** (your bank / internal dashboard / Xiaohongshu / Zhihu) — just tell your agent **"set up tap for logged-in sites"** right in the chat. The **tap-setup** skill drives the whole bridge from the chat: it materializes the stable binary (from the engine `npx` already downloaded — no second download) and registers the native-messaging manifest, then opens the extension page. The single **[Add to Chrome](https://chromewebstore.google.com/detail/tap/llcidejeoobdegbkolbjhfoeckphldce)** click is the only step that isn't a chat action — it *is* the trust gate that lets Tap reuse your existing login, and the in-flight call resumes automatically once it lands.
 - **Claude Desktop**: download [`tap.mcpb`](https://github.com/LeonTing1010/tap/releases/latest) and double-click.
 
 <details>

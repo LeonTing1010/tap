@@ -31,7 +31,7 @@
 
 别的浏览器 agent 每跑一次都要现场调一次大模型、反复烧 token。Taprun 让 AI 把页面分析**一次**，产出确定性的 `.plan.json` 程序；之后每次重放都是纯数据派发 —— 每次结果完全一致，**$0 token，agent 不在运行路径**。它跑在你自己真实的 Chrome 里，cookie 和登录会话因此留在你机器上（架构决定）。`tap verify` 在数据变质前发现页面变化。
 
-适用于 Claude Code、Cursor、Cline、Windsurf 以及任何 MCP host。任意 URL 按需锻造 tap——不需要目录。
+适用于 Claude Code、CodeBuddy、Cursor、Cline、Windsurf 以及任何 MCP host —— 在聊天窗口里就能装。任意 URL 按需锻造 tap——不需要目录。
 
 ```
 捕获：  AI 分析网站 → 编译成 .plan.json 程序        （一次性成本）
@@ -56,16 +56,31 @@
 
 ## 快速开始
 
-### 1. 接入你的 Agent —— 一条命令
+### 1. 接入你的 Agent —— 在聊天窗口里就能装
 
-```bash
-npx -y @taprun/cli embed claude-code   # 或：cursor | vscode | claude-desktop
+**Claude Code / CodeBuddy** —— 往聊天框粘两行，别的都不用：
+
+```
+/plugin marketplace add LeonTing1010/taprun
+/plugin install tap@taprun
 ```
 
-这就是全部安装：二进制自动拷贝到 `~/.tap/bin`，Agent 的 MCP 配置自动写好，浏览器桥自动注册。随时用 `tap embed --verify` 复查。
+这会装上 Tap MCP 服务，**外加**教 agent 何时用它的 skill、以及把被墙的 fetch 路由到 Tap 的 hook —— 不进终端、不写配置文件。（CodeBuddy 只在启动时接线插件 MCP 服务，所以装完要**完全重启一次**；Claude Code 用 `/reload-plugins` 即可。）
 
-- **需要登录的站点**（小红书、知乎等）：按提示装 [Chrome 扩展](https://chromewebstore.google.com/detail/tap/llcidejeoobdegbkolbjhfoeckphldce)——点一次即可，装好后进行中的调用自动续跑。
-- **不装扩展 / CI**：加 `--no-extension`（Playwright 运行时，独立 profile）。
+**其他任意 MCP host**（Cursor · VS Code · Claude Desktop）—— 一条命令替你写好配置：
+
+```bash
+npx -y @taprun/cli embed cursor   # 或：vscode | claude-desktop | claude-code | codebuddy | qwen
+```
+
+二进制自动拷贝到 `~/.tap/bin`，Agent 的 MCP 配置自动写好。随时用 `tap embed --verify` 复查。
+
+> **你的 coding agent 不在这个列表里？** `tap embed` 的 target 是**数据不是代码**：往 `~/.tap/embed-targets.json` 里加一行，新 agent 立即可用——不用等引擎发版。每行指定四种装法**类型**之一（`cc-plugin`=Claude Code 插件宿主 / `cli-mcp-add`=有 `<cli> mcp add` 的 CLI / `ide-deeplink` / `desktop-bundle`），例如 `[{"id":"kode","kind":"cc-plugin","display":"Kode CLI","tier":1,"cli":"kode"}]`。和 Tap 其余部分同一信条——引擎保持封闭机械，扩展发生在本地数据里。
+
+接着选运行时 —— **只有要复用你「已登录的真实 Chrome」时才需要扩展：**
+
+- **公开页面 / 开放 API / CI —— 不用再装任何东西。** MCP 服务跑在 `npx` 上，到此为止。想要一条完全在聊天里的路径就加 `--no-extension`（Playwright 运行时 + 独立 profile，无浏览器手势、无点击）。
+- **需要登录的站点**（银行 / 内部后台 / 小红书 / 知乎）—— 直接在聊天里对 agent 说**「帮我给登录态站点 set up tap」**。**tap-setup** skill 会在聊天里把整条桥装好：从 `npx` 已下载的引擎里落位稳定二进制（**不会二次下载**）、写好 native-messaging manifest，然后打开扩展页面。唯一不是聊天动作的一步，就是那一下 **[Add to Chrome](https://chromewebstore.google.com/detail/tap/llcidejeoobdegbkolbjhfoeckphldce)** 点击 —— 它正是让 Tap 能复用你现有登录态的信任闸；点完，进行中的调用自动续跑。
 - **Claude Desktop**：下载 [`tap.mcpb`](https://github.com/LeonTing1010/tap/releases/latest) 双击安装。
 
 <details>

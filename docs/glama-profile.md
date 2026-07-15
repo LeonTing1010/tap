@@ -150,7 +150,7 @@ replay for snapshot equivalence, flagging drift the moment a site changes.
 Or wire your agent in one step:
 
 ```bash
-npx -y @taprun/cli embed claude-code   # or: cursor | vscode | claude-desktop
+npx -y @taprun/cli embed claude-code   # or: codebuddy | cursor | vscode | claude-desktop
 ```
 
 ### What you get
