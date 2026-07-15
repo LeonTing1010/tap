@@ -17,10 +17,10 @@ description (the "Description" textarea). Everything else lives in this file.
 
 | Field | Value |
 |---|---|
-| Item name | `Tap — Local-First Browser MCP` |
-| Summary (132 chars max) | `Your agent's action layer in your own logged-in Chrome — the login/compliance last 20% APIs can't reach. Zero-token replay.` |
+| Item name | `Tap — Automate the Sites You're Logged Into` |
+| Summary (132 chars max) | `Automate the websites you already log into — invoices, reports, trackers — in your own browser. Private, free to run, forever.` |
 | Detailed description | see `description.txt` |
-| Category | `Developer Tools` |
+| Category | `Productivity` |
 | Language | English (en) |
 | Website | `https://taprun.dev` |
 | Support email | `hello@taprun.dev` |

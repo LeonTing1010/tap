@@ -28,6 +28,18 @@ test('op:pdf method uses CDP Page.printToPDF and returns a pdf mime', () => {
   assert(BG.includes("mime: 'application/pdf'"), 'must tag the artifact as PDF')
 })
 
+test('op:pdf stamp mode overlays via bundled offline pdf-lib (not chrome://pdf CDP)', () => {
+  // ADR 2026-07-15: stamp is mechanical/tab-free; done by a pinned, offline
+  // pdf-lib, NOT by driving the in-viewer annotation UI (content-script-inaccessible,
+  // no CDP annotation command). Guards the spike-proven mechanism from silently
+  // regressing to a chrome://pdf dependency.
+  assert(BG.includes("mode === 'stamp'"), 'pdf handler must branch on stamp mode')
+  assert(BG.includes("import('./lib/pdf-lib.esm.js')"), 'stamp must use the vendored OFFLINE pdf-lib (local ./lib path)')
+  assert(BG.includes('embedPng'), 'stamp must embed the signature PNG')
+  assert(BG.includes('drawImage'), 'stamp must draw the overlay at (x,y)')
+  assert(BG.includes('bytesToB64'), 'stamp must return base64 PDF bytes (same {data,mime} shape as export)')
+})
+
 test('highlight method uses native Overlay.highlightNode (survives re-render)', () => {
   assert(BG.includes("case 'highlight'"), 'highlight handler must exist')
   assert(BG.includes('Overlay.highlightNode'), 'must use native CDP overlay, not injected box')

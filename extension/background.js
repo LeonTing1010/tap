@@ -1116,6 +1116,22 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   return true
 })
 
+// --- base64 helpers (SW has atob/btoa; chunk to avoid call-stack overflow) ---
+function b64ToBytes(b64) {
+  const bin = atob(b64)
+  const out = new Uint8Array(bin.length)
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i)
+  return out
+}
+function bytesToB64(bytes) {
+  let bin = ''
+  const CHUNK = 0x8000
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    bin += String.fromCharCode(...bytes.subarray(i, i + CHUNK))
+  }
+  return btoa(bin)
+}
+
 async function handleMethod(method, params = {}, senderTabId = null, { fromDaemon = false } = {}) {
   let tabId = params.tabId ? Number(params.tabId) : null
 
@@ -1135,7 +1151,10 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
   const noTabNeeded = ['nav', 'tab', 'bookmark', 'tab.new', 'tab.list', 'tab.close', 'capabilities', 'reload',
                        'session.create', 'session.destroy', 'session.info',
                        'visualize', 'fetch', 'notify']
-  if (!tabId && !noTabNeeded.includes(method)) {
+  // op:pdf stamp mode is tab-FREE (overlays a local file via pdf-lib); export mode
+  // still needs the bound tab for Page.printToPDF. Mirrors core pdfNeedsTab().
+  const pdfTabFree = method === 'pdf' && params.mode === 'stamp'
+  if (!tabId && !noTabNeeded.includes(method) && !pdfTabFree) {
     throw new Error('No active tab. Call nav first or use session.create.')
   }
 
@@ -1481,9 +1500,37 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
     }
 
     case 'pdf': {
-      // op:pdf → CDP Page.printToPDF → base64 PDF of the current page. For statement /
-      // invoice / report capture (the bookkeeping done-for-you取数环). The host
-      // writes the bytes under ~/.tap. Landscape / paper size passthrough.
+      // op:pdf — two modes:
+      //   mode 'export' (default): CDP Page.printToPDF of the bound tab → base64 PDF.
+      //   mode 'stamp': overlay a pre-authored LOCAL signature/stamp image onto an
+      //     input PDF — tab-free, deterministic, no LLM, no human at run time.
+      //     Core expands the Plan's `$file` refs to base64 at the dispatch boundary
+      //     (mirrors the ${VAR} secret-indirection pattern): the peer receives
+      //     `pdfBytes` + `stamp.imageBytes`, stays FS-free, and the trace carries no
+      //     cleartext paths. ADR 2026-07-15-op-pdf-stamp-mode.
+      const mode = params.mode === 'stamp' ? 'stamp' : 'export'
+      if (mode === 'stamp') {
+        // DRAFT: needs vendored, OFFLINE, pinned pdf-lib ESM at ./lib/pdf-lib.esm.js
+        // (proven feasible in spike — pdf-lib@1.17.1, embedPng + drawImage opacity).
+        const { PDFDocument } = await import('./lib/pdf-lib.esm.js')
+        if (!params.pdfBytes) throw new Error('stamp: missing source PDF bytes (core must expand $file ref)')
+        if (!params.stamp?.imageBytes) throw new Error('stamp: missing stamp image bytes (core must expand $file ref)')
+        const doc = await PDFDocument.load(b64ToBytes(params.pdfBytes))
+        const img = await doc.embedPng(b64ToBytes(params.stamp.imageBytes))
+        const pageIdx = Math.max(0, (params.stamp.page | 0) - 1) // ADR: 1-based
+        const page = doc.getPages()[pageIdx]
+        if (!page) throw new Error(`stamp: page ${params.stamp.page} out of range (doc has ${doc.getPageCount()})`)
+        const width = typeof params.stamp.width === 'number' ? params.stamp.width : img.width
+        page.drawImage(img, {
+          x: params.stamp.x ?? 0,
+          y: params.stamp.y ?? 0,
+          width,
+          opacity: typeof params.stamp.opacity === 'number' ? params.stamp.opacity : 1,
+        })
+        const bytes = await doc.save()
+        return { data: bytesToB64(bytes), mime: 'application/pdf' }
+      }
+      // export (default) — unchanged
       const data = await withDebugger(tabId, async () => {
         const r = await chrome.debugger.sendCommand({ tabId }, 'Page.printToPDF', {
           landscape: !!params.landscape,
@@ -3269,6 +3316,12 @@ const WIRE_CODE = {
   // reconnect_extension recovery hint. Mirrors core/core/wire-codes.ts; W4
   // drift-guard keeps them in lockstep.
   eval_error: -32016,
+  // -32017: ADR 2026-07-15 op:pdf stamp — local file read failure at the core
+  // dispatch boundary (a $file ref to the source PDF or signature image was
+  // missing / unreadable). Engine-internal; the SW never EMITS it (present for
+  // decode symmetry). Mirrors core/core/wire-codes.ts; W4 drift-guard keeps
+  // them in lockstep.
+  file_read: -32017,
 }
 
 const NATIVE_HOST_NAME = 'dev.taprun.daemon'

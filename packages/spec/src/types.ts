@@ -305,14 +305,36 @@ export const BOOKMARK_ACTIONS = [
 export type BookmarkAction = typeof BOOKMARK_ACTIONS[number];
 
 /** The closed Op union — exactly 13 members. */
-/** Host op: capture the tab as a PDF (CDP Page.printToPDF). base64 binds via
- *  `save`. PUBLIC mirror of core/types.ts:PdfOp (ADR 2026-07-08-op-capabilities). */
+/** Stamp/annotation overlay for `op:pdf` `mode:"stamp"` (ADR
+ *  2026-07-15-op-pdf-stamp-mode). Local signature image overlaid at declared
+ *  coordinates. `image` is a local `$file` ref. `imageBytes` is the peer-transport
+ *  form, expanded from `image` at the dispatch boundary; not authored in plans.
+ *  PUBLIC mirror of core/types.ts:PdfStamp. */
+export interface PdfStamp {
+  image: string;
+  page: number;
+  x: number;
+  y: number;
+  width?: number;
+  opacity?: number;
+  imageBytes?: string;
+}
+
+/** Host op: PDF output. `mode:"export"` (default) = CDP Page.printToPDF of the
+ *  bound tab. `mode:"stamp"` = overlay `stamp` onto input PDF `pdf` (tab-free,
+ *  deterministic — ADR 2026-07-15). `pdfBytes` is the peer-transport form of
+ *  `pdf`, expanded from the `$file` ref at the dispatch boundary; not authored.
+ *  PUBLIC mirror of core/types.ts:PdfOp (ADR 2026-07-08-op-capabilities). */
 export interface PdfOp {
   op: "pdf";
+  mode?: "export" | "stamp";
   landscape?: boolean;
   printBackground?: boolean;
   paperWidth?: number;
   paperHeight?: number;
+  pdf?: string;
+  stamp?: PdfStamp;
+  pdfBytes?: string;
   save?: string;
 }
 

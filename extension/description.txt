@@ -1,8 +1,8 @@
-# Tap — Your Agent's Action Layer in Your Own Logged-In Browser
+# Tap — Automate the Websites You're Already Logged Into
 
-Tap is the action layer your AI agent drives inside your own already-logged-in Chrome — built for the login-gated, exception-heavy, compliance-critical last 20% that clean APIs and cloud agents can't reach. Claude Code, Cursor, Continue, Windsurf, or any MCP-compatible AI agent compiles the task a single time; every run after that is deterministic data dispatch in your own real Chrome — no per-step LLM cost, no cloud credentials, no vendor lock-in. It closes the loop: act, verify the effect, re-run on drift.
+Tap runs the browser chores you do by hand — pulling invoices, downloading statements, checking dashboards, filling forms — inside your own already-logged-in Chrome. Set a task up once and it runs on schedule forever, for free, with your passwords never leaving your machine. An optional AI agent can help you build a task the first time, but every replay after that is plain, deterministic automation in your real browser — no per-step AI cost, no cloud, no vendor lock-in. It closes the loop: act, verify the effect, re-run on drift.
 
-AI participates at compile time only: saved plans replay deterministically at zero LLM token cost.
+AI helps only at build time (optional): saved tasks replay deterministically at zero AI token cost.
 
 ## Why Tap (vs. Stagehand / Browserbase / Playwright-MCP / BrowserMCP)
 
@@ -33,29 +33,31 @@ Every cloud-first browser-automation MCP forces a tradeoff: ship your credential
 
 ## How It Works
 
-This extension is the browser half of Tap. It talks to the Tap CLI on your machine via Chrome's Native Messaging transport. No code runs without the CLI.
+Tap has two parts: this Chrome extension, and a small helper program that runs on your own computer. The extension tells the helper which task to run; the helper drives your browser. Nothing runs without both, and nothing ever leaves your machine.
+
+Getting set up takes about two minutes:
 
 1. Install this Chrome extension (you may have just done that).
 
-2. Run one command on your machine (any platform with Node 18+):
+2. Open a terminal and run one command to install the helper and link it to your browser:
 
    npx -y @taprun/cli embed claude-code
 
-   (or: cursor | vscode | claude-desktop)
+   (or: cursor | vscode | claude-desktop — whichever AI assistant you use, or connect one later)
 
-   This one step installs the tap binary, writes your agent's MCP config, and registers the Chrome native-messaging manifest that authorises this extension to launch the tap binary. No network ports are opened. No OS service is installed.
+   That single step installs the helper on your computer and registers this extension to talk to it. It opens no network ports and installs no background service.
 
-3. Click the Tap toolbar icon. The popup should say "Connected to local bridge". Done.
+3. Click the Tap toolbar icon. When the popup shows "Connected", you're done.
 
-Prefer manual installs? brew install LeonTing1010/tap/taprun, or curl -fsSL https://taprun.dev/install.sh | sh — then run `tap bridge setup` once to register the manifest.
+Prefer to install the helper manually? Run `brew install LeonTing1010/tap/taprun` or `curl -fsSL https://taprun.dev/install.sh | sh`, then `tap bridge setup` once.
 
-The bridge only runs while Chrome is open — closing every window shuts it down; re-opening Chrome (or clicking the toolbar icon) wakes it back up.
+The helper only runs while Chrome is open — close your browser and it stops; open Chrome again (or click the toolbar icon) and it starts back up.
 
-## Connect Your AI Agent (MCP)
+## Connect an AI Assistant (Optional)
 
-Tap exposes 4 meta verbs (capture / verify / mark / run) as MCP tools and every saved plan as an MCP Resource.
+You don't need an AI assistant to use Tap — you can build and run tasks on your own. But if you use one (Claude, Cursor, Windsurf, Continue, Cline, or any tool that supports MCP), it can turn a plain sentence like "pull my monthly bank statement" into a task, then hand it to Tap to run forever.
 
-`npx -y @taprun/cli embed <agent>` already wrote this config for you. Setting it up by hand instead — **Claude Code / Cursor / Windsurf / Continue / Cline** — add to your MCP host config:
+If you ran the `embed` command during setup, this is already wired up. To connect an assistant manually, add Tap to its config:
 
    {
      "mcpServers": {
@@ -66,36 +68,39 @@ Tap exposes 4 meta verbs (capture / verify / mark / run) as MCP tools and every 
      }
    }
 
-Restart your host. You should see `capture`, `verify`, `mark`, `run` in the tool list and `tap://<site>/<name>` in resources. Ask your agent things like "use the tap MCP to run github/stars" or "capture this page with tap".
+Restart the assistant. You can then say things like "use Tap to run github/stars" or "capture this site with Tap".
 
 ## Get the Most Out of Tap
 
-   tap list                               # discover all saved plans
-   tap list github                        # filter by substring
-   tap show <site>/<name>                 # print the plan JSON
-   tap run <site>/<name> k=v ...          # execute (zero LLM tokens)
+Tap is at its best when you let an AI assistant build a task for you once, then run it on a schedule. If you'd rather use the command line directly, these are the basics:
+
+   tap list                               # see all your saved tasks
+   tap list github                        # narrow the list by name
+   tap show <site>/<name>                 # view what a task does
+   tap run <site>/<name> k=v ...          # run it (no AI cost)
    tap capture <url> <site>/<name> --intent "..."
-                                          # author a new plan with AI
-   tap verify <site>/<name>               # read-only health check
+                                          # build a new task with AI
+   tap verify <site>/<name>               # check it still works
 
-**Working patterns:**
-- Let the agent author once, replay forever. Ask Claude/Cursor to "capture a tap for X" — the AI explores the page, you confirm with `tap mark <site>/<name> <key> committed`, and every subsequent run is deterministic and free.
-- Pass arguments. Most community plans take args (`tap run reddit/post-comment subreddit=mcp body="..."`). Inspect with `tap show`.
-- Compose plans. One plan can call another (`op:tap`) — build pipelines like "login → scrape → post" out of small reusable units.
-- Schedule replays. Plans are JSON; run them from launchd / cron / GitHub Actions with no token cost.
-- Convert existing Playwright / Puppeteer / Stagehand scripts — `npx @taprun/from-playwright <file>.spec.ts` emits a Tap plan you can run today.
+**Everyday patterns:**
+- Build once, run forever. Ask your assistant to "set up a task for X" — it figures out the steps on your site, you confirm, and every run after is automatic and free.
+- Give a task inputs. Many ready-made tasks take options (`tap run reddit/post-comment subreddit=mcp body="..."`). See what they accept with `tap show`.
+- Chain tasks together. One task can call another — assemble flows like "log in → extract → post" from small reusable pieces.
+- Put tasks on a schedule. Run them from launchd / cron / GitHub Actions with no AI cost, so your browser chores happen while you sleep.
+- Already have an automation script? Convert a Playwright / Puppeteer / Stagehand script — `npx @taprun/from-playwright <file>.spec.ts` turns it into a Tap task you can run today.
 
-Full guide & plan catalogue: https://taprun.dev
+Full guide & task catalogue: https://taprun.dev
 Spec & plan JSON Schema: https://taprun.dev/spec/plan-v1/
 Source (MIT, includes this extension): https://github.com/LeonTing1010/tap
 
 ## Use Cases
 
-- Authenticated scraping — pull data from any site you are logged into (dev tools, productivity apps, financial dashboards, internal portals) using your existing session, with zero cloud round-trip.
-- Multi-step workflows — chain page-A → API-B → page-C with stable JSON plans that survive site refactors better than vision-based loops.
-- AI-agent browser tools — give Claude Code, Cursor, or any MCP agent a browser without paying per-step token cost or shipping credentials anywhere.
-- Personal automation — daily KB scans, dashboard checks, monitoring runs scheduled via launchd / cron, hitting authenticated sites that public scrapers can't touch.
-- Migrating off cloud browser-automation — Stagehand / Browserbase / Apify users moving to a local-first model without rewriting their plan corpus (community plan-converters available for Playwright / Puppeteer / Stagehand sources).
+- Personal automation — pull monthly invoices, download statements, check dashboards, monitor price or stock changes on sites behind a login, all scheduled via launchd / cron and run in your own browser.
+- Paperwork that lives in portals — bank / supplier / utility / SaaS reserved areas with no API. Set the task up once; Tap rides your live session and does the monthly download dance for you.
+- Multi-step workflows — chain page-A → API-B → page-C with stable JSON tasks that survive site refactors better than vision-based loops.
+- Authenticated data pulls — extract from any site you are logged into using your existing session, with zero cloud round-trip.
+- AI-agent browser tools (optional) — give Claude Code, Cursor, or any MCP agent a browser without paying per-step token cost or shipping credentials anywhere. Build a task once with AI, then replay it deterministically forever.
+- Migrating off cloud browser-automation — Stagehand / Browserbase / Apify users moving to a local-first model without rewriting their task corpus (community converters available for Playwright / Puppeteer / Stagehand sources).
 
 ## Troubleshooting
 
