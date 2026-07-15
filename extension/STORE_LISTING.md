@@ -18,7 +18,7 @@ description (the "Description" textarea). Everything else lives in this file.
 | Field | Value |
 |---|---|
 | Item name | `Tap — Automate the Sites You're Logged Into` |
-| Summary (132 chars max) | `Automate the websites you already log into — invoices, reports, trackers — in your own browser. Private, free to run, forever.` |
+| Summary (132 chars max) | `Automate the sites you're logged into — pull invoices, sign PDFs, track changes — in your own browser. Private, free, forever.` |
 | Detailed description | see `description.txt` |
 | Category | `Productivity` |
 | Language | English (en) |
