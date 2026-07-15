@@ -61,7 +61,7 @@
   "codeRepository": "https://github.com/LeonTing1010/tap",
   "keywords": ["local-first", "browser automation", "MCP", "tap protocol", "forge", "deterministic automation", "Chrome extension", "Playwright alternative", "browser-use alternative", "Stagehand alternative", "verify", "snapshot", "drift detection"],
   "offers": [
-    {"@type": "Offer", "price": "0", "priceCurrency": "USD", "description": "Free during v0.x. @taprun/spec 1.6, {{ site.data.cli.counts.npm_packages }} npm packages, Chrome extension, tap CLI ({{ site.data.cli.verbs.capture.name }}/{{ site.data.cli.verbs.verify.name }}/{{ site.data.cli.verbs.mark.name }} + saved-tap run), {{ site.data.cli.counts.community_taps }}+ community taps. Paid tiers deferred until first paying customer."}
+    {"@type": "Offer", "price": "0", "priceCurrency": "USD", "description": "Free, MIT-licensed engine: @taprun/spec 1.6, {{ site.data.cli.counts.npm_packages }} npm packages, Chrome extension, tap CLI ({{ site.data.cli.verbs.capture.name }}/{{ site.data.cli.verbs.verify.name }}/{{ site.data.cli.verbs.mark.name }} + saved-tap run), {{ site.data.cli.counts.community_taps }}+ community taps. Paid done-for-you service (recurring portal pulls) is $99/month — see /pricing.html."}
   ]
 }
 </script>
@@ -1649,9 +1649,12 @@ footer {
 </section>
 
 <!-- ============== INSTALL ============== -->
-<!-- #pricing legacy anchor — paid tiers deferred per ADR 2026-05-04; old external
-     links land on the install/closing block which clarifies "Free during v0.x". -->
+<!-- #pricing legacy anchor — old external links pointing here now redirect to the
+     live pricing page (/pricing.html), which shows the free tier and the $99/mo plan. -->
 <span id="pricing" style="position:absolute; visibility:hidden"></span>
+<script>
+  if (location.hash === '#pricing') { location.replace('/pricing.html'); }
+</script>
 <section class="section install-section" id="install">
   <div class="container">
     <div class="section-label reveal">Two minutes, one terminal</div>
@@ -1716,7 +1719,7 @@ footer {
       </a>
     </div>
     <p class="reveal delay-3" style="margin-top:80px; max-width:60ch; font-family:var(--font-display); font-style:italic; font-size:18px; color:var(--text-muted); line-height:1.6;">
-      Taprun is MIT-licensed, written in TypeScript on Deno, ships as a single signed binary. The Chrome extension is open-source. No license server, no phone-home, no usage telemetry. Free during v0.x. Paid tiers deferred until a customer asks.
+      Taprun is MIT-licensed, written in TypeScript on Deno, ships as a single signed binary. The Chrome extension is an open extension. No license server, no phone-home, no usage telemetry. Free to use and build on — or, if you'd rather buy the outcome than the tool, the done-for-you service is $99/month. See <a href="/pricing.html" style="color:var(--signal); border-bottom:1px solid var(--signal); text-decoration:none;">pricing</a>.
     </p>
   </div>
 </section>
@@ -1734,6 +1737,7 @@ footer {
       </div>
       <div class="footer-col">
         <h5>Product</h5>
+        <a href="/pricing.html">Pricing</a>
         <a href="#how">How it works</a>
         <a href="/taps/">Community taps</a>
         <a href="/spec/plan-v1/">Plan spec v1</a>
@@ -1749,6 +1753,8 @@ footer {
       <div class="footer-col">
         <h5>Open</h5>
         <a href="https://github.com/LeonTing1010/tap?ref=taprun.dev">GitHub</a>
+        <a href="/pricing.html">Pricing</a>
+        <a href="/terms.html">Terms</a>
         <a href="/privacy.html">Privacy</a>
         <a href="https://github.com/LeonTing1010/tap/blob/main/SECURITY.md?ref=taprun.dev">Security</a>
       </div>
