@@ -866,6 +866,111 @@ async function neutralizeBeforeUnload(tabId) {
   try { await execFunc(tabId, suppressBeforeUnload) } catch (_) { /* best-effort */ }
 }
 
+// ─── Ambient revalidation — browse-as-audit (ADR 2026-07-17-reference-
+// metabolism-witness-voting-and-ambient-revalidation) ────────────────────
+// The resident kernel converts ORGANIC browsing into free binding-freshness
+// audits: (RECORD) input ops with object resolvers persist host×witness to
+// tap:bindings; (PROBE) when the user naturally lands on a recorded host —
+// throttled, read-only — each witness is re-resolved and its freshness
+// stored in tap:binding-health; (CONSUME) the selector_not_found detail
+// appends that freshness, so staleness knowledge lands exactly where the
+// agent decides between retry and re-capture. Everything stays in
+// chrome.storage.local (security invariant #3: nothing leaves the machine).
+const AMBIENT_THROTTLE_MS = 6 * 3600 * 1000
+const AMBIENT_MAX_BINDINGS_PER_HOST = 20
+function ambientHostOf(url) {
+  try {
+    const h = new URL(url).hostname.toLowerCase()
+    return h.startsWith('www.') ? h.slice(4) : (h || null)
+  } catch (_) { return null }
+}
+function ambientDue(lastAt, now) {
+  return typeof lastAt !== 'number' || (now - lastAt) >= AMBIENT_THROTTLE_MS
+}
+// Stable identity of a witness across property order; discriminators the
+// probe ignores (nth/visible/inViewport) are excluded on purpose — they
+// select among matches, they don't name the referent.
+function bindingKeyOf(w) {
+  return JSON.stringify([w.selector || '', w.role || '', w.name || '', w.text || ''])
+}
+async function recordBinding(url, target) {
+  if (!target || typeof target !== 'object') return
+  const host = ambientHostOf(url)
+  if (!host) return
+  const w = {
+    ...(target.selector ? { selector: target.selector } : {}),
+    ...(target.role ? { role: target.role } : {}),
+    ...(target.name ? { name: target.name } : {}),
+    ...(target.text ? { text: target.text } : {}),
+  }
+  if (!w.selector && !w.role) return // no witness — discriminators alone name nothing
+  const key = bindingKeyOf(w)
+  const store = (await chrome.storage.local.get('tap:bindings'))['tap:bindings'] || {}
+  const hostRec = store[host] || { entries: {} }
+  // seq = per-host monotonic recency (Date.now() ties within one ms would
+  // make cap eviction order unstable).
+  const keys0 = Object.keys(hostRec.entries)
+  const maxSeq = keys0.reduce((m, k) => Math.max(m, hostRec.entries[k].seq || 0), 0)
+  hostRec.entries[key] = { w, last_used: Date.now(), seq: maxSeq + 1 }
+  const keys = Object.keys(hostRec.entries)
+  if (keys.length > AMBIENT_MAX_BINDINGS_PER_HOST) {
+    keys.sort((a, b) => (hostRec.entries[b].seq || 0) - (hostRec.entries[a].seq || 0))
+    for (const k of keys.slice(AMBIENT_MAX_BINDINGS_PER_HOST)) delete hostRec.entries[k]
+  }
+  store[host] = hostRec
+  await chrome.storage.local.set({ 'tap:bindings': store }).catch(() => {})
+}
+async function ambientProbe(tabId, url) {
+  const host = ambientHostOf(url)
+  if (!host) return
+  // Gate 1: only hosts with recorded bindings — never scan the open web.
+  const bindings = (await chrome.storage.local.get('tap:bindings'))['tap:bindings'] || {}
+  const hostRec = bindings[host]
+  const entryKeys = hostRec ? Object.keys(hostRec.entries || {}) : []
+  if (entryKeys.length === 0) return
+  // Gate 2: throttle per host — organic browsing is frequent, audits need not be.
+  const health = (await chrome.storage.local.get('tap:binding-health'))['tap:binding-health'] || {}
+  const now = Date.now()
+  if (!ambientDue(health[host] && health[host].checked_at, now)) return
+  await ensureDeep(tabId)
+  // READ-ONLY by construction: presence via __tapDeep.pick, visible:false so
+  // below-fold bindings still count as resolving. Never clicks, never focuses.
+  const witnesses = entryKeys.map((k) => ({ k, w: hostRec.entries[k].w }))
+  const results = await execFunc(tabId, (ws) =>
+    ws.map((x) => ({ k: x.k, resolved: !!globalThis.__tapDeep.pick({ ...x.w, visible: false }, document) })), witnesses)
+  const rec = { checked_at: now, results: {} }
+  for (const r of (results || [])) rec.results[r.k] = { resolved: !!r.resolved, at: now }
+  health[host] = rec
+  await chrome.storage.local.set({ 'tap:binding-health': health }).catch(() => {})
+}
+chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
+  if (info.status === 'complete' && tab && tab.url) {
+    ambientProbe(tabId, tab.url).catch(() => { /* audits are best-effort */ })
+  }
+})
+/** The CONSUME half: ' [ambient: ...]' suffix for a selector_not_found
+ *  detail, from the last organic-browse audit of this host×witness.
+ *  Empty string when nothing is known — never blocks, never throws. */
+async function ambientFreshnessOf(tabId, resolver, selStr) {
+  try {
+    const t = await chrome.tabs.get(tabId)
+    const host = ambientHostOf(t && t.url)
+    if (!host) return ''
+    const health = (await chrome.storage.local.get('tap:binding-health'))['tap:binding-health'] || {}
+    const rec = health[host]
+    if (!rec || !rec.results) return ''
+    const key = resolver
+      ? bindingKeyOf({ selector: resolver.selector, role: resolver.role, name: resolver.name, text: resolver.text })
+      : bindingKeyOf({ selector: selStr })
+    const known = rec.results[key]
+    if (!known) return ''
+    const mins = Math.max(0, Math.round((Date.now() - known.at) / 60000))
+    return known.resolved
+      ? ` [ambient: resolved ${mins}m ago during organic browsing]`
+      : ` [ambient: NOT resolving as of ${mins}m ago — binding likely drifted; prefer re-capture over retry]`
+  } catch (_) { return '' }
+}
+
 // #62 frame-piercing combinator: "<iframe-sel> >>> <inner-sel>" addresses an
 // element inside an iframe. chrome.scripting reaches cross-origin frames via
 // frameIds (host_permissions) where page-JS contentDocument cannot, and the
@@ -1052,6 +1157,30 @@ const TAP_DEEP_INSTALL = () => {
     return (el.textContent || '').trim()
   }
   const ROLE_CANDIDATES = 'a,area,button,summary,input,select,textarea,img,nav,main,header,footer,aside,h1,h2,h3,h4,h5,h6,[role],[aria-label],[tabindex],[onclick]'
+  // The object-target filter pipeline, returning the FULL filtered list —
+  // pick indexes it (nth); pickVoted needs its LENGTH for the uniqueness
+  // gate. Candidacy: selector matches, else the common-role set when a
+  // semantic predicate (role/name) is declared. (name-only resolvers are
+  // lint-illegal, so extending candidacy to `name` is unobservable for
+  // legal plans — it exists for pickVoted's stripped semantic witness.)
+  const resolveList = (target, root) => {
+    const wantRole = target.role ? String(target.role).trim().toLowerCase() : ''
+    let list = target.selector
+      ? all(target.selector, root)
+      : ((wantRole || target.name) ? all(ROLE_CANDIDATES, root) : [])
+    if (wantRole) list = list.filter((e) => implicitRole(e) === wantRole)
+    if (target.name) {
+      const nm = String(target.name).trim().toLowerCase()
+      list = list.filter((e) => accName(e).toLowerCase().includes(nm))
+    }
+    if (target.visible !== false) list = list.filter(vis)
+    if (target.text) {
+      const tx = String(target.text).trim()
+      list = list.filter((e) => (e.textContent || '').trim().includes(tx))
+    }
+    if (target.inViewport) list = list.filter(inView)
+    return list
+  }
   const pick = (target, root, depth) => {
     const isObj = target && typeof target === 'object'
     if (isObj && target.within) {
@@ -1069,25 +1198,53 @@ const TAP_DEEP_INSTALL = () => {
       if (el && !vis(el)) { for (const e of list) { if (vis(e)) { el = e; break } } }
       return el
     }
-    const wantRole = target.role ? String(target.role).trim().toLowerCase() : ''
-    // Candidates: the selector's matches, or (role-only) the common-role set.
-    let list = target.selector ? all(target.selector, root) : (wantRole ? all(ROLE_CANDIDATES, root) : [])
-    if (wantRole) list = list.filter((e) => implicitRole(e) === wantRole)
-    if (target.name) {
-      const nm = String(target.name).trim().toLowerCase()
-      list = list.filter((e) => accName(e).toLowerCase().includes(nm))
-    }
-    if (target.visible !== false) list = list.filter(vis)
-    if (target.text) {
-      const tx = String(target.text).trim()
-      list = list.filter((e) => (e.textContent || '').trim().includes(tx))
-    }
-    if (target.inViewport) list = list.filter(inView)
+    const list = resolveList(target, root)
     let idx = (typeof target.nth === 'number') ? target.nth : 0
     if (idx < 0) idx = list.length + idx
     return list[idx] || null
   }
-  globalThis.__tapDeep = { all, control, pick, implicitRole, accName }
+  // Witness voting on a conjunctive MISS (ADR 2026-07-17-reference-
+  // metabolism): a resolver declaring BOTH witness classes (structural
+  // `selector` + semantic `role`/`name`) already paid for redundancy —
+  // when one class drifts, the survivor may still uniquely name the
+  // author's intent. Rule: absence ≠ veto; dissent = veto; uniqueness
+  // required. The survivor resolves iff it matches EXACTLY ONE element
+  // AND the other class matches ZERO. Fires only on a pick miss with
+  // nth ∈ {undefined, 0} — hits are byte-identical to pick. Returns
+  // { el, witness? }; a fallback resolution carries witness =
+  // { resolved_by, missing } which handlers ride into _tap_anomalies
+  // (never silent — the early drift warning IS the point).
+  const pickVoted = (target, root) => {
+    const hit = pick(target, root)
+    const isObj = target && typeof target === 'object'
+    if (hit || !isObj) return { el: hit }
+    const nthOk = target.nth === undefined || target.nth === 0
+    if (!target.selector || !(target.role || target.name) || !nthOk) return { el: null }
+    let scope = root
+    if (target.within) {
+      scope = pick(target.within, root, 1)
+      if (!scope) return { el: null }
+    }
+    const base = {
+      ...(target.text ? { text: target.text } : {}),
+      ...(target.visible !== undefined ? { visible: target.visible } : {}),
+      ...(target.inViewport ? { inViewport: target.inViewport } : {}),
+    }
+    const semList = resolveList({
+      ...base,
+      ...(target.role ? { role: target.role } : {}),
+      ...(target.name ? { name: target.name } : {}),
+    }, scope)
+    const structList = resolveList({ ...base, selector: target.selector }, scope)
+    if (semList.length === 1 && structList.length === 0) {
+      return { el: semList[0], witness: { resolved_by: 'semantic', missing: 'selector' } }
+    }
+    if (structList.length === 1 && semList.length === 0) {
+      return { el: structList[0], witness: { resolved_by: 'selector', missing: 'semantic' } }
+    }
+    return { el: null }
+  }
+  globalThis.__tapDeep = { all, control, pick, pickVoted, implicitRole, accName }
 }
 // Idempotent: ensure globalThis.__tapDeep exists in the (frame) target before a
 // handler's injected fn references it. One extra execFunc per op — ops are
@@ -1834,6 +1991,10 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
             })
             if (diag && diag.reach) detail += ` [reach=${diag.reach}]`
           } catch (_) { /* diagnosis is best-effort */ }
+          // Ambient freshness (ADR 2026-07-17): what did the last organic-
+          // browse audit see for THIS binding? Staleness knowledge lands
+          // exactly where the agent decides between retry and re-capture.
+          try { detail += await ambientFreshnessOf(tabId, resolver, selStr) } catch (_) { /* best-effort */ }
           throw new Error(detail)
         }
         throw e
@@ -1867,12 +2028,18 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
           return r.width > 0 && r.height > 0
         }
         let el = null
+        let witness
         if (isObj) {
           // Explicit TargetResolver → the shared predicate picker (single source
-          // of truth). NO semantic text/aria fallback: an explicit resolver is
-          // precise intent; out-of-range must fail loudly, never silently click
-          // a different node (the whole point of ADR 2026-07-08).
-          el = globalThis.__tapDeep.pick(t, document)
+          // of truth), now with witness voting on a conjunctive miss (ADR
+          // 2026-07-17-reference-metabolism, amending 2026-07-08's fail-loudly
+          // clause): when ONE declared witness class drifted (absent) and the
+          // other still resolves UNIQUELY, the survivor carries the author's
+          // intent — resolve it and REPORT via _tap_anomalies.witness. Dissent
+          // and ambiguity still fail loudly, never a silent different node.
+          const voted = globalThis.__tapDeep.pickVoted(t, document)
+          el = voted.el
+          witness = voted.witness
         } else {
           el = globalThis.__tapDeep.all(t, document)[0] || null
           if (el && !vis(el)) {
@@ -1898,13 +2065,23 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
         if (probe) {
           if (!el) return { resolved: false }
           const rb = el.getBoundingClientRect()
-          return { resolved: true, x: Math.round(rb.x + rb.width / 2), y: Math.round(rb.y + rb.height / 2) }
+          return {
+            resolved: true,
+            x: Math.round(rb.x + rb.width / 2),
+            y: Math.round(rb.y + rb.height / 2),
+            ...(witness ? { _tap_anomalies: { witness } } : {}),
+          }
         }
         if (!el) throw new Error('Element not found: ' + label)
         el.scrollIntoView({ block: 'center', behavior: 'instant' })
         el.click()
         const r = el.getBoundingClientRect()
-        return { clicked: true, x: Math.round(r.x + r.width / 2), y: Math.round(r.y + r.height / 2) }
+        return {
+          clicked: true,
+          x: Math.round(r.x + r.width / 2),
+          y: Math.round(r.y + r.height / 2),
+          ...(witness ? { _tap_anomalies: { witness } } : {}),
+        }
       }
       let result
       try {
@@ -1933,7 +2110,15 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       if (params.trusted) {
         await cdpClick(tabId, result.x + dx, result.y + dy)
       }
-      return {}
+      // Ambient recorder (ADR 2026-07-17): remember this host×witness so the
+      // user's organic browsing can revalidate it later. Fire-and-forget —
+      // never on the op's critical path.
+      if (params.resolver) {
+        chrome.tabs.get(tabId).then((t) => recordBinding(t && t.url, params.resolver)).catch(() => {})
+      }
+      // Witness-voting fallback report rides to the engine (core lifts
+      // value._tap_anomalies → OpResult.anomalies → run/verify envelopes).
+      return result._tap_anomalies ? { _tap_anomalies: result._tap_anomalies } : {}
     }
 
     case 'type': {
