@@ -882,10 +882,16 @@
         "op"
       ],
       "additionalProperties": false,
-      "description": "Host op: capture the tab as a PDF (CDP Page.printToPDF). base64 binds via save. ADR 2026-07-08-op-capabilities.",
+      "description": "Host op: PDF output. mode:export (default) = CDP Page.printToPDF of the bound tab (ADR 2026-07-08). mode:stamp = overlay stamp onto input PDF pdf (tab-free, deterministic — ADR 2026-07-15). pdfBytes is the peer-transport form of pdf, expanded from the $file ref at the dispatch boundary; not authored.",
       "properties": {
         "op": {
           "const": "pdf"
+        },
+        "mode": {
+          "enum": [
+            "export",
+            "stamp"
+          ]
         },
         "landscape": {
           "type": "boolean"
@@ -899,8 +905,59 @@
         "paperHeight": {
           "type": "number"
         },
+        "pdf": {
+          "type": "string",
+          "description": "$file ref to the source PDF (stamp mode)"
+        },
+        "stamp": {
+          "$ref": "#/$defs/PdfStamp"
+        },
+        "pdfBytes": {
+          "type": "string",
+          "description": "peer transport only — boundary-expanded base64; not authored"
+        },
         "save": {
           "type": "string"
+        }
+      }
+    },
+    "PdfStamp": {
+      "type": "object",
+      "required": [
+        "image",
+        "page",
+        "x",
+        "y"
+      ],
+      "additionalProperties": false,
+      "description": "Stamp/annotation overlay for op:pdf mode:stamp (ADR 2026-07-15). Local signature image overlaid at declared coordinates. image is a local $file ref.",
+      "properties": {
+        "image": {
+          "type": "string",
+          "description": "$file ref to a local PNG/SVG signature image"
+        },
+        "page": {
+          "type": "number",
+          "description": "1-based page index"
+        },
+        "x": {
+          "type": "number",
+          "description": "PDF user-space points (72 dpi), origin bottom-left"
+        },
+        "y": {
+          "type": "number"
+        },
+        "width": {
+          "type": "number",
+          "description": "rendered width; height derived from image aspect"
+        },
+        "opacity": {
+          "type": "number",
+          "description": "0..1, default 1"
+        },
+        "imageBytes": {
+          "type": "string",
+          "description": "peer transport only — boundary-expanded base64; not authored"
         }
       }
     },
