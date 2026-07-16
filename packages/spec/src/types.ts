@@ -363,15 +363,29 @@ export interface AxOp {
   save?: string;
 }
 
+/** Host op: invoke a thin host capability from the host-caps registry.
+ *  `cap` names a registry entry mapped to a chrome.<namespace>.<method>(...)
+ *  call; adding a capability is a registry entry (data), not new op code.
+ *  PUBLIC mirror of core/types.ts:HostOp (ADR
+ *  2026-07-16-primitive-set-narrow-waist-and-thin-host-capability-registry). */
+export interface HostOp {
+  op: "host";
+  cap: string;
+  args?: Record<string, unknown>;
+  save?: string;
+}
+
 export type Op =
   | FetchOp | NavOp | WaitOp | InputOp | ExtractOp | CookiesOp | TapOp
   | IfOp | ForeachOp | ParallelOp
   | EvalOp | TabOp | BookmarkOp
   | PdfOp
   | NotifyOp
-  | AxOp;
+  | AxOp
+  | HostOp;
 
-/** Runtime constant for the 16-op closure (highlight/screencast/point retired
+/** Runtime constant for the 17-op closure (op:host added per ADR
+ *  2026-07-16-primitive-set-narrow-waist; highlight/screencast/point retired
  *  per ADR 2026-07-13-op-union-minimization). */
 export const OP_NAMES_V2 = [
   "fetch", "nav", "wait", "input", "extract", "cookies", "tap",
@@ -380,6 +394,7 @@ export const OP_NAMES_V2 = [
   "pdf",
   "notify",
   "ax",
+  "host",
 ] as const;
 
 export type OpName = typeof OP_NAMES_V2[number];

@@ -1660,6 +1660,34 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       return { notified: true }
     }
 
+    case 'host': {
+      // op:host → run a thin host CAPABILITY resolved by core (Lane B, ADR
+      // 2026-07-16-primitive-set-narrow-waist-and-thin-host-capability-registry).
+      // `params._cap` is the registry spec {namespace, method, params} attached
+      // at the core dispatch boundary. This handler is GENERIC: it calls
+      // chrome.<namespace>.<method>(...) with NO per-cap branch, so adding a
+      // capability is a registry edit (core/assets/host-caps.json) — never a
+      // change here. That absence of per-cap code IS the Lane-B guarantee.
+      const spec = params._cap
+      if (!spec || typeof spec.namespace !== 'string' || typeof spec.method !== 'string') {
+        throw new Error('op:host missing resolved _cap (core dispatch must attach it)')
+      }
+      // Defense-in-depth: mirror core HOST_CAP_NAMESPACES so a wire that
+      // bypassed core validation still cannot invoke an arbitrary chrome API.
+      const HOST_NS_OK = new Set(['tabs', 'windows'])
+      if (!HOST_NS_OK.has(spec.namespace)) {
+        throw new Error('op:host: namespace "' + spec.namespace + '" not allowed')
+      }
+      const ns = chrome[spec.namespace]
+      const fn = ns && ns[spec.method]
+      if (typeof fn !== 'function') {
+        throw new Error('op:host: chrome.' + spec.namespace + '.' + spec.method + ' is not a function')
+      }
+      const argv = (Array.isArray(spec.params) ? spec.params : []).map((name) => (params.args || {})[name])
+      const result = await fn.apply(ns, argv)
+      return result === undefined ? { host: spec.namespace + '.' + spec.method } : result
+    }
+
     case 'cookies': {
       const tab = await chrome.tabs.get(tabId)
       return { cookies: await chrome.cookies.getAll({ url: tab.url }) }

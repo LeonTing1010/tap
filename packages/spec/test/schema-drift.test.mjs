@@ -73,12 +73,13 @@ test("schema OpName.enum exactly matches OP_NAMES_V2 in src/types.ts (bidirectio
     `OpName drift:\n  in TS  not in schema: ${tsOps.filter((o) => !schemaOps.includes(o))}\n  in schema not in TS: ${schemaOps.filter((o) => !tsOps.includes(o))}`,
   );
 
-  // Same length confirms no duplicates within either (16 = 11 + 2 host +
+  // Same length confirms no duplicates within either (17 = 11 + 2 host +
   // 2 output pdf/notify (ADR 2026-07-08) + 1 host-observation ax (ADR
-  // 2026-07-12); highlight/screencast/point retired per ADR
+  // 2026-07-12) + 1 host-capability op:host (ADR 2026-07-16-primitive-set-
+  // narrow-waist); highlight/screencast/point retired per ADR
   // 2026-07-13-op-union-minimization)
-  assert.equal(tsOps.length, 16, `OP_NAMES_V2 must have 16 entries (got ${tsOps.length})`);
-  assert.equal(schemaOps.length, 16, `schema OpName.enum must have 16 entries (got ${schemaOps.length})`);
+  assert.equal(tsOps.length, 17, `OP_NAMES_V2 must have 17 entries (got ${tsOps.length})`);
+  assert.equal(schemaOps.length, 17, `schema OpName.enum must have 17 entries (got ${schemaOps.length})`);
 });
 
 test("every TS op interface has a matching $defs entry", () => {

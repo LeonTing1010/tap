@@ -65,7 +65,7 @@
     },
     "OpName": {
       "type": "string",
-      "description": "Closed 16-op union (substrate 7 + control 3 + escape 1 + host 2 + output 2 + observation 1). Mirrors OP_NAMES_V2. highlight/screencast/point retired per ADR 2026-07-13-op-union-minimization.",
+      "description": "Closed 17-op union (substrate 7 + control 3 + escape 1 + host 2 + output 2 + observation 1 + host-capability 1). Mirrors OP_NAMES_V2. highlight/screencast/point retired per ADR 2026-07-13-op-union-minimization.",
       "enum": [
         "fetch",
         "nav",
@@ -82,7 +82,8 @@
         "bookmark",
         "pdf",
         "notify",
-        "ax"
+        "ax",
+        "host"
       ]
     },
     "NavAttachMatchMode": {
@@ -701,6 +702,9 @@
         },
         {
           "$ref": "#/$defs/AxOp"
+        },
+        {
+          "$ref": "#/$defs/HostOp"
         }
       ]
     },
@@ -1005,6 +1009,29 @@
           "minimum": 1,
           "maximum": 400,
           "description": "Max items returned. Default 120."
+        },
+        "save": {
+          "type": "string"
+        }
+      }
+    },
+    "HostOp": {
+      "type": "object",
+      "required": [
+        "op",
+        "cap"
+      ],
+      "additionalProperties": false,
+      "description": "Host op: invoke a thin host capability from the host-caps registry (Lane B, ADR 2026-07-16-primitive-set-narrow-waist-and-thin-host-capability-registry). `cap` names a registry entry mapped to a chrome.<namespace>.<method>(...) call; adding a capability is a registry entry (data), not new op code.",
+      "properties": {
+        "op": {
+          "const": "host"
+        },
+        "cap": {
+          "type": "string"
+        },
+        "args": {
+          "type": "object"
         },
         "save": {
           "type": "string"
