@@ -617,10 +617,20 @@ const DIAGNOSE_REACHABILITY = (t) => {
   const host = D.pick({ selector: t.selector, visible: false }, document)
   const hadDiscriminator = !!(t.text || t.name)
   if (!host) {
-    // selector matched nothing even bare. A ' >>> ' frame chain that got
-    // here (frame resolved, inner selector missed) is still absent from the
-    // reachable DOM; a cross-origin frame would have failed earlier with a
-    // frame-probe error, not reached this choke point.
+    // Bare selector matched nothing in the top document. Before calling it
+    // `absent` (real drift → re-capture), check whether it lives inside a
+    // SAME-ORIGIN iframe: querySelector never crosses iframe document
+    // boundaries, so an iframe-embedded target (AGC-style SPA consoles) looks
+    // "absent" to a bare selector when the fix is actually the ' >>> ' frame
+    // combinator, not a re-capture. Cross-origin frames throw earlier in
+    // resolveFrame's probe and never reach here.
+    try {
+      for (const fr of document.querySelectorAll('iframe')) {
+        let idoc = null
+        try { idoc = fr.contentDocument } catch (_) { /* cross-origin: skip */ }
+        if (idoc && idoc.querySelector(t.selector)) return { reach: 'in_frame' }
+      }
+    } catch (_) { /* best-effort; a ' >>> ' selector throws in querySelector → absent */ }
     return { reach: 'absent' }
   }
   // Host exists. Opaque host (no light children, no own text) + the resolver
@@ -1889,7 +1899,7 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
         throw e
       }
       if (params.probe) return { resolved: !!(result && result.resolved) }
-      if (!result) throw new Error('selector_not_found: ' + (innerSel ?? '[resolver]') + ' (page not ready — exec returned null)')
+      if (!result) throw new Error('selector_not_found: ' + (innerSel ?? '[resolver]') + ' (top-frame resolve found nothing — page may still be loading, or the target is inside an iframe: prefix the selector, e.g. iframeSel >>> innerSel)')
       // CDP fallback: if site needs isTrusted events, retry with cdpClick
       // (dx/dy translate frame-relative coords to top-frame viewport space)
       if (params.trusted) {
@@ -2029,7 +2039,7 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
         const r = el.getBoundingClientRect()
         return { x: Math.round(r.x + r.width / 2), y: Math.round(r.y + r.height / 2) }
       }, sel)
-      if (!coords) throw new Error('selector_not_found: ' + sel + ' (page not ready — exec returned null)')
+      if (!coords) throw new Error('selector_not_found: ' + sel + ' (top-frame resolve found nothing — page may still be loading, or the target is inside an iframe: prefix the selector, e.g. iframeSel >>> innerSel)')
       // Real CDP click establishes focus + caret; select-all so insertText
       // REPLACES any existing value; Input.insertText drives the native
       // beforeinput/input pipeline (per-char dispatchKeyEvent({text}) silently
@@ -2087,7 +2097,7 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
         return { x: Math.round(r.x + r.width / 2), y: Math.round(r.y + r.height / 2) }
       }, sel)
       // null exec = page mid-navigation → typed miss, not "reading 'x'"
-      if (!coords) throw new Error('selector_not_found: ' + sel + ' (page not ready)')
+      if (!coords) throw new Error('selector_not_found: ' + sel + ' (top-frame resolve found nothing — page may still be loading, or the target is inside an iframe: prefix the selector, e.g. iframeSel >>> innerSel)')
       await withDebugger(tabId, () =>
         chrome.debugger.sendCommand({ tabId }, 'Input.dispatchMouseEvent', { type: 'mouseMoved', x: coords.x + dx, y: coords.y + dy }))
       return {}
@@ -2137,7 +2147,7 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
         return { blurred: true }
       }
       const done = await execFunc(fx, blurResolver, sel)
-      if (!done) throw new Error('selector_not_found: ' + sel + ' (page not ready — exec returned null)')
+      if (!done) throw new Error('selector_not_found: ' + sel + ' (top-frame resolve found nothing — page may still be loading, or the target is inside an iframe: prefix the selector, e.g. iframeSel >>> innerSel)')
       return {}
     }
 

@@ -108,9 +108,11 @@ export interface NavOp {
  *  `text` → filter `inViewport` → index `nth` (0-based; negatives from the
  *  end, `-1` = last). PUBLIC mirror of core/types.ts:TargetResolver. */
 export interface TargetResolver {
-  /** CSS selector (supports the ` >>> ` shadow-piercing combinator).
-   *  Optional when `role` is given. At least one of `selector` / `role`
-   *  is required. */
+  /** CSS selector. The ` >>> ` piercing combinator crosses BOTH shadow-root
+   *  AND iframe boundaries: `iframeSel >>> innerSel` targets an element inside
+   *  an iframe (same- or cross-origin). A bare selector searches only the top
+   *  document and will NOT match inside an iframe. Optional when `role` is
+   *  given. At least one of `selector` / `role` is required. */
   selector?: string;
   /** ARIA role (explicit `role=` or implicit from tag) — selector-free
    *  semantic targeting that survives React class/DOM churn. A pragmatic

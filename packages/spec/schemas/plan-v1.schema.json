@@ -208,7 +208,7 @@
       "properties": {
         "selector": {
           "type": "string",
-          "description": "CSS selector (supports ' >>> ' shadow-piercing combinator). Optional when role is given."
+          "description": "CSS selector. The ' >>> ' piercing combinator crosses BOTH shadow-root AND iframe boundaries: 'iframeSel >>> innerSel' targets an element inside an iframe (same- or cross-origin). A bare selector searches only the top document and will NOT match inside an iframe. Optional when role is given."
         },
         "role": {
           "type": "string",

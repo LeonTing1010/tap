@@ -90,7 +90,7 @@ test('selector-bearing handlers route through resolveFrame', () => {
 test('CDP coordinate ops translate frame-relative coords (dx/dy)', () => {
   const click = slice("case 'click': {", 5400) // widened: visible-match clickResolver (2026-06-11) + probe-mode branch (Clause B, 2026-06-17) + inline deepAll shadow helper (2026-06-23) + closed-shadow pierce fallback (Phase 2, 2026-07-10)
   assert(click.includes('result.x + dx'), 'trusted click must offset by iframe viewport position')
-  const hover = slice("case 'hover': {", 800)
+  const hover = slice("case 'hover': {", 1000) // widened 800->1000: the selector-miss message now carries the iframe ' >>> ' hint (2026-07-16)
   assert(hover.includes('coords.x + dx'), 'hover mouseMoved must offset by iframe viewport position')
   const type = slice("case 'type': {", 4300)
   assert(type.includes('probe.x + dx'), 'type keys/contenteditable paths must offset coords')
@@ -139,6 +139,63 @@ test('frame miss surfaces as Element not found (→ selector_not_found wire code
   const body = slice('async function resolveFrame(', 1800)
   assert(body.includes("throw new Error('Element not found: "),
     'resolveFrame errors must keep the prefix peer-conformance maps to selector_not_found')
+})
+
+// ── reachability diagnosis: a bare selector that misses in the top document
+//    but exists inside a SAME-ORIGIN iframe must be tagged [reach=in_frame]
+//    (→ core suggests the ' >>> ' fix), NOT `absent` (→ wrongly says re-capture).
+//    This is the AGC-console class: querySelector never crosses iframe document
+//    boundaries, so the fix is the frame combinator, not drift.
+function extractArrowConst(name) {
+  const marker = `const ${name} = `
+  const start = BG_SRC.indexOf(marker)
+  assert(start >= 0, `${marker} not found in background.js`)
+  const braceStart = BG_SRC.indexOf('{', start)
+  let depth = 0
+  for (let i = braceStart; i < BG_SRC.length; i++) {
+    if (BG_SRC[i] === '{') depth++
+    else if (BG_SRC[i] === '}') { depth--; if (depth === 0) return BG_SRC.slice(BG_SRC.indexOf('=', start) + 1, i + 1).trim() }
+  }
+  throw new Error(`unbalanced braces in ${name}`)
+}
+
+test('DIAGNOSE_REACHABILITY tags a same-origin iframe target as in_frame (behavioral)', () => {
+  const arrow = extractArrowConst('DIAGNOSE_REACHABILITY')
+  const node = { tagName: 'DIV' }
+  const mkDoc = (hit, crossOrigin) => ({
+    querySelectorAll: (s) => s === 'iframe' ? [{
+      get contentDocument() {
+        if (crossOrigin) throw new Error('cross-origin: blocked')
+        return { querySelector: (sel) => (hit && sel === '.target') ? node : null }
+      },
+    }] : [],
+  })
+  const bind = (doc) => new Function('document', `return (${arrow})`)(doc)
+  const prev = globalThis.__tapDeep
+  globalThis.__tapDeep = { pick: () => null } // top-doc host absent → forces the iframe probe
+  try {
+    assert.deepEqual(bind(mkDoc(true, false))({ selector: '.target' }), { reach: 'in_frame' },
+      'same-origin iframe hit must tag in_frame')
+    assert.deepEqual(bind(mkDoc(false, false))({ selector: '.target' }), { reach: 'absent' },
+      'no iframe hit → absent (real drift)')
+    assert.deepEqual(bind(mkDoc(true, true))({ selector: '.target' }), { reach: 'absent' },
+      'cross-origin frame throws on contentDocument → best-effort falls through to absent')
+  } finally {
+    globalThis.__tapDeep = prev
+  }
+})
+
+test('DIAGNOSE probes iframe contentDocument before declaring absent (source)', () => {
+  const body = slice('const DIAGNOSE_REACHABILITY', 1500)
+  assert(body.includes('contentDocument'), 'must probe iframe contentDocument')
+  assert(body.includes("reach: 'in_frame'"), 'must tag in_frame on an iframe hit')
+})
+
+test('misdirecting "page not ready" wording replaced with the frame >>> hint', () => {
+  assert(!BG_SRC.includes('page not ready'),
+    'the misdirecting "page not ready" wording (blames timing for a scope error) must be gone')
+  assert(BG_SRC.includes('iframeSel >>> innerSel'),
+    'selector-miss messages must hint the frame combinator')
 })
 
 console.log(`\n${passed + failed} constraints, ${passed} passed, ${failed} failed\n`)
