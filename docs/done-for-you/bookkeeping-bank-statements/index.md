@@ -82,6 +82,12 @@ Nothing learns, nothing trains on your client data, nothing improvises on a bank
 - Anyone whose clients bank at **small banks or credit unions QuickBooks / Plaid can't connect**
 - Bookkeepers tired of the month-end statement chase — who'd rather buy the outcome than build the tool
 
+**And it goes beyond banks.** The same recorded-pull approach covers payroll reports,
+merchant processor statements, loan statements, and recurring vendor invoices — the whole
+"pullable" half of your month-end missing list. How firms run that as a dispatch list:
+[Stop Chasing Clients for Documents — Most Are Behind Logins You Already
+Have](/blog/stop-chasing-clients-for-documents.html).
+
 ## Start the free pilot
 
 Email **[hello@taprun.dev](mailto:hello@taprun.dev?subject=Bookkeeping%20bank-statement%20pilot)**

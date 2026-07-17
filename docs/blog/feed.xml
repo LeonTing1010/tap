@@ -6,7 +6,15 @@
 <description>Engineering insights on browser automation, AI agents, and deterministic programs.</description>
 <language>en-us</language>
 <atom:link href="https://taprun.dev/blog/feed.xml" rel="self" type="application/rss+xml"/>
-<lastBuildDate>Thu, 09 Jul 2026 00:00:00 +0000</lastBuildDate>
+<lastBuildDate>Sat, 18 Jul 2026 00:00:00 +0000</lastBuildDate>
+
+<item>
+<title>Stop Chasing Clients for Documents — Most Are Behind Logins You Already Have</title>
+<link>https://taprun.dev/blog/stop-chasing-clients-for-documents.html</link>
+<description>The close stalls on missing documents, not accounting — and reminder tools only automate the asking. Most of the missing list (statements, payroll reports, processor payouts, loan statements) sits in portals someone can already log into. Split the list into pullable vs. genuinely-human, run the pullable half as a dispatch list on your own machine, and shrink the chase to a ten-minute triage.</description>
+<pubDate>Sat, 18 Jul 2026 00:00:00 +0000</pubDate>
+<guid>https://taprun.dev/blog/stop-chasing-clients-for-documents.html</guid>
+</item>
 
 <item>
 <title>The API Got Metered. The Browser Didn't.</title>
