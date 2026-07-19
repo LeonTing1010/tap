@@ -25,7 +25,11 @@
   --text: #E7E9EC;
   --text-body: #C5C9CF;
   --text-dim: #9AA0A8;
-  --text-muted: #62676F;
+  /* #767B84, not the reference design's #62676F: on --ink that value measures
+     3.4:1, below the WCAG AA 4.5:1 floor for body-size text. The design used it
+     on short labels; here it also carries dates, units and captions at 10-15px.
+     Measured across 739 live text nodes — this was the only token below AA. */
+  --text-muted: #767B84;
 
   /* Signal */
   --signal: #B4F03A;
