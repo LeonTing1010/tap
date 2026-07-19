@@ -14,17 +14,28 @@
 <meta property="og:image" content="https://taprun.dev/social-preview.png">
 <meta name="twitter:card" content="summary_large_image">
 {% include head-common.html %}
-{% include blog-styles.html %}
+<link rel="stylesheet" href="/assets/css/site.css">
 <style>
+  /* Page-specific only. Tokens, typography, code and table rules come from
+     /assets/css/site.css. */
+
+  .site-header { display: flex; align-items: baseline; justify-content: space-between; gap: 24px; flex-wrap: wrap; margin-bottom: 48px; }
+  .site-header .brand { font-family: var(--font-display); font-weight: 600; font-size: 18px; color: var(--text); display: flex; align-items: center; gap: 10px; }
+  .site-header .brand-mark { font-family: var(--font-mono); color: var(--signal); }
+  .site-nav { display: flex; gap: 20px; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase; }
+  .site-nav a { color: var(--text-dim); }
+  .site-nav a:hover { color: var(--signal); text-decoration: none; }
+  .lede { font-size: 1.05rem; color: var(--text-dim); }
+
   .int-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.25rem; margin: 2rem 0; }
-  .int-card { padding: 1.25rem 1.4rem; border: 1px solid #E5E7EB; border-radius: 8px; transition: border-color 0.15s; text-decoration: none; color: inherit; display: block; }
-  .int-card:hover { border-color: #6366F1; }
-  .int-card .badge { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; padding: 0.15rem 0.5rem; border-radius: 3px; display: inline-block; margin-bottom: 0.6rem; letter-spacing: 0.03em; }
-  .badge-live { background: #D1FAE5; color: #065F46; }
-  .badge-beta { background: #FEF3C7; color: #92400E; }
-  .badge-roadmap { background: #E5E7EB; color: #6B7280; }
-  .int-card h3 { margin: 0 0 0.5rem; font-size: 1.1rem; }
-  .int-card p { margin: 0; color: #4B5563; font-size: 0.93rem; line-height: 1.5; }
+  .int-card { padding: 1.25rem 1.4rem; background: var(--ink-soft); border: 1px solid var(--ink-rule); border-radius: 0; transition: border-color 0.15s; text-decoration: none; color: inherit; display: block; }
+  a.int-card:hover { border-color: var(--signal); text-decoration: none; }
+  .int-card .badge { font-family: var(--font-mono); font-size: 0.72rem; padding: 0.15rem 0.5rem; border-radius: 0; display: inline-block; margin-bottom: 0.6rem; letter-spacing: 0.03em; }
+  .badge-live { background: rgba(74,222,128,0.14); color: var(--emerald); }
+  .badge-beta { background: rgba(255,182,39,0.14); color: var(--amber); }
+  .badge-roadmap { background: rgba(255,255,255,0.06); color: var(--text-dim); }
+  .int-card h3 { margin: 0 0 0.5rem; font-size: 1.1rem; color: var(--text); }
+  .int-card p { margin: 0; color: var(--text-body); font-size: 0.93rem; line-height: 1.5; }
   .int-card.disabled { cursor: default; opacity: 0.7; }
 </style>
 </head>

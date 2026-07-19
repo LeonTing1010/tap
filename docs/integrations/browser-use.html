@@ -33,26 +33,38 @@
 }
 </script>
 {% include head-common.html %}
-{% include blog-styles.html %}
+<link rel="stylesheet" href="/assets/css/site.css">
 <style>
-  .hero-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; letter-spacing: 0.04em; color: #6366F1; text-transform: uppercase; margin-bottom: 0.6rem; }
-  .scope-box { border: 1px solid #E5E7EB; border-radius: 8px; padding: 1rem 1.25rem; background: #F9FAFB; margin: 1.5rem 0; }
-  .scope-box h4 { margin-top: 0; font-size: 0.95rem; }
-  .scope-row { display: flex; gap: 0.6rem; align-items: baseline; margin-bottom: 0.4rem; }
-  .scope-row .tag { font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; padding: 0.1rem 0.45rem; border-radius: 3px; flex-shrink: 0; }
-  .scope-row .tag-yes { background: #D1FAE5; color: #065F46; }
-  .scope-row .tag-no { background: #FEE2E2; color: #991B1B; }
-  .scope-row .tag-tier0 { background: #DBEAFE; color: #1E40AF; }
-  table.token-math { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.92rem; }
-  table.token-math th, table.token-math td { padding: 0.6rem 0.8rem; border-bottom: 1px solid #E5E7EB; text-align: left; }
-  table.token-math th { background: #F9FAFB; font-weight: 600; }
-  table.token-math td.num { font-family: 'JetBrains Mono', monospace; text-align: right; }
-  .quote-card { border-left: 3px solid #6366F1; padding: 0.6rem 1rem; margin: 1rem 0; background: #F9FAFB; font-style: italic; }
-  .quote-card .attr { font-style: normal; font-size: 0.85rem; color: #6B7280; margin-top: 0.4rem; }
+  /* Page-specific only. Tokens, typography, code and base table rules come
+     from /assets/css/site.css. */
+
+  .site-header { display: flex; align-items: baseline; justify-content: space-between; gap: 24px; flex-wrap: wrap; margin-bottom: 48px; }
+  .site-header .brand { font-family: var(--font-display); font-weight: 600; font-size: 18px; color: var(--text); display: flex; align-items: center; gap: 10px; }
+  .site-header .brand-mark { font-family: var(--font-mono); color: var(--signal); }
+  .site-nav { display: flex; gap: 20px; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase; }
+  .site-nav a { color: var(--text-dim); }
+  .site-nav a:hover { color: var(--signal); text-decoration: none; }
+  .lede { font-size: 1.05rem; color: var(--text-dim); }
+
+  .hero-eyebrow { font-family: var(--font-mono); font-size: 0.85rem; letter-spacing: 0.04em; color: var(--signal); text-transform: uppercase; margin-bottom: 0.6rem; }
+  .scope-box { border: 1px solid var(--ink-rule); border-radius: 0; padding: 1rem 1.25rem; background: var(--ink-soft); margin: 1.5rem 0; }
+  .scope-box h4 { margin: 0 0 0.6rem; font-family: var(--font-display); font-size: 0.95rem; color: var(--text); }
+  .scope-row { display: flex; gap: 0.6rem; align-items: baseline; margin-bottom: 0.4rem; font-size: 0.93rem; color: var(--text-body); }
+  .scope-row .tag { font-family: var(--font-mono); font-size: 0.78rem; padding: 0.1rem 0.45rem; border-radius: 0; flex-shrink: 0; }
+  .scope-row .tag-yes { background: rgba(74,222,128,0.14); color: var(--emerald); }
+  .scope-row .tag-no { background: rgba(242,109,91,0.14); color: var(--rust); }
+  .scope-row .tag-tier0 { background: rgba(180,240,58,0.14); color: var(--signal); }
+  table.token-math { font-size: 0.92rem; }
+  table.token-math th, table.token-math td { padding: 0.6rem 0.8rem; }
+  table.token-math th { background: var(--ink-soft); }
+  table.token-math td.num { font-family: var(--font-mono); text-align: right; font-variant-numeric: tabular-nums; }
+  .quote-card { border-left: 3px solid var(--signal); padding: 0.6rem 1rem; margin: 1rem 0; background: rgba(180,240,58,0.05); font-style: italic; color: var(--text-body); }
+  .quote-card .attr { font-style: normal; font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-muted); margin-top: 0.4rem; }
   .next-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 2rem; }
-  .next-grid a { padding: 1rem; border: 1px solid #E5E7EB; border-radius: 6px; text-decoration: none; color: inherit; transition: border-color 0.15s; }
-  .next-grid a:hover { border-color: #6366F1; }
-  .next-grid .label { font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: #6366F1; text-transform: uppercase; letter-spacing: 0.04em; }
+  .next-grid a { padding: 1rem; background: var(--ink-soft); border: 1px solid var(--ink-rule); border-radius: 0; text-decoration: none; color: var(--text); transition: border-color 0.15s; }
+  .next-grid a:hover { border-color: var(--signal); text-decoration: none; }
+  .next-grid .label { font-family: var(--font-mono); font-size: 0.78rem; color: var(--signal); text-transform: uppercase; letter-spacing: 0.04em; }
+  .next-grid .sub { color: var(--text-muted); font-size: 0.9rem; }
   @media (max-width: 600px) { .next-grid { grid-template-columns: 1fr; } }
 </style>
 </head>
@@ -331,28 +343,28 @@ tap forge https://example.com/dashboard
     <a href="https://pypi.org/project/taprun/">
       <div class="label">Python SDK</div>
       <div><strong>pip install taprun</strong></div>
-      <div style="color:#6B7280; font-size:0.9rem;">PyPI · MIT</div>
+      <div style="color: var(--text-muted); font-size:0.9rem;">PyPI · MIT</div>
     </a>
     <a href="https://www.npmjs.com/package/taprun">
       <div class="label">TypeScript SDK</div>
       <div><strong>npm install taprun</strong></div>
-      <div style="color:#6B7280; font-size:0.9rem;">npm · MIT</div>
+      <div style="color: var(--text-muted); font-size:0.9rem;">npm · MIT</div>
     </a>
     <a href="/install.html">
       <div class="label">CLI</div>
       <div><strong>brew / curl / npm</strong></div>
-      <div style="color:#6B7280; font-size:0.9rem;">2-minute install</div>
+      <div style="color: var(--text-muted); font-size:0.9rem;">2-minute install</div>
     </a>
     <a href="https://github.com/LeonTing1010/tap/issues">
       <div class="label">Feedback</div>
       <div><strong>Issues + roadmap</strong></div>
-      <div style="color:#6B7280; font-size:0.9rem;">Stagehand, Anthropic, more</div>
+      <div style="color: var(--text-muted); font-size:0.9rem;">Stagehand, Anthropic, more</div>
     </a>
   </div>
 
   <hr style="margin: 3rem 0 1.5rem;">
 
-  <p style="color:#6B7280; font-size: 0.9rem;">
+  <p style="color: var(--text-muted); font-size: 0.9rem;">
     Last updated 2026-04-26 against
     <code>taprun</code> v0.14 (Python) / v0.1.x (TypeScript). Trajectory
     compile (<code>forge(trajectory=...)</code>) shipped in commit

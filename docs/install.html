@@ -43,137 +43,100 @@ robots: "index,follow"
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/css/site.css">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='105' cy='115' r='55' fill='%23FFFFFF'/%3E%3Ccircle cx='85' cy='70' r='45' fill='%23FFFFFF'/%3E%3Cellipse cx='75' cy='32' rx='15' ry='22' fill='%23EF4444'/%3E%3Cellipse cx='90' cy='30' rx='12' ry='20' fill='%23DC2626'/%3E%3Cellipse cx='103' cy='35' rx='10' ry='16' fill='%23B91C1C'/%3E%3Cpath d='M 55 68 L 8 75 L 55 85 Z' fill='%23FBBF24'/%3E%3Cpath d='M 55 85 L 8 75 L 12 82 Z' fill='%23D97706'/%3E%3Ccircle cx='70' cy='65' r='14' fill='%231F2937'/%3E%3Ccircle cx='66' cy='61' r='5' fill='%23FFFFFF'/%3E%3Ccircle cx='74' cy='68' r='2.5' fill='%23FFFFFF'/%3E%3Cellipse cx='50' cy='78' rx='8' ry='5' fill='%23FECACA' opacity='0.8'/%3E%3Cellipse cx='125' cy='115' rx='35' ry='30' fill='%23818CF8'/%3E%3Cellipse cx='125' cy='115' rx='25' ry='20' fill='%236366F1'/%3E%3Ccircle cx='95' cy='130' r='25' fill='%23F9FAFB'/%3E%3Cpath d='M 145 140 L 175 185 L 155 180 L 140 145 Z' fill='%23818CF8'/%3E%3Cpath d='M 150 145 L 180 190 L 162 185 L 148 150 Z' fill='%236366F1'/%3E%3C/svg%3E">
 
 <style>
-  :root {
-    --bg-deep: #0a0a0f;
-    --bg-surface: #11111a;
-    --bg-card: #1a1a26;
-    --white: #fafafa;
-    --text: #e5e5ec;
-    --text-dim: #a8a8b8;
-    --text-muted: #6e6e80;
-    --indigo: #6366f1;
-    --indigo-bright: #a5b4fc;
-    --gold: #fbbf24;
-    --green: #34d399;
-    --red: #ef4444;
-    --border: rgba(255,255,255,0.08);
-    --radius: 10px;
-    --radius-lg: 14px;
-    --font-heading: 'Bricolage Grotesque', system-ui, sans-serif;
-    --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
-    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-  }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; }
-  body {
-    background: var(--bg-deep);
-    color: var(--text);
-    font-family: var(--font-body);
-    font-size: 16px;
-    line-height: 1.6;
-    -webkit-font-smoothing: antialiased;
-  }
-  a { color: var(--indigo-bright); text-decoration: none; }
-  a:hover { text-decoration: underline; }
+  /* Page-specific only. Tokens, body, typography, base pre/code and motion
+     rules live in /assets/css/site.css. */
+
+  /* This page runs a wider measure than the 720px article default, and its
+     .container is reused by the sticky topbar + footer, so it owns no
+     vertical padding. */
   .container { max-width: 880px; margin: 0 auto; padding: 0 24px; }
 
   header.topbar {
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--ink-rule);
     padding: 16px 0;
-    background: rgba(10, 10, 15, 0.85);
+    background: rgba(10, 11, 13, 0.85);
     backdrop-filter: blur(8px);
     position: sticky; top: 0; z-index: 10;
   }
   .topbar-row { display: flex; justify-content: space-between; align-items: center; }
-  .brand { font-family: var(--font-heading); font-weight: 800; font-size: 20px; color: var(--white); letter-spacing: -0.02em; }
+  .brand { font-family: var(--font-display); font-weight: 700; font-size: 20px; color: var(--text); letter-spacing: -0.02em; }
   .brand a { color: inherit; text-decoration: none; }
   .topnav a { color: var(--text-dim); margin-left: 18px; font-size: 14px; }
-  .topnav a:hover { color: var(--white); text-decoration: none; }
+  .topnav a:hover { color: var(--signal); text-decoration: none; }
 
   .hero { padding: 64px 0 32px; }
   .badge-status {
     display: inline-flex; align-items: center; gap: 8px;
     padding: 6px 12px;
-    background: rgba(239, 68, 68, 0.1);
-    border: 1px solid rgba(239, 68, 68, 0.3);
-    border-radius: 999px;
+    background: rgba(242, 109, 91, 0.10);
+    border: 1px solid rgba(242, 109, 91, 0.35);
+    border-radius: 0;
     font-family: var(--font-mono);
     font-size: 12px;
-    color: var(--red);
+    color: var(--rust);
     margin-bottom: 20px;
   }
-  .badge-status .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); }
+  .badge-status .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--rust); }
   h1 {
-    font-family: var(--font-heading);
-    font-weight: 800;
     font-size: clamp(28px, 4vw, 40px);
-    letter-spacing: -0.02em;
+    font-weight: 600;
     line-height: 1.15;
-    color: var(--white);
     margin: 0 0 16px;
   }
-  h1 .hl { color: var(--gold); }
+  h1 .hl { color: var(--signal); }
   .lede { font-size: 17px; color: var(--text-dim); margin: 0 0 8px; max-width: 680px; }
 
   .steps { display: flex; flex-direction: column; gap: 20px; padding: 24px 0 8px; }
   .step {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
+    background: var(--ink-raised);
+    border: 1px solid var(--ink-rule);
+    border-radius: 0;
     padding: 24px 24px 24px 64px;
     position: relative;
   }
-  .step.required { border-color: rgba(99, 102, 241, 0.5); }
+  .step.required { border-color: rgba(180, 240, 58, 0.45); }
   .step.required::after {
     content: 'Required';
     position: absolute; top: -10px; right: 20px;
-    background: var(--indigo); color: var(--white);
+    background: var(--signal); color: var(--ink);
     font-family: var(--font-mono); font-size: 10px; font-weight: 600;
-    padding: 3px 8px; border-radius: 4px; letter-spacing: 0.04em;
+    padding: 3px 8px; border-radius: 0; letter-spacing: 0.04em;
   }
   .step-num {
     position: absolute; top: 22px; left: 20px;
     width: 28px; height: 28px;
-    background: var(--bg-deep);
-    border: 1px solid var(--border);
+    background: var(--ink);
+    border: 1px solid var(--ink-rule);
     border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     font-family: var(--font-mono); font-weight: 700; font-size: 13px;
-    color: var(--indigo-bright);
+    color: var(--signal);
   }
-  .step.required .step-num { border-color: var(--indigo); color: var(--white); background: var(--indigo); }
-  .step h2 { font-family: var(--font-heading); font-weight: 700; font-size: 18px; color: var(--white); margin: 0 0 6px; letter-spacing: -0.01em; }
+  .step.required .step-num { border-color: var(--signal); color: var(--ink); background: var(--signal); }
+  .step h2 { font-size: 18px; color: var(--text); margin: 0 0 6px; }
   .step p { font-size: 14px; color: var(--text-dim); margin: 0 0 14px; }
   .step-targets { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); margin: -4px 0 14px; letter-spacing: 0.02em; }
 
+  /* This page's <pre> sits inside cards, so it drops to the darkest surface
+     to stay distinct from --ink-raised. Token classes are page-local names
+     (.k/.s/.cmt/.prompt) rather than site.css's .cmd/.comment. */
   pre {
-    background: var(--bg-deep);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
+    background: var(--ink);
     padding: 14px 16px;
     margin: 0 0 12px;
-    overflow-x: auto;
-    font-family: var(--font-mono);
     font-size: 13px;
-    color: var(--text);
     line-height: 1.55;
   }
   pre .prompt { color: var(--text-muted); user-select: none; }
   pre .cmt { color: var(--text-muted); }
-  pre .k { color: var(--gold); }
-  pre .s { color: var(--green); }
-  :not(pre) > code {
-    font-family: var(--font-mono);
-    font-size: 13px;
-    background: rgba(165, 180, 252, 0.08);
-    padding: 2px 6px;
-    border-radius: 4px;
-    color: var(--indigo-bright);
-  }
+  pre .c   { color: var(--text-muted); }
+  pre .k { color: var(--signal); }
+  pre .s { color: var(--emerald); }
 
   /* click-to-copy hint (mirrors head-common.html so the global handler works the same here) */
   pre { position: relative; }
@@ -188,71 +151,55 @@ robots: "index,follow"
   }
   pre:hover { cursor: pointer; }
   pre:hover::after { color: rgba(255,255,255,0.7); }
-  pre.tap-copied::after { content: 'copied ✓'; color: var(--green); }
-  :not(pre) > code:hover { cursor: pointer; outline: 1px dashed rgba(165,180,252,0.45); outline-offset: 2px; }
-  code.tap-copied { outline: 1px solid var(--green) !important; }
-  code.tap-copied::after { content: ' ✓'; color: var(--green); }
+  pre.tap-copied::after { content: 'copied ✓'; color: var(--emerald); }
+  :not(pre) > code:hover { cursor: pointer; outline: 1px dashed rgba(180,240,58,0.45); outline-offset: 2px; }
+  code.tap-copied { outline: 1px solid var(--emerald) !important; }
+  code.tap-copied::after { content: ' ✓'; color: var(--emerald); }
 
   .verify {
     margin: 40px 0 24px;
     padding: 24px;
-    background: var(--bg-surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
+    background: var(--ink-soft);
+    border: 1px solid var(--ink-rule);
+    border-radius: 0;
   }
-  .verify h2 { font-family: var(--font-heading); font-weight: 700; font-size: 18px; color: var(--white); margin: 0 0 12px; letter-spacing: -0.01em; }
-  .verify ol { margin: 0; padding-left: 18px; color: var(--text); }
+  .verify h2 { font-size: 18px; margin: 0 0 12px; }
+  .verify ol { margin: 0; padding-left: 18px; color: var(--text-body); }
   .verify li { margin-bottom: 10px; font-size: 14px; }
   .verify li code { font-size: 12px; }
   .badge-illustration {
     display: inline-flex; align-items: center; gap: 6px;
     font-family: var(--font-mono); font-size: 12px;
-    padding: 2px 8px; border-radius: 4px;
+    padding: 2px 8px; border-radius: 0;
   }
-  .badge-illustration.red { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
-  .badge-illustration.green { background: rgba(52,211,153,0.12); color: var(--green); border: 1px solid rgba(52,211,153,0.3); }
+  .badge-illustration.red { background: rgba(242,109,91,0.15); color: var(--rust); border: 1px solid rgba(242,109,91,0.35); }
+  .badge-illustration.green { background: rgba(74,222,128,0.12); color: var(--emerald); border: 1px solid rgba(74,222,128,0.3); }
 
   details.troubleshoot {
     margin: 24px 0;
     padding: 16px 20px;
-    background: var(--bg-surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
+    background: var(--ink-soft);
+    border: 1px solid var(--ink-rule);
+    border-radius: 0;
   }
   details.troubleshoot summary {
     cursor: pointer;
-    font-family: var(--font-heading);
+    font-family: var(--font-display);
     font-weight: 600;
-    color: var(--white);
+    color: var(--text);
     font-size: 15px;
     list-style: none;
   }
   details.troubleshoot summary::-webkit-details-marker { display: none; }
-  details.troubleshoot summary::before { content: '▸ '; color: var(--text-muted); }
+  details.troubleshoot summary::before { content: '▸ '; color: var(--signal); }
   details.troubleshoot[open] summary::before { content: '▾ '; }
   details.troubleshoot ul { color: var(--text-dim); font-size: 14px; padding-left: 20px; margin: 14px 0 0; }
-  details.troubleshoot li { margin-bottom: 8px; }
+  details.troubleshoot li { margin-bottom: 8px; font-size: 14px; }
 
-  .heroes {
-    margin: 48px 0 24px;
-  }
-  .heroes-head {
-    text-align: left;
-    margin-bottom: 20px;
-  }
-  .heroes-head h2 {
-    font-family: var(--font-heading);
-    font-weight: 700;
-    font-size: 22px;
-    color: var(--white);
-    margin: 0 0 6px;
-    letter-spacing: -0.02em;
-  }
-  .heroes-head p {
-    font-size: 14px;
-    color: var(--text-dim);
-    margin: 0;
-  }
+  .heroes { margin: 48px 0 24px; }
+  .heroes-head { text-align: left; margin-bottom: 20px; }
+  .heroes-head h2 { font-size: 22px; margin: 0 0 6px; }
+  .heroes-head p { font-size: 14px; color: var(--text-dim); margin: 0; }
   .hero-grid {
     display: grid;
     grid-template-columns: 1fr;
@@ -261,85 +208,89 @@ robots: "index,follow"
   @media (min-width: 760px) { .hero-grid { grid-template-columns: repeat(3, 1fr); } }
   .hero-card {
     display: flex; flex-direction: column;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
+    background: var(--ink-raised);
+    border: 1px solid var(--ink-rule);
+    border-radius: 0;
     padding: 18px;
     transition: border-color 0.15s, transform 0.15s;
     text-decoration: none;
   }
-  .hero-card:hover { border-color: rgba(99, 102, 241, 0.4); transform: translateY(-1px); text-decoration: none; }
+  .hero-card:hover { border-color: var(--signal); transform: translateY(-1px); text-decoration: none; }
   .hero-card .site { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); letter-spacing: 0.04em; }
-  .hero-card .name { font-family: var(--font-heading); font-weight: 700; color: var(--white); font-size: 17px; margin: 4px 0 8px; letter-spacing: -0.01em; }
+  .hero-card .name { font-family: var(--font-display); font-weight: 600; color: var(--text); font-size: 17px; margin: 4px 0 8px; letter-spacing: -0.01em; }
   .hero-card .desc { font-size: 13px; color: var(--text-dim); margin: 0; line-height: 1.5; flex: 1; }
-  .hero-card .arrow { color: var(--indigo-bright); font-family: var(--font-mono); font-size: 13px; margin-top: 12px; }
+  .hero-card .arrow { color: var(--signal); font-family: var(--font-mono); font-size: 13px; margin-top: 12px; }
 
   .footer-cta {
     margin: 48px 0 32px;
     padding: 28px 24px;
-    background: var(--bg-surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
+    background: var(--ink-soft);
+    border: 1px solid var(--ink-rule);
+    border-radius: 0;
     text-align: center;
   }
-  .footer-cta h2 { font-family: var(--font-heading); font-weight: 700; color: var(--white); font-size: 18px; margin: 0 0 8px; }
+  .footer-cta h2 { font-size: 18px; margin: 0 0 8px; }
   .footer-cta p { color: var(--text-dim); margin: 0 0 18px; font-size: 14px; }
   .cta-row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
   .cta-btn {
     display: inline-flex; align-items: center; gap: 6px;
     padding: 9px 16px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 8px;
+    background: var(--ink-raised);
+    border: 1px solid var(--ink-rule);
+    border-radius: 0;
     color: var(--text);
     font-size: 13px;
     font-family: var(--font-mono);
     text-decoration: none;
-    transition: border-color 0.15s, background 0.15s;
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
   }
-  .cta-btn:hover { border-color: var(--indigo); background: var(--bg-card); text-decoration: none; }
-  .cta-btn.primary { background: var(--indigo); color: var(--white); border-color: var(--indigo); }
-  .cta-btn.primary:hover { background: #4f51d8; border-color: #4f51d8; }
+  .cta-btn:hover { border-color: var(--signal); color: var(--signal); text-decoration: none; }
+  .cta-btn.primary { background: var(--signal); color: var(--ink); border-color: var(--signal); }
+  .cta-btn.primary:hover { background: var(--signal-dim); border-color: var(--signal-dim); color: var(--ink); }
 
   footer.site-footer {
-    border-top: 1px solid var(--border);
+    border-top: 1px solid var(--ink-rule);
     padding: 24px 0 32px;
     color: var(--text-muted);
     font-size: 13px;
   }
   footer.site-footer a { color: var(--text-dim); }
+  footer.site-footer a:hover { color: var(--signal); }
   footer.site-footer .row { display: flex; flex-wrap: wrap; gap: 18px; justify-content: space-between; }
 
   /* Recovery panel — shown when arriving from popup error states.
-     JS at bottom of <body> reads ?utm_campaign= and unhides one variant. */
+     JS at bottom of <body> reads ?utm_campaign= and unhides one variant.
+     Amber, not lime: this is a fault state, not the happy path. */
   .recovery {
     margin: 24px 0 0;
     padding: 20px 22px;
-    border: 1px solid rgba(251, 191, 36, 0.35);
-    background: rgba(251, 191, 36, 0.06);
-    border-radius: 10px;
-    color: var(--text);
+    border: 1px solid rgba(255, 182, 39, 0.35);
+    background: rgba(255, 182, 39, 0.06);
+    border-radius: 0;
+    color: var(--text-body);
   }
-  .recovery h2 { margin: 0 0 6px; font-size: 18px; font-weight: 700; }
+  .recovery h2 { margin: 0 0 6px; font-size: 18px; color: var(--amber); }
   .recovery .symptom { font-size: 14px; color: var(--text-dim); margin: 0 0 14px; }
   .recovery .fix-cmd {
     display: flex; align-items: center; gap: 8px;
-    background: #0b0d12; border: 1px solid var(--border); border-radius: 8px;
+    background: var(--ink); border: 1px solid var(--ink-rule); border-radius: 0;
     padding: 10px 12px; margin-bottom: 12px;
     font-family: var(--font-mono); font-size: 13px;
   }
-  .recovery .fix-cmd code { flex: 1; color: var(--text); white-space: nowrap; overflow-x: auto; }
+  .recovery .fix-cmd code { flex: 1; color: var(--text); background: none; white-space: nowrap; overflow-x: auto; }
   .recovery .copy-btn {
-    background: var(--indigo); color: var(--white); border: 0;
-    padding: 6px 12px; border-radius: 6px;
+    background: var(--amber); color: var(--ink); border: 0;
+    padding: 6px 12px; border-radius: 0;
+    font-family: var(--font-mono);
     font-size: 12px; font-weight: 600;
     cursor: pointer; white-space: nowrap;
   }
-  .recovery .copy-btn:hover { background: #4f51d8; }
+  .recovery .copy-btn:hover { background: var(--signal); }
   .recovery ol { margin: 8px 0 0 18px; padding: 0; font-size: 13px; color: var(--text-dim); }
-  .recovery ol li { margin: 4px 0; }
-  .recovery code.inline { background: #0b0d12; border: 1px solid var(--border); padding: 1px 6px; border-radius: 4px; font-family: var(--font-mono); font-size: 12px; }
+  .recovery ol li { margin: 4px 0; font-size: 13px; }
+  .recovery code.inline { background: var(--ink); border: 1px solid var(--ink-rule); padding: 1px 6px; border-radius: 0; font-family: var(--font-mono); font-size: 12px; }
 </style>
+
 </head>
 <body>
 
@@ -428,7 +379,7 @@ robots: "index,follow"
 
 <span class="cmt"># Register the Chrome Native Messaging manifest (no daemon, no port)</span>
 <span class="prompt">$ </span><span class="k">tap bridge setup</span></pre>
-      <p style="font-size:12.5px; color: var(--text-muted); margin: 0;">Then open Chrome and click the Taprun toolbar icon — the bridge launches automatically when this extension's service worker activates. The popup should say <span class="badge-illustration green">Connected to local bridge</span>. The bridge lives only as long as the extension is active; closing all Chrome windows shuts it down, and re-opening Chrome wakes it back up.</p>
+      <p style="font-size:12.5px; color: var(--text-dim); margin: 0;">Then open Chrome and click the Taprun toolbar icon — the bridge launches automatically when this extension's service worker activates. The popup should say <span class="badge-illustration green">Connected to local bridge</span>. The bridge lives only as long as the extension is active; closing all Chrome windows shuts it down, and re-opening Chrome wakes it back up.</p>
     </div>
 
     <div class="step">
@@ -436,13 +387,13 @@ robots: "index,follow"
       <h2>Optional · Wire your AI agent</h2>
       <div class="step-targets">Claude Code · Cursor · Windsurf · Codex · any MCP host</div>
       <p>Get your MCP host to call Tap as a tool. Independent from Step 1 — these are two separate channels.</p>
-      <p style="font-size:12.5px; color: var(--text-muted); margin: 0 0 6px;"><strong>Claude Code — simplest (no terminal, no restart, skill bundled):</strong></p>
+      <p style="font-size:12.5px; color: var(--text-dim); margin: 0 0 6px;"><strong>Claude Code — simplest (no terminal, no restart, skill bundled):</strong></p>
 <pre><span class="prompt">&gt; </span><span class="k">/plugin marketplace add LeonTing1010/taprun</span>
 <span class="prompt">&gt; </span><span class="k">/plugin install tap@taprun</span>
 <span class="prompt">&gt; </span><span class="k">/reload-plugins</span></pre>
-      <p style="font-size:12.5px; color: var(--text-muted); margin: 10px 0 6px;">Other hosts (or the terminal route) — auto-edits that host's config:</p>
+      <p style="font-size:12.5px; color: var(--text-dim); margin: 10px 0 6px;">Other hosts (or the terminal route) — auto-edits that host's config:</p>
 <pre><span class="prompt">$ </span><span class="k">tap embed claude-code</span>     <span class="cmt"># or: cursor | vscode | claude-desktop</span></pre>
-      <p style="font-size:12.5px; color: var(--text-muted); margin: 0;">For the <code>embed</code> route, quit and reopen your AI agent (it only re-reads MCP config on launch). After that you can ask it "run the github-stars tap" and it dispatches via MCP.</p>
+      <p style="font-size:12.5px; color: var(--text-dim); margin: 0;">For the <code>embed</code> route, quit and reopen your AI agent (it only re-reads MCP config on launch). After that you can ask it "run the github-stars tap" and it dispatches via MCP.</p>
     </div>
 
     <div class="step">
@@ -452,7 +403,7 @@ robots: "index,follow"
       <p>Saved taps run directly from the shell. The extension is only invoked when a tap needs your authenticated browser session.</p>
 <pre><span class="prompt">$ </span><span class="k">tap ls</span>                      <span class="cmt"># list saved taps</span>
 <span class="prompt">$ </span><span class="k">tap run github/stars</span>       <span class="cmt"># execute one</span></pre>
-      <p style="font-size:12.5px; color: var(--text-muted); margin: 0;">Windows users: the Chrome-extension bridge is honest-warning until verified — use the headless / Playwright path via <code>npx -y @taprun/cli</code>. +1 demand for native bridge support <a href="https://github.com/LeonTing1010/tap/issues?q=is%3Aissue+label%3Aplatform-support">here</a>.</p>
+      <p style="font-size:12.5px; color: var(--text-dim); margin: 0;">Windows users: the Chrome-extension bridge is honest-warning until verified — use the headless / Playwright path via <code>npx -y @taprun/cli</code>. +1 demand for native bridge support <a href="https://github.com/LeonTing1010/tap/issues?q=is%3Aissue+label%3Aplatform-support">here</a>.</p>
     </div>
 
   </section>
@@ -508,7 +459,7 @@ robots: "index,follow"
         <div class="arrow">View tap →</div>
       </a>
     </div>
-    <p style="margin-top: 16px; font-size: 13px; color: var(--text-muted);">→ <a href="/taps/?utm_source=install&amp;utm_medium=cta&amp;utm_campaign=disconnect-recovery">Browse all 140+ taps</a></p>
+    <p style="margin-top: 16px; font-size: 13px; color: var(--text-dim);">→ <a href="/taps/?utm_source=install&amp;utm_medium=cta&amp;utm_campaign=disconnect-recovery">Browse all 140+ taps</a></p>
   </section>
 
   <section class="footer-cta">

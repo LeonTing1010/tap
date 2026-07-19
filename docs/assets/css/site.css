@@ -1,0 +1,258 @@
+/* ============================================================================
+   Taprun site stylesheet — single source of truth for every page except the
+   homepage hero system (docs/index.html keeps its own landing-page styles).
+
+   Before this file existed, ~45 pages each carried their own inline copy of
+   these rules, most with hardcoded hex values. Change colors HERE, not there.
+
+   Design system: near-black surfaces, lime signal, Space Grotesk + JetBrains
+   Mono. Matches the homepage so there is no jump between landing and content.
+   ========================================================================= */
+
+:root {
+  /* Surfaces — darkest to lightest */
+  --ink: #0A0B0D;
+  --ink-soft: #0E1013;
+  --ink-panel: #0C0D10;
+  --ink-raised: #121519;
+
+  /* Rules and hairlines — alpha so they work over any surface */
+  --ink-rule: rgba(255, 255, 255, 0.08);
+  --ink-hairline: rgba(255, 255, 255, 0.14);
+
+  /* Text — long-form body is deliberately brighter than the homepage's
+     --text-dim, which is tuned for short marketing copy, not paragraphs. */
+  --text: #E7E9EC;
+  --text-body: #C5C9CF;
+  --text-dim: #9AA0A8;
+  --text-muted: #62676F;
+
+  /* Signal */
+  --signal: #B4F03A;
+  --signal-dim: #7F9A3A;
+  --emerald: #4ADE80;
+  --rust: #F26D5B;
+  --amber: #FFB627;
+
+  --font-display: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+  --font-body: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--ink);
+  color: var(--text-body);
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection { background: var(--signal); color: var(--ink); }
+
+.container {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 60px 24px;
+}
+.container.wide { max-width: 1080px; }
+
+/* ===================== Typography ===================== */
+
+h1 {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: var(--text);
+  margin-bottom: 8px;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+h2 {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  margin-top: 48px;
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+h3 {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  margin-top: 32px;
+  margin-bottom: 12px;
+}
+
+p, li {
+  font-size: 0.95rem;
+  color: var(--text-body);
+  margin-bottom: 16px;
+  text-wrap: pretty;
+}
+ul, ol { padding-left: 24px; }
+li { margin-bottom: 8px; }
+
+strong { color: var(--text); font-weight: 600; }
+em { color: var(--text); font-style: italic; }
+
+a { color: var(--signal); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+hr {
+  border: none;
+  border-top: 1px solid var(--ink-rule);
+  margin: 48px 0;
+}
+
+/* Article chrome */
+.meta {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin-bottom: 40px;
+}
+.back {
+  display: inline-block;
+  margin-bottom: 24px;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+.back:hover { color: var(--signal); text-decoration: none; }
+.separator {
+  border: none;
+  border-top: 1px solid var(--ink-rule);
+  margin: 48px 0;
+}
+.cen { text-align: center; }
+
+/* ===================== Code ===================== */
+
+code {
+  background: rgba(180, 240, 58, 0.10);
+  color: var(--text);
+  padding: 2px 6px;
+  border-radius: 0;
+  font-size: 0.88em;
+  font-family: var(--font-mono);
+}
+
+pre {
+  background: var(--ink-raised);
+  border: 1px solid var(--ink-rule);
+  border-radius: 0;
+  padding: 16px 20px;
+  overflow-x: auto;
+  margin: 20px 0;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: #c9cdd3;
+}
+pre code { background: none; padding: 0; font-size: inherit; color: inherit; }
+
+/* Token classes used inside <pre> across the blog */
+pre .comment { color: var(--text-muted); }
+pre .cmd     { color: var(--signal); }
+pre .output  { color: var(--text-dim); }
+pre .flag    { color: var(--amber); }
+pre .err     { color: var(--rust); }
+pre .warn    { color: var(--amber); }
+pre .ok      { color: var(--emerald); }
+pre .key     { color: var(--text-dim); }
+pre .val     { color: var(--signal); }
+
+/* ===================== Blockquote ===================== */
+
+blockquote {
+  border-left: 3px solid var(--signal);
+  padding: 12px 16px;
+  margin: 20px 0;
+  background: rgba(180, 240, 58, 0.05);
+  border-radius: 0;
+}
+blockquote p { color: var(--text-body); margin-bottom: 0; }
+blockquote cite {
+  display: block;
+  margin-top: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-style: normal;
+  color: var(--text-muted);
+}
+
+/* ===================== Tables ===================== */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+}
+th, td {
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--ink-rule);
+  font-size: 0.9rem;
+}
+th {
+  color: var(--text);
+  font-weight: 600;
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+td { color: var(--text-body); }
+td code { font-size: 0.85em; }
+
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
+}
+.highlight-row td {
+  background: rgba(180, 240, 58, 0.06);
+  color: var(--text);
+}
+td.good { color: var(--emerald); }
+td.warn { color: var(--amber); }
+td.bad  { color: var(--rust); }
+
+/* Comparison glyphs */
+.check { color: var(--emerald); }
+.cross { color: var(--rust); }
+.tilde { color: var(--amber); }
+
+/* ===================== Call to action ===================== */
+
+.cta {
+  margin-top: 48px;
+  padding: 24px;
+  background: var(--ink-soft);
+  border: 1px solid var(--signal);
+  border-radius: 0;
+}
+.cta h3 {
+  color: var(--text);
+  font-size: 1.1rem;
+  margin-bottom: 12px;
+  margin-top: 0;
+}
+.cta pre { margin-bottom: 0; }
+
+/* ===================== Motion ===================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001s !important;
+    transition-duration: 0.001s !important;
+  }
+}

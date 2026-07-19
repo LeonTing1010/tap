@@ -105,29 +105,31 @@
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,200..900,0..100;1,9..144,200..900,0..100&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- Design tokens live in site.css (site-wide). The <style> below is the
+     landing-page layer only, and deliberately overrides a few base rules
+     (.container width, body line-height) that long-form pages want different. -->
+<link rel="stylesheet" href="/assets/css/site.css">
 
 <style>
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
+/* Tokens come from /assets/css/site.css. Only landing-page-specific additions
+   belong here — if you find yourself redefining a color, change site.css. */
 :root {
-  --ink: #0B0F19;
-  --ink-soft: #131826;
-  --ink-rule: #1F2733;
-  --ink-hairline: #2A3344;
-  --paper: #F2EBDB;
-  --paper-bright: #FAF5E8;
-  --text: #E8DFC9;
-  --text-dim: #B8B0A0;
-  --text-muted: #6F6757;
-  --signal: #FFB627;
-  --signal-dim: #C28819;
-  --emerald: #4ADE80;
-  --rust: #DC4A2D;
-  --font-display: 'Fraunces', 'Hoefler Text', Georgia, serif;
-  --font-body: 'Fraunces', Georgia, serif;
-  --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+  --paper: #E7E9EC;        /* landing only: solid fill on the receipt/plan cards */
+  --paper-bright: #EAFBC6; /* landing only: primary-button hover */
 }
+
+/* site.css carries long-form article defaults (heading top-margins, paragraph
+   bottom-margins, lime links). The landing page positions everything itself,
+   so opt out of those defaults here and let the section rules below own it. */
+h1, h2, h3, h4, h5 { margin-top: 0; }
+p, li { margin-bottom: 0; color: inherit; }
+ul, ol { padding-left: 0; }
+a { color: inherit; }
+a:hover { text-decoration: none; }
+code { background: none; padding: 0; color: inherit; }
 
 html { scroll-behavior: smooth; }
 
@@ -137,33 +139,10 @@ body {
   color: var(--text);
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
-  font-feature-settings: "ss01", "ss02", "kern";
-  font-variation-settings: "SOFT" 0;
-  line-height: 1.55;
+  line-height: 1.5;
 }
 
-/* Subtle film-grain over everything */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  pointer-events: none;
-  opacity: 0.035;
-  mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-
-/* Faint horizontal ruling — engineering paper */
-body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background-image: linear-gradient(180deg, transparent 0, transparent calc(100% - 1px), rgba(255,255,255,0.012) 100%);
-  background-size: 100% 32px;
-}
+::selection { background: var(--signal); color: var(--ink); }
 
 a { color: inherit; text-decoration: none; }
 code, pre { font-family: var(--font-mono); }
@@ -176,73 +155,56 @@ code, pre { font-family: var(--font-mono); }
   z-index: 1;
 }
 
-/* ===================== Registration marks (corner ticks) ===================== */
-.regmark {
-  position: fixed;
-  width: 24px;
-  height: 24px;
-  z-index: 100;
-  pointer-events: none;
-  opacity: 0.5;
-}
-.regmark::before, .regmark::after {
-  content: '';
-  position: absolute;
-  background: var(--signal);
-}
-.regmark::before { left: 50%; top: 0; bottom: 0; width: 1px; transform: translateX(-50%); }
-.regmark::after { top: 50%; left: 0; right: 0; height: 1px; transform: translateY(-50%); }
-.regmark.tl { top: 16px; left: 16px; }
-.regmark.tr { top: 16px; right: 16px; }
-.regmark.bl { bottom: 16px; left: 16px; }
-.regmark.br { bottom: 16px; right: 16px; }
-
 /* ===================== Nav ===================== */
 .nav {
   position: fixed;
   top: 0; left: 0; right: 0;
   z-index: 50;
-  backdrop-filter: blur(12px);
-  background: rgba(11, 15, 25, 0.72);
-  border-bottom: 1px solid var(--ink-rule);
+  backdrop-filter: blur(14px);
+  background: rgba(10, 11, 13, 0.72);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 }
 .nav-inner {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 18px 32px;
+  padding: 15px 32px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 24px;
 }
 .brand {
   font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 20px;
+  font-weight: 600;
+  font-size: 18px;
   letter-spacing: -0.02em;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 11px;
 }
 .brand-mark {
-  width: 22px; height: 22px;
+  width: 16px; height: 16px;
   border: 1.5px solid var(--signal);
   position: relative;
   transform: rotate(45deg);
+  flex-shrink: 0;
 }
 .brand-mark::after {
   content: '';
   position: absolute;
-  inset: 4px;
+  inset: 3px;
   background: var(--signal);
 }
 .nav-links {
   display: flex;
-  gap: 36px;
+  gap: 28px;
   align-items: center;
   font-family: var(--font-mono);
   font-size: 12px;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 .nav-links a {
   color: var(--text-dim);
@@ -253,11 +215,12 @@ code, pre { font-family: var(--font-mono); }
 .nav-cta {
   font-family: var(--font-mono);
   font-size: 12px;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  padding: 9px 18px;
+  padding: 8px 16px;
   border: 1px solid var(--signal);
   color: var(--signal) !important;
+  transition: background 0.2s, color 0.2s;
 }
 .nav-cta:hover { background: var(--signal); color: var(--ink) !important; }
 
@@ -267,7 +230,7 @@ code, pre { font-family: var(--font-mono); }
 
 /* ===================== Hero ===================== */
 .hero {
-  padding: 200px 0 120px;
+  padding: 150px 0 96px;
   position: relative;
   border-bottom: 1px solid var(--ink-rule);
   overflow: hidden;
@@ -275,10 +238,9 @@ code, pre { font-family: var(--font-mono); }
 .hero::before {
   content: '';
   position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse at 80% 10%, rgba(255, 182, 39, 0.08), transparent 50%),
-    radial-gradient(ellipse at 10% 80%, rgba(74, 222, 128, 0.04), transparent 50%);
+  top: -200px; right: -100px;
+  width: 700px; height: 700px;
+  background: radial-gradient(circle, rgba(180, 240, 58, 0.09), transparent 62%);
   pointer-events: none;
 }
 
@@ -290,87 +252,118 @@ code, pre { font-family: var(--font-mono); }
   color: var(--text-muted);
   display: flex;
   justify-content: space-between;
-  margin-bottom: 56px;
-  border-bottom: 1px dashed var(--ink-hairline);
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 52px;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
   padding-bottom: 14px;
 }
 .hero-meta span:nth-child(2) { color: var(--signal); }
 
+/* Two-column hero: copy on the left, the compiled plan on the right */
+.hero-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  gap: 64px;
+  align-items: start;
+}
+@media (max-width: 900px) { .hero-grid { grid-template-columns: 1fr; gap: 48px; } }
+
 .hero h1 {
   font-family: var(--font-display);
-  font-weight: 300;
-  font-size: clamp(48px, 8.4vw, 128px);
-  line-height: 0.94;
+  font-weight: 500;
+  font-size: clamp(42px, 5.6vw, 80px);
+  line-height: 1.0;
   letter-spacing: -0.035em;
-  font-variation-settings: "opsz" 144, "SOFT" 30;
-  max-width: 14ch;
-  margin-bottom: 48px;
+  text-wrap: balance;
+  margin-bottom: 30px;
 }
 .hero h1 .accent {
-  font-style: italic;
   color: var(--signal);
-  font-weight: 400;
-  display: inline-block;
-  position: relative;
-}
-.hero h1 .accent::after {
-  content: '';
-  position: absolute;
-  left: -2px; right: -2px;
-  bottom: 0.06em;
-  height: 1px;
-  background: var(--signal);
-  opacity: 0.4;
-}
-.hero h1 .strike {
-  position: relative;
-  display: inline-block;
-  color: var(--text-muted);
-}
-.hero h1 .strike::before {
-  content: '';
-  position: absolute;
-  left: -4px; right: -4px;
-  top: 52%;
-  height: 2px;
-  background: var(--rust);
-  transform: rotate(-1.5deg);
+  font-weight: 500;
 }
 
 .hero-deck {
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-weight: 400;
-  font-size: clamp(18px, 1.8vw, 22px);
-  line-height: 1.5;
-  max-width: 56ch;
+  font-size: clamp(16px, 1.4vw, 19px);
+  line-height: 1.55;
+  max-width: 54ch;
   color: var(--text-dim);
-  margin-bottom: 56px;
-  font-variation-settings: "opsz" 36;
+  margin-bottom: 38px;
+  text-wrap: pretty;
 }
 .hero-deck em {
   color: var(--text);
-  font-style: italic;
+  font-style: normal;
   font-weight: 500;
 }
+.hero-deck strong { color: var(--text); font-weight: 500; }
+.hero-deck code { font-size: 0.88em; color: var(--text); }
+
+/* Plan / terminal card */
+.plan-card {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.65;
+}
+.plan-card-bar {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--ink-rule);
+  background: #121519;
+}
+.plan-card-bar i {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: #2A2E35;
+}
+.plan-card-bar .path {
+  flex: 1;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-style: normal;
+}
+.plan-card-body {
+  padding: 18px 20px;
+  color: #7d8590;
+  white-space: pre;
+  overflow-x: auto;
+}
+.plan-card-body .k { color: var(--text-dim); }
+.plan-card-body .v { color: var(--signal); }
+.plan-card-body .op { color: var(--text); }
+.plan-card-foot {
+  padding: 16px 20px;
+  border-top: 1px solid var(--ink-rule);
+  color: #7d8590;
+}
+.plan-card-foot .prompt { color: var(--signal); }
+.plan-card-foot .ok { color: var(--emerald); }
 
 .hero-cta {
   display: flex;
   align-items: center;
-  gap: 24px;
-  margin-bottom: 80px;
+  gap: 18px;
+  margin-bottom: 56px;
   flex-wrap: wrap;
 }
 .btn-primary {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   font-family: var(--font-mono);
   font-size: 13px;
   font-weight: 500;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
   background: var(--signal);
   color: var(--ink);
-  padding: 16px 26px;
+  padding: 15px 24px;
   border: 1px solid var(--signal);
   transition: all 0.2s;
   cursor: pointer;
@@ -387,13 +380,13 @@ code, pre { font-family: var(--font-mono); }
 .btn-ghost {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   font-family: var(--font-mono);
   font-size: 13px;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
   color: var(--text-dim);
-  padding: 16px 0;
-  border-bottom: 1px solid var(--ink-rule);
+  padding: 15px 2px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
   transition: all 0.2s;
 }
 .btn-ghost:hover { color: var(--signal); border-color: var(--signal); }
@@ -403,32 +396,30 @@ code, pre { font-family: var(--font-mono); }
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 0;
-  border-top: 1px solid var(--ink-rule);
-  border-bottom: 1px solid var(--ink-rule);
+  border: 1px solid var(--ink-rule);
 }
 .proof-cell {
-  padding: 28px 32px;
+  padding: 22px 20px;
   border-right: 1px solid var(--ink-rule);
   position: relative;
 }
 .proof-cell:last-child { border-right: none; }
 .proof-num {
   font-family: var(--font-display);
-  font-weight: 300;
-  font-size: 56px;
+  font-weight: 500;
+  font-size: 40px;
   line-height: 1;
   letter-spacing: -0.04em;
   color: var(--signal);
-  font-variation-settings: "opsz" 144;
   margin-bottom: 8px;
 }
-.proof-num.is-zero { font-style: italic; }
 .proof-label {
   font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.12em;
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text-muted);
+  line-height: 1.4;
 }
 .proof-label .em { color: var(--text); }
 
@@ -438,57 +429,9 @@ code, pre { font-family: var(--font-mono); }
   .proof-cell:last-child { border-bottom: none; }
 }
 
-/* ===================== Stamp (rotated seal) ===================== */
-.stamp {
-  position: absolute;
-  top: 220px;
-  right: 60px;
-  width: 200px;
-  height: 200px;
-  border: 2px solid var(--signal);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--signal);
-  text-align: center;
-  transform: rotate(-12deg);
-  opacity: 0.85;
-  pointer-events: none;
-}
-.stamp::before {
-  content: '';
-  position: absolute;
-  inset: 8px;
-  border: 1px solid var(--signal);
-  border-radius: 50%;
-  opacity: 0.4;
-}
-.stamp-line {
-  display: block;
-  padding: 2px 0;
-}
-.stamp-line.big {
-  font-family: var(--font-display);
-  font-style: italic;
-  font-size: 22px;
-  letter-spacing: 0;
-  text-transform: none;
-  font-weight: 500;
-  margin: 6px 0;
-}
-@media (max-width: 1080px) {
-  .stamp { display: none; }
-}
-
 /* ===================== Section primitives ===================== */
 .section {
-  padding: 140px 0;
+  padding: 120px 0;
   position: relative;
   border-bottom: 1px solid var(--ink-rule);
 }
@@ -505,33 +448,36 @@ code, pre { font-family: var(--font-mono); }
 }
 .section-label::before {
   content: '';
-  width: 32px;
+  width: 28px;
   height: 1px;
   background: var(--signal);
 }
-.section h2 {
+.section h2, .receipt-section h2, .verdict-section h2, .wire-section h2 {
   font-family: var(--font-display);
-  font-weight: 300;
-  font-size: clamp(36px, 5.2vw, 72px);
-  line-height: 1.02;
-  letter-spacing: -0.025em;
-  font-variation-settings: "opsz" 96, "SOFT" 20;
+  font-weight: 500;
+  font-size: clamp(32px, 4.5vw, 58px);
+  line-height: 1.03;
+  letter-spacing: -0.03em;
   max-width: 22ch;
-  margin-bottom: 32px;
+  margin-bottom: 24px;
+  text-wrap: balance;
 }
-.section h2 em {
-  font-style: italic;
+.section h2 em, .receipt-section h2 em, .verdict-section h2 em, .wire-section h2 em {
+  font-style: normal;
   color: var(--signal);
-  font-weight: 400;
+  font-weight: 500;
 }
 .section-deck {
-  font-family: var(--font-display);
-  font-size: 19px;
-  line-height: 1.6;
+  font-family: var(--font-body);
+  font-size: 18px;
+  line-height: 1.55;
   color: var(--text-dim);
   max-width: 60ch;
-  margin-bottom: 64px;
+  margin-bottom: 56px;
+  text-wrap: pretty;
 }
+.section-deck em { font-style: normal; color: var(--text); }
+.section-deck code { color: var(--text); }
 
 /* ===================== Paths (three ways to delegate) ===================== */
 .paths-section {
@@ -567,12 +513,10 @@ code, pre { font-family: var(--font-mono); }
 }
 .path-h {
   font-family: var(--font-display);
-  font-weight: 500;
-  font-style: italic;
-  font-size: 27px;
-  letter-spacing: -0.015em;
-  margin-bottom: 14px;
-  font-variation-settings: "opsz" 60, "SOFT" 50;
+  font-weight: 600;
+  font-size: 23px;
+  letter-spacing: -0.02em;
+  margin-bottom: 12px;
 }
 .path-p {
   font-size: 15.5px;
@@ -601,15 +545,14 @@ code, pre { font-family: var(--font-mono); }
 .path-price.open { color: var(--emerald); }
 .paths-tell {
   margin-top: 28px;
-  font-family: var(--font-display);
-  font-style: italic;
-  font-size: 17px;
+  font-family: var(--font-body);
+  font-size: 16px;
   line-height: 1.6;
   color: var(--text-muted);
   max-width: 62ch;
-  font-variation-settings: "opsz" 24;
+  text-wrap: pretty;
 }
-.paths-tell strong { color: var(--text-dim); font-weight: 500; font-style: normal; }
+.paths-tell strong { color: var(--text-dim); font-weight: 500; }
 
 /* ===================== The Problem (cloud SDK leak) ===================== */
 .problem-grid {
@@ -637,8 +580,8 @@ code, pre { font-family: var(--font-mono); }
 .leak-list li:first-child { border-top: 1px solid var(--ink-rule); }
 .leak-vendor {
   font-family: var(--font-display);
-  font-weight: 500;
-  font-size: 17px;
+  font-weight: 600;
+  font-size: 16px;
   letter-spacing: -0.01em;
   color: var(--text);
 }
@@ -654,13 +597,13 @@ code, pre { font-family: var(--font-mono); }
   font-size: 11px;
 }
 .leak-where.tap {
-  color: var(--emerald);
+  color: var(--signal);
 }
 
 .architecture-card {
-  background: var(--ink-soft);
-  border: 1px solid var(--ink-rule);
-  padding: 36px;
+  background: var(--ink);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 34px;
   position: relative;
 }
 .architecture-card::before {
@@ -688,20 +631,21 @@ code, pre { font-family: var(--font-mono); }
   margin-bottom: 24px;
 }
 .arch-quote {
-  font-family: var(--font-display);
-  font-style: italic;
-  font-size: 24px;
-  line-height: 1.4;
-  font-variation-settings: "opsz" 48, "SOFT" 60;
-  margin-bottom: 24px;
+  font-family: var(--font-body);
+  font-size: 22px;
+  line-height: 1.42;
+  color: var(--text);
+  margin-bottom: 22px;
+  text-wrap: pretty;
 }
+.arch-quote em { font-style: normal; color: var(--signal); }
 .arch-attr {
   font-family: var(--font-mono);
   font-size: 11px;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   color: var(--text-muted);
   text-transform: uppercase;
-  border-top: 1px dashed var(--ink-hairline);
+  border-top: 1px dashed rgba(255, 255, 255, 0.12);
   padding-top: 16px;
 }
 .arch-attr .doc {
@@ -733,35 +677,36 @@ code, pre { font-family: var(--font-mono); }
 
 .how-num {
   font-family: var(--font-display);
-  font-style: italic;
-  font-weight: 300;
-  font-size: 88px;
+  font-weight: 500;
+  font-size: 56px;
   line-height: 0.9;
   letter-spacing: -0.04em;
   color: var(--signal);
-  margin-bottom: 28px;
-  font-variation-settings: "opsz" 144, "SOFT" 50;
+  opacity: 0.9;
+  margin-bottom: 24px;
 }
 .how-h {
   font-family: var(--font-display);
-  font-weight: 500;
-  font-size: 24px;
-  letter-spacing: -0.015em;
-  margin-bottom: 16px;
+  font-weight: 600;
+  font-size: 23px;
+  letter-spacing: -0.02em;
+  margin-bottom: 12px;
 }
 .how-p {
-  font-size: 16.5px;
+  font-size: 15.5px;
   line-height: 1.55;
   color: var(--text-dim);
-  margin-bottom: 24px;
+  margin-bottom: 22px;
+  text-wrap: pretty;
 }
+.how-p em { font-style: normal; color: var(--text); }
 .how-code {
   font-family: var(--font-mono);
-  font-size: 12.5px;
-  background: var(--ink);
-  border: 1px solid var(--ink-hairline);
-  padding: 14px 16px;
-  color: var(--paper);
+  font-size: 12px;
+  background: var(--ink-soft);
+  border: 1px solid var(--ink-rule);
+  padding: 13px 15px;
+  color: #c9cdd3;
   position: relative;
   overflow-x: auto;
 }
@@ -771,61 +716,55 @@ code, pre { font-family: var(--font-mono); }
 
 /* ===================== Receipt (cost comparison) ===================== */
 .receipt-section {
-  padding: 140px 0;
-  background: var(--ink-soft);
+  padding: 120px 0;
+  background: var(--ink-panel);
   border-bottom: 1px solid var(--ink-rule);
 }
 .receipt-grid {
   display: grid;
-  grid-template-columns: 1fr 1.4fr;
-  gap: 80px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
   align-items: start;
 }
-@media (max-width: 980px) { .receipt-grid { grid-template-columns: 1fr; gap: 48px; } }
+.receipts-side {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 8px 4px;
+}
 
+/* Ledger cards — dark, squared, no paper mimicry */
 .receipt {
-  background: var(--paper);
-  color: var(--ink);
-  padding: 40px 36px;
+  background: var(--ink-soft);
+  color: var(--text-dim);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   font-family: var(--font-mono);
   font-size: 13px;
   line-height: 1.5;
   position: relative;
-  box-shadow:
-    0 0 0 1px var(--ink-rule),
-    -8px 8px 0 -1px rgba(255, 182, 39, 0.5),
-    -8px 8px 0 0 var(--ink-rule);
-  /* tear edge */
-  clip-path: polygon(
-    0 0, 100% 0,
-    100% calc(100% - 8px),
-    98% 100%, 95% calc(100% - 4px), 92% 100%,
-    88% calc(100% - 6px), 84% 100%, 80% calc(100% - 4px),
-    76% 100%, 72% calc(100% - 5px), 68% 100%,
-    64% calc(100% - 4px), 60% 100%, 56% calc(100% - 6px),
-    52% 100%, 48% calc(100% - 4px), 44% 100%,
-    40% calc(100% - 5px), 36% 100%, 32% calc(100% - 4px),
-    28% 100%, 24% calc(100% - 6px), 20% 100%,
-    16% calc(100% - 4px), 12% 100%, 8% calc(100% - 5px),
-    4% 100%, 0 calc(100% - 8px)
-  );
+  padding: 0 0 12px;
+}
+.receipt.tap {
+  border-color: var(--signal);
+  box-shadow: 0 0 0 4px rgba(180, 240, 58, 0.08);
 }
 .receipt-head {
-  text-align: center;
-  border-bottom: 1px dashed var(--ink-rule);
-  padding-bottom: 16px;
-  margin-bottom: 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--ink-rule);
+  padding: 20px 24px;
+  margin-bottom: 8px;
 }
 .receipt-head h3 {
   font-family: var(--font-display);
   font-weight: 600;
   font-size: 18px;
   letter-spacing: -0.01em;
-  font-style: italic;
+  color: var(--text);
 }
 .receipt-head .sub {
-  font-size: 10px;
-  letter-spacing: 0.16em;
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
   color: var(--text-muted);
   margin-top: 4px;
   text-transform: uppercase;
@@ -833,88 +772,87 @@ code, pre { font-family: var(--font-mono); }
 .receipt-row {
   display: flex;
   justify-content: space-between;
-  padding: 6px 0;
+  padding: 6px 24px;
+  color: var(--text-dim);
 }
 .receipt-row.dotted {
-  border-bottom: 1px dotted #B5A88B;
-  padding-bottom: 10px;
-  margin-bottom: 10px;
+  border-bottom: 1px dotted rgba(255, 255, 255, 0.14);
+  padding-bottom: 12px;
+  margin-bottom: 8px;
 }
-.receipt-row .qty { color: #6F6757; }
+.receipt-row .qty { color: var(--text-muted); }
 .receipt-total {
   display: flex;
   justify-content: space-between;
-  padding-top: 16px;
-  border-top: 2px solid var(--ink);
-  margin-top: 12px;
+  padding: 16px 24px 0;
+  border-top: 2px solid rgba(255, 255, 255, 0.16);
+  margin: 10px 24px 0;
+  padding-left: 0;
+  padding-right: 0;
   font-family: var(--font-display);
   font-size: 22px;
   font-weight: 600;
   letter-spacing: -0.01em;
 }
 .receipt-total.bad { color: var(--rust); }
-.receipt-total.good { color: var(--emerald); }
+.receipt-total.good { color: var(--signal); }
+.receipt.tap .receipt-total { border-top-color: var(--signal); }
 .receipt-foot {
-  font-size: 10px;
+  font-size: 10.5px;
   color: var(--text-muted);
   text-align: center;
-  margin-top: 24px;
+  margin-top: 20px;
+  padding: 12px 24px 0;
+  border-top: 1px solid var(--ink-rule);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
-.receipt.tap { transform: rotate(-1.4deg); }
-.receipt.cloud { transform: rotate(1.2deg); margin-bottom: 32px; }
-
-.receipt-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
+.receipt.tap .receipt-foot { color: var(--signal); }
 
 .receipts-takeaway {
-  font-family: var(--font-display);
-  font-size: 22px;
+  font-family: var(--font-body);
+  font-size: 20px;
   line-height: 1.5;
-  font-style: italic;
   color: var(--text);
-  font-variation-settings: "opsz" 48, "SOFT" 70;
+  text-wrap: pretty;
 }
+.receipts-takeaway em { font-style: normal; color: var(--text-dim); }
 .receipts-takeaway strong {
-  font-style: normal;
   font-weight: 600;
-  background: linear-gradient(180deg, transparent 60%, rgba(255,182,39,0.25) 60%);
-  padding: 0 4px;
+  background: linear-gradient(180deg, transparent 62%, rgba(180, 240, 58, 0.32) 62%);
+  padding: 0 3px;
 }
 
 .crossover {
-  margin-top: 32px;
-  padding: 24px 0;
-  border-top: 1px solid var(--ink-rule);
-  border-bottom: 1px solid var(--ink-rule);
+  margin-top: 28px;
+  padding: 24px 0 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   align-items: baseline;
-  gap: 18px;
+  gap: 16px;
 }
 .crossover-num {
   font-family: var(--font-display);
-  font-style: italic;
-  font-size: 56px;
-  font-weight: 400;
+  font-size: 52px;
+  font-weight: 500;
   line-height: 1;
+  letter-spacing: -0.04em;
   color: var(--signal);
 }
 .crossover-text {
   font-family: var(--font-mono);
   font-size: 12px;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
   color: var(--text-dim);
 }
 
 /* ===================== Verdict band ===================== */
 .verdict-section {
-  padding: 120px 0;
+  padding: 110px 0;
   position: relative;
+  background: var(--ink-panel);
+  border-bottom: 1px solid var(--ink-rule);
 }
 .verdict-grid {
   display: grid;
@@ -927,29 +865,27 @@ code, pre { font-family: var(--font-mono); }
 @media (max-width: 480px) { .verdict-grid { grid-template-columns: 1fr; } }
 
 .verdict-cell {
-  background: var(--ink);
-  padding: 36px 28px;
+  background: var(--ink-panel);
+  padding: 30px 26px;
   position: relative;
 }
 .verdict-name {
   font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.16em;
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--signal);
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 .verdict-h {
   font-family: var(--font-display);
-  font-weight: 500;
-  font-style: italic;
-  font-size: 26px;
-  letter-spacing: -0.015em;
-  margin-bottom: 12px;
-  font-variation-settings: "opsz" 60, "SOFT" 50;
+  font-weight: 600;
+  font-size: 19px;
+  letter-spacing: -0.02em;
+  margin-bottom: 10px;
 }
 .verdict-p {
-  font-size: 14.5px;
+  font-size: 14px;
   line-height: 1.5;
   color: var(--text-dim);
 }
@@ -965,11 +901,11 @@ code, pre { font-family: var(--font-mono); }
 .verdict-dot.neutral { background: var(--text-muted); }
 
 /* ===================== Install ===================== */
-.install-section { padding: 140px 0; }
+.install-section { padding: 120px 0; }
 .install-grid {
   display: grid;
-  grid-template-columns: 1fr 1.2fr;
-  gap: 80px;
+  grid-template-columns: 1fr 1fr;
+  gap: 56px;
   align-items: start;
 }
 @media (max-width: 980px) { .install-grid { grid-template-columns: 1fr; gap: 48px; } }
@@ -1002,15 +938,16 @@ code, pre { font-family: var(--font-mono); }
 
 .install-pane {
   background: var(--ink-soft);
-  border: 1px solid var(--ink-rule);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-top: none;
-  padding: 28px;
+  padding: 26px;
   font-family: var(--font-mono);
-  font-size: 14px;
-  line-height: 1.6;
+  font-size: 13.5px;
+  line-height: 1.7;
+  min-height: 120px;
 }
 .install-pane .prompt { color: var(--signal); margin-right: 8px; }
-.install-pane .cmd { color: var(--paper); }
+.install-pane .cmd { color: #d3d7dd; }
 .install-pane .comment { color: var(--text-muted); }
 .install-pane .pane { display: none; }
 .install-pane .pane.active { display: block; }
@@ -1033,37 +970,36 @@ code, pre { font-family: var(--font-mono); }
   content: counter(install-counter, decimal-leading-zero);
   counter-increment: install-counter;
   font-family: var(--font-display);
-  font-style: italic;
-  font-size: 22px;
-  color: var(--text-dim);
+  font-size: 20px;
+  color: var(--text-muted);
   letter-spacing: 0;
 }
 .install-side {
   counter-reset: install-counter;
 }
 .install-step p {
-  font-family: var(--font-display);
-  font-size: 19px;
+  font-family: var(--font-body);
+  font-size: 18px;
   line-height: 1.5;
   color: var(--text);
-  margin-left: 38px;
+  margin-left: 44px;
 }
+.install-step p code { font-size: 0.82em; color: var(--signal); }
 .install-step p .small {
   display: block;
   font-size: 14px;
   color: var(--text-muted);
-  margin-top: 6px;
+  margin-top: 4px;
 }
 
 /* ===================== Wire log (live demo aesthetic) ===================== */
 .wire-section {
   padding: 100px 0;
-  background: var(--ink-soft);
   border-bottom: 1px solid var(--ink-rule);
 }
 .wire-log {
-  background: var(--ink);
-  border: 1px solid var(--ink-rule);
+  background: var(--ink-soft);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   font-family: var(--font-mono);
   font-size: 13px;
   line-height: 1.7;
@@ -1078,10 +1014,10 @@ code, pre { font-family: var(--font-mono); }
   display: block;
   padding: 14px 18px;
   border-bottom: 1px solid var(--ink-rule);
-  color: var(--text-muted);
+  color: #2A2E35;
   letter-spacing: 0.4em;
   font-size: 10px;
-  background: var(--ink-soft);
+  background: #121519;
 }
 .wire-content {
   padding: 24px 28px;
@@ -1109,32 +1045,32 @@ code, pre { font-family: var(--font-mono); }
 
 /* ===================== Closing manifesto ===================== */
 .closing {
-  padding: 180px 0 160px;
+  padding: 150px 0 130px;
   position: relative;
   text-align: left;
   border-bottom: 1px solid var(--ink-rule);
+  overflow: hidden;
 }
 .closing::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at 50% 50%, rgba(255, 182, 39, 0.06), transparent 60%);
+  background: radial-gradient(ellipse at 50% 60%, rgba(180, 240, 58, 0.07), transparent 60%);
   pointer-events: none;
 }
 .closing h2 {
   font-family: var(--font-display);
-  font-weight: 200;
-  font-size: clamp(44px, 7vw, 104px);
+  font-weight: 400;
+  font-size: clamp(38px, 6vw, 88px);
   line-height: 1;
-  letter-spacing: -0.035em;
-  font-variation-settings: "opsz" 144, "SOFT" 40;
-  max-width: 14ch;
-  margin-bottom: 56px;
+  letter-spacing: -0.04em;
+  max-width: 16ch;
+  margin-bottom: 44px;
 }
 .closing h2 em {
-  font-style: italic;
+  font-style: normal;
   color: var(--signal);
-  font-weight: 300;
+  font-weight: 400;
 }
 
 /* ===================== Footer ===================== */
@@ -1156,7 +1092,7 @@ footer {
 .footer-col h5 {
   font-family: var(--font-mono);
   font-size: 11px;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--signal);
   margin-bottom: 18px;
@@ -1170,13 +1106,11 @@ footer {
 .footer-col a:hover { color: var(--text); }
 
 .footer-thesis {
-  font-family: var(--font-display);
-  font-style: italic;
-  font-size: 17px;
+  font-family: var(--font-body);
+  font-size: 14px;
   line-height: 1.5;
   color: var(--text-dim);
   max-width: 38ch;
-  font-variation-settings: "opsz" 24;
 }
 .footer-bottom {
   border-top: 1px solid var(--ink-rule);
@@ -1213,7 +1147,7 @@ footer {
 .hero-deck { animation: rise 0.9s ease-out 0.55s both; }
 .hero-cta { animation: rise 0.8s ease-out 0.75s both; }
 .hero-proof { animation: rise 0.9s ease-out 0.95s both; }
-.stamp { animation: rise 0.8s ease-out 1.2s both; }
+.plan-card { animation: rise 0.9s ease-out 1.05s both; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -1225,11 +1159,6 @@ footer {
 {% include site-schema.html %}
 </head>
 <body>
-
-<div class="regmark tl"></div>
-<div class="regmark tr"></div>
-<div class="regmark bl"></div>
-<div class="regmark br"></div>
 
 <nav class="nav">
   <div class="nav-inner">
@@ -1255,6 +1184,8 @@ footer {
       <span>Filed 2026-05-05</span>
     </div>
 
+    <div class="hero-grid">
+    <div class="hero-col">
     <h1>Your agent's action layer — in your own <span class="accent">logged-in browser.</span></h1>
 
     <p class="hero-deck">
@@ -1289,12 +1220,28 @@ footer {
         <div class="proof-label"><span class="em">community taps</span>, MIT, ready to run</div>
       </div>
     </div>
-  </div>
+    </div><!-- /.hero-col -->
 
-  <div class="stamp">
-    <span class="stamp-line">Capture once</span>
-    <span class="stamp-line big">replay forever</span>
-    <span class="stamp-line">Zero tokens · in your browser</span>
+    <!-- The compiled artifact, shown rather than described -->
+    <div class="plan-card">
+      <div class="plan-card-bar">
+        <i></i><i></i><i></i>
+        <span class="path">~/.tap/plans/hn/top.plan.json</span>
+      </div>
+      <div class="plan-card-body">{
+  <span class="k">"site"</span>: <span class="v">"hn"</span>, <span class="k">"name"</span>: <span class="v">"top"</span>,
+  <span class="k">"ops"</span>: [
+    { <span class="k">"op"</span>:<span class="op">"nav"</span>,     <span class="k">"url"</span>:<span class="v">"news.ycombinator.com"</span> },
+    { <span class="k">"op"</span>:<span class="op">"extract"</span>, <span class="k">"from"</span>:<span class="v">"jsonld[].headline"</span> },
+    { <span class="k">"op"</span>:<span class="op">"tap"</span>,     <span class="k">"as"</span>:<span class="v">"stories[]"</span> }
+  ]
+}</div>
+      <div class="plan-card-foot">
+        <div><span class="prompt">$</span> {{ site.data.cli.binary }} run hn/top</div>
+        <div class="ok">✓ 30 records · 0.41s · 0 tokens<span class="cursor"></span></div>
+      </div>
+    </div>
+    </div><!-- /.hero-grid -->
   </div>
 </header>
 
@@ -1348,14 +1295,14 @@ footer {
       </p>
     </div>
 
-    <div class="demo-stage" style="background:var(--ink-soft);border:1px solid var(--ink-rule);border-radius:12px;padding:40px;position:relative;overflow:hidden;">
+    <div class="demo-stage" style="background:var(--ink-soft);border:1px solid var(--ink-rule);padding:40px;position:relative;overflow:hidden;">
       
       <!-- Architecture Diagram (syncs with terminal) -->
       <div class="demo-arch" style="display:flex;align-items:center;justify-content:center;gap:20px;margin-bottom:40px;flex-wrap:wrap;">
         
         <!-- CLI -->
         <div class="arch-node" id="arch-cli" style="text-align:center;opacity:0.3;transition:all 0.4s ease;">
-          <div style="width:100px;height:100px;background:var(--ink);border:2px solid var(--ink-rule);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:border-color 0.4s;">
+          <div style="width:100px;height:100px;background:var(--ink);border:2px solid var(--ink-rule);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:border-color 0.4s;">
             <svg width="36" height="36" viewBox="0 0 24 24" fill="var(--text)" style="margin-bottom:8px;"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V6h16v12zM6 10h8v2H6zm0-3h12v2H6z"/></svg>
             <div style="font-family:var(--font-mono);font-size:11px;color:var(--text);">Tap CLI</div>
           </div>
@@ -1369,7 +1316,7 @@ footer {
 
         <!-- Extension -->
         <div class="arch-node" id="arch-ext" style="text-align:center;opacity:0.3;transition:all 0.4s ease;">
-          <div style="width:100px;height:100px;background:var(--ink);border:2px solid var(--ink-rule);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:border-color 0.4s;">
+          <div style="width:100px;height:100px;background:var(--ink);border:2px solid var(--ink-rule);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:border-color 0.4s;">
             <svg width="36" height="36" viewBox="0 0 24 24" fill="var(--text)" style="margin-bottom:8px;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
             <div style="font-family:var(--font-mono);font-size:11px;color:var(--text);">Extension</div>
           </div>
@@ -1383,7 +1330,7 @@ footer {
 
         <!-- GitHub -->
         <div class="arch-node" id="arch-github" style="text-align:center;opacity:0.3;transition:all 0.4s ease;">
-          <div style="width:100px;height:100px;background:var(--ink);border:2px solid var(--ink-rule);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:border-color 0.4s;">
+          <div style="width:100px;height:100px;background:var(--ink);border:2px solid var(--ink-rule);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:border-color 0.4s;">
             <svg width="36" height="36" viewBox="0 0 24 24" fill="var(--text)" style="margin-bottom:8px;"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
             <div style="font-family:var(--font-mono);font-size:11px;color:var(--text);">GitHub</div>
           </div>
@@ -1392,12 +1339,12 @@ footer {
       </div>
 
       <!-- Terminal Window -->
-      <div class="terminal-window" style="background:var(--ink);border:1px solid var(--ink-rule);border-radius:8px;overflow:hidden;margin-bottom:32px;">
+      <div class="terminal-window" style="background:var(--ink);border:1px solid var(--ink-rule);overflow:hidden;margin-bottom:32px;">
         <!-- Terminal Header -->
         <div class="terminal-header" style="background:var(--ink-soft);border-bottom:1px solid var(--ink-rule);padding:12px 16px;display:flex;align-items:center;gap:8px;">
-          <div style="width:12px;height:12px;background:#EF4444;border-radius:50%;"></div>
-          <div style="width:12px;height:12px;background:#FBBF24;border-radius:50%;"></div>
-          <div style="width:12px;height:12px;background:#22C55E;border-radius:50%;"></div>
+          <div style="width:10px;height:10px;background:#2A2E35;border-radius:50%;"></div>
+          <div style="width:10px;height:10px;background:#2A2E35;border-radius:50%;"></div>
+          <div style="width:10px;height:10px;background:#2A2E35;border-radius:50%;"></div>
           <div style="flex:1;text-align:center;font-family:var(--font-mono);font-size:12px;color:var(--text-dim);">tap run github-star</div>
         </div>
         
@@ -1543,8 +1490,7 @@ footer {
     </p>
 
     <div class="receipt-grid">
-      <div class="receipt-stack reveal delay-3">
-        <div class="receipt cloud">
+        <div class="receipt cloud reveal delay-3">
           <div class="receipt-head">
             <h3>browser-use, inc.</h3>
             <div class="sub">Invoice · Run #1–#100</div>
@@ -1561,7 +1507,7 @@ footer {
           <div class="receipt-foot">★★☆☆☆ — keep paying every run</div>
         </div>
 
-        <div class="receipt tap">
+        <div class="receipt tap reveal delay-4">
           <div class="receipt-head">
             <h3>Taprun (open source)</h3>
             <div class="sub">Invoice · Run #1–#100</div>
@@ -1577,14 +1523,13 @@ footer {
           </div>
           <div class="receipt-foot">★★★★★ — paid once, owned forever</div>
         </div>
-      </div>
 
-      <div class="reveal delay-4">
+      <div class="receipts-side reveal delay-5">
         <p class="receipts-takeaway">
           Cloud SDKs price browser automation like a <em>subscription to a clicker</em>. Taprun prices it like a <strong>compiler</strong> — pay at build time, ship a binary, run for free.
         </p>
         <div class="crossover">
-          <div class="crossover-num">2</div>
+          <div class="crossover-num">#2</div>
           <div class="crossover-text">
             Crossover at run #2.<br>
             From there, the gap compounds.
@@ -1688,7 +1633,7 @@ footer {
           <button class="install-tab" data-tab="mcp">mcp.json</button>
         </div>
         <div class="install-pane" style="position:relative;">
-          <button id="install-copy-btn" type="button" aria-label="Copy install command" style="position:absolute;top:12px;right:12px;background:transparent;color:var(--text-muted);border:1px solid var(--ink-rule);padding:6px 12px;font-family:var(--font-mono);font-size:11px;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:all 0.15s ease;z-index:2;">Copy</button>
+          <button id="install-copy-btn" type="button" aria-label="Copy install command" style="position:absolute;top:12px;right:12px;background:transparent;color:var(--text-muted);border:1px solid var(--ink-rule);padding:6px 12px;font-family:var(--font-mono);font-size:11px;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer;transition:all 0.15s ease;z-index:2;">Copy</button>
           <div class="pane active" data-pane="embed"><span class="prompt">$</span><span class="cmd">{{ site.data.cli.install.embed }}</span>      <span class="comment"># or: cursor | vscode | claude-desktop</span>
 <span class="comment"># binary + MCP config + browser bridge — all written for you</span></div>
           <div class="pane" data-pane="curl"><span class="prompt">$</span><span class="cmd">{{ site.data.cli.install.curl }}</span>
@@ -1718,7 +1663,7 @@ footer {
         Read the source ↗
       </a>
     </div>
-    <p class="reveal delay-3" style="margin-top:80px; max-width:60ch; font-family:var(--font-display); font-style:italic; font-size:18px; color:var(--text-muted); line-height:1.6;">
+    <p class="reveal delay-3" style="margin-top:72px; max-width:64ch; font-family:var(--font-body); font-size:16px; color:var(--text-muted); line-height:1.6; text-wrap:pretty;">
       Taprun is MIT-licensed, written in TypeScript on Deno, ships as a single signed binary. The Chrome extension is an open extension. No license server, no phone-home, no usage telemetry. Free to use and build on — or, if you'd rather buy the outcome than the tool, the done-for-you service is $99/month. See <a href="/pricing.html" style="color:var(--signal); border-bottom:1px solid var(--signal); text-decoration:none;">pricing</a>.
     </p>
   </div>
@@ -1767,7 +1712,7 @@ footer {
 </footer>
 
 <!-- Toast notification for GitHub star -->
-<div id="star-toast" style="position:fixed;bottom:24px;right:24px;background:var(--ink-soft);border:1px solid var(--ink-rule);padding:16px 20px;border-radius:4px;box-shadow:0 4px 20px rgba(0,0,0,0.3);z-index:1000;opacity:0;transform:translateY(20px);transition:all 0.3s ease;pointer-events:none;max-width:320px;">
+<div id="star-toast" style="position:fixed;bottom:24px;right:24px;background:var(--ink-soft);border:1px solid var(--ink-rule);padding:16px 20px;box-shadow:0 4px 20px rgba(0,0,0,0.3);z-index:1000;opacity:0;transform:translateY(20px);transition:all 0.3s ease;pointer-events:none;max-width:320px;">
   <div style="display:flex;align-items:center;gap:12px;">
     <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--signal)"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
     <div>

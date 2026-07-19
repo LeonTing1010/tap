@@ -33,97 +33,91 @@ robots: "index,follow"
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/css/site.css">
 <style>
-  :root {
-    --bg-deep: #0a0a0f;
-    --bg-surface: #11111a;
-    --bg-card: #1a1a26;
-    --white: #fafafa;
-    --text: #e5e5ec;
-    --text-dim: #a8a8b8;
-    --text-muted: #6e6e80;
-    --indigo: #6366f1;
-    --indigo-bright: #a5b4fc;
-    --gold: #fbbf24;
-    --green: #34d399;
-    --border: rgba(255,255,255,.08);
-  }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    background: var(--bg-deep);
-    color: var(--text);
-    font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
-    line-height: 1.65;
-  }
+  /* Page-specific only. Tokens, body, typography, base pre/code rules live
+     in /assets/css/site.css. */
+
   .wrap { max-width: 860px; margin: 0 auto; padding: 48px 20px 96px; }
   h1 {
-    font-family: 'Bricolage Grotesque', sans-serif;
     font-size: clamp(1.9rem, 5vw, 2.8rem);
-    font-weight: 800; color: var(--white); line-height: 1.15;
+    font-weight: 600; line-height: 1.15;
     margin-bottom: 12px;
   }
   .sub { color: var(--text-dim); font-size: 1.05rem; max-width: 620px; margin-bottom: 8px; }
-  .kicker { color: var(--indigo-bright); font-weight: 600; font-size: .85rem;
+  .sub b { color: var(--signal); font-weight: 600; }
+  .kicker { color: var(--signal); font-family: var(--font-mono); font-weight: 500; font-size: .8rem;
     text-transform: uppercase; letter-spacing: .08em; margin-bottom: 10px; }
   .trust { color: var(--text-muted); font-size: .85rem; margin-bottom: 40px; }
-  .trust b { color: var(--green); font-weight: 600; }
+  .trust b { color: var(--emerald); font-weight: 600; }
 
   .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 0; }
   .tab {
-    font: 600 .9rem 'Plus Jakarta Sans', sans-serif;
-    padding: 10px 18px; border-radius: 10px 10px 0 0; cursor: pointer;
+    font: 500 .9rem var(--font-display);
+    padding: 10px 18px; border-radius: 0; cursor: pointer;
     background: transparent; color: var(--text-dim);
-    border: 1px solid var(--border); border-bottom: none;
+    border: 1px solid var(--ink-rule); border-bottom: none;
   }
-  .tab.active { background: var(--bg-card); color: var(--white); }
+  .tab:hover { color: var(--text); }
+  /* The active tab merges into the panel below it — same surface, and the
+     shared edge is hidden by the panel's own top border sitting flush. */
+  .tab.active { background: var(--ink-soft); color: var(--signal); border-color: var(--ink-hairline); }
   .panel {
-    background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: 0 14px 14px 14px; padding: 28px; display: none;
+    background: var(--ink-soft); border: 1px solid var(--ink-rule);
+    border-radius: 0; padding: 28px; display: none;
   }
   .panel.active { display: block; }
-  .panel h2 { font-family: 'Bricolage Grotesque', sans-serif; color: var(--white);
-    font-size: 1.25rem; margin-bottom: 6px; }
-  .panel h3 { color: var(--indigo-bright); font-size: .95rem; margin: 22px 0 8px; }
+  .panel h2 { color: var(--text); font-size: 1.25rem; margin: 0 0 6px; }
+  .panel h3 { color: var(--signal); font-size: .95rem; margin: 22px 0 8px; }
   .panel p { color: var(--text-dim); font-size: .95rem; margin-bottom: 10px; }
-  .steps { counter-reset: s; list-style: none; margin: 14px 0; }
+  .steps { counter-reset: s; list-style: none; margin: 14px 0; padding-left: 0; }
   .steps li { counter-increment: s; position: relative; padding: 0 0 14px 44px; }
   .steps li::before {
     content: counter(s); position: absolute; left: 0; top: 0;
     width: 28px; height: 28px; border-radius: 50%;
-    background: var(--indigo); color: #fff; font-weight: 700; font-size: .85rem;
+    background: var(--signal); color: var(--ink);
+    font-family: var(--font-mono); font-weight: 700; font-size: .85rem;
     display: flex; align-items: center; justify-content: center;
   }
+  /* <pre> sits on the panel surface, so it drops to the page floor to read
+     as a recessed block rather than blending into the card. */
   pre {
-    background: var(--bg-deep); border: 1px solid var(--border);
-    border-radius: 10px; padding: 14px 16px; overflow-x: auto;
-    font: 500 .82rem/1.6 'JetBrains Mono', monospace; color: var(--text);
+    background: var(--ink);
+    padding: 14px 16px;
+    font-size: .82rem; line-height: 1.6;
     margin: 8px 0 4px; position: relative;
   }
   .copybtn {
     position: absolute; top: 8px; right: 8px;
-    font: 600 .7rem 'Plus Jakarta Sans', sans-serif;
-    background: var(--bg-card); color: var(--text-dim);
-    border: 1px solid var(--border); border-radius: 6px;
+    font: 500 .7rem var(--font-mono);
+    background: var(--ink-raised); color: var(--text-dim);
+    border: 1px solid var(--ink-rule); border-radius: 0;
     padding: 3px 9px; cursor: pointer;
   }
-  .copybtn:hover { color: var(--white); }
+  .copybtn:hover { color: var(--signal); border-color: var(--signal); }
   .btn {
-    display: inline-block; font: 700 .95rem 'Plus Jakarta Sans', sans-serif;
-    background: var(--indigo); color: #fff; text-decoration: none;
-    padding: 12px 22px; border-radius: 10px; margin: 6px 8px 6px 0;
+    display: inline-block; font: 600 .95rem var(--font-display);
+    background: var(--signal); color: var(--ink); text-decoration: none;
+    padding: 12px 22px; border-radius: 0; margin: 6px 8px 6px 0;
+    transition: background 0.15s;
   }
-  .btn.ghost { background: transparent; border: 1px solid var(--indigo);
-    color: var(--indigo-bright); }
+  .btn:hover { background: var(--signal-dim); text-decoration: none; }
+  .btn.ghost { background: transparent; border: 1px solid var(--signal);
+    color: var(--signal); }
+  .btn.ghost:hover { background: var(--signal); color: var(--ink); }
   .note {
-    background: rgba(99,102,241,.08); border-left: 3px solid var(--indigo);
-    border-radius: 0 8px 8px 0; padding: 10px 14px; font-size: .87rem;
+    background: rgba(180,240,58,.06); border-left: 3px solid var(--signal);
+    border-radius: 0; padding: 10px 14px; font-size: .87rem;
     color: var(--text-dim); margin: 14px 0;
   }
-  .note.warn { background: rgba(251,191,36,.07); border-left-color: var(--gold); }
-  a { color: var(--indigo-bright); }
-  .foot { margin-top: 42px; color: var(--text-muted); font-size: .85rem; }
+  .note b { color: var(--signal); }
+  .note.warn { background: rgba(255,182,39,.07); border-left-color: var(--amber); }
+  .foot { margin-top: 42px; color: var(--text-dim); font-size: .85rem; }
+  .foot p { color: var(--text-dim); font-size: .85rem; }
+  .foot b { color: var(--signal); }
 </style>
+
 </head>
 <body>
 <div class="wrap">
