@@ -46,15 +46,32 @@ jobs:
           zip -r ../tap-extension-${{ steps.version.outputs.version }}.zip . \
             -x '.*' 'test/*' 'TESTING.md' 'description.txt' 'STORE_LISTING.md' 'icons/icon.svg'
 
-      - name: Create GitHub Release
-        # softprops/action-gh-release needs a tag ref; on workflow_dispatch
-        # we run from a branch and don't want to fabricate a duplicate release
-        # (the v* release already exists, created by core's Release workflow).
+      - name: Attach extension to the existing release
+        # This job must NEVER create the release. core's Release workflow owns
+        # it and attaches the engine binaries + tap.mcpb + SHA256SUMS.
+        #
+        # It used to run softprops/action-gh-release here, which creates the
+        # release when absent. On 2026-07-15 core's release workflow never ran
+        # for v0.20.8, so this step became the creator and published an orphan
+        # release carrying ONLY the extension zip. That release took over
+        # `latest`, which 404'd every releases/latest/download/* URL for four
+        # days — install.sh's binary fallback and the tap.mcpb download button
+        # included.
+        #
+        # `gh release upload` fails when the release is missing. Failing loudly
+        # is the point: a missing core release is a release-pipeline bug, and
+        # silently inventing a half-empty release hides it.
         if: github.event_name == 'push'
-        uses: softprops/action-gh-release@v2
-        with:
-          files: tap-extension-${{ steps.version.outputs.version }}.zip
-          generate_release_notes: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            echo "::error::Release $TAG does not exist. core's Release workflow must publish it (binaries + tap.mcpb) before the extension can be attached. Refusing to create an orphan release."
+            exit 1
+          fi
+          gh release upload "$TAG" \
+            "tap-extension-${{ steps.version.outputs.version }}.zip" --clobber
 
       - name: Upload and publish to Chrome Web Store
         # chrome-webstore-upload-cli ≥3.x removed --client-id / --client-secret /

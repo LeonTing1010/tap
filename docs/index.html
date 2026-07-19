@@ -131,7 +131,10 @@ a { color: inherit; }
 a:hover { text-decoration: none; }
 code { background: none; padding: 0; color: inherit; }
 
-html { scroll-behavior: smooth; }
+/* The nav is position:fixed (~58px tall), so an anchor jump lands the target's
+   top edge underneath it — #receipts used to cut the headline in half. Offset
+   every scroll target by the nav height plus breathing room. */
+html { scroll-behavior: smooth; scroll-padding-top: 88px; }
 
 body {
   font-family: var(--font-body);
