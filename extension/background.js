@@ -979,6 +979,23 @@ async function ambientFreshnessOf(tabId, resolver, selStr) {
 // viewport offset so CDP coordinate ops (top-frame space) can be translated.
 // Plain selectors pass through untouched. Single frame hop only.
 const FRAME_SEP = ' >>> '
+// A miss message that does not lie about what to try next (2026-07-20).
+//
+// The old text always appended "…or the target is inside an iframe: prefix
+// the selector, e.g. iframeSel >>> innerSel" — including when the caller had
+// ALREADY prefixed it. Reading that on a `iframe >>> #foo` miss sends you
+// looking for a frame problem you do not have; the real cause is usually the
+// `visible` filter (node exists, box is 0×0 because its panel is inactive).
+// Rule: only suggest the frame hop when the selector has not taken it, and
+// always prefer the page-side stage diagnosis when one is available.
+function notFoundMsg(sel, why) {
+  const label = sel ?? '[resolver]'
+  if (why) return 'selector_not_found: ' + label + ' — ' + why
+  const alreadyScoped = typeof label === 'string' && label.includes(FRAME_SEP)
+  return 'selector_not_found: ' + label + (alreadyScoped
+    ? ' (resolved inside the named frame and found nothing — the node may exist but be filtered: check `visible` on collapsed/inactive panels)'
+    : ' (top-frame resolve found nothing — page may still be loading, or the target is inside an iframe: prefix the selector, e.g. iframeSel >>> innerSel)')
+}
 async function resolveFrame(tabId, sel) {
   if (!sel || !sel.includes(FRAME_SEP)) return { t: tabId, sel, dx: 0, dy: 0 }
   const i = sel.indexOf(FRAME_SEP)
@@ -1244,7 +1261,87 @@ const TAP_DEEP_INSTALL = () => {
     }
     return { el: null }
   }
-  globalThis.__tapDeep = { all, control, pick, pickVoted, implicitRole, accName }
+  // Why a miss happened, in the resolver's own vocabulary (2026-07-20).
+  //
+  // A bare `selector_not_found` conflates two very different worlds:
+  //   (a) the selector matched NOTHING — wrong selector, or wrong frame;
+  //   (b) the selector matched fine and a LATER filter emptied the list —
+  //       most often `visible`, because the node is real but collapsed
+  //       (inactive wizard step, closed accordion, un-mounted tab panel).
+  // (b) reported as (a) sends the reader hunting for a selector bug that
+  // does not exist. Worse, the generic hint says "prefix with the iframe
+  // selector" even when the caller already did — actively misleading.
+  //
+  // diag() replays the SAME pipeline as resolveList, recording the survivor
+  // count at each stage, and names the first stage that reached zero plus a
+  // concrete reason for the leading casualty. Read-only; runs only on a miss.
+  // Outer guard: a diagnosis is a courtesy on a path that has ALREADY
+  // failed. If any probe throws (hostile getters, detached nodes, exotic
+  // custom elements), degrade to a bare string — never convert a resolver
+  // miss into an unrelated exception the caller has to debug instead.
+  const diag = (target, root) => {
+    try { return diagInner(target, root) } catch (_e) { return 'diagnosis unavailable' }
+  }
+  const diagInner = (target, root) => {
+    const r = root || document
+    if (!target || typeof target !== 'object') {
+      const n = all(String(target), r).length
+      return n === 0 ? 'no element matched' : 'matched ' + n + ' but none was visible'
+    }
+    const wantRole = target.role ? String(target.role).trim().toLowerCase() : ''
+    let list = target.selector
+      ? all(target.selector, r)
+      : ((wantRole || target.name) ? all(ROLE_CANDIDATES, r) : [])
+    const started = list.length
+    if (started === 0) {
+      return target.selector
+        ? 'selector matched 0 elements'
+        : 'no candidates for role/name'
+    }
+    const stages = []
+    const step = (label, fn) => {
+      if (list.length === 0) return
+      const before = list
+      list = list.filter(fn)
+      if (list.length !== before.length) stages.push(label + ' ' + before.length + '→' + list.length)
+      if (list.length === 0 && before.length > 0) {
+        // Name the leading casualty concretely — "0×0 box" reads very
+        // differently from "wrong accessible name".
+        const e = before[0]
+        try {
+          if (label === 'visible') {
+            const b = e.getBoundingClientRect()
+            const s = (typeof getComputedStyle === 'function') ? getComputedStyle(e) : null
+            stages.push('first casualty: ' + Math.round(b.width) + '×' + Math.round(b.height) + ' box' +
+              (s && s.display === 'none' ? ', display:none' : '') +
+              (s && s.visibility === 'hidden' ? ', visibility:hidden' : '') +
+              (e.offsetParent ? '' : ', offsetParent=null'))
+          } else if (label === 'name') {
+            stages.push('first casualty name: "' + String(accName(e) || '').slice(0, 40) + '"')
+          } else if (label === 'role') {
+            stages.push('first casualty role: ' + implicitRole(e))
+          }
+        } catch (_e) { /* diagnosis must never throw */ }
+      }
+    }
+    if (wantRole) step('role', (e) => implicitRole(e) === wantRole)
+    if (target.name) {
+      const nm = String(target.name).trim().toLowerCase()
+      step('name', (e) => accName(e).toLowerCase().includes(nm))
+    }
+    if (target.visible !== false) step('visible', vis)
+    if (target.text) {
+      const tx = String(target.text).trim()
+      step('text', (e) => (e.textContent || '').trim().includes(tx))
+    }
+    if (target.inViewport) step('inViewport', inView)
+    if (list.length > 0) {
+      const idx = (typeof target.nth === 'number') ? target.nth : 0
+      return 'matched ' + list.length + ' but nth=' + idx + ' is out of range'
+    }
+    return 'matched ' + started + ', 0 survived [' + stages.join('; ') + ']'
+  }
+  globalThis.__tapDeep = { all, control, pick, pickVoted, implicitRole, accName, diag }
 }
 // Idempotent: ensure globalThis.__tapDeep exists in the (frame) target before a
 // handler's injected fn references it. One extra execFunc per op — ops are
@@ -2072,7 +2169,13 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
             ...(witness ? { _tap_anomalies: { witness } } : {}),
           }
         }
-        if (!el) throw new Error('Element not found: ' + label)
+        if (!el) {
+          // Carry the stage-by-stage reason out of the page — the SW cannot
+          // recompute it (the DOM is on this side of the boundary).
+          let why = ''
+          try { why = globalThis.__tapDeep.diag(t, document) } catch (_e) { /* never mask the real miss */ }
+          throw new Error('Element not found: ' + label + (why ? ' — ' + why : ''))
+        }
         el.scrollIntoView({ block: 'center', behavior: 'instant' })
         el.click()
         const r = el.getBoundingClientRect()
@@ -2104,7 +2207,7 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
         throw e
       }
       if (params.probe) return { resolved: !!(result && result.resolved) }
-      if (!result) throw new Error('selector_not_found: ' + (innerSel ?? '[resolver]') + ' (top-frame resolve found nothing — page may still be loading, or the target is inside an iframe: prefix the selector, e.g. iframeSel >>> innerSel)')
+      if (!result) throw new Error(notFoundMsg(innerSel))
       // CDP fallback: if site needs isTrusted events, retry with cdpClick
       // (dx/dy translate frame-relative coords to top-frame viewport space)
       if (params.trusted) {
@@ -2252,7 +2355,7 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
         const r = el.getBoundingClientRect()
         return { x: Math.round(r.x + r.width / 2), y: Math.round(r.y + r.height / 2) }
       }, sel)
-      if (!coords) throw new Error('selector_not_found: ' + sel + ' (top-frame resolve found nothing — page may still be loading, or the target is inside an iframe: prefix the selector, e.g. iframeSel >>> innerSel)')
+      if (!coords) throw new Error(notFoundMsg(sel))
       // Real CDP click establishes focus + caret; select-all so insertText
       // REPLACES any existing value; Input.insertText drives the native
       // beforeinput/input pipeline (per-char dispatchKeyEvent({text}) silently
@@ -2310,7 +2413,7 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
         return { x: Math.round(r.x + r.width / 2), y: Math.round(r.y + r.height / 2) }
       }, sel)
       // null exec = page mid-navigation → typed miss, not "reading 'x'"
-      if (!coords) throw new Error('selector_not_found: ' + sel + ' (top-frame resolve found nothing — page may still be loading, or the target is inside an iframe: prefix the selector, e.g. iframeSel >>> innerSel)')
+      if (!coords) throw new Error(notFoundMsg(sel))
       await withDebugger(tabId, () =>
         chrome.debugger.sendCommand({ tabId }, 'Input.dispatchMouseEvent', { type: 'mouseMoved', x: coords.x + dx, y: coords.y + dy }))
       return {}
@@ -2360,7 +2463,7 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
         return { blurred: true }
       }
       const done = await execFunc(fx, blurResolver, sel)
-      if (!done) throw new Error('selector_not_found: ' + sel + ' (top-frame resolve found nothing — page may still be loading, or the target is inside an iframe: prefix the selector, e.g. iframeSel >>> innerSel)')
+      if (!done) throw new Error(notFoundMsg(sel))
       return {}
     }
 
