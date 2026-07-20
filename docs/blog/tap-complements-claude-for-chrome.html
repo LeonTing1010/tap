@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+  (function() {
+    if (location.hostname !== 'taprun.dev') return;
+    var s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=G-RH14PQ10QK';
+    document.head.appendChild(s);
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function(){ dataLayer.push(arguments); };
+    gtag('js', new Date());
+    gtag('config', 'G-RH14PQ10QK');
+  })();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tap Complements Claude for Chrome — The Hand and the Muscle Memory | Tap</title>
+<meta name="description" content="Claude for Chrome is an excellent interactive browser assistant. But it re-reasons every run, so a weekly repeat task keeps spending tokens. Tap compiles the run you already got working into a zero-token replay. They sit side by side in Claude Code.">
+<link rel="canonical" href="https://taprun.dev/blog/tap-complements-claude-for-chrome.html">
+<meta property="og:title" content="Tap Complements Claude for Chrome — The Hand and the Muscle Memory">
+<meta property="og:description" content="Claude for Chrome explores; Tap remembers. Two MCP servers in the same Claude Code, for two different jobs.">
+<meta property="og:url" content="https://taprun.dev/blog/tap-complements-claude-for-chrome.html">
+<meta property="og:type" content="article">
+<meta property="article:published_time" content="2026-07-21">
+<meta property="article:author" content="Leon Ting">
+<meta property="og:image" content="https://taprun.dev/social-preview.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Tap Complements Claude for Chrome — The Hand and the Muscle Memory">
+<meta name="twitter:description" content="Claude for Chrome explores; Tap remembers. Complementary, not competing.">
+<meta name="twitter:image" content="https://taprun.dev/social-preview.png">
+<meta name="keywords" content="claude for chrome, claude in chrome, claude for chrome repeated tasks, claude for chrome scheduled tasks, claude for chrome token usage, claude code browser automation, zero token browser replay, claude for chrome alternative, browser workflow automation">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Tap Complements Claude for Chrome — The Hand and the Muscle Memory",
+  "description": "Claude for Chrome is a strong interactive browser assistant that re-reasons every run. Tap compiles a working run into a zero-token deterministic replay. They run side by side in Claude Code.",
+  "datePublished": "2026-07-21",
+  "author": { "@type": "Person", "name": "Leon Ting", "url": "https://github.com/LeonTing1010" },
+  "publisher": { "@type": "Organization", "name": "Tap", "url": "https://taprun.dev" },
+  "url": "https://taprun.dev/blog/tap-complements-claude-for-chrome.html",
+  "mainEntityOfPage": "https://taprun.dev/blog/tap-complements-claude-for-chrome.html",
+  "image": "https://taprun.dev/social-preview.png"
+}
+</script>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='100' cy='100' r='80' fill='%23818CF8'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/css/site.css?v=20260720">
+<style>
+/* Post-specific styles. Shared rules live in /assets/css/site.css */
+.tldr { padding: 16px 20px; background: var(--ink-soft); border-left: 3px solid var(--signal); margin: 24px 0; }
+.tldr strong { color: var(--text); }
+</style>
+<script src="https://analytics.ahrefs.com/analytics.js" data-key="G1wKuningnrw+t5LQJ+MPw" async></script>
+</head>
+<body>
+<div class="container">
+<a href="../" class="back">&larr; Tap</a> &middot; <a href="./" class="back">Blog</a>
+<h1>Tap Complements Claude for Chrome: The Hand and the Muscle Memory</h1>
+<p class="meta">July 21, 2026 &middot; Leon Ting &middot; 6 min read</p>
+
+<div class="tldr">
+<strong>TL;DR.</strong> Claude for Chrome is a genuinely good interactive browser assistant &mdash; it explores a page, fills a form, handles a one-off task in your own logged-in Chrome. But it reasons through the task <em>every time it runs</em>, which means a chore you repeat every week keeps spending model tokens on every run and needs your machine awake to fire. <strong>Tap</strong> is the other half: once you've gotten a browser flow working, Tap compiles it into a <code>.tap.json</code> plan that replays deterministically at <strong>zero LLM tokens</strong>, on a local schedule. They're two MCP servers in the same Claude Code. Claude for Chrome is the hand that figures it out the first time; Tap is the muscle memory that does it for free forever after.
+</div>
+
+<h2>This is not a versus post</h2>
+
+<p>Most "X vs Y" browser-automation comparisons pit tools that are trying to do the same job. This isn't that. Claude for Chrome and Tap live in the <em>same</em> Claude Code session, as two separate MCP servers, and they're good at two different phases of the same work. If you're using one, the other is probably the missing half &mdash; not the replacement.</p>
+
+<p>So let's be fair to each.</p>
+
+<h2>What Claude for Chrome is genuinely good at</h2>
+
+<p>Claude for Chrome drives your real, logged-in Chrome. That's the right design for a whole class of work:</p>
+
+<ul>
+<li><strong>Exploration.</strong> "Open this dashboard and tell me what's on it." The page is new, the structure is unknown, you want the model to look and react. Interactive reasoning is exactly what you want here.</li>
+<li><strong>One-off tasks.</strong> "Fill out this form once," "find the export button on this admin panel," "check whether this listing went through." You'll do it once and never again. Paying for one model pass is a rounding error.</li>
+<li><strong>Anything that needs judgment mid-flow.</strong> "Reply to these, but skip anything that looks like a complaint." The decision has to happen live, on content the model is seeing for the first time.</li>
+</ul>
+
+<p>For all of that, an assistant that thinks its way through the page in your own browser session is the correct tool. Tap does not try to be that assistant.</p>
+
+<h2>The seam: the task you do <em>again</em></h2>
+
+<p>Here's where a real gap opens, and it's not a flaw in Claude for Chrome &mdash; it's a consequence of what it is. An interactive assistant reasons through the task on every run, because that's how it stays adaptive. That's great the first time. It's expensive the fiftieth time.</p>
+
+<p>Consider a genuinely boring, genuinely real chore: <em>every Monday, log into three dashboards and pull this week's numbers into a note.</em> The steps never change. But run it through a reasoning assistant and:</p>
+
+<ul>
+<li>Every Monday's run spends model tokens re-deciding steps it already decided last Monday. Heavy users of Claude for Chrome notice this &mdash; browser tasks draw down your subscription limits faster than a normal chat, because each task is a full agent loop.</li>
+<li>The task only fires while Chrome is open and your machine is awake. A scheduled browser task is still, under the hood, "wake up and reason through it again."</li>
+<li>Saving the workflow helps, but what's saved is essentially a reusable <em>prompt</em> &mdash; the assistant still re-interprets it each run. The steps are remembered; the <em>reasoning</em> isn't compiled away.</li>
+</ul>
+
+<p>None of that is Claude for Chrome doing something wrong. It's an interactive assistant behaving like an interactive assistant. It just means the <em>repeat</em> case wants a different shape.</p>
+
+<h2>What Tap adds: compile the run, replay it for free</h2>
+
+<p>Tap's whole premise is that a browser flow you've already gotten working is a thing you should be able to <em>compile</em>, not re-derive. The first successful run &mdash; done however you like, including by an interactive assistant &mdash; becomes a <code>.tap.json</code> plan: a small, explicit list of steps. After that:</p>
+
+<ul>
+<li><strong>Replay costs zero LLM tokens.</strong> The plan is mechanical data. Running it doesn't call a model. Your Monday numbers-pull, run 2 through run 200, is free.</li>
+<li><strong>It runs unattended, locally.</strong> A compiled plan can fire on a local schedule without waking an agent or holding a chat session open. No per-run reasoning to pay for or supervise.</li>
+<li><strong>It carries its own check.</strong> Each plan can declare what "this actually worked" means (a value that must be present, a page that must say the right thing), so a silently-broken run surfaces as a real error instead of landing empty and looking fine.</li>
+<li><strong>Credentials never leave your machine.</strong> Tap's extension reuses the session already in your real Chrome. Nothing crosses a trust boundary, by architecture.</li>
+</ul>
+
+<p>What Tap deliberately does <em>not</em> do is be the thing that figures the task out in the first place. It has no model of its own. The intelligence lives in the connected agent at compile time &mdash; which is exactly where Claude for Chrome, or Claude Code itself, comes in.</p>
+
+<h2>How they fit together</h2>
+
+<p>Because both are MCP servers inside Claude Code, they compose in one session. The natural division of labor:</p>
+
+<blockquote>
+<p><strong>Claude for Chrome is the hand that works it out. Tap is the muscle memory that repeats it for free.</strong></p>
+</blockquote>
+
+<p>The flow looks like:</p>
+
+<ol>
+<li><strong>Explore interactively.</strong> Use Claude for Chrome (or Claude Code driving your browser) to get the task working once, live, with full reasoning. This is the part that needs a brain.</li>
+<li><strong>Compile it.</strong> Once it works, capture the flow as a Tap plan. The agent that just did it also knows how to write it down as explicit steps &mdash; that's the compile.</li>
+<li><strong>Replay for free.</strong> From then on, the plan runs deterministically at zero tokens, on a schedule if you want. The reasoning was paid for once, not every week.</li>
+</ol>
+
+<p>You don't retire the assistant. You stop paying it to re-solve a solved problem.</p>
+
+<h2>How to pick, task by task</h2>
+
+<ol>
+<li><strong>Is this a one-time or exploratory task?</strong> &rarr; Interactive assistant. Don't bother compiling something you'll never run again.</li>
+<li><strong>Does the task need fresh judgment on content each run?</strong> &rarr; Keep it interactive. The decision can't be compiled if it depends on what the page says today.</li>
+<li><strong>Are the steps stable and will you run it repeatedly?</strong> &rarr; Get it working once interactively, then compile it into a Tap plan. Every run after the first is free.</li>
+<li><strong>Do you want it to run on a schedule, unattended?</strong> &rarr; Tap. A compiled plan fires without waking an agent; an interactive task needs the session live.</li>
+</ol>
+
+<p>Most real workloads are a mix: an exploratory phase that's genuinely interactive, sitting on top of a repetitive core that shouldn't be. Use each tool for the phase it fits.</p>
+
+<h2>The honest boundaries</h2>
+
+<p>Two things Tap is <em>not</em>, so this stays fair:</p>
+
+<p><strong>Compiling only pays off if you repeat.</strong> Turning a run into a plan costs one interactive pass up front. For a task you'll run twice, that's not worth it &mdash; just do it interactively both times. Tap earns its keep on the flows you run weekly, daily, or on a trigger. The economics are the point: the first run is the expensive one, and Tap only makes sense when you amortize it.</p>
+
+<p><strong>Tap runs where your browser runs.</strong> It's local by design &mdash; the session lives in your real Chrome on your real machine. If you need cloud-scale orchestration spinning up dozens of parallel headless sessions, that's a different tool's job. Tap is for the "automate the things I already do, in the browser I already use" cohort.</p>
+
+<h2>Setup</h2>
+
+<p>Tap installs as an MCP server alongside whatever else you have in Claude Code:</p>
+
+<div class="cta">
+<h3>Install</h3>
+<pre>/plugin marketplace add LeonTing1010/taprun
+/plugin install tap@taprun</pre>
+</div>
+
+<p>All features are free during v0.x. Once installed, Tap exposes four meta verbs (<code>capture</code> / <code>verify</code> / <code>mark</code> / <code>run</code>) plus every saved plan as a callable resource. AI participates only at <code>capture</code> time; replay is mechanical and token-free.</p>
+
+<p>Then the workflow is the one above: let the interactive assistant get a browser task working, and when you notice you're about to do the same thing again next week &mdash; compile it, and stop paying for the repeat.</p>
+
+<hr>
+
+<p class="meta">Related reading: <a href="claude-code-browser-automation.html">Claude Code Browser Automation &mdash; Tap vs Playwright MCP vs Stagehand</a> &middot; <a href="compile-time-ai-not-runtime-ai.html">Compile-time AI, not runtime AI</a> &middot; <a href="mcp-authoring-zero-token-execution.html">MCP authoring &amp; zero-token execution</a></p>
+
+</div>
+</body>
+</html>

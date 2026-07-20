@@ -6,8 +6,15 @@
 <description>Engineering insights on browser automation, AI agents, and deterministic programs.</description>
 <language>en-us</language>
 <atom:link href="https://taprun.dev/blog/feed.xml" rel="self" type="application/rss+xml"/>
-<lastBuildDate>Sat, 18 Jul 2026 00:00:00 +0000</lastBuildDate>
+<lastBuildDate>Tue, 21 Jul 2026 00:00:00 +0000</lastBuildDate>
 
+<item>
+<title>Tap Complements Claude for Chrome: The Hand and the Muscle Memory</title>
+<link>https://taprun.dev/blog/tap-complements-claude-for-chrome.html</link>
+<description>Claude for Chrome is a strong interactive browser assistant — it explores, fills a form, handles a one-off in your own logged-in Chrome. But it reasons through the task every run, so a weekly repeat keeps spending tokens and needs the machine awake to fire. Tap is the other half: compile a browser flow you've already gotten working into a zero-token deterministic replay that runs on a local schedule. Two MCP servers in the same Claude Code — the hand that works it out the first time, and the muscle memory that repeats it for free. Not a competitor; the missing half.</description>
+<pubDate>Tue, 21 Jul 2026 00:00:00 +0000</pubDate>
+<guid>https://taprun.dev/blog/tap-complements-claude-for-chrome.html</guid>
+</item>
 <item>
 <title>Stop Chasing Clients for Documents — Most Are Behind Logins You Already Have</title>
 <link>https://taprun.dev/blog/stop-chasing-clients-for-documents.html</link>
