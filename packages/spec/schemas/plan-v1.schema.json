@@ -359,6 +359,12 @@
             "$ref": "#/$defs/ExtractSpec"
           }
         },
+        "from": {
+          "type": "string"
+        },
+        "live": {
+          "type": "boolean"
+        },
         "save": {
           "type": "string"
         }
