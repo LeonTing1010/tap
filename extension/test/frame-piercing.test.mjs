@@ -88,7 +88,7 @@ test('selector-bearing handlers route through resolveFrame', () => {
 })
 
 test('CDP coordinate ops translate frame-relative coords (dx/dy)', () => {
-  const click = slice("case 'click': {", 6400) // widened: visible-match clickResolver (2026-06-11) + probe-mode branch (Clause B, 2026-06-17) + inline deepAll shadow helper (2026-06-23) + closed-shadow pierce fallback (Phase 2, 2026-07-10) + witness-voting report (ADR 2026-07-17)
+  const click = slice("case 'click': {", 8000) // widened: visible-match clickResolver (2026-06-11) + probe-mode branch (Clause B, 2026-06-17) + inline deepAll shadow helper (2026-06-23) + closed-shadow pierce fallback (Phase 2, 2026-07-10) + witness-voting report (ADR 2026-07-17) + 6400->8000 full one-click pointer sequence (ADR 2026-07-21)
   assert(click.includes('result.x + dx'), 'trusted click must offset by iframe viewport position')
   const hover = slice("case 'hover': {", 1000) // widened 800->1000: the selector-miss message now carries the iframe ' >>> ' hint (2026-07-16)
   assert(hover.includes('coords.x + dx'), 'hover mouseMoved must offset by iframe viewport position')

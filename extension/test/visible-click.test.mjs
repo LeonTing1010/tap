@@ -69,6 +69,12 @@ console.log('\n  -- op:input click prefers the visible match --\n')
 
 const resolverSrc = (() => { try { return extractClickResolver(BG_SRC) } catch (e) { return null } })()
 
+// clickResolver now shares __tapDeep.vis (2026-07-21 dedup — the inline copy was
+// R2 drift). __tapDeep.vis reads the GLOBAL getComputedStyle at call time (not a
+// factory param), so expose the mocks' __display globally; the extracted resolver
+// and the installed __tapDeep then agree on visibility.
+globalThis.getComputedStyle = (el) => ({ display: el?.__display || 'block', visibility: 'visible', opacity: '1' })
+
 test('clickResolver exists as a self-contained named injected fn', () => {
   assert(resolverSrc, 'background.js must define `const clickResolver = (t) => {…}`')
 })
@@ -132,6 +138,55 @@ test('probe mode on a miss returns {resolved:false} and does NOT throw', () => {
   try { out = resolver('nope', true) } catch { threw = true }
   assert(!threw, 'probe must not throw on miss')
   assert(out && out.resolved === false, 'probe returns {resolved:false} on miss')
+})
+
+// --- op:input click fires a FULL one-click pointer/mouse sequence -----------
+// Element Plus el-select / el-radio (and most frameworks: Ant, Vuetify, Wiz…)
+// open/toggle on `mousedown`/`pointerdown`. A lone `el.click()` fires only a
+// synthetic `click` and is a SILENT no-op on them — it returns clicked:true
+// yet nothing happens, so it never even shows up in friction (failed-op) data.
+// Anchor: 2026-07-21 AGC Connect-API `.agc-select` dropdown never opened →
+// could not create the publishing API client. A real user click dispatches
+// pointerdown → mousedown → pointerup → mouseup → click. The resolver must too.
+console.log('\n  -- op:input click dispatches a full one-click pointer sequence --\n')
+
+function makeClickyEl({ display = 'block', w = 40, h = 20 } = {}) {
+  const events = []
+  return {
+    __clicked: false, __display: display, textContent: '', children: [],
+    getAttribute: () => null, scrollIntoView() {}, focus() { events.push('focus') },
+    click() { this.__clicked = true; events.push('click') },
+    dispatchEvent(ev) { events.push(ev.type); return true },
+    getBoundingClientRect() { return { x: 0, y: 0, width: w, height: h } },
+    __events: events,
+  }
+}
+class StubEvent { constructor(type) { this.type = type } }
+
+// Build the resolver with DOM event constructors + window present in scope
+// (the browser content-script has them; the earlier factory omits them so the
+// resolver's `typeof PointerEvent !== 'undefined'` guard skips dispatch and
+// degrades to el.click() — that path is covered by the tests above).
+function buildFullSeqResolver(el) {
+  const fakeDoc = { body: {}, querySelector: () => el, querySelectorAll: () => [el], createTreeWalker: () => ({ nextNode: () => null }) }
+  const factory = new Function('document', 'getComputedStyle', 'NodeFilter', 'window', 'PointerEvent', 'MouseEvent', `return (${resolverSrc})`)
+  return factory(fakeDoc, (e) => ({ display: e.__display, visibility: 'visible', opacity: '1' }), { SHOW_ELEMENT: 1 }, {}, StubEvent, StubEvent)
+}
+
+test('click dispatches mousedown + pointerdown (not just a lone click)', () => {
+  assert(resolverSrc, 'resolver missing')
+  const el = makeClickyEl()
+  buildFullSeqResolver(el)('.el-radio')
+  assert(el.__events.includes('mousedown'), 'must dispatch mousedown — frameworks toggle on it (got ' + JSON.stringify(el.__events) + ')')
+  assert(el.__events.includes('pointerdown'), 'must dispatch pointerdown (got ' + JSON.stringify(el.__events) + ')')
+})
+
+test('the sequence is ONE real click: mousedown precedes the click, click still fires', () => {
+  assert(resolverSrc, 'resolver missing')
+  const el = makeClickyEl()
+  buildFullSeqResolver(el)('.el-radio')
+  assert(el.__clicked, 'native click must still fire (plain onclick handlers)')
+  assert(el.__events.indexOf('mousedown') < el.__events.lastIndexOf('click'), 'mousedown must precede click — one real user click (got ' + JSON.stringify(el.__events) + ')')
 })
 
 console.log(`\n  ${passed} passed, ${failed} failed\n`)

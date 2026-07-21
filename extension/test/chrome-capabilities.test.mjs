@@ -40,28 +40,13 @@ test('op:pdf stamp mode overlays via bundled offline pdf-lib (not chrome://pdf C
   assert(BG.includes('bytesToB64'), 'stamp must return base64 PDF bytes (same {data,mime} shape as export)')
 })
 
-test('highlight method uses native Overlay.highlightNode (survives re-render)', () => {
-  assert(BG.includes("case 'highlight'"), 'highlight handler must exist')
-  assert(BG.includes('Overlay.highlightNode'), 'must use native CDP overlay, not injected box')
-  assert(BG.includes('Overlay.hideHighlight'), 'must auto-clear the highlight')
-})
-
-test('op:screencast records via Page.startScreencast + ack + stop', () => {
-  assert(BG.includes("case 'screencast'"), 'screencast handler must exist (op:screencast)')
-  assert(BG.includes('Page.startScreencast'), 'must start the screencast')
-  assert(BG.includes('Page.screencastFrameAck'), 'frames must be acked or the stream stalls')
-  assert(BG.includes('Page.stopScreencast'), 'must stop the screencast (self-contained)')
-})
+// highlight / screencast / point handler tests were removed with the ops —
+// retired by ADR 2026-07-13-op-union-minimization (no plan op can reach them).
+// Their DELETION from background.js is now guarded by op-handler-drift.test.mjs.
 
 test('focusEmulate method re-arms focus/lifecycle emulation on demand', () => {
   assert(BG.includes("case 'focusEmulate'"), 'focusEmulate handler must exist')
   assert(BG.includes('enableFocusEmulation('), 'must reuse the shared focus-emulation helper')
-})
-
-test('op:point (plan-callable picker) arms a click listener + returns a resolver', () => {
-  assert(BG.includes("case 'point'"), 'point handler must exist (op:point)')
-  assert(BG.includes("addEventListener('click', onClick, true)"), 'must arm a one-shot capture-phase click')
-  assert(BG.includes('return { resolver }'), 'must return the picked resolver to the plan')
 })
 
 test('op:notify pushes a message to the side panel storage key', () => {

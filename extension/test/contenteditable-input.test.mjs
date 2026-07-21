@@ -28,7 +28,10 @@
 import { strict as assert } from 'node:assert'
 import { readFileSync } from 'node:fs'
 
-const BG_SRC = readFileSync(new URL('../background.js', import.meta.url), 'utf-8')
+// Source-string checks span the SW handlers (background.js) AND the resolver's
+// `control` helper, which now lives in tap-deep.js (2026-07-21 single-source extraction).
+const BG_SRC = readFileSync(new URL('../background.js', import.meta.url), 'utf-8') +
+  '\n' + readFileSync(new URL('../tap-deep.js', import.meta.url), 'utf-8')
 
 let passed = 0
 let failed = 0

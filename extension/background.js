@@ -28,7 +28,6 @@ console.log('[tap] extension runtime ready')
 // --- Session Manager ---
 // Each MCP session owns a dedicated tab. Commands route via sessionId → tabId.
 const sessions = new Map()  // sessionId → { tabId, url, interceptActive, networkCapturing }
-const screencastBuckets = new Map()  // tabId → { frames, max, onEvt } (ADR 2026-07-08-op-capabilities)
 
 // --- Session persistence ---
 //
@@ -996,6 +995,52 @@ function notFoundMsg(sel, why) {
     ? ' (resolved inside the named frame and found nothing — the node may exist but be filtered: check `visible` on collapsed/inactive panels)'
     : ' (top-frame resolve found nothing — page may still be loading, or the target is inside an iframe: prefix the selector, e.g. iframeSel >>> innerSel)')
 }
+// op:input kind:"scroll" wheel distance (ADR 2026-07-20-input-kind-scroll).
+// amount: "page" (default) | "-page" | "end" | signed pixel count.
+// "end" asks for the whole remaining distance in ONE wheel event rather than
+// looping — the platform's lazy-load listener fires on the wheel, so a single
+// large delta is both fewer round-trips and fewer chances to lose the pointer.
+// Pure + named so it is extractable by test/scroll-postcondition.test.mjs.
+// op:input kind:"scroll" postcondition verdict (ADR 2026-07-20 §2.2, corrected
+// by the first end-to-end run the same day).
+//
+// The ADR's prose always distinguished two delta-0 cases; the first
+// implementation did not, and threw on both:
+//   • ALREADY AT A BOUNDARY — you asked to scroll to the end and you are at
+//     the end. The postcondition is SATISFIED, not violated. Throwing here
+//     aborts a `foreach … until at_bottom` loop that started on a short page,
+//     and (worse) fell through classifyExtensionError to peer_unreachable,
+//     telling the operator to reconnect a bridge that was working fine — the
+//     exact trap tap-core#65 fixed for op:eval.
+//   • MOVED NOTHING MID-PAGE — the wheel went nowhere: no scrollable ancestor
+//     under the pointer, or the container swallows wheel events. That is a
+//     plan bug and MUST fail; it is the entire reason this kind earned a seat.
+// The error text carries `selector_not_found:` so the classifier routes it to
+// a target problem instead of a transport problem.
+// Pure + named so it is extractable by test/scroll-postcondition.test.mjs.
+const scrollOutcome = (delta, pre, post, deltaY, ax, ay) => {
+  if (delta !== 0) return { ok: true, value: { before: pre.top, after: post.top, delta, at_bottom: post.at_bottom } }
+  if (post.at_bottom || (deltaY < 0 && pre.top === 0)) {
+    // Pinned at the requested boundary — terminal, not broken.
+    return { ok: true, value: { before: pre.top, after: post.top, delta: 0, at_bottom: post.at_bottom } }
+  }
+  return {
+    ok: false,
+    error: `selector_not_found: scroll_no_op — wheel deltaY ${deltaY} at (${ax},${ay}) moved nothing ` +
+      `and the scroller is not at a boundary (scrollTop ${pre.top}, clientHeight ${pre.clientHeight}, ` +
+      `scrollHeight ${pre.scrollHeight}). No scrollable ancestor under the pointer, or the container ` +
+      `intercepts wheel events — retarget, do not retry.`,
+  }
+}
+const scrollDeltaFor = (amount, clientHeight, scrollHeight, top) => {
+  const page = Math.max(120, Math.round((clientHeight || 0) * 0.9))
+  const amt = String(amount ?? 'page')
+  if (amt === 'page') return page
+  if (amt === '-page') return -page
+  if (amt === 'end') return Math.max(page, (scrollHeight || 0) - (top || 0))
+  const n = Number(amt)
+  return Number.isFinite(n) && n !== 0 ? n : page
+}
 async function resolveFrame(tabId, sel) {
   if (!sel || !sel.includes(FRAME_SEP)) return { t: tabId, sel, dx: 0, dy: 0 }
   const i = sel.indexOf(FRAME_SEP)
@@ -1040,313 +1085,20 @@ async function resolveFrame(tabId, sel) {
 //     inputs put the writable <input> inside the host's open shadow root; bounded
 //     depth (≤4) guards infinite walks. Returns null when none.
 // Drift/wiring guarded by test/shadow-piercing.test.mjs.
-const TAP_DEEP_INSTALL = () => {
-  if (globalThis.__tapDeep) return
-  // Recursive descent through OPEN shadow roots — collect every match for `sel` at
-  // the root document AND inside each nested element.shadowRoot (top-down, document
-  // order). Closed roots (.shadowRoot === null) stay invisible; only upload's CDP
-  // pierce:true path reaches those.
-  const deep = (sel, root) => {
-    const acc = []
-    const walk = (node) => {
-      if (!node || !node.querySelectorAll) return
-      acc.push(...node.querySelectorAll(sel))
-      for (const el of node.querySelectorAll('*')) if (el.shadowRoot) walk(el.shadowRoot)
-    }
-    walk(root || document)
-    return acc
-  }
-  const all = (sel, root) => {
-    const parts = String(sel).split(' >> ')
-    let roots = [root || document]
-    for (let i = 0; i < parts.length; i++) {
-      const out = []
-      for (const r of roots) if (r && r.querySelectorAll) out.push(...r.querySelectorAll(parts[i].trim()))
-      if (i === parts.length - 1) {
-        // A plain selector (no explicit ' >> ') that matched NOTHING in the light DOM
-        // auto-descends OPEN shadow roots. Fires ONLY on a 0-match, so every existing
-        // light-DOM tap stays byte-identical (replay determinism preserved), while
-        // whole-page shadow SPAs (微信小店 等 qiankun / web-component consoles) resolve
-        // without hand-authoring a ' >> ' host chain.
-        if (!out.length && parts.length === 1) return deep(parts[0].trim(), root || document)
-        return out
-      }
-      roots = out.map((e) => e.shadowRoot).filter(Boolean)
-      if (!roots.length) return []
-    }
-    return []
-  }
-  const control = (n, d) => {
-    if (!n || d > 4) return null
-    if (/^(INPUT|TEXTAREA|SELECT)$/.test(n.tagName)) return n
-    const root = n.shadowRoot || n
-    const hit = root.querySelector && root.querySelector('input, textarea, select')
-    if (hit) return hit
-    for (const h of (root.querySelectorAll ? root.querySelectorAll('*') : [])) {
-      if (h.shadowRoot) { const r = control(h, d + 1); if (r) return r }
-    }
-    return null
-  }
-  // Resolve a target — bare selector STRING or a TargetResolver OBJECT
-  // { selector, visible?, nth?, text?, inViewport?, within? } — to the ONE
-  // chosen element (ADR 2026-07-08-target-resolver + within amendment
-  // 2026-07-12-target-resolver-within). A string keeps the historic
-  // "first match, prefer a visible one" contract; a resolver object applies
-  // the explicit predicate in order: within (scope subtree) → role/name →
-  // visible (default true) → text → inViewport → nth (0-based; negatives
-  // count from the end, -1 = last = newest in append-ordered chat/list UIs).
-  // Out-of-range → null (no silent first-match — the whole point).
-  // `within` is itself a Target, resolved recursively; the outer query runs
-  // inside the resolved element's subtree. This expresses the relational
-  // queries ("the 删除 button INSIDE the card whose text includes X") that
-  // previously forced the eval-marker dance: an op:eval stamping
-  // data-tap-* attributes + a follow-up op:input clicking the marker — a
-  // two-op TOCTOU that a React/Vue re-render between the ops silently
-  // broke. within resolves relationally IN ONE OP at act time.
-  // Single source of truth for element
-  // selection across the selector-bearing write handlers + op:wait resolver;
-  // clickResolver keeps its own inline bare-string path (the visible-click
-  // test injects getComputedStyle into IT) but routes the OBJECT path here.
-  const vis = (e) => {
-    if (!e) return false
-    const s = (typeof getComputedStyle === 'function') ? getComputedStyle(e) : null
-    if (s && (s.display === 'none' || s.visibility === 'hidden' || s.opacity === '0')) return false
-    const r = e.getBoundingClientRect ? e.getBoundingClientRect() : { width: 1, height: 1 }
-    return r.width > 0 && r.height > 0
-  }
-  const inView = (e) => {
-    const r = e.getBoundingClientRect ? e.getBoundingClientRect() : null
-    if (!r) return true
-    const vh = (typeof innerHeight === 'number') ? innerHeight : 1e9
-    const vw = (typeof innerWidth === 'number') ? innerWidth : 1e9
-    return r.width > 0 && r.height > 0 && r.bottom > 0 && r.right > 0 && r.top < vh && r.left < vw
-  }
-  // Pragmatic in-page getByRole (ADR 2026-07-08-target-resolver-ax): explicit
-  // role= wins, else a common-subset implicit-role map. Not the full CDP AX
-  // tree, but stable enough to survive the class/DOM churn that breaks CSS
-  // selectors across React re-renders.
-  const implicitRole = (el) => {
-    if (!el || !el.getAttribute) return ''
-    const explicit = el.getAttribute('role')
-    if (explicit && explicit.trim()) return explicit.trim().toLowerCase().split(/\s+/)[0]
-    const tag = (el.tagName || '').toLowerCase()
-    switch (tag) {
-      case 'a': case 'area': return el.hasAttribute && el.hasAttribute('href') ? 'link' : ''
-      case 'button': case 'summary': return 'button'
-      case 'select': return el.multiple ? 'listbox' : 'combobox'
-      case 'textarea': return 'textbox'
-      case 'img': return 'img'
-      case 'nav': return 'navigation'
-      case 'main': return 'main'
-      case 'header': return 'banner'
-      case 'footer': return 'contentinfo'
-      case 'aside': return 'complementary'
-      case 'h1': case 'h2': case 'h3': case 'h4': case 'h5': case 'h6': return 'heading'
-      case 'input': {
-        const t = ((el.getAttribute('type') || 'text')).toLowerCase()
-        if (t === 'button' || t === 'submit' || t === 'reset' || t === 'image') return 'button'
-        if (t === 'checkbox') return 'checkbox'
-        if (t === 'radio') return 'radio'
-        if (t === 'range') return 'slider'
-        if (t === 'number') return 'spinbutton'
-        if (t === 'search') return 'searchbox'
-        return 'textbox'
-      }
-      default: return ''
-    }
-  }
-  // Accessible name: aria-label → aria-labelledby → <label> → alt/title → text.
-  const accName = (el) => {
-    if (!el || !el.getAttribute) return ''
-    const al = el.getAttribute('aria-label'); if (al && al.trim()) return al.trim()
-    const lb = el.getAttribute('aria-labelledby')
-    const doc = (el.ownerDocument || (typeof document !== 'undefined' ? document : null))
-    if (lb && doc && doc.getElementById) {
-      const txt = lb.trim().split(/\s+/).map((id) => { const n = doc.getElementById(id); return n ? (n.textContent || '') : '' }).join(' ').trim()
-      if (txt) return txt
-    }
-    if (el.id && doc && doc.querySelector) {
-      try { const esc = (typeof CSS !== 'undefined' && CSS.escape) ? CSS.escape(el.id) : el.id; const lab = doc.querySelector('label[for="' + esc + '"]'); if (lab && (lab.textContent || '').trim()) return lab.textContent.trim() } catch (_) {}
-    }
-    const wrap = el.closest && el.closest('label'); if (wrap && (wrap.textContent || '').trim()) return wrap.textContent.trim()
-    const alt = el.getAttribute('alt'); if (alt && alt.trim()) return alt.trim()
-    const title = el.getAttribute('title'); if (title && title.trim()) return title.trim()
-    return (el.textContent || '').trim()
-  }
-  const ROLE_CANDIDATES = 'a,area,button,summary,input,select,textarea,img,nav,main,header,footer,aside,h1,h2,h3,h4,h5,h6,[role],[aria-label],[tabindex],[onclick]'
-  // The object-target filter pipeline, returning the FULL filtered list —
-  // pick indexes it (nth); pickVoted needs its LENGTH for the uniqueness
-  // gate. Candidacy: selector matches, else the common-role set when a
-  // semantic predicate (role/name) is declared. (name-only resolvers are
-  // lint-illegal, so extending candidacy to `name` is unobservable for
-  // legal plans — it exists for pickVoted's stripped semantic witness.)
-  const resolveList = (target, root) => {
-    const wantRole = target.role ? String(target.role).trim().toLowerCase() : ''
-    let list = target.selector
-      ? all(target.selector, root)
-      : ((wantRole || target.name) ? all(ROLE_CANDIDATES, root) : [])
-    if (wantRole) list = list.filter((e) => implicitRole(e) === wantRole)
-    if (target.name) {
-      const nm = String(target.name).trim().toLowerCase()
-      list = list.filter((e) => accName(e).toLowerCase().includes(nm))
-    }
-    if (target.visible !== false) list = list.filter(vis)
-    if (target.text) {
-      const tx = String(target.text).trim()
-      list = list.filter((e) => (e.textContent || '').trim().includes(tx))
-    }
-    if (target.inViewport) list = list.filter(inView)
-    return list
-  }
-  const pick = (target, root, depth) => {
-    const isObj = target && typeof target === 'object'
-    if (isObj && target.within) {
-      // Scope: resolve the within Target first, then run the outer query
-      // inside its subtree. Depth-capped defensively (JSON can't cycle,
-      // but a pathological deep nest shouldn't stack-overflow the page).
-      if ((depth || 0) > 8) return null
-      const scope = pick(target.within, root, (depth || 0) + 1)
-      if (!scope) return null
-      root = scope
-    }
-    if (!isObj) {
-      const list = all(target, root)
-      let el = list[0] || null
-      if (el && !vis(el)) { for (const e of list) { if (vis(e)) { el = e; break } } }
-      return el
-    }
-    const list = resolveList(target, root)
-    let idx = (typeof target.nth === 'number') ? target.nth : 0
-    if (idx < 0) idx = list.length + idx
-    return list[idx] || null
-  }
-  // Witness voting on a conjunctive MISS (ADR 2026-07-17-reference-
-  // metabolism): a resolver declaring BOTH witness classes (structural
-  // `selector` + semantic `role`/`name`) already paid for redundancy —
-  // when one class drifts, the survivor may still uniquely name the
-  // author's intent. Rule: absence ≠ veto; dissent = veto; uniqueness
-  // required. The survivor resolves iff it matches EXACTLY ONE element
-  // AND the other class matches ZERO. Fires only on a pick miss with
-  // nth ∈ {undefined, 0} — hits are byte-identical to pick. Returns
-  // { el, witness? }; a fallback resolution carries witness =
-  // { resolved_by, missing } which handlers ride into _tap_anomalies
-  // (never silent — the early drift warning IS the point).
-  const pickVoted = (target, root) => {
-    const hit = pick(target, root)
-    const isObj = target && typeof target === 'object'
-    if (hit || !isObj) return { el: hit }
-    const nthOk = target.nth === undefined || target.nth === 0
-    if (!target.selector || !(target.role || target.name) || !nthOk) return { el: null }
-    let scope = root
-    if (target.within) {
-      scope = pick(target.within, root, 1)
-      if (!scope) return { el: null }
-    }
-    const base = {
-      ...(target.text ? { text: target.text } : {}),
-      ...(target.visible !== undefined ? { visible: target.visible } : {}),
-      ...(target.inViewport ? { inViewport: target.inViewport } : {}),
-    }
-    const semList = resolveList({
-      ...base,
-      ...(target.role ? { role: target.role } : {}),
-      ...(target.name ? { name: target.name } : {}),
-    }, scope)
-    const structList = resolveList({ ...base, selector: target.selector }, scope)
-    if (semList.length === 1 && structList.length === 0) {
-      return { el: semList[0], witness: { resolved_by: 'semantic', missing: 'selector' } }
-    }
-    if (structList.length === 1 && semList.length === 0) {
-      return { el: structList[0], witness: { resolved_by: 'selector', missing: 'semantic' } }
-    }
-    return { el: null }
-  }
-  // Why a miss happened, in the resolver's own vocabulary (2026-07-20).
-  //
-  // A bare `selector_not_found` conflates two very different worlds:
-  //   (a) the selector matched NOTHING — wrong selector, or wrong frame;
-  //   (b) the selector matched fine and a LATER filter emptied the list —
-  //       most often `visible`, because the node is real but collapsed
-  //       (inactive wizard step, closed accordion, un-mounted tab panel).
-  // (b) reported as (a) sends the reader hunting for a selector bug that
-  // does not exist. Worse, the generic hint says "prefix with the iframe
-  // selector" even when the caller already did — actively misleading.
-  //
-  // diag() replays the SAME pipeline as resolveList, recording the survivor
-  // count at each stage, and names the first stage that reached zero plus a
-  // concrete reason for the leading casualty. Read-only; runs only on a miss.
-  // Outer guard: a diagnosis is a courtesy on a path that has ALREADY
-  // failed. If any probe throws (hostile getters, detached nodes, exotic
-  // custom elements), degrade to a bare string — never convert a resolver
-  // miss into an unrelated exception the caller has to debug instead.
-  const diag = (target, root) => {
-    try { return diagInner(target, root) } catch (_e) { return 'diagnosis unavailable' }
-  }
-  const diagInner = (target, root) => {
-    const r = root || document
-    if (!target || typeof target !== 'object') {
-      const n = all(String(target), r).length
-      return n === 0 ? 'no element matched' : 'matched ' + n + ' but none was visible'
-    }
-    const wantRole = target.role ? String(target.role).trim().toLowerCase() : ''
-    let list = target.selector
-      ? all(target.selector, r)
-      : ((wantRole || target.name) ? all(ROLE_CANDIDATES, r) : [])
-    const started = list.length
-    if (started === 0) {
-      return target.selector
-        ? 'selector matched 0 elements'
-        : 'no candidates for role/name'
-    }
-    const stages = []
-    const step = (label, fn) => {
-      if (list.length === 0) return
-      const before = list
-      list = list.filter(fn)
-      if (list.length !== before.length) stages.push(label + ' ' + before.length + '→' + list.length)
-      if (list.length === 0 && before.length > 0) {
-        // Name the leading casualty concretely — "0×0 box" reads very
-        // differently from "wrong accessible name".
-        const e = before[0]
-        try {
-          if (label === 'visible') {
-            const b = e.getBoundingClientRect()
-            const s = (typeof getComputedStyle === 'function') ? getComputedStyle(e) : null
-            stages.push('first casualty: ' + Math.round(b.width) + '×' + Math.round(b.height) + ' box' +
-              (s && s.display === 'none' ? ', display:none' : '') +
-              (s && s.visibility === 'hidden' ? ', visibility:hidden' : '') +
-              (e.offsetParent ? '' : ', offsetParent=null'))
-          } else if (label === 'name') {
-            stages.push('first casualty name: "' + String(accName(e) || '').slice(0, 40) + '"')
-          } else if (label === 'role') {
-            stages.push('first casualty role: ' + implicitRole(e))
-          }
-        } catch (_e) { /* diagnosis must never throw */ }
-      }
-    }
-    if (wantRole) step('role', (e) => implicitRole(e) === wantRole)
-    if (target.name) {
-      const nm = String(target.name).trim().toLowerCase()
-      step('name', (e) => accName(e).toLowerCase().includes(nm))
-    }
-    if (target.visible !== false) step('visible', vis)
-    if (target.text) {
-      const tx = String(target.text).trim()
-      step('text', (e) => (e.textContent || '').trim().includes(tx))
-    }
-    if (target.inViewport) step('inViewport', inView)
-    if (list.length > 0) {
-      const idx = (typeof target.nth === 'number') ? target.nth : 0
-      return 'matched ' + list.length + ' but nth=' + idx + ' is out of range'
-    }
-    return 'matched ' + started + ', 0 survived [' + stages.join('; ') + ']'
-  }
-  globalThis.__tapDeep = { all, control, pick, pickVoted, implicitRole, accName, diag }
-}
+// TAP_DEEP_INSTALL (the shared semantic resolver) moved to ./tap-deep.js
+  // (2026-07-21 single-source extraction) — imported at top; execFunc still
+  // stringifies the imported fn for injection (.toString() is self-contained).
 // Idempotent: ensure globalThis.__tapDeep exists in the (frame) target before a
 // handler's injected fn references it. One extra execFunc per op — ops are
 // user-paced, not hot loops — and the install short-circuits once present.
-async function ensureDeep(fx) { await execFunc(fx, TAP_DEEP_INSTALL) }
+// Lazy dynamic import (NOT a static top-level import — background.js stays
+// self-contained per protocol.test, exactly like ./lib/pdf-lib.esm.js). The
+// resolver source lives in ./tap-deep.js (single source of truth, 2026-07-21);
+// execFunc stringifies the imported fn for injection (.toString() self-contained).
+async function ensureDeep(fx) {
+  const { TAP_DEEP_INSTALL } = await import('./tap-deep.js')
+  await execFunc(fx, TAP_DEEP_INSTALL)
+}
 
 // --- Message Handler ---
 
@@ -1808,102 +1560,11 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       return { data, mime: 'application/pdf' }
     }
 
-    case 'highlight': {
-      // CDP Overlay.highlightNode — a NATIVE element highlight that survives
-      // React re-renders (unlike the injected red box, whose data-tap marker
-      // React drops). Best-effort visualize aid; auto-clears after ms.
-      const sel = (params.target && typeof params.target === 'object') ? params.target.selector : params.target
-      await withDebugger(tabId, async () => {
-        await chrome.debugger.sendCommand({ tabId }, 'DOM.enable').catch(() => {})
-        await chrome.debugger.sendCommand({ tabId }, 'Overlay.enable').catch(() => {})
-        const doc = await chrome.debugger.sendCommand({ tabId }, 'DOM.getDocument', { depth: 0 })
-        const found = await chrome.debugger.sendCommand({ tabId }, 'DOM.querySelector', {
-          nodeId: doc.root.nodeId, selector: String(sel),
-        })
-        if (!found?.nodeId) throw new Error('highlight: node not found: ' + sel)
-        await chrome.debugger.sendCommand({ tabId }, 'Overlay.highlightNode', {
-          highlightConfig: {
-            contentColor: { r: 111, g: 66, b: 193, a: 0.28 },
-            borderColor: { r: 111, g: 66, b: 193, a: 0.9 },
-          },
-          nodeId: found.nodeId,
-        })
-        return {}
-      })
-      const ms = Math.min(params.ms || 1200, 10000)
-      setTimeout(() => { chrome.debugger.sendCommand({ tabId }, 'Overlay.hideHighlight').catch(() => {}) }, ms)
-      return { highlighted: true }
-    }
-
-    case 'screencast': {
-      // op:screencast → CDP Page.startScreencast for `ms`, then stop and return
-      // the JPEG frames (base64). Self-contained (start → wait → stop) so no
-      // cross-op recording state exists. Real frame stream vs single
-      // captureVisibleTab; works on background tabs.
-      const bucket = { frames: [], max: Math.min(params.maxFrames || 600, 1200), onEvt: null }
-      screencastBuckets.set(tabId, bucket)
-      await ensureDebugger(tabId)
-      const onEvt = (src, method, p) => {
-        if (src.tabId !== tabId || method !== 'Page.screencastFrame') return
-        if (bucket.frames.length < bucket.max) bucket.frames.push(p.data)
-        chrome.debugger.sendCommand({ tabId }, 'Page.screencastFrameAck', { sessionId: p.sessionId }).catch(() => {})
-      }
-      bucket.onEvt = onEvt
-      chrome.debugger.onEvent.addListener(onEvt)
-      await chrome.debugger.sendCommand({ tabId }, 'Page.startScreencast', {
-        format: 'jpeg', quality: params.quality || 50, everyNthFrame: params.everyNthFrame || 1,
-      })
-      await new Promise((r) => setTimeout(r, Math.min(Math.max(params.ms || 2000, 0), 25000)))
-      await chrome.debugger.sendCommand({ tabId }, 'Page.stopScreencast').catch(() => {})
-      chrome.debugger.onEvent.removeListener(onEvt)
-      screencastBuckets.delete(tabId)
-      scheduleDetach(tabId)
-      return { frames: bucket.frames, count: bucket.frames.length }
-    }
-
     case 'focusEmulate': {
       // Explicitly (re)assert focus/active emulation on demand — the attach
       // path already does this, but a plan can re-arm it after a nav.
       await withDebugger(tabId, () => enableFocusEmulation(tabId))
       return { focusEmulated: true }
-    }
-
-    case 'point': {
-      // op:point → ask the human to click an element in the bound tab; return
-      // the computed TargetResolver (selector + implicit role + accessible
-      // name). Human-in-the-loop element picking as a plan primitive (ADR
-      // 2026-07-08-op-capabilities). Same one-shot capture-phase listener the
-      // context-menu picker uses, so the emitted resolver matches pick() at
-      // replay. Times out (→ resolver:null) after timeout_ms.
-      await ensureDeep(tabId)
-      const budget = Math.min(params.timeout_ms || 30000, 120000)
-      const [res] = await chrome.scripting.executeScript({
-        target: { tabId }, world: 'MAIN',
-        args: [budget],
-        func: (ms) => new Promise((resolve) => {
-          const D = globalThis.__tapDeep
-          const onClick = (e) => {
-            e.preventDefault(); e.stopPropagation()
-            document.removeEventListener('click', onClick, true)
-            const el = e.target
-            const role = (D && D.implicitRole) ? D.implicitRole(el) : (el.getAttribute('role') || '')
-            let selector = ''
-            if (el.id) selector = '#' + CSS.escape(el.id)
-            else {
-              const cls = (el.className && typeof el.className === 'string')
-                ? el.className.trim().split(/\s+/).slice(0, 2).filter(Boolean).map((c) => '.' + CSS.escape(c)).join('') : ''
-              selector = el.tagName.toLowerCase() + cls
-            }
-            const name = (el.getAttribute('aria-label') || el.textContent || '').trim().slice(0, 40)
-            resolve({ selector, role: role || undefined, name: name || undefined, visible: true })
-          }
-          document.addEventListener('click', onClick, true)
-          setTimeout(() => { document.removeEventListener('click', onClick, true); resolve(null) }, ms)
-        }),
-      })
-      const resolver = res?.result || null
-      if (resolver) chrome.storage.local.set({ 'tap:lastPickedResolver': resolver, 'tap:lastPickedAt': Date.now() }).catch(() => {})
-      return { resolver }
     }
 
     case 'notify': {
@@ -2035,8 +1696,100 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
             // (trusted) blur/focusout. End form-fill sequences with this on
             // the last field before clicking save (2026-06-11 beian lesson).
             return await handleMethod('blur', { ...rest, selector: selStr, resolver }, senderTabId, { fromDaemon })
+          case 'scroll':
+            // Trusted CDP wheel at the target's coordinates — NOT a synthesized
+            // key. Keyboard scrolling routes to whatever holds focus, which is
+            // the exact failure this kind exists to remove (2026-07-20: a
+            // `press End` scroll returned ok:true while resetting scrollTop to
+            // 0 because focus sat on the document, and the reading agent
+            // concluded the platform blocked deep access). Returns
+            // {before, after, delta, at_bottom} and THROWS on delta 0 — a
+            // scroll that moved nothing is not a successful scroll.
+            return await handleMethod('scroll', { ...rest, selector: selStr, resolver, amount: value }, senderTabId, { fromDaemon })
         }
         throw new Error(`Unknown op:input kind: ${kind}`)
+      }
+      // ─── Target witness (ADR 2026-07-09 drift-survivable-targets, source half) ──
+      // A bare FRAGILE selector (class/tag/descendant chain, no stable anchor)
+      // re-binds to nothing after DOM churn; the only recovery is an LLM
+      // re-capture — the cost zero-token replay exists to eliminate. We are
+      // about to resolve that element anyway, so read its SEMANTIC identity
+      // (role + accessible name) and hand it back; core's freeze materializer
+      // turns the fragile string into a `{selector, role, name}` resolver that
+      // re-resolves every act in __tapDeep.pick. Fixes the SOURCE instead of
+      // warning after the fact.
+      //
+      // Read BEFORE dispatch: the acting op may navigate or re-render, after
+      // which the element we touched no longer exists to be described.
+      // Read-only, best-effort, never blocks or alters the op.
+      // MIRRORS core/lint.ts:isStableBareSelector — keep the two in sync (this
+      // is the cheap pre-filter; the AUTHORITATIVE gate is core-side in
+      // live.ts:upgradeFragileTarget, so a mismatch here only wastes a probe,
+      // it can never produce a wrong upgrade). Note `\b` after the attribute
+      // name: `[placeholder*=`, `[data-x^=` etc. ARE anchored — an `=`-only
+      // regex silently misclassifies every substring-match attribute selector
+      // as fragile (found 2026-07-21 while counting the repair surface).
+      const isFragileBare = (s) => {
+        if (typeof s !== 'string') return false
+        const t = s.trim()
+        if (t === '' || t.includes('{{')) return false
+        // Quoted attribute values are blanked first — a space/comma/+ inside
+        // [placeholder="Enter skills here"] is payload, not a combinator.
+        if (/[\s>+~,]/.test(t.replace(/"[^"]*"|'[^']*'/g, '""'))) return true
+        if (/#[A-Za-z_][\w-]*/.test(t)) return false   // #id anywhere → stable
+        if (/\[\s*(name|id|data-[\w-]+|aria-[\w-]+|role|type|placeholder)\b/i.test(t)) return false
+        return true
+      }
+      // Also reports whether {role,name} ALONE names this element uniquely on
+      // the page. That flag is what lets freeze drop the selector — and only
+      // a selector-FREE resolver actually survives drift: __tapDeep.resolveList
+      // uses `selector` as the CANDIDATE SET when present, so a resolver that
+      // keeps a fragile selector still misses the moment that selector breaks
+      // (verified empirically 2026-07-21: {selector:BROKEN, name:"上传图文"}
+      // → MISS, while {role:"button", name:"上传视频"} → resolves).
+      // Name-only is deliberately NOT sufficient: accName falls through to
+      // textContent, so a bare name matched a whole <main> whose text merely
+      // CONTAINED the label. (Lint already treats name-only resolvers as
+      // illegal for the same reason.)
+      const WITNESS_FN = (sel) => {
+        const D = globalThis.__tapDeep
+        if (!D) return null
+        const el = D.pick({ selector: sel, visible: true }, document)
+        if (!el) return null
+        const role = D.implicitRole(el) || ''
+        const name = (D.accName(el) || '').slice(0, 80)
+        if (!role && !name) return null
+        let unique = false
+        if (role && name) {
+          try {
+            const hits = D.all ? D.all('a,area,button,summary,input,select,textarea,img,[role],[aria-label],[tabindex],[onclick]', document) : []
+            const matched = hits.filter((e) => {
+              if (D.implicitRole(e) !== role) return false
+              const n = (D.accName(e) || '').toLowerCase()
+              return n.includes(name.toLowerCase())
+            })
+            unique = matched.length === 1 && matched[0] === el
+          } catch (_) { unique = false }
+        }
+        return {
+          ...(role ? { role } : {}),
+          ...(name ? { name } : {}),
+          ...(unique ? { unique: true } : {}),
+        }
+      }
+      let witness = null
+      if (!isResolver && isFragileBare(selStr) && kind !== 'resolve') {
+        try {
+          await ensureDeep(tabId)
+          witness = await execFunc(tabId, WITNESS_FN, selStr)
+        } catch (_) { /* witness is advisory — never fail an op over it */ }
+      }
+      // Piggyback on the op value under a reserved key; core/dispatch.ts lifts
+      // it into the OpResult envelope and strips the key before op.expect, so
+      // plan-visible data stays pure (same contract as _tap_anomalies).
+      const withWitness = (res) => {
+        if (!witness || !res || typeof res !== 'object' || Array.isArray(res)) return res
+        return { ...res, _tap_witness: witness }
       }
       const isMiss = (err) => String(err?.message || err).startsWith('Element not found')
       // Anomaly piggyback (core lifts value._tap_anomalies into the OpResult
@@ -2051,7 +1804,7 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       }
       try {
         try {
-          return await dispatchKind()
+          return withWitness(await dispatchKind())
         } catch (e) {
           if (kind === 'resolve' || !isMiss(e)) throw e
           const retryStart = Date.now()
@@ -2062,7 +1815,7 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
             await new Promise(r => setTimeout(r, 150))
             attempts++
             try {
-              return withRetryAnomaly(await dispatchKind(), attempts, Date.now() - retryStart)
+              return withWitness(withRetryAnomaly(await dispatchKind(), attempts, Date.now() - retryStart))
             } catch (e2) {
               if (!isMiss(e2)) throw e2
               lastErr = e2
@@ -2117,13 +1870,11 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
         // dogfood and logged the session out. Below-fold (scrolled) elements keep
         // size>0 so they still resolve; only display:none/hidden/zero-box are skipped.
         const isObj = t && typeof t === 'object'
-        const vis = (e) => {
-          if (!e) return false
-          const s = (typeof getComputedStyle === 'function') ? getComputedStyle(e) : null
-          if (s && (s.display === 'none' || s.visibility === 'hidden' || s.opacity === '0')) return false
-          const r = e.getBoundingClientRect()
-          return r.width > 0 && r.height > 0
-        }
+        // Visibility = the SHARED __tapDeep.vis (same predicate resolveList uses),
+        // not an inline copy. The inline reimpl was a residual the __tapDeep
+        // migration missed — test/_install-deep.mjs already installs __tapDeep for
+        // the isolated handler tests, so the copy was pure R2 drift. (dedup 2026-07-21)
+        const vis = globalThis.__tapDeep.vis
         let el = null
         let witness
         if (isObj) {
@@ -2177,6 +1928,33 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
           throw new Error('Element not found: ' + label + (why ? ' — ' + why : ''))
         }
         el.scrollIntoView({ block: 'center', behavior: 'instant' })
+        // Fire a FULL one-click pointer/mouse sequence, not a lone el.click().
+        // el.click() emits only a synthetic `click` — a SILENT no-op on framework
+        // components (Element Plus el-select/el-radio, Ant, Wiz…) that open/toggle
+        // on mousedown/pointerdown: it returns clicked:true yet nothing happens, so
+        // it never even surfaces in friction (failed-op) data. Anchor: 2026-07-21
+        // AGC `.agc-select` dropdown never opened → could not create the publishing
+        // API client. This IS one real user click (pointerdown→mousedown→pointerup→
+        // mouseup→click) so single-toggle components flip exactly once. Guarded so it
+        // degrades to a bare el.click() where the event constructors are absent (test
+        // sandbox / exotic realms). ADR 2026-07-21-click-full-pointer-sequence.
+        const _seq = (Ctor, type, extra) => {
+          try {
+            if (typeof Ctor !== 'function') return
+            el.dispatchEvent(new Ctor(type, {
+              bubbles: true, cancelable: true, composed: true,
+              ...(typeof window !== 'undefined' ? { view: window } : {}),
+              button: 0, ...extra,
+            }))
+          } catch (_e) { /* best-effort; the el.click() below is the guaranteed path */ }
+        }
+        const _PE = (typeof PointerEvent !== 'undefined') ? PointerEvent : null
+        const _ME = (typeof MouseEvent !== 'undefined') ? MouseEvent : null
+        _seq(_PE, 'pointerdown', { pointerId: 1, isPrimary: true, pointerType: 'mouse', buttons: 1 })
+        _seq(_ME, 'mousedown', { buttons: 1 })
+        try { if (el.focus) el.focus() } catch (_e) { /* focus is best-effort */ }
+        _seq(_PE, 'pointerup', { pointerId: 1, isPrimary: true, pointerType: 'mouse', buttons: 0 })
+        _seq(_ME, 'mouseup', { buttons: 0 })
         el.click()
         const r = el.getBoundingClientRect()
         return {
@@ -2419,6 +2197,70 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       return {}
     }
 
+    // ADR 2026-07-20-input-kind-scroll. Trusted CDP wheel at the target's
+    // coordinates. Two properties are load-bearing and neither is available
+    // from the `hover + click + press PageDown` composition this replaces:
+    //   1. WHEEL, NOT KEY — a wheel event routes to the element under the
+    //      pointer; a key routes to whatever holds focus. The 2026-07-20
+    //      failure was exactly a focus miss reported as success.
+    //   2. MEASURED POSTCONDITION — scrollTop is read before and after, so a
+    //      scroll that moved nothing FAILS instead of returning ok:true. That
+    //      is the whole reason this kind earned a seat (ops are admitted for
+    //      irreducibility, kinds for observability).
+    // (Rationale lives ABOVE the case so the body opens on code: the
+    //  frame-piercing guard slices 700 chars from `case 'scroll': {` looking
+    //  for resolveFrame, and a long in-body preamble pushes it out of range.)
+    case 'scroll': {
+      const { t: fx, sel, dx, dy } = await resolveFrame(tabId, params.selector)
+      // ONE injected probe, called before and after the wheel — the metrics
+      // and the aim point come from the same walk, so a container that
+      // re-lays-out between reads cannot make before/after describe different
+      // elements. Named + self-contained so it injects AND is extractable by
+      // test/scroll-postcondition.test.mjs (same contract as keysLanded).
+      const scrollProbe = (s) => {
+        const scrollableAncestor = (start) => {
+          for (let el = start; el && el !== document.body; el = el.parentElement) {
+            const cs = getComputedStyle(el)
+            const canY = /auto|scroll|overlay/.test(cs.overflowY)
+            if (canY && el.scrollHeight > el.clientHeight + 4) return el
+          }
+          return document.scrollingElement || document.documentElement
+        }
+        const anchor = s
+          ? document.querySelector(s)
+          : (document.scrollingElement || document.documentElement)
+        if (!anchor) throw new Error('Element not found: ' + s)
+        const sc = scrollableAncestor(anchor)
+        const rooted = sc === document.scrollingElement || sc === document.documentElement
+        const b = rooted ? null : sc.getBoundingClientRect()
+        const cx = rooted ? innerWidth / 2 : b.x + b.width / 2
+        const cy = rooted ? innerHeight / 2 : b.y + b.height / 2
+        return {
+          top: Math.round(sc.scrollTop),
+          clientHeight: sc.clientHeight,
+          scrollHeight: sc.scrollHeight,
+          at_bottom: sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 4,
+          x: Math.round(Math.max(1, Math.min(innerWidth - 2, cx))),
+          y: Math.round(Math.max(1, Math.min(innerHeight - 2, cy))),
+        }
+      }
+      const pre = await execFunc(fx, scrollProbe, sel || null)
+      if (!pre) throw new Error(notFoundMsg(sel))
+      const deltaY = scrollDeltaFor(params.amount, pre.clientHeight, pre.scrollHeight, pre.top)
+      await withDebugger(tabId, () =>
+        chrome.debugger.sendCommand({ tabId }, 'Input.dispatchMouseEvent', {
+          type: 'mouseWheel', x: pre.x + dx, y: pre.y + dy, deltaX: 0, deltaY,
+        }))
+      // Smooth-scroll / rAF settle before the postcondition read; without it a
+      // successful scroll can measure delta 0 and be reported as a failure.
+      await new Promise((r) => setTimeout(r, 260))
+      const post = await execFunc(fx, scrollProbe, sel || null)
+      if (!post) throw new Error(notFoundMsg(sel))
+      const verdict = scrollOutcome(post.top - pre.top, pre, post, deltaY, pre.x + dx, pre.y + dy)
+      if (!verdict.ok) throw new Error(verdict.error)
+      return verdict.value
+    }
+
     case 'blur': {
       // Commit gesture: real focus loss via el.blur() — the UA generates
       // trusted blur/focusout, which blur-flushing form stores (Ant
@@ -2467,15 +2309,16 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       return {}
     }
 
-    case 'scroll': {
-      const { t: fx, sel } = await resolveFrame(tabId, params.selector || '')
-      await execFunc(fx, (s) => {
-        const el = s ? document.querySelector(s) : null
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-        else window.scrollBy({ top: 500, behavior: 'smooth' })
-      }, sel)
-      return {}
-    }
+    // (The pre-2026-07-20 `case 'scroll'` lived here: JS `scrollIntoView` /
+    //  `window.scrollBy({top:500})`, returning `{}`. It was ZERO-CONSUMER —
+    //  core only ever emits `method:"dispatch"` carrying an Op, and no op
+    //  routed to it; it survived only as a stale entry in
+    //  `capabilities.supports`. It is absorbed by the ADR
+    //  2026-07-20-input-kind-scroll handler above rather than kept alongside
+    //  it: two `case 'scroll'` arms in one switch means the first shadows the
+    //  second, and the legacy body was the exact silent-no-op shape the new
+    //  kind exists to eliminate — untrusted JS scrolling, which measurably
+    //  does NOT drive platform lazy-load, reported as `{}`.)
 
     case 'pressKey':
       // Propagate tabId so the keystroke lands on the dispatch-target tab, not
@@ -2769,31 +2612,30 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       return await execFunc(tabId, () => document.body.innerText)
 
     case 'extract': {
-      const { t: fx, sel } = await resolveFrame(tabId, params.selector)
-      const fields = params.fields
-      // NOTE: op:extract is NOT wired for ' >> ' shadow piercing. In the live
-      // pipeline op:extract runs ENGINE-side (deno-dom over fetched static HTML,
-      // core/handlers/extract.ts) — it never reaches this extension handler, and
-      // static HTML has no shadow roots anyway. Adding deepAll here would be dead
-      // on the live path ("looks supported but isn't"). Reading live shadow content
-      // is done via op:input-driven flows / op:eval; routing extract to the peer is
-      // a separate engine concern (Phase 2). Verified live 2026-06-23.
-      return await execFunc(fx, (rowSel, fieldMap) => {
-        return Array.from(document.querySelectorAll(rowSel)).map(row => {
-          const obj = {}
-          for (const [name, spec] of Object.entries(fieldMap)) {
-            const atIdx = spec.indexOf('@')
-            if (atIdx > 0) {
-              const elSel = spec.substring(0, atIdx)
-              const attr = spec.substring(atIdx + 1)
-              obj[name] = row.querySelector(elSel)?.getAttribute(attr) || ''
-            } else {
-              obj[name] = row.querySelector(spec)?.textContent?.trim() || ''
-            }
-          }
-          return obj
+      // LIVE-DOM structured extraction (Phase 2, 2026-07-21). Typed home for the
+      // querySelectorAll(...).map(...) work ~66% of op:eval traffic hand-rolls in
+      // opaque JS. Same {root, per_item} shape + applySpec as the engine deno-dom
+      // extractor (core/handlers/extract.ts) — a plan reads identically from fetched
+      // HTML (engine, op.from) or the LIVE page (here). ROOT pierces shadow/iframe
+      // via __tapDeep.all; returns a typed array (no fn) — the read type hole closed.
+      const { t: fx, sel } = await resolveFrame(tabId, params.root)
+      await ensureDeep(fx)
+      return await execFunc(fx, (rootSel, perItem) => {
+        const D = globalThis.__tapDeep
+        const applySpec = (row, spec) => {
+          const target = spec.selector !== undefined ? row.querySelector(spec.selector) : row
+          if (spec.exists !== undefined) return target !== null
+          if (target === null) return ''
+          if (spec.attr !== undefined) return target.getAttribute(spec.attr) ?? ''
+          if (spec.html !== undefined) return target.innerHTML
+          return (target.textContent ?? '').trim() // text / innerText / default
+        }
+        return D.all(rootSel, document).map((row) => {
+          const item = {}
+          for (const key in perItem) item[key] = applySpec(row, perItem[key])
+          return item
         })
-      }, sel, fields)
+      }, sel, params.per_item)
     }
 
     case 'upload': {

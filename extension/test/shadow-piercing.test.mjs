@@ -37,7 +37,10 @@ import { strict as assert } from 'node:assert'
 import { readFileSync } from 'node:fs'
 import { tapDeep } from './_install-deep.mjs' // the REAL helper, extracted from background.js
 
-const BG_SRC = readFileSync(new URL('../background.js', import.meta.url), 'utf-8')
+// Source-string checks span the SW handlers (background.js) AND the resolver,
+// which now lives in its own module (tap-deep.js, 2026-07-21 single-source extraction).
+const BG_SRC = readFileSync(new URL('../background.js', import.meta.url), 'utf-8') +
+  '\n' + readFileSync(new URL('../tap-deep.js', import.meta.url), 'utf-8')
 
 let passed = 0
 let failed = 0
@@ -101,9 +104,13 @@ test('every selector-bearing handler installs (ensureDeep) BEFORE referencing __
   }
 })
 
-test('op:extract is NOT wired for shadow piercing (engine-side, would be dead)', () => {
-  assert(!block("case 'extract': {").includes('__tapDeep'),
-    'extract runs engine-side (deno-dom) and never reaches the extension — must stay plain')
+test('op:extract IS wired for live-DOM shadow piercing (Phase 2, 2026-07-21)', () => {
+  // op.from present → engine-side deno-dom (fetched HTML). No op.from → the peer
+  // runs THIS live-DOM extractor, which pierces open shadow/iframe via __tapDeep.all
+  // — the typed home for the querySelectorAll+map work ~66% of op:eval hand-rolls.
+  const body = block("case 'extract': {")
+  assert(body.includes('__tapDeep.all'), 'live extract must pierce shadow/iframe via __tapDeep.all')
+  assert(body.includes('applySpec'), 'live extract must apply the same {root, per_item} spec semantics as the engine extractor')
 })
 
 // --- 2. Behaviour: run the REAL shipping helper (no re-typed copy) ---
