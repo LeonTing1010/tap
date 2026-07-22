@@ -199,6 +199,15 @@ export interface ExtractOp {
   op: "extract";
   root: string;
   per_item: Record<string, ExtractSpec>;
+  /** JSONata expression resolving to the source HTML string; defaults to
+   *  `_phase_last` (the prior op's value, e.g. a preceding op:fetch's HTML).
+   *  Engine-inline, parsed server-side; no peer involvement. */
+  from?: string;
+  /** `true` = extract from the LIVE page DOM via the extension peer (tab-bound):
+   *  `root` runs through the shared resolver (open-shadow + same-origin-iframe
+   *  piercing); per_item applies the same ExtractSpec semantics. Omitted =
+   *  engine-inline over `from`/`_phase_last` HTML (ADR 2026-07-22-op-extract-live). */
+  live?: boolean;
   save?: string;
 }
 
