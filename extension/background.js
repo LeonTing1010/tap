@@ -17,6 +17,11 @@ console.log('[tap] extension runtime ready')
 // field). Static top-level import is the only legal way to load the shared
 // resolver here; protocol.test Rule 6 carries an explicit carve-out for it.
 import { TAP_DEEP_INSTALL } from './tap-deep.js'
+// Same MV3 constraint for op:pdf mode:stamp's pdf-lib — the second instance
+// of the class, caught by e2e/op-matrix.spec.mjs the day the gate was built.
+// Startup parse cost of the vendored ESM (~600KB) is the price of a SW that
+// cannot lazy-load; measured negligible against SW cold-start itself.
+import { PDFDocument } from './lib/pdf-lib.esm.js'
 
 // --- SW keep-alive: DELETED per ADR 2026-05-13-daemon-extension-via-native-messaging.md ---
 //
@@ -1532,9 +1537,8 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       //     cleartext paths. ADR 2026-07-15-op-pdf-stamp-mode.
       const mode = params.mode === 'stamp' ? 'stamp' : 'export'
       if (mode === 'stamp') {
-        // DRAFT: needs vendored, OFFLINE, pinned pdf-lib ESM at ./lib/pdf-lib.esm.js
-        // (proven feasible in spike — pdf-lib@1.17.1, embedPng + drawImage opacity).
-        const { PDFDocument } = await import('./lib/pdf-lib.esm.js')
+        // pdf-lib is imported statically at module top (MV3 SW forbids
+        // runtime import(); vendored OFFLINE pinned ESM, pdf-lib@1.17.1).
         if (!params.pdfBytes) throw new Error('stamp: missing source PDF bytes (core must expand $file ref)')
         if (!params.stamp?.imageBytes) throw new Error('stamp: missing stamp image bytes (core must expand $file ref)')
         const doc = await PDFDocument.load(b64ToBytes(params.pdfBytes))

@@ -10,7 +10,38 @@ permissions:
   contents: write
 
 jobs:
+  # Layer 4 gate (2026-07-22): the full op matrix dispatched through the REAL
+  # MV3 service worker before anything reaches the store. Exists because
+  # 0.22.0 shipped with a runtime import() in the SW — every resolver op
+  # (op:input, op:wait{selector}) dead in the field — while all Node-side
+  # test layers stayed green (none of them execute the SW). Text asserts
+  # can't see runtime-context violations; this job runs them for real.
+  op-matrix:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: extension/e2e
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: extension/e2e/package-lock.json
+      - name: Install npm deps (@playwright/test)
+        run: npm install
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ hashFiles('extension/e2e/package-lock.json') }}
+      - name: Install Chromium + system deps (xvfb etc.)
+        run: npx playwright install --with-deps chromium
+      - name: Run op-matrix against the real SW (headed under xvfb)
+        run: xvfb-run -a npx playwright test op-matrix
+
   publish:
+    needs: op-matrix
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6

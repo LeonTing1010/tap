@@ -210,8 +210,11 @@ console.log('\n  -- Rule 6: Layer Isolation --\n')
   // resolver-needing op (op:input dead in the field). Single-source-of-truth
   // for the resolver (2026-07-21 extraction) therefore REQUIRES this static
   // import; strip exactly that line before the self-containment assertions.
-  const ALLOWED_IMPORT = /^import\s*\{\s*TAP_DEEP_INSTALL\s*\}\s*from\s*'\.\/tap-deep\.js'.*$/m
-  const stripped = BG_SRC.replace(ALLOWED_IMPORT, '')
+  const ALLOWED_IMPORTS = [
+    /^import\s*\{\s*TAP_DEEP_INSTALL\s*\}\s*from\s*'\.\/tap-deep\.js'.*$/m,
+    /^import\s*\{\s*PDFDocument\s*\}\s*from\s*'\.\/lib\/pdf-lib\.esm\.js'.*$/m,
+  ]
+  const stripped = ALLOWED_IMPORTS.reduce((s, re) => s.replace(re, ''), BG_SRC)
     .replace(/\/\/.*/g, '').replace(/\/\*[\s\S]*?\*\//g, '')
 
   test('no executor references (comments stripped)', () => {
