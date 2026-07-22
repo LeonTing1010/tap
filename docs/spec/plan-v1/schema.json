@@ -65,7 +65,7 @@
     },
     "OpName": {
       "type": "string",
-      "description": "Closed 16-op union (substrate 7 + control 3 + escape 1 + host 2 + output 2 + observation 1). Mirrors OP_NAMES_V2. highlight/screencast/point retired per ADR 2026-07-13-op-union-minimization.",
+      "description": "Closed 17-op union (substrate 7 + control 3 + escape 1 + host 2 + output 2 + observation 1 + host-capability 1). Mirrors OP_NAMES_V2. highlight/screencast/point retired per ADR 2026-07-13-op-union-minimization.",
       "enum": [
         "fetch",
         "nav",
@@ -82,7 +82,8 @@
         "bookmark",
         "pdf",
         "notify",
-        "ax"
+        "ax",
+        "host"
       ]
     },
     "NavAttachMatchMode": {
@@ -208,7 +209,7 @@
       "properties": {
         "selector": {
           "type": "string",
-          "description": "CSS selector (supports ' >>> ' shadow-piercing combinator). Optional when role is given."
+          "description": "CSS selector. The ' >>> ' piercing combinator crosses BOTH shadow-root AND iframe boundaries: 'iframeSel >>> innerSel' targets an element inside an iframe (same- or cross-origin). A bare selector searches only the top document and will NOT match inside an iframe. Optional when role is given."
         },
         "role": {
           "type": "string",
@@ -357,6 +358,12 @@
           "additionalProperties": {
             "$ref": "#/$defs/ExtractSpec"
           }
+        },
+        "from": {
+          "type": "string"
+        },
+        "live": {
+          "type": "boolean"
         },
         "save": {
           "type": "string"
@@ -701,6 +708,9 @@
         },
         {
           "$ref": "#/$defs/AxOp"
+        },
+        {
+          "$ref": "#/$defs/HostOp"
         }
       ]
     },
@@ -882,10 +892,16 @@
         "op"
       ],
       "additionalProperties": false,
-      "description": "Host op: capture the tab as a PDF (CDP Page.printToPDF). base64 binds via save. ADR 2026-07-08-op-capabilities.",
+      "description": "Host op: PDF output. mode:export (default) = CDP Page.printToPDF of the bound tab (ADR 2026-07-08). mode:stamp = overlay stamp onto input PDF pdf (tab-free, deterministic — ADR 2026-07-15). pdfBytes is the peer-transport form of pdf, expanded from the $file ref at the dispatch boundary; not authored.",
       "properties": {
         "op": {
           "const": "pdf"
+        },
+        "mode": {
+          "enum": [
+            "export",
+            "stamp"
+          ]
         },
         "landscape": {
           "type": "boolean"
@@ -899,8 +915,59 @@
         "paperHeight": {
           "type": "number"
         },
+        "pdf": {
+          "type": "string",
+          "description": "$file ref to the source PDF (stamp mode)"
+        },
+        "stamp": {
+          "$ref": "#/$defs/PdfStamp"
+        },
+        "pdfBytes": {
+          "type": "string",
+          "description": "peer transport only — boundary-expanded base64; not authored"
+        },
         "save": {
           "type": "string"
+        }
+      }
+    },
+    "PdfStamp": {
+      "type": "object",
+      "required": [
+        "image",
+        "page",
+        "x",
+        "y"
+      ],
+      "additionalProperties": false,
+      "description": "Stamp/annotation overlay for op:pdf mode:stamp (ADR 2026-07-15). Local signature image overlaid at declared coordinates. image is a local $file ref.",
+      "properties": {
+        "image": {
+          "type": "string",
+          "description": "$file ref to a local PNG/SVG signature image"
+        },
+        "page": {
+          "type": "number",
+          "description": "1-based page index"
+        },
+        "x": {
+          "type": "number",
+          "description": "PDF user-space points (72 dpi), origin bottom-left"
+        },
+        "y": {
+          "type": "number"
+        },
+        "width": {
+          "type": "number",
+          "description": "rendered width; height derived from image aspect"
+        },
+        "opacity": {
+          "type": "number",
+          "description": "0..1, default 1"
+        },
+        "imageBytes": {
+          "type": "string",
+          "description": "peer transport only — boundary-expanded base64; not authored"
         }
       }
     },
@@ -948,6 +1015,29 @@
           "minimum": 1,
           "maximum": 400,
           "description": "Max items returned. Default 120."
+        },
+        "save": {
+          "type": "string"
+        }
+      }
+    },
+    "HostOp": {
+      "type": "object",
+      "required": [
+        "op",
+        "cap"
+      ],
+      "additionalProperties": false,
+      "description": "Host op: invoke a thin host capability from the host-caps registry (Lane B, ADR 2026-07-16-primitive-set-narrow-waist-and-thin-host-capability-registry). `cap` names a registry entry mapped to a chrome.<namespace>.<method>(...) call; adding a capability is a registry entry (data), not new op code.",
+      "properties": {
+        "op": {
+          "const": "host"
+        },
+        "cap": {
+          "type": "string"
+        },
+        "args": {
+          "type": "object"
         },
         "save": {
           "type": "string"
