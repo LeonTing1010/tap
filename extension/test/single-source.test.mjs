@@ -35,8 +35,12 @@ test('background.js does NOT re-inline TAP_DEEP_INSTALL (imports it instead)', (
   assert(!BG.includes('const TAP_DEEP_INSTALL ='),
     'background.js must NOT define `const TAP_DEEP_INSTALL =` — re-inlining forks the resolver from ' +
     'every peer + test that inject tap-deep.js. It must `await import(\'./tap-deep.js\')` in ensureDeep.')
-  assert(/import\(['"]\.\/tap-deep\.js['"]\)/.test(BG),
-    'background.js must dynamically import ./tap-deep.js (self-contained SW; no static top-level import per protocol.test)')
+  // 2026-07-22: MV3 module-SW forbids runtime import() (w3c/ServiceWorker#1356)
+  // — the lazy import threw "import() is disallowed" on every resolver op.
+  // The one legal loading form is a static top-level import (protocol.test
+  // Rule 6 carries the matching carve-out).
+  assert(/import\s*\{\s*TAP_DEEP_INSTALL\s*\}\s*from\s*['"]\.\/tap-deep\.js['"]/.test(BG),
+    'background.js must statically import TAP_DEEP_INSTALL from ./tap-deep.js (MV3 SW forbids runtime import())')
 })
 
 test('the `vis` visibility predicate is defined EXACTLY ONCE (no re-duplication)', () => {

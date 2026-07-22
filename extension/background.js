@@ -11,6 +11,13 @@
 
 console.log('[tap] extension runtime ready')
 
+// MV3 module-SW: runtime import() is FORBIDDEN in ServiceWorkerGlobalScope
+// (w3c/ServiceWorker#1356) — every op needing the resolver died with
+// "import() is disallowed" (found 2026-07-22, first broken op:input in the
+// field). Static top-level import is the only legal way to load the shared
+// resolver here; protocol.test Rule 6 carries an explicit carve-out for it.
+import { TAP_DEEP_INSTALL } from './tap-deep.js'
+
 // --- SW keep-alive: DELETED per ADR 2026-05-13-daemon-extension-via-native-messaging.md ---
 //
 // The prior two-layer defence (25s alarm + 4 wake hooks) compensated for
@@ -1091,12 +1098,11 @@ async function resolveFrame(tabId, sel) {
 // Idempotent: ensure globalThis.__tapDeep exists in the (frame) target before a
 // handler's injected fn references it. One extra execFunc per op — ops are
 // user-paced, not hot loops — and the install short-circuits once present.
-// Lazy dynamic import (NOT a static top-level import — background.js stays
-// self-contained per protocol.test, exactly like ./lib/pdf-lib.esm.js). The
-// resolver source lives in ./tap-deep.js (single source of truth, 2026-07-21);
-// execFunc stringifies the imported fn for injection (.toString() self-contained).
+// Static top-level import (see header note): MV3 SW forbids runtime import(),
+// so TAP_DEEP_INSTALL is imported at module scope. The resolver source lives in
+// ./tap-deep.js (single source of truth, 2026-07-21); execFunc stringifies the
+// imported fn for injection (.toString() self-contained).
 async function ensureDeep(fx) {
-  const { TAP_DEEP_INSTALL } = await import('./tap-deep.js')
   await execFunc(fx, TAP_DEEP_INSTALL)
 }
 

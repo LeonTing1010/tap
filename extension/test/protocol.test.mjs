@@ -203,7 +203,16 @@ console.log('\n  -- Rule 5: Eval-based Inspect Tools NOT in Extension --\n')
 console.log('\n  -- Rule 6: Layer Isolation --\n')
 
 {
-  const stripped = BG_SRC.replace(/\/\/.*/g, '').replace(/\/\*[\s\S]*?\*\//g, '')
+  // Carve-out (2026-07-22): the ONE allowed static import is the shared
+  // resolver ./tap-deep.js. MV3 module-SW forbids runtime import()
+  // (w3c/ServiceWorker#1356) — the previous lazy `await import('./tap-deep.js')`
+  // threw "import() is disallowed on ServiceWorkerGlobalScope" on every
+  // resolver-needing op (op:input dead in the field). Single-source-of-truth
+  // for the resolver (2026-07-21 extraction) therefore REQUIRES this static
+  // import; strip exactly that line before the self-containment assertions.
+  const ALLOWED_IMPORT = /^import\s*\{\s*TAP_DEEP_INSTALL\s*\}\s*from\s*'\.\/tap-deep\.js'.*$/m
+  const stripped = BG_SRC.replace(ALLOWED_IMPORT, '')
+    .replace(/\/\/.*/g, '').replace(/\/\*[\s\S]*?\*\//g, '')
 
   test('no executor references (comments stripped)', () => {
     assert(!stripped.toLowerCase().includes('executor'),
