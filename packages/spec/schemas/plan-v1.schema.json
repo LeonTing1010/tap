@@ -65,7 +65,7 @@
     },
     "OpName": {
       "type": "string",
-      "description": "Closed 17-op union (substrate 7 + control 3 + escape 1 + host 2 + output 2 + observation 1 + host-capability 1). Mirrors OP_NAMES_V2. highlight/screencast/point retired per ADR 2026-07-13-op-union-minimization.",
+      "description": "Closed 18-op union (substrate 7 + control 3 + escape 1 + host 2 + output 3 + observation 1 + host-capability 1). Mirrors OP_NAMES_V2. highlight/screencast/point retired per ADR 2026-07-13-op-union-minimization.",
       "enum": [
         "fetch",
         "nav",
@@ -83,7 +83,8 @@
         "pdf",
         "notify",
         "ax",
-        "host"
+        "host",
+        "screenshot"
       ]
     },
     "NavAttachMatchMode": {
@@ -296,7 +297,8 @@
             "setHtml",
             "hover",
             "keytype",
-            "blur"
+            "blur",
+            "scroll"
           ]
         },
         "target": {
@@ -925,6 +927,35 @@
         "pdfBytes": {
           "type": "string",
           "description": "peer transport only — boundary-expanded base64; not authored"
+        },
+        "save": {
+          "type": "string"
+        }
+      }
+    },
+    "ScreenshotOp": {
+      "type": "object",
+      "required": [
+        "op"
+      ],
+      "additionalProperties": false,
+      "description": "Host output op (ADR 2026-07-19-op-screenshot): render the bound tab (or a clipped element) to an image via CDP Page.captureScreenshot. format png|jpeg, quality 0-100, target = CSS selector to clip. Produces a base64 image artifact persisted to ~/.tap/artifacts/<save>.<ext> (mirrors op:pdf).",
+      "properties": {
+        "op": {
+          "const": "screenshot"
+        },
+        "format": {
+          "enum": [
+            "png",
+            "jpeg"
+          ]
+        },
+        "quality": {
+          "type": "number"
+        },
+        "target": {
+          "type": "string",
+          "description": "CSS selector to clip (element screenshot); omit for full viewport"
         },
         "save": {
           "type": "string"

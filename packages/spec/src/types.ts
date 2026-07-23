@@ -357,6 +357,17 @@ export interface NotifyOp {
   save?: string;
 }
 
+/** Output op: CDP Page.captureScreenshot of the bound tab (or a clipped
+ *  element) → base64 PNG/JPEG bytes. The raster analogue of op:pdf.
+ *  PUBLIC mirror of core/types.ts:ScreenshotOp (ADR 2026-07-19-op-screenshot). */
+export interface ScreenshotOp {
+  op: "screenshot";
+  format?: "png" | "jpeg";
+  quality?: number;
+  target?: string;
+  save?: string;
+}
+
 /** Host-observation op: CDP accessibility-tree survey of the bound tab —
  *  role + accessible name for every rendered node, including closed
  *  shadow roots page JS cannot reach. PUBLIC mirror of
@@ -390,10 +401,12 @@ export type Op =
   | EvalOp | TabOp | BookmarkOp
   | PdfOp
   | NotifyOp
+  | ScreenshotOp
   | AxOp
   | HostOp;
 
-/** Runtime constant for the 17-op closure (op:host added per ADR
+/** Runtime constant for the 18-op closure (op:screenshot added per ADR
+ *  2026-07-19-op-screenshot; op:host added per ADR
  *  2026-07-16-primitive-set-narrow-waist; highlight/screencast/point retired
  *  per ADR 2026-07-13-op-union-minimization). */
 export const OP_NAMES_V2 = [
@@ -402,6 +415,7 @@ export const OP_NAMES_V2 = [
   "eval", "tab", "bookmark",
   "pdf",
   "notify",
+  "screenshot",
   "ax",
   "host",
 ] as const;

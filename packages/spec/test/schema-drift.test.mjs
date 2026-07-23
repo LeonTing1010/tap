@@ -78,8 +78,8 @@ test("schema OpName.enum exactly matches OP_NAMES_V2 in src/types.ts (bidirectio
   // 2026-07-12) + 1 host-capability op:host (ADR 2026-07-16-primitive-set-
   // narrow-waist); highlight/screencast/point retired per ADR
   // 2026-07-13-op-union-minimization)
-  assert.equal(tsOps.length, 17, `OP_NAMES_V2 must have 17 entries (got ${tsOps.length})`);
-  assert.equal(schemaOps.length, 17, `schema OpName.enum must have 17 entries (got ${schemaOps.length})`);
+  assert.equal(tsOps.length, 18, `OP_NAMES_V2 must have 18 entries (got ${tsOps.length})`);
+  assert.equal(schemaOps.length, 18, `schema OpName.enum must have 18 entries (got ${schemaOps.length})`);
 });
 
 test("every TS op interface has a matching $defs entry", () => {
@@ -128,8 +128,10 @@ test("schema does not enumerate any deleted v0.x op names", () => {
   // Sentinel list — exact names that were in v0.x schema and got deleted
   // at v2 launch (2026-05-03). Catching these is the regression check for
   // the original silent-drift bug. See LeonTing1010/tap#8.
+  // "screenshot" left this list 2026-07-19: ADR 2026-07-19-op-screenshot
+  // re-admits it as a v2 output op (raster twin of pdf) — no longer a zombie.
   const V0X_DELETED = [
-    "exec", "parseXML", "screenshot", "scroll",
+    "exec", "parseXML", "scroll",
     "compute", "filter", "project", "sort", "dedupe",
     "pick", "limit", "concat", "pipe",
   ];
