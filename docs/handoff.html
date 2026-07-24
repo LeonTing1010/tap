@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) — production host only -->
+<script>
+  (function() {
+    if (location.hostname !== 'taprun.dev') return;
+    var s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=G-RH14PQ10QK';
+    document.head.appendChild(s);
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function(){ dataLayer.push(arguments); };
+    gtag('js', new Date());
+    gtag('config', 'G-RH14PQ10QK');
+  })();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hand it to us — Taprun watches the sites you depend on</title>
+<meta name="description" content="Depend on a website that keeps breaking your workflow? Tell us which site and what you need. We watch it, catch changes before you do, and fix what breaks — starting at $9/month, full done-for-you at $99/month. Credentials never leave your machine.">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://taprun.dev/handoff.html">
+<link rel="stylesheet" href="/assets/css/site.css?v=20260720">
+<style>
+/* Page-scoped rules only; base styling lives in /assets/css/site.css. */
+.handoff-form { background: var(--ink-soft); border: 1px solid var(--ink-hairline); padding: 32px 30px; margin: 40px 0 8px; }
+.handoff-form label { display: block; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); margin: 18px 0 6px; }
+.handoff-form label:first-child { margin-top: 0; }
+.handoff-form input, .handoff-form textarea { width: 100%; box-sizing: border-box; background: var(--ink); border: 1px solid var(--ink-hairline); color: var(--text); font-size: 15px; padding: 12px 14px; border-radius: 0; }
+.handoff-form input:focus, .handoff-form textarea:focus { outline: none; border-color: var(--signal); }
+.handoff-form textarea { min-height: 88px; resize: vertical; }
+.handoff-form .hp { position: absolute; left: -9999px; opacity: 0; }
+.handoff-form button { margin-top: 24px; display: block; width: 100%; text-align: center; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; padding: 14px 18px; border: 1px solid var(--signal); border-radius: 0; color: var(--ink); background: var(--signal); cursor: pointer; transition: background 0.2s; }
+.handoff-form button:hover { background: var(--signal-dim); border-color: var(--signal-dim); }
+.tier-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin: 36px 0 8px; }
+.tier { border: 1px solid var(--ink-hairline); padding: 20px 18px; }
+.tier .t-price { font-family: var(--font-display); font-weight: 600; font-size: 26px; color: var(--text); }
+.tier .t-name { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--signal-dim); margin-bottom: 8px; }
+.tier p { font-size: 14px; color: var(--text-body); margin: 8px 0 0; line-height: 1.5; }
+.note { border-left: 3px solid var(--signal); padding: 14px 20px; margin: 28px 0; background: rgba(180, 240, 58, 0.05); }
+.note p { color: var(--text); margin-bottom: 0; }
+.end-ornament { text-align: center; margin: 80px 0 24px; }
+.end-ornament .rule { display: inline-block; width: 72px; height: 1px; background: var(--signal-dim); vertical-align: middle; margin: 0 18px; }
+.end-ornament span.glyph { font-family: var(--font-mono); color: var(--signal); font-size: 15px; letter-spacing: 0.1em; vertical-align: middle; }
+.footer-links { text-align: center; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); }
+@media (max-width: 720px) { .tier-row { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<header class="masthead-strip">
+  <div class="row">
+    <a href="/" class="brand">Taprun</a>
+    <span class="crumb">Hand it to us</span>
+    <span class="links">
+      <a href="/pricing.html">Pricing</a>
+      <a href="/privacy.html">Privacy</a>
+    </span>
+  </div>
+</header>
+
+<main class="container">
+
+  <div class="kicker">Done-for-you</div>
+  <h1>Depend on a website?<br><em>Hand the watching to us.</em></h1>
+  <p class="lede">A portal you pull statements from. A dashboard you check every morning. A backoffice that quietly breaks your routine every time it ships a redesign. Tell us <strong>which site</strong> and <strong>what you need</strong> — we set up the watching and the fixing, and your credentials never leave your machine.</p>
+
+  <!-- Demand-capture form. Posts to the intake worker
+       (core/workers/intake — deploy with wrangler, then point this
+       action at the deployed URL, e.g. https://intake.taprun.dev/intake). -->
+  <form class="handoff-form" method="POST" action="https://intake.taprun.dev/intake">
+    <label for="site">The site you depend on</label>
+    <input id="site" name="site" type="text" placeholder="e.g. portal.mybank.com, seller dashboard, court records site" required maxlength="500">
+    <label for="need">What do you need from it?</label>
+    <textarea id="need" name="need" placeholder="e.g. Download the monthly statement PDF and tell me if it ever fails. / Watch the price list and email me when the layout changes." maxlength="2000"></textarea>
+    <label for="email">Your email</label>
+    <input id="email" name="email" type="email" placeholder="you@example.com" required maxlength="500">
+    <div class="hp" aria-hidden="true">
+      <label for="website">Website</label>
+      <input id="website" name="website" type="text" tabindex="-1" autocomplete="off">
+    </div>
+    <button type="submit">Hand it to us →</button>
+  </form>
+  <p style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; color: var(--text-muted); margin-top: 10px;">No account. No spam. We reply within 48h with what it would take.</p>
+
+  <h2>What it costs</h2>
+  <div class="tier-row">
+    <div class="tier">
+      <div class="t-name">Watch</div>
+      <div class="t-price">$9–19<span style="font-size:14px; color: var(--text-muted);"> /site/mo</span></div>
+      <p>We watch the site's shape. It changes — you get an email before your workflow hits the break.</p>
+    </div>
+    <div class="tier">
+      <div class="t-name">Watch + Fix</div>
+      <div class="t-price">$29–49<span style="font-size:14px; color: var(--text-muted);"> /site/mo</span></div>
+      <p>Changes get repaired, not just reported. Your automation keeps running; you hear about it afterwards.</p>
+    </div>
+    <div class="tier">
+      <div class="t-name">Done-for-you</div>
+      <div class="t-price">$99<span style="font-size:14px; color: var(--text-muted);"> /mo</span></div>
+      <p>We build and maintain the whole recurring pull on your machine. <a href="/pricing.html">Full details →</a></p>
+    </div>
+  </div>
+
+  <div class="note">
+    <p><strong>Credentials stay on your machine — that's architecture, not a promise.</strong> The automation runs inside your own Chrome. We watch the public shape of the sites you name and ship fixes; we never hold your passwords or see your data.</p>
+  </div>
+
+  <div class="end-ornament"><span class="rule"></span><span class="glyph">tap</span><span class="rule"></span></div>
+  <div class="footer-links">
+    <a href="/terms.html">Terms of Service</a>·
+    <a href="/privacy.html">Privacy</a>·
+    <a href="/">Home</a>
+  </div>
+
+</main>
+
+</body>
+</html>
