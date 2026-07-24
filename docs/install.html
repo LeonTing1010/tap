@@ -352,7 +352,7 @@ robots: "index,follow"
     <ol>
       <li>Run the command above and read the output. It checks the CLI install, the daemon socket, and the native-messaging manifest in one pass.</li>
       <li>If the manifest is missing: <code class="inline">tap bridge setup</code>.</li>
-      <li>If the daemon isn't running: <code class="inline">tap bridge start</code>.</li>
+      <li>If the bridge isn't running: reload the Tap extension in Chrome (<code class="inline">chrome://extensions</code>) — the browser starts the host on demand; there is no separate daemon to start.</li>
       <li>Still stuck? Open an issue with the <code class="inline">tap bridge status --json</code> output — that's the diagnostic the maintainer needs.</li>
     </ol>
   </section>
