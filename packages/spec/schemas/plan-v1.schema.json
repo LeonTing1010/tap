@@ -235,6 +235,14 @@
         "inViewport": {
           "type": "boolean",
           "description": "Keep only matches intersecting the viewport — precondition for a trusted CDP click."
+        },
+        "within": {
+          "$ref": "#/$defs/Target",
+          "description": "Scope: resolve THIS resolver inside the subtree of the element `within` resolves to (recursively nestable). The relational query — 'the button INSIDE the card whose text includes X' — in ONE op, replacing the eval-marker two-op TOCTOU. Per ADR 2026-07-12-target-resolver-within."
+        },
+        "topmost": {
+          "type": "boolean",
+          "description": "Keep only matches that actually RECEIVE a pointer event at their center (elementFromPoint hit-test: the hit is the match, inside it, or its ancestor). Kills the stacked-dialog trap — SPAs that keep every dialog mounted (weui admin consoles) leave N same-class buttons 'visible'; only the top of the stack is interactable. Off-viewport candidates pass (nothing to hit-test); combine with the click op's own scroll-into-view."
         }
       }
     },
@@ -343,9 +351,7 @@
     "ExtractOp": {
       "type": "object",
       "required": [
-        "op",
-        "root",
-        "per_item"
+        "op"
       ],
       "additionalProperties": false,
       "properties": {
@@ -353,7 +359,8 @@
           "const": "extract"
         },
         "root": {
-          "type": "string"
+          "type": "string",
+          "description": "ROOT selector (live/HTML sources) or a JSON path into the captured entries array (network source, e.g. \"entries[*]\"). Required for a read; optional for the network source arm/stop modes."
         },
         "per_item": {
           "type": "object",
@@ -362,10 +369,19 @@
           }
         },
         "from": {
-          "type": "string"
+          "type": "string",
+          "description": "JSONata expression resolving to the source HTML string, OR the sentinel \"network\" selecting the CDP-captured-response source (ADR 2026-07-23). Omitted defaults to _phase_last (prior op:fetch HTML). HTML parses engine-inline (deno-dom, tab-free); \"network\" routes to the peer."
         },
         "live": {
           "type": "boolean"
+        },
+        "mode": {
+          "enum": [
+            "arm",
+            "read",
+            "stop"
+          ],
+          "description": "Capture lifecycle for from:\"network\" (ADR 2026-07-23). \"arm\" starts CDP capture (no read); \"read\" (default) dumps + applies per_item over the buffered entries; \"stop\" ends capture. Ignored for HTML/live sources."
         },
         "save": {
           "type": "string"

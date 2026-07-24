@@ -522,6 +522,68 @@ async function cdpClick(tabId, x, y) {
   }
 }
 
+// ─── Click-effect watch (2026-07-23, wxamp submit-review dogfood) ───────────
+//
+// A JS-injected click can be a SILENT no-op: the resolver found the node,
+// the event sequence dispatched, `clicked:true` returned — and the page did
+// NOTHING, because the handler is gesture-gated (isTrusted check, or a
+// window.open the popup blocker eats without user activation). ok proved
+// dispatch, not effect; the author learned nothing until they hand-rolled
+// fetch/XHR/window.open hooks (the 2026-07-23 anchor: wxamp 提交审核 —
+// six dialog layers of "clicked, nothing happened").
+//
+// These two self-contained fns are injected around the click (MAIN world,
+// same substrate the page runs in):
+//   ARM  — count DOM mutations + page-initiated fetch/XHR + window.open
+//          calls (splitting blocked-vs-allowed by the null return), and
+//          remember href.
+//   READ — restore every wrap, disconnect the observer, and report the
+//          counters. `null` return = never armed (nav destroyed the doc).
+//
+// The SW-side click case reads the counters ~450ms after the click:
+//   • all-zero + untrusted → the click was provably INERT (no handler ran
+//     anything observable) → one CDP escalation at the same coords is
+//     SAFE (nothing fired, so nothing can double-fire) — then re-probe.
+//   • blocked.length > 0 → popup_blocked anomaly with the eaten URLs (the
+//     agent navs there directly or bakes trusted:true). NO auto-escalation
+//     in this arm: the handler DID run (it called window.open, and may have
+//     fired requests) — a second click could double-fire a write.
+// Both surface via _tap_anomalies.click_effect — never a silent nothing.
+const CLICK_WATCH_ARM = () => {
+  const prev = globalThis.__tapClickWatch
+  if (prev) {
+    try { prev.obs.disconnect() } catch (_) {}
+    try { if (prev.of) window.fetch = prev.of } catch (_) {}
+    try { if (prev.oo) XMLHttpRequest.prototype.open = prev.oo } catch (_) {}
+    try { if (prev.ow) window.open = prev.ow } catch (_) {}
+  }
+  const W = { m: 0, net: 0, opens: [], blocked: [], href: location.href }
+  W.obs = new MutationObserver((recs) => { W.m += recs.length })
+  W.obs.observe(document.documentElement, { childList: true, subtree: true, attributes: true, characterData: true })
+  W.of = window.fetch
+  window.fetch = function (...a) { W.net++; return W.of.apply(this, a) }
+  W.oo = XMLHttpRequest.prototype.open
+  XMLHttpRequest.prototype.open = function (...a) { W.net++; return W.oo.apply(this, a) }
+  W.ow = window.open
+  window.open = function (u, ...r) {
+    const w = W.ow.call(this, u, ...r)
+    ;(w ? W.opens : W.blocked).push(String(u).slice(0, 200))
+    return w
+  }
+  globalThis.__tapClickWatch = W
+  return true
+}
+const CLICK_WATCH_READ = () => {
+  const W = globalThis.__tapClickWatch
+  if (!W) return null
+  try { W.obs.disconnect() } catch (_) {}
+  try { if (W.of) window.fetch = W.of } catch (_) {}
+  try { if (W.oo) XMLHttpRequest.prototype.open = W.oo } catch (_) {}
+  try { if (W.ow) window.open = W.ow } catch (_) {}
+  delete globalThis.__tapClickWatch
+  return { m: W.m, net: W.net, opens: W.opens, blocked: W.blocked, hrefChanged: location.href !== W.href }
+}
+
 // ─── Closed-shadow pierce (shadow-piercing Phase 2, 2026-07-10) ─────────────
 //
 // JS-world resolution (__tapDeep) is structurally blind to CLOSED shadow
@@ -803,14 +865,24 @@ async function queryAttachCandidate(url, mode) {
   }
 
   if (candidates.length === 0) return null
-  // Multi-match resolution (2026-07-03 dogfood): prefer the ACTIVE tab
-  // over raw recency — with N same-origin candidates, binding a
-  // background one surprises the user mid-flow; the visible tab is the
-  // one they mean. Tiebreak: most-recently-accessed. `lastAccessed` is
-  // a chrome.tabs.Tab field (ms since epoch); fall back to 0 when
-  // absent (Chrome <122) — older tabs sort behind newer ones with
-  // the field set.
+  // Multi-match resolution. Primary key (2026-07-23 wxamp dogfood): the
+  // longest common URL prefix with the nav target — under match:origin,
+  // an origin can host wholly unrelated surfaces (mp.weixin.qq.com serves
+  // BOTH the wxamp admin console and public articles), and active/recency
+  // alone bound the ARTICLE tab to an admin-console read. The tab sharing
+  // the deepest path with where the plan is going is the tab it means.
+  // Tiebreaks (2026-07-03 dogfood): prefer the ACTIVE tab over raw
+  // recency — binding a background one surprises the user mid-flow; then
+  // most-recently-accessed. `lastAccessed` is a chrome.tabs.Tab field
+  // (ms since epoch); fall back to 0 when absent (Chrome <122).
+  const commonPrefixLen = (a, b) => {
+    const n = Math.min(a.length, b.length)
+    let i = 0
+    while (i < n && a[i] === b[i]) i++
+    return i
+  }
   candidates.sort((a, b) =>
+    (commonPrefixLen(b.url || '', url) - commonPrefixLen(a.url || '', url)) ||
     ((b.active ? 1 : 0) - (a.active ? 1 : 0)) ||
     ((b.lastAccessed || 0) - (a.lastAccessed || 0)))
   return candidates[0]
@@ -1898,6 +1970,21 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
           const voted = globalThis.__tapDeep.pickVoted(t, document)
           el = voted.el
           witness = voted.witness
+          if (!el && t.inViewport) {
+            // inViewport self-heal (2026-07-23 wxamp dogfood): inViewport is
+            // a PRE-scroll veto, but click's own contract scrolls the target
+            // into view before acting — so a below-fold match is one scroll
+            // away, not a miss. Re-resolve without the veto, scroll the
+            // survivor to center, and accept it iff it actually renders.
+            // Scoped to CLICK resolution only: op:wait must keep observing
+            // (auto-scrolling there would make every inViewport wait
+            // trivially true and defeat its semantics).
+            const relaxed = globalThis.__tapDeep.pickVoted({ ...t, inViewport: false }, document)
+            if (relaxed.el && relaxed.el.scrollIntoView) {
+              relaxed.el.scrollIntoView({ block: 'center', behavior: 'instant' })
+              if (vis(relaxed.el)) { el = relaxed.el; witness = relaxed.witness }
+            }
+          }
         } else {
           el = globalThis.__tapDeep.all(t, document)[0] || null
           if (el && !vis(el)) {
@@ -1975,6 +2062,10 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
         }
       }
       let result
+      // Arm the click-effect watch BEFORE the click (skip for probe: it
+      // never clicks). Best-effort: a CSP-exotic page that rejects the arm
+      // injection must not break the click itself.
+      if (!params.probe) { try { await execFunc(fx, CLICK_WATCH_ARM) } catch (_e) { /* effect probe degrades to null */ } }
       try {
         result = await execFunc(fx, clickResolver, innerTarget, params.probe)
       } catch (e) {
@@ -2001,6 +2092,37 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       if (params.trusted) {
         await cdpClick(tabId, result.x + dx, result.y + dy)
       }
+      // Effect probe (click-effect watch, 2026-07-23): read the counters the
+      // pre-click ARM installed. 450ms balances detection (framework handlers
+      // mutate DOM or fire requests well inside it) against replay speed
+      // (north-star: replay ≤ human speed — a human's next click is slower).
+      // A probe failure after the click ≈ the click NAVIGATED the tab — the
+      // strongest possible effect, recorded as such, never treated as inert.
+      let effect = null
+      if (!params.probe) {
+        await new Promise(r => setTimeout(r, 450))
+        try { effect = await execFunc(fx, CLICK_WATCH_READ) } catch (_e) { effect = { navigated: true } }
+        if (effect === null || effect === undefined) effect = null
+        else if (!effect.navigated && effect.m === 0 && effect.net === 0 && !effect.hrefChanged &&
+            effect.opens.length === 0 && effect.blocked.length === 0 &&
+            !params.trusted && result && typeof result.x === 'number') {
+          // Provably INERT JS click (zero mutations, zero requests, zero
+          // opens, same href) → escalate ONCE to a CDP trusted click at the
+          // same coords. Safe by construction: nothing fired, so nothing can
+          // double-fire. The anomaly below tells the author to bake
+          // trusted:true so replays skip the dead L1 attempt.
+          try {
+            await execFunc(fx, CLICK_WATCH_ARM)
+            await cdpClick(tabId, result.x + dx, result.y + dy)
+            await new Promise(r => setTimeout(r, 450))
+            let after = null
+            try { after = await execFunc(fx, CLICK_WATCH_READ) } catch (_e2) { after = { navigated: true } }
+            effect = { ...(after || {}), silentJsClick: true, escalated: true }
+          } catch (_e) {
+            effect = { ...effect, silentJsClick: true, escalated: false }
+          }
+        }
+      }
       // Ambient recorder (ADR 2026-07-17): remember this host×witness so the
       // user's organic browsing can revalidate it later. Fire-and-forget —
       // never on the op's critical path.
@@ -2009,7 +2131,27 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       }
       // Witness-voting fallback report rides to the engine (core lifts
       // value._tap_anomalies → OpResult.anomalies → run/verify envelopes).
-      return result._tap_anomalies ? { _tap_anomalies: result._tap_anomalies } : {}
+      // click_effect joins it: popup_blocked and silent-click/escalation are
+      // exactly the "ok proved dispatch, not effect" facts the author cannot
+      // see from ok:true alone.
+      const anomalies = { ...(result._tap_anomalies || {}) }
+      if (effect) {
+        const ce = {}
+        if (effect.blocked && effect.blocked.length) ce.popup_blocked = effect.blocked
+        if (effect.silentJsClick) {
+          ce.silent_js_click = true
+          ce.escalated = !!effect.escalated
+          if (effect.escalated) {
+            ce.effect_after_escalation = {
+              mutations: effect.m | 0, net: effect.net | 0,
+              href_changed: !!effect.hrefChanged, navigated: !!effect.navigated,
+              opens: effect.opens || [], popup_blocked: effect.blocked || [],
+            }
+          }
+        }
+        if (Object.keys(ce).length) anomalies.click_effect = ce
+      }
+      return Object.keys(anomalies).length ? { _tap_anomalies: anomalies } : {}
     }
 
     case 'type': {
@@ -2583,11 +2725,22 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
           : !!document.querySelector(sel)
         if (hit()) return true
         return new Promise((resolve) => {
-          const timer = setTimeout(() => { obs.disconnect(); resolve(false) }, timeout)
-          const obs = new MutationObserver(() => {
-            if (hit()) { obs.disconnect(); clearTimeout(timer); resolve(true) }
-          })
-          obs.observe(document.documentElement, { childList: true, subtree: true })
+          // childList alone missed two REAL mutation classes (2026-07-23
+          // wxamp submit-review dogfood — wait timed out on a condition
+          // op:input resolved fine seconds later):
+          //   (a) dialog open/close = class/style ATTRIBUTE toggles on
+          //       pre-existing nodes (weui keeps every dialog mounted) —
+          //       no childList record ever fires;
+          //   (b) `:checked` / `:disabled` state = PROPERTY changes that
+          //       emit NO mutation record of any kind.
+          // attributes:true covers (a); the 250ms poll is the ONLY
+          // observer for (b). Both funnel through the same `hit()` so the
+          // wait condition stays exactly the resolver's answer.
+          const done = (v) => { obs.disconnect(); clearInterval(iv); clearTimeout(timer); resolve(v) }
+          const timer = setTimeout(() => done(false), timeout)
+          const obs = new MutationObserver(() => { if (hit()) done(true) })
+          obs.observe(document.documentElement, { childList: true, subtree: true, attributes: true })
+          const iv = setInterval(() => { if (hit()) done(true) }, 250)
         })
       }, rawSel, ms)
       if (!found) throw new Error('waitFor timeout: ' + selStr)
@@ -2622,6 +2775,48 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       return await execFunc(tabId, () => document.body.innerText)
 
     case 'extract': {
+      // NETWORK source (ADR 2026-07-23): from:"network" reads the CDP-captured
+      // response buffer instead of the DOM. Three modes reuse the already-shipped
+      // inspect.networkStart/Dump/Stop compound:
+      //   arm  → start CDP capture (no read)
+      //   read → dump + apply per_item over the entries array (JSON-path root)
+      //   stop → end capture
+      // This is the typed home for the fetch/XHR-hook harvest op:eval hand-rolls
+      // when a request is unforgeable out-of-band (per-session nonce/signature/
+      // encrypted payload) — see compass_capture.
+      if (params.from === 'network') {
+        const mode = params.mode || 'read'
+        if (mode === 'arm') {
+          await handleMethod('inspect.networkStart', { tabId }, senderTabId, { fromDaemon })
+          return { armed: true }
+        }
+        if (mode === 'stop') {
+          await handleMethod('inspect.networkStop', { tabId }, senderTabId, { fromDaemon })
+          return { stopped: true }
+        }
+        // read: dump the buffer, then apply the SAME ExtractSpec per_item the
+        // DOM/HTML paths use — but over captured entries, not DOM rows. `root`
+        // is a JSON path into the dump ({count, entries}); "entries[*]" (or
+        // "entries") selects the array. applySpec fields read entry keys
+        // (url/method/status/responseBody/postData) via spec.attr, or the
+        // whole entry via a JSON sub-path in spec.selector.
+        const dump = await handleMethod('inspect.networkDump', { tabId, wait_ms: params.wait_ms }, senderTabId, { fromDaemon })
+        const rows = Array.isArray(dump?.entries) ? dump.entries : []
+        const perItem = params.per_item || {}
+        return rows.map((entry) => {
+          const item = {}
+          for (const key in perItem) {
+            const spec = perItem[key]
+            // spec.attr → entry[attr]; spec.exists → key presence; else the
+            // whole entry (or entry[spec.selector] when selector names a field).
+            const src = spec.selector !== undefined ? entry[spec.selector] : entry
+            if (spec.exists !== undefined) item[key] = src !== undefined && src !== null
+            else if (spec.attr !== undefined) item[key] = entry[spec.attr] ?? ''
+            else item[key] = src ?? ''
+          }
+          return item
+        })
+      }
       // LIVE-DOM structured extraction (Phase 2, 2026-07-21). Typed home for the
       // querySelectorAll(...).map(...) work ~66% of op:eval traffic hand-rolls in
       // opaque JS. Same {root, per_item} shape + applySpec as the engine deno-dom

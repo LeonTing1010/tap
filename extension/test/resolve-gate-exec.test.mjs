@@ -123,8 +123,12 @@ await test('execFunc maps undefined → null before executeScript', () => {
 await test('waitFor timeout resolves(false) and throws extension-side, never reject() in MAIN world', () => {
   assert(!/reject\(new Error\('waitFor timeout/.test(waitInjectedSrc),
     'the injected wait fn must NOT reject on timeout (MAIN-world swallows it) — resolve a sentinel instead')
-  assert(/resolve\(false\)/.test(waitInjectedSrc),
-    'the injected wait fn must resolve(false) on timeout')
+  // 2026-07-23 (waitfor-mutation-classes): all resolution paths funnel
+  // through one cleanup-complete done(v) → resolve(v); timeout passes false.
+  assert(/setTimeout\(\(\) => done\(false\), timeout\)/.test(waitInjectedSrc),
+    'the injected wait fn must resolve(false) via done(false) on timeout')
+  assert(/const done = \(v\) => \{[^}]*resolve\(v\) \}/.test(waitInjectedSrc),
+    'done() must resolve the sentinel (never reject)')
   assert(/if \(!found\) throw new Error\('waitFor timeout/.test(BG_SRC),
     'the wait method must throw extension-side when the injected fn reports not-found')
 })

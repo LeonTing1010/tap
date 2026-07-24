@@ -87,6 +87,30 @@ const TAP_DEEP_INSTALL = () => {
     const vw = (typeof innerWidth === 'number') ? innerWidth : 1e9
     return r.width > 0 && r.height > 0 && r.bottom > 0 && r.right > 0 && r.top < vh && r.left < vw
   }
+  // topmost: does this element actually RECEIVE a pointer event at its
+  // center? Hit-test via elementFromPoint on the element's own root (a
+  // ShadowRoot supports elementFromPoint, so shadow content hit-tests
+  // against its local tree instead of resolving to the host). Accepted when
+  // the hit IS the candidate, is inside it (label/span inside a button), or
+  // contains it (the candidate is a wrapper). Kills the stacked-dialog trap
+  // (2026-07-23 wxamp dogfood): SPAs that keep every dialog mounted leave N
+  // same-class buttons "visible" — only the top of the stack is
+  // interactable. Off-viewport centers pass (nothing to hit-test there; the
+  // click op scrolls before taking coordinates).
+  const topAt = (e) => {
+    if (!e.getBoundingClientRect) return true
+    const r = e.getBoundingClientRect()
+    const cx = r.x + r.width / 2, cy = r.y + r.height / 2
+    const vh = (typeof innerHeight === 'number') ? innerHeight : 1e9
+    const vw = (typeof innerWidth === 'number') ? innerWidth : 1e9
+    if (cx < 0 || cy < 0 || cx >= vw || cy >= vh) return true
+    let root = (e.getRootNode && e.getRootNode()) || document
+    if (!root.elementFromPoint) root = document
+    if (!root.elementFromPoint) return true
+    const hit = root.elementFromPoint(cx, cy)
+    if (!hit) return false
+    return hit === e || (e.contains && e.contains(hit)) || (hit.contains && hit.contains(e))
+  }
   // Pragmatic in-page getByRole (ADR 2026-07-08-target-resolver-ax): explicit
   // role= wins, else a common-subset implicit-role map. Not the full CDP AX
   // tree, but stable enough to survive the class/DOM churn that breaks CSS
@@ -162,6 +186,7 @@ const TAP_DEEP_INSTALL = () => {
       list = list.filter((e) => (e.textContent || '').trim().includes(tx))
     }
     if (target.inViewport) list = list.filter(inView)
+    if (target.topmost) list = list.filter(topAt)
     return list
   }
   const pick = (target, root, depth) => {
@@ -301,13 +326,14 @@ const TAP_DEEP_INSTALL = () => {
       step('text', (e) => (e.textContent || '').trim().includes(tx))
     }
     if (target.inViewport) step('inViewport', inView)
+    if (target.topmost) step('topmost', topAt)
     if (list.length > 0) {
       const idx = (typeof target.nth === 'number') ? target.nth : 0
       return 'matched ' + list.length + ' but nth=' + idx + ' is out of range'
     }
     return 'matched ' + started + ', 0 survived [' + stages.join('; ') + ']'
   }
-  globalThis.__tapDeep = { all, control, pick, pickVoted, implicitRole, accName, diag, vis }
+  globalThis.__tapDeep = { all, control, pick, pickVoted, implicitRole, accName, diag, vis, topAt }
 }
 
 export { TAP_DEEP_INSTALL }
