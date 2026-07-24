@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) — production host only -->
+<script>
+  (function() {
+    if (location.hostname !== 'taprun.dev') return;
+    var s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=G-RH14PQ10QK';
+    document.head.appendChild(s);
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function(){ dataLayer.push(arguments); };
+    gtag('js', new Date());
+    gtag('config', 'G-RH14PQ10QK');
+  })();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>One person + an agent is a team now. Here's my ops room. — Tap Blog</title>
+<meta name="description" content="A gold-price sentinel, a publication monitor, a weekly research report — all running unattended on one laptop at zero tokens per run. What one person plus an AI agent plus deterministic replay can operate, and what it costs: almost nothing.">
+<meta name="keywords" content="one person team AI agent, solo operator AI automation, zero token browser automation, AI agent scheduled tasks, local-first automation, Claude Code automation daily, drift maintenance">
+<link rel="canonical" href="https://taprun.dev/blog/one-person-agent-team.html">
+<meta property="og:title" content="One person + an agent is a team now. Here's my ops room.">
+<meta property="og:url" content="https://taprun.dev/blog/one-person-agent-team.html">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://taprun.dev/social-preview.png">
+<meta property="article:published_time" content="2026-07-25">
+<meta property="article:author" content="Leon Ting">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="One person + an agent is a team now. Here's my ops room.">
+<meta name="twitter:image" content="https://taprun.dev/social-preview.png">
+<link rel="stylesheet" href="/assets/css/site.css?v=20260720">
+</head>
+<body>
+<div class="container">
+<a href="../" class="back">&larr; Tap</a> &middot; <a href="./" class="back">Blog</a>
+<h1>One person + an agent is a team now. Here's my ops room.</h1>
+<p class="meta">July 25, 2026 &middot; Leon Ting &middot; 5 min read</p>
+
+<p>Every morning at 08:10, a job on my laptop pulls the gold daily close and evaluates one sentence: <em>close &ge; threshold</em>. If that sentence stops being true, my Mac notifies me — no browser window, no AI call, no cloud. It has done this every day since I set it up. Cost per day: zero tokens, zero dollars.</p>
+
+<p>The same machine checks a publication backend for new content, assembles the data for my weekly research report, and audits its own oldest automations every night at 22:30 to see whether the world has drifted out from under them. None of this wakes me up unless something is actually wrong.</p>
+
+<p>This used to be a team's job. A junior checks the dashboards every morning. Someone maintains the scripts when sites change. Someone writes the weekly report. I'm one person, and most days I spend under twenty minutes on all of it — reading a list of exceptions, not touring seventeen healthy things to find the three broken ones.</p>
+
+<h2>The division of labor that makes it work</h2>
+
+<p>The setup is two parts, and the boundary between them is the entire trick:</p>
+
+<p><strong>The agent is the brain.</strong> When I need a new automation — "watch this price", "pull this statement", "collect these posts" — I describe it to my AI agent once. The agent explores the site, figures out the selectors and endpoints, and compiles the whole thing into a plan: a small JSON file with the steps <em>and</em> a machine-checkable definition of success. That exploration costs tokens. Once.</p>
+
+<p><strong>The engine is muscle memory.</strong> After that, the plan replays deterministically — same steps, checked against the same success condition, at zero tokens per run. Scheduled with the operating system's own scheduler, not a cloud cron. Running in my own browser with my own logins, so nothing about my accounts ever leaves this machine.</p>
+
+<p>Intelligence is expensive and judgment-shaped; repetition is free and check-shaped. Most automation tools get this boundary wrong in one of two directions: either the AI drives the browser every single time (you pay tokens for repetition, and the run is as reliable as the model's mood), or a dumb script runs blind (nothing checks whether the result is actually true). The plan format forces every automation to carry its own truth condition — so replays are free <em>and</em> honest.</p>
+
+<h2>What breaks, and who fixes it</h2>
+
+<p>Sites change. Selectors die. A login expires. This is the actual job — not writing automations, but keeping them true. Two things make it survivable for one person:</p>
+
+<p>First, <strong>the exceptions surface themselves</strong>. Every run's outcome lands in a local ledger; a truth panel ranks what's broken, what's decaying, and what hasn't been verified in too long. My morning starts with that list. Seventeen healthy automations cost me zero attention.</p>
+
+<p>Second, <strong>repair is a conversation, not an afternoon</strong>. When something drifts, the fix is telling the agent "re-capture this" — it re-explores with the old intent, produces a new plan, and the success condition proves the repair worked. The expensive part (my attention) shrinks to a decision; the mechanical part is the agent's problem.</p>
+
+<h2>Why I'm writing this</h2>
+
+<p>Because the arithmetic generalizes. If one person can keep a dozen unattended jobs true on a laptop, one person can keep a hundred true for other people — and most people who depend on a website don't want an engine, a plan format, or an agent. They want to hand it to someone and get an email when something needs their attention.</p>
+
+<p>So that's the offer. The engine is <a href="https://github.com/LeonTing1010/tap">free and MIT-licensed</a> — if you're the kind of person who runs their own ops room, take it, it's yours. And if you'd rather <em>depend on a site without babysitting it</em>: <a href="/handoff.html">tell us which site and what you need</a>. We'll watch it, catch the changes before you hit them, and fix what breaks — on terms where your credentials never leave your machine, because that's architecture, not a promise.</p>
+
+<p class="meta">Taprun is a free, MIT-licensed browser automation engine that runs in your own Chrome — and a done-for-you service for people who'd rather not run it themselves. <a href="/handoff.html">Hand us a site →</a></p>
+
+</div>
+</body>
+</html>
