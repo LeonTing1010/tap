@@ -2,8 +2,8 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://taprun.dev/spec/plan-v1/schema.json",
   "title": "Tap Plan v1",
-  "description": "On-disk format for Tap v2 plans (bare JSON; no W3C Annotation envelope). Plans are a discriminated union of read (observe+return) and write (act+key+confirm?) variants. Mirrors @taprun/spec/src/types.ts; drift-guarded by packages/spec/test/schema-drift.test.mjs.",
-  "$comment": "Per ADR tap-core docs/adr/2026-05-03-unified-tap-primitive.md. Edited from src/types.ts. Do not edit fields without updating the drift-guard test.",
+  "description": "On-disk format for Tap v2 plans (bare JSON; no W3C Annotation envelope). Plans are a discriminated union of read (observe+return) and write (act+key+confirm?) variants.",
+  "$comment": "GENERATED from core/types.ts by scripts/gen-plan-schema.ts — DO NOT EDIT BY HAND. Regenerate: deno task gen:plan-schema. Freshness: gen:plan-schema --check (blocking).",
   "oneOf": [
     {
       "$ref": "#/$defs/PlanRead"
@@ -65,7 +65,7 @@
     },
     "OpName": {
       "type": "string",
-      "description": "Closed 18-op union (substrate 7 + control 3 + escape 1 + host 2 + output 3 + observation 1 + host-capability 1). Mirrors OP_NAMES_V2. highlight/screencast/point retired per ADR 2026-07-13-op-union-minimization.",
+      "description": "Closed 18-op union. Mirrors OP_NAMES_V2 in core/types.ts (generated).",
       "enum": [
         "fetch",
         "nav",
@@ -120,6 +120,71 @@
         }
       ]
     },
+    "TargetResolver": {
+      "type": "object",
+      "anyOf": [
+        {
+          "required": [
+            "selector"
+          ]
+        },
+        {
+          "required": [
+            "role"
+          ]
+        }
+      ],
+      "additionalProperties": false,
+      "description": "Explicit predicate over a match set (ADR 2026-07-08-target-resolver + -ax). Selection: candidates (deepQueryAll(selector), or the common-role set when role-only) → filter role → filter name → filter visible → filter text → filter inViewport → index nth. Re-resolved at act-time by the peer. A bare string target is sugar for { selector, visible: true }. Requires selector OR role.",
+      "properties": {
+        "selector": {
+          "type": "string",
+          "description": "CSS selector. The ' >>> ' piercing combinator crosses BOTH shadow-root AND iframe boundaries: 'iframeSel >>> innerSel' targets an element inside an iframe (same- or cross-origin). A bare selector searches only the top document and will NOT match inside an iframe. Optional when role is given."
+        },
+        "role": {
+          "type": "string",
+          "description": "ARIA role (explicit role= or implicit from tag). Selector-free semantic targeting; survives React class/DOM churn that breaks CSS selectors."
+        },
+        "name": {
+          "type": "string",
+          "description": "Accessible-name substring (aria-label → aria-labelledby → <label> → alt/title → textContent), trimmed + case-insensitive."
+        },
+        "visible": {
+          "type": "boolean",
+          "description": "Keep only rendered matches (offsetParent set / non-zero box / not display:none·hidden·opacity:0). Kills the 'first match is a hidden template' footgun."
+        },
+        "nth": {
+          "type": "number",
+          "description": "0-based index into the filtered set; negative counts from the end (-1 = last = newest in append-ordered chat/list UIs). Default 0. Out-of-range → element_not_found."
+        },
+        "text": {
+          "type": "string",
+          "description": "Keep only matches whose textContent includes this substring (trimmed, case-sensitive)."
+        },
+        "inViewport": {
+          "type": "boolean",
+          "description": "Keep only matches intersecting the viewport — precondition for a trusted CDP click."
+        },
+        "topmost": {
+          "type": "boolean",
+          "description": "Keep only matches that actually RECEIVE a pointer event at their center (elementFromPoint hit-test: the hit is the match, inside it, or its ancestor). Kills the stacked-dialog trap — SPAs that keep every dialog mounted (weui admin consoles) leave N same-class buttons 'visible'; only the top of the stack is interactable. Off-viewport candidates pass (nothing to hit-test); combine with the click op's own scroll-into-view."
+        },
+        "within": {
+          "$ref": "#/$defs/Target",
+          "description": "Scope: resolve THIS resolver inside the subtree of the element `within` resolves to (recursively nestable). The relational query — 'the button INSIDE the card whose text includes X' — in ONE op, replacing the eval-marker two-op TOCTOU. Per ADR 2026-07-12-target-resolver-within."
+        }
+      }
+    },
+    "Target": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/$defs/TargetResolver"
+        }
+      ]
+    },
     "FetchOp": {
       "type": "object",
       "required": [
@@ -166,6 +231,10 @@
         },
         "save": {
           "type": "string"
+        },
+        "expect": {
+          "$ref": "#/$defs/CelExpr",
+          "description": "Per-op postcondition (ADR 2026-05-08 §2B): CEL over { …scope, $result } after a successful fetch. Falsy → tap_drifted."
         }
       }
     },
@@ -190,71 +259,6 @@
           "type": "string"
         }
       }
-    },
-    "TargetResolver": {
-      "type": "object",
-      "anyOf": [
-        {
-          "required": [
-            "selector"
-          ]
-        },
-        {
-          "required": [
-            "role"
-          ]
-        }
-      ],
-      "additionalProperties": false,
-      "description": "Explicit predicate over a match set (ADR 2026-07-08-target-resolver + -ax). Selection: candidates (deepQueryAll(selector), or the common-role set when role-only) → filter role → filter name → filter visible → filter text → filter inViewport → index nth. Re-resolved at act-time by the peer. A bare string target is sugar for { selector, visible: true }. Requires selector OR role.",
-      "properties": {
-        "selector": {
-          "type": "string",
-          "description": "CSS selector. The ' >>> ' piercing combinator crosses BOTH shadow-root AND iframe boundaries: 'iframeSel >>> innerSel' targets an element inside an iframe (same- or cross-origin). A bare selector searches only the top document and will NOT match inside an iframe. Optional when role is given."
-        },
-        "role": {
-          "type": "string",
-          "description": "ARIA role (explicit role= or implicit from tag). Selector-free semantic targeting; survives React class/DOM churn that breaks CSS selectors."
-        },
-        "name": {
-          "type": "string",
-          "description": "Accessible-name substring (aria-label → aria-labelledby → <label> → alt/title → textContent), trimmed + case-insensitive."
-        },
-        "visible": {
-          "type": "boolean",
-          "description": "Keep only rendered matches (offsetParent set / non-zero box / not display:none·hidden·opacity:0). Kills the 'first match is a hidden template' footgun."
-        },
-        "nth": {
-          "type": "number",
-          "description": "0-based index into the filtered set; negative counts from the end (-1 = last = newest in append-ordered chat/list UIs). Default 0. Out-of-range → element_not_found."
-        },
-        "text": {
-          "type": "string",
-          "description": "Keep only matches whose textContent includes this substring (trimmed, case-sensitive)."
-        },
-        "inViewport": {
-          "type": "boolean",
-          "description": "Keep only matches intersecting the viewport — precondition for a trusted CDP click."
-        },
-        "within": {
-          "$ref": "#/$defs/Target",
-          "description": "Scope: resolve THIS resolver inside the subtree of the element `within` resolves to (recursively nestable). The relational query — 'the button INSIDE the card whose text includes X' — in ONE op, replacing the eval-marker two-op TOCTOU. Per ADR 2026-07-12-target-resolver-within."
-        },
-        "topmost": {
-          "type": "boolean",
-          "description": "Keep only matches that actually RECEIVE a pointer event at their center (elementFromPoint hit-test: the hit is the match, inside it, or its ancestor). Kills the stacked-dialog trap — SPAs that keep every dialog mounted (weui admin consoles) leave N same-class buttons 'visible'; only the top of the stack is interactable. Off-viewport candidates pass (nothing to hit-test); combine with the click op's own scroll-into-view."
-        }
-      }
-    },
-    "Target": {
-      "oneOf": [
-        {
-          "type": "string"
-        },
-        {
-          "$ref": "#/$defs/TargetResolver"
-        }
-      ]
     },
     "WaitOp": {
       "type": "object",
@@ -318,6 +322,10 @@
         "trusted": {
           "type": "boolean",
           "description": "Substrate-tier hint. Absent/false (default) → L1: JS-injection el.click() — isTrusted:false, CSP-immune, no DevTools bar. true → L2: CDP-dispatched mouse events at element coordinates (isTrusted:true). L2 is REQUIRED to activate gesture-bound framework buttons (Polymer/Wiz tap recognizers — e.g. YouTube Studio ytcp-button, Material ripple buttons) that ignore a synthetic JS click. Set by capture when forge detects L1 fails the expect predicate; authors may set it directly when a click silently no-ops on a framework button."
+        },
+        "expect": {
+          "$ref": "#/$defs/CelExpr",
+          "description": "Per-op postcondition (ADR 2026-05-08 §2B): CEL over { …scope, $result }. Falsy → tap_drifted."
         },
         "save": {
           "type": "string"
@@ -676,8 +684,225 @@
         }
       }
     },
+    "PdfStamp": {
+      "type": "object",
+      "required": [
+        "image",
+        "page",
+        "x",
+        "y"
+      ],
+      "additionalProperties": false,
+      "description": "Stamp/annotation overlay for op:pdf mode:stamp (ADR 2026-07-15). Local signature image overlaid at declared coordinates. image is a local $file ref.",
+      "properties": {
+        "image": {
+          "type": "string",
+          "description": "$file ref to a local PNG/SVG signature image"
+        },
+        "page": {
+          "type": "number",
+          "description": "1-based page index"
+        },
+        "x": {
+          "type": "number",
+          "description": "PDF user-space points (72 dpi), origin bottom-left"
+        },
+        "y": {
+          "type": "number"
+        },
+        "width": {
+          "type": "number",
+          "description": "rendered width; height derived from image aspect"
+        },
+        "opacity": {
+          "type": "number",
+          "description": "0..1, default 1"
+        },
+        "imageBytes": {
+          "type": "string",
+          "description": "peer transport only — boundary-expanded base64; not authored"
+        }
+      }
+    },
+    "PdfOp": {
+      "type": "object",
+      "description": "Host op: PDF output. mode:export (default) = CDP Page.printToPDF of the bound tab (ADR 2026-07-08). mode:stamp = overlay stamp onto input PDF pdf (tab-free, deterministic — ADR 2026-07-15). pdfBytes is the peer-transport form of pdf, expanded from the $file ref at the dispatch boundary; not authored.",
+      "required": [
+        "op"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "op": {
+          "const": "pdf"
+        },
+        "mode": {
+          "enum": [
+            "export",
+            "stamp"
+          ]
+        },
+        "landscape": {
+          "type": "boolean"
+        },
+        "printBackground": {
+          "type": "boolean"
+        },
+        "paperWidth": {
+          "type": "number"
+        },
+        "paperHeight": {
+          "type": "number"
+        },
+        "pdf": {
+          "type": "string",
+          "description": "$file ref to the source PDF (stamp mode)"
+        },
+        "stamp": {
+          "$ref": "#/$defs/PdfStamp"
+        },
+        "pdfBytes": {
+          "type": "string",
+          "description": "peer transport only — boundary-expanded base64; not authored"
+        },
+        "save": {
+          "type": "string"
+        }
+      }
+    },
+    "NotifyOp": {
+      "type": "object",
+      "description": "Host op: push a message to the Tap side panel (plan->human output). Stored under chrome.storage.local['tap:notify'].",
+      "required": [
+        "op",
+        "message"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "op": {
+          "const": "notify"
+        },
+        "message": {
+          "type": "string"
+        },
+        "save": {
+          "type": "string"
+        }
+      }
+    },
+    "AxOp": {
+      "type": "object",
+      "description": "Host-observation op (ADR 2026-07-12-op-ax-observation): CDP accessibility-tree survey of the bound tab. Returns {total, items:[{role,name,x,y,w,h,backendId}]} — role+name for every rendered node INCLUDING closed shadow roots page JS cannot reach. {role,name} is a ready-made input target; x/y feed a trusted:true coordinate click. No filter -> interactive roles only; role/name filter -> all roles.",
+      "required": [
+        "op"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "op": {
+          "const": "ax"
+        },
+        "role": {
+          "type": "string",
+          "description": "Exact AX role, case-insensitive (e.g. \"button\")."
+        },
+        "name": {
+          "type": "string",
+          "description": "Accessible-name substring, case-insensitive."
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 400,
+          "description": "Max items returned. Default 120."
+        },
+        "save": {
+          "type": "string"
+        }
+      }
+    },
+    "ScreenshotOp": {
+      "type": "object",
+      "description": "Host output op (ADR 2026-07-19-op-screenshot): render the bound tab (or a clipped element) to an image via CDP Page.captureScreenshot. format png|jpeg, quality 0-100, target = CSS selector to clip. Produces a base64 image artifact persisted to ~/.tap/artifacts/<save>.<ext> (mirrors op:pdf).",
+      "required": [
+        "op"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "op": {
+          "const": "screenshot"
+        },
+        "format": {
+          "enum": [
+            "png",
+            "jpeg"
+          ]
+        },
+        "quality": {
+          "type": "number"
+        },
+        "target": {
+          "type": "string",
+          "description": "CSS selector to clip (element screenshot); omit for full viewport"
+        },
+        "save": {
+          "type": "string"
+        }
+      }
+    },
+    "HostCapSpec": {
+      "type": "object",
+      "required": [
+        "namespace",
+        "method"
+      ],
+      "additionalProperties": false,
+      "description": "Resolved host-caps registry entry (Lane-B). Peer transport only — attached at the core dispatch boundary; not authored in plans.",
+      "properties": {
+        "namespace": {
+          "type": "string"
+        },
+        "method": {
+          "type": "string"
+        },
+        "params": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "HostOp": {
+      "type": "object",
+      "description": "Host op: invoke a thin host capability from the host-caps registry (Lane B, ADR 2026-07-16-primitive-set-narrow-waist-and-thin-host-capability-registry). `cap` names a registry entry mapped to a chrome.<namespace>.<method>(...) call; adding a capability is a registry entry (data), not new op code.",
+      "required": [
+        "op",
+        "cap"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "op": {
+          "const": "host"
+        },
+        "cap": {
+          "type": "string"
+        },
+        "args": {
+          "type": "object"
+        },
+        "save": {
+          "type": "string"
+        },
+        "_cap": {
+          "$ref": "#/$defs/HostCapSpec",
+          "description": "Peer transport only — the resolved registry spec, attached at the core dispatch boundary; NOT authored."
+        }
+      }
+    },
     "Op": {
-      "description": "The closed Op union — exactly 18 members. Discriminated by `op`.",
+      "description": "The closed Op union — exactly 18 members. Discriminated by `op`. GENERATED from OP_NAMES_V2.",
       "oneOf": [
         {
           "$ref": "#/$defs/FetchOp"
@@ -729,6 +954,9 @@
         },
         {
           "$ref": "#/$defs/HostOp"
+        },
+        {
+          "$ref": "#/$defs/ScreenshotOp"
         }
       ]
     },
@@ -739,6 +967,26 @@
         "scoped",
         "interactive"
       ]
+    },
+    "PlanIntent": {
+      "type": "object",
+      "description": "The durable verifiable intent (goal + oracle + source_url) — the regeneration target when ops drift stale. Ops are a cache OF this. ADR tap-core 2026-07-14-intent-first-class.",
+      "required": [
+        "goal"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "goal": {
+          "type": "string",
+          "description": "The user's intent in natural language. Supersedes flat source_intent."
+        },
+        "oracle": {
+          "$ref": "#/$defs/CelExpr"
+        },
+        "source_url": {
+          "type": "string"
+        }
+      }
     },
     "PlanCommon": {
       "type": "object",
@@ -805,26 +1053,6 @@
         }
       }
     },
-    "PlanIntent": {
-      "type": "object",
-      "description": "The durable verifiable intent (goal + oracle + source_url) — the regeneration target when ops drift stale. Ops are a cache OF this. ADR tap-core 2026-07-14-intent-first-class.",
-      "required": [
-        "goal"
-      ],
-      "additionalProperties": false,
-      "properties": {
-        "goal": {
-          "type": "string",
-          "description": "The user's intent in natural language. Supersedes flat source_intent."
-        },
-        "oracle": {
-          "$ref": "#/$defs/CelExpr"
-        },
-        "source_url": {
-          "type": "string"
-        }
-      }
-    },
     "PlanRead": {
       "allOf": [
         {
@@ -847,17 +1075,17 @@
               },
               {
                 "required": [
+                  "confirm"
+                ]
+              },
+              {
+                "required": [
                   "postcondition"
                 ]
               },
               {
                 "required": [
                   "dedup_ttl_seconds"
-                ]
-              },
-              {
-                "required": [
-                  "confirm"
                 ]
               }
             ]
@@ -903,193 +1131,6 @@
           }
         }
       ]
-    },
-    "PdfOp": {
-      "type": "object",
-      "required": [
-        "op"
-      ],
-      "additionalProperties": false,
-      "description": "Host op: PDF output. mode:export (default) = CDP Page.printToPDF of the bound tab (ADR 2026-07-08). mode:stamp = overlay stamp onto input PDF pdf (tab-free, deterministic — ADR 2026-07-15). pdfBytes is the peer-transport form of pdf, expanded from the $file ref at the dispatch boundary; not authored.",
-      "properties": {
-        "op": {
-          "const": "pdf"
-        },
-        "mode": {
-          "enum": [
-            "export",
-            "stamp"
-          ]
-        },
-        "landscape": {
-          "type": "boolean"
-        },
-        "printBackground": {
-          "type": "boolean"
-        },
-        "paperWidth": {
-          "type": "number"
-        },
-        "paperHeight": {
-          "type": "number"
-        },
-        "pdf": {
-          "type": "string",
-          "description": "$file ref to the source PDF (stamp mode)"
-        },
-        "stamp": {
-          "$ref": "#/$defs/PdfStamp"
-        },
-        "pdfBytes": {
-          "type": "string",
-          "description": "peer transport only — boundary-expanded base64; not authored"
-        },
-        "save": {
-          "type": "string"
-        }
-      }
-    },
-    "ScreenshotOp": {
-      "type": "object",
-      "required": [
-        "op"
-      ],
-      "additionalProperties": false,
-      "description": "Host output op (ADR 2026-07-19-op-screenshot): render the bound tab (or a clipped element) to an image via CDP Page.captureScreenshot. format png|jpeg, quality 0-100, target = CSS selector to clip. Produces a base64 image artifact persisted to ~/.tap/artifacts/<save>.<ext> (mirrors op:pdf).",
-      "properties": {
-        "op": {
-          "const": "screenshot"
-        },
-        "format": {
-          "enum": [
-            "png",
-            "jpeg"
-          ]
-        },
-        "quality": {
-          "type": "number"
-        },
-        "target": {
-          "type": "string",
-          "description": "CSS selector to clip (element screenshot); omit for full viewport"
-        },
-        "save": {
-          "type": "string"
-        }
-      }
-    },
-    "PdfStamp": {
-      "type": "object",
-      "required": [
-        "image",
-        "page",
-        "x",
-        "y"
-      ],
-      "additionalProperties": false,
-      "description": "Stamp/annotation overlay for op:pdf mode:stamp (ADR 2026-07-15). Local signature image overlaid at declared coordinates. image is a local $file ref.",
-      "properties": {
-        "image": {
-          "type": "string",
-          "description": "$file ref to a local PNG/SVG signature image"
-        },
-        "page": {
-          "type": "number",
-          "description": "1-based page index"
-        },
-        "x": {
-          "type": "number",
-          "description": "PDF user-space points (72 dpi), origin bottom-left"
-        },
-        "y": {
-          "type": "number"
-        },
-        "width": {
-          "type": "number",
-          "description": "rendered width; height derived from image aspect"
-        },
-        "opacity": {
-          "type": "number",
-          "description": "0..1, default 1"
-        },
-        "imageBytes": {
-          "type": "string",
-          "description": "peer transport only — boundary-expanded base64; not authored"
-        }
-      }
-    },
-    "NotifyOp": {
-      "type": "object",
-      "required": [
-        "op",
-        "message"
-      ],
-      "additionalProperties": false,
-      "description": "Host op: push a message to the Tap side panel (plan->human output). Stored under chrome.storage.local['tap:notify'].",
-      "properties": {
-        "op": {
-          "const": "notify"
-        },
-        "message": {
-          "type": "string"
-        },
-        "save": {
-          "type": "string"
-        }
-      }
-    },
-    "AxOp": {
-      "type": "object",
-      "required": [
-        "op"
-      ],
-      "additionalProperties": false,
-      "description": "Host-observation op (ADR 2026-07-12-op-ax-observation): CDP accessibility-tree survey of the bound tab. Returns {total, items:[{role,name,x,y,w,h,backendId}]} — role+name for every rendered node INCLUDING closed shadow roots page JS cannot reach. {role,name} is a ready-made input target; x/y feed a trusted:true coordinate click. No filter -> interactive roles only; role/name filter -> all roles.",
-      "properties": {
-        "op": {
-          "const": "ax"
-        },
-        "role": {
-          "type": "string",
-          "description": "Exact AX role, case-insensitive (e.g. \"button\")."
-        },
-        "name": {
-          "type": "string",
-          "description": "Accessible-name substring, case-insensitive."
-        },
-        "limit": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 400,
-          "description": "Max items returned. Default 120."
-        },
-        "save": {
-          "type": "string"
-        }
-      }
-    },
-    "HostOp": {
-      "type": "object",
-      "required": [
-        "op",
-        "cap"
-      ],
-      "additionalProperties": false,
-      "description": "Host op: invoke a thin host capability from the host-caps registry (Lane B, ADR 2026-07-16-primitive-set-narrow-waist-and-thin-host-capability-registry). `cap` names a registry entry mapped to a chrome.<namespace>.<method>(...) call; adding a capability is a registry entry (data), not new op code.",
-      "properties": {
-        "op": {
-          "const": "host"
-        },
-        "cap": {
-          "type": "string"
-        },
-        "args": {
-          "type": "object"
-        },
-        "save": {
-          "type": "string"
-        }
-      }
     }
   }
 }
