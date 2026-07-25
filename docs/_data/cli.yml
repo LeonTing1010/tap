@@ -81,7 +81,7 @@ mcp:
 # the same commit that bumps npm/cli/package.json — search for
 # `cli.yml` in scripts/release.sh. Manual edits to this field will be
 # overwritten on next release.
-version: "0.24.0"
+version: "0.25.0"
 
 # ─── Install ─────────────────────────────────────────────────────────────
 install:
