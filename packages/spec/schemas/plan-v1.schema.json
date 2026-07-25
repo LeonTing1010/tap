@@ -970,7 +970,7 @@
     },
     "PlanIntent": {
       "type": "object",
-      "description": "The durable verifiable intent (goal + oracle + source_url) — the regeneration target when ops drift stale. Ops are a cache OF this. ADR tap-core 2026-07-14-intent-first-class.",
+      "description": "The durable verifiable intent (goal + source_url) — the regeneration target when ops drift stale. Ops are a cache OF this; the oracle lives in must[] (ADR tap-core 2026-07-25-plan-v3-clean-break).",
       "required": [
         "goal"
       ],
@@ -979,9 +979,6 @@
         "goal": {
           "type": "string",
           "description": "The user's intent in natural language. Supersedes flat source_intent."
-        },
-        "oracle": {
-          "$ref": "#/$defs/CelExpr"
         },
         "source_url": {
           "type": "string"
@@ -1050,6 +1047,34 @@
         },
         "intent": {
           "$ref": "#/$defs/PlanIntent"
+        },
+        "must": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MustClause"
+          }
+        }
+      }
+    },
+    "MustClause": {
+      "type": "object",
+      "description": "One authored predicate obligation — THE plan-level oracle spelling (ADR tap-core 2026-07-25-plan-v3-clean-break). Writes author post_act (the pre-act flip probe is derived from the same holds + the confirm channel); reads author post_return over the outcome contract.",
+      "required": [
+        "moment",
+        "holds"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "moment": {
+          "type": "string",
+          "enum": [
+            "pre_act",
+            "post_act",
+            "post_return"
+          ]
+        },
+        "holds": {
+          "$ref": "#/$defs/CelExpr"
         }
       }
     },
@@ -1076,11 +1101,6 @@
               {
                 "required": [
                   "confirm"
-                ]
-              },
-              {
-                "required": [
-                  "postcondition"
                 ]
               },
               {
@@ -1121,9 +1141,6 @@
               "items": {
                 "$ref": "#/$defs/Op"
               }
-            },
-            "postcondition": {
-              "$ref": "#/$defs/CelExpr"
             },
             "dedup_ttl_seconds": {
               "type": "number"
