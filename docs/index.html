@@ -1696,6 +1696,8 @@ footer {
       <input id="drift-email" type="email" name="email" required placeholder="you@company.com" aria-label="Email address"
              style="flex:1 1 240px; min-width:0; padding:14px 16px; font-family:var(--font-mono); font-size:15px; color:var(--text); background:var(--ink-soft); border:1px solid var(--ink-rule); border-radius:0; outline:none;" />
       <button type="submit" class="btn-primary">Get drift alerts <span class="arrow">→</span></button>
+      <input id="drift-sites" type="text" name="sites" placeholder="sites you automate — e.g. mi.com, xero.com (optional, so we watch the right ones)" aria-label="Sites you automate (optional)"
+             style="flex:1 1 100%; min-width:0; padding:12px 16px; font-family:var(--font-mono); font-size:14px; color:var(--text); background:var(--ink-soft); border:1px solid var(--ink-rule); border-radius:0; outline:none;" />
     </form>
     <p id="drift-status" role="status" aria-live="polite" style="min-height:1.2em; margin:16px auto 0; font-family:var(--font-mono); font-size:13px; color:var(--text); letter-spacing:0.01em;"></p>
     <p class="reveal delay-3" style="margin:8px auto 0; font-family:var(--font-mono); font-size:12px; color:var(--text-muted); letter-spacing:0.02em;">
@@ -1716,7 +1718,7 @@ footer {
     fetch(f.action, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ email: email, source: 'landing', utm: utm, website: f.website.value })
+      body: JSON.stringify({ email: email, sites: (document.getElementById('drift-sites').value || '').trim(), source: 'landing', utm: utm, website: f.website.value })
     })
       .then(function (r) { return r.json().catch(function () { return {}; }).then(function (b) { return { ok: r.ok, b: b }; }); })
       .then(function (res) {
