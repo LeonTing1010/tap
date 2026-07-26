@@ -12,6 +12,7 @@
   <a href="https://taprun.dev/?utm_source=readme-cn&utm_medium=docs&utm_campaign=homepage"><b>主页</b></a> &nbsp;|&nbsp;
   <a href="https://taprun.dev/blog/?utm_source=readme-cn&utm_medium=docs&utm_campaign=blog"><b>博客</b></a> &nbsp;|&nbsp;
   <a href="https://github.com/LeonTing1010/tap-skills"><b>已验证判断</b></a> &nbsp;|&nbsp;
+  <a href="https://taprun.dev/?utm_source=readme-cn&utm_medium=docs&utm_campaign=drift-alerts#drift-alerts"><b>📬 漂移预警</b></a> &nbsp;|&nbsp;
   <a href="README.md"><b>English</b></a>
 </p>
 

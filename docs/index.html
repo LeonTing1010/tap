@@ -1672,6 +1672,69 @@ footer {
   </div>
 </section>
 
+<!-- ============== DRIFT ALERTS (email capture · own Cloudflare Worker → D1) ============== -->
+<!-- Posts to our own worker (core/workers/drift-alerts) → D1; the subscriber list
+     is ours, no third party. Renders only when _config.yml newsletter.endpoint is
+     set to the deployed worker URL, so a broken/unwired form never ships.
+     No-JS fallback: a plain form POST → worker 303-redirects to /thanks.html. -->
+{% if site.newsletter.endpoint %}
+<section class="section" id="drift-alerts" style="border-top:1px solid var(--ink-rule);">
+  <div class="container" style="max-width:720px; text-align:center;">
+    <div class="section-label reveal">Drift alerts</div>
+    <h2 class="reveal delay-1">Get told <em>before</em> your taps break.</h2>
+    <p class="reveal delay-2" style="max-width:60ch; margin:16px auto 0; font-family:var(--font-body); font-size:17px; color:var(--text-muted); line-height:1.6; text-wrap:pretty;">
+      When a site you automate changes its DOM, replays fail silently — and you find out in production. Subscribe and we send the patched connector <em>before</em> that happens. No product spam. Just drift.
+    </p>
+    <form id="drift-form" class="reveal delay-3"
+          action="{{ site.newsletter.endpoint }}"
+          method="post"
+          style="display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin:32px auto 0; max-width:520px;">
+      <!-- honeypot: humans leave this empty (off-screen, not display:none) -->
+      <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true"
+             style="position:absolute; left:-9999px; width:1px; height:1px; opacity:0;" />
+      <input type="hidden" name="source" value="landing" />
+      <input id="drift-email" type="email" name="email" required placeholder="you@company.com" aria-label="Email address"
+             style="flex:1 1 240px; min-width:0; padding:14px 16px; font-family:var(--font-mono); font-size:15px; color:var(--text); background:var(--ink-soft); border:1px solid var(--ink-rule); border-radius:0; outline:none;" />
+      <button type="submit" class="btn-primary">Get drift alerts <span class="arrow">→</span></button>
+    </form>
+    <p id="drift-status" role="status" aria-live="polite" style="min-height:1.2em; margin:16px auto 0; font-family:var(--font-mono); font-size:13px; color:var(--text); letter-spacing:0.01em;"></p>
+    <p class="reveal delay-3" style="margin:8px auto 0; font-family:var(--font-mono); font-size:12px; color:var(--text-muted); letter-spacing:0.02em;">
+      Outbound only — we email you; nothing about your taps or sessions leaves your machine. Unsubscribe anytime.
+    </p>
+  </div>
+</section>
+<script>
+(function () {
+  var f = document.getElementById('drift-form');
+  if (!f) return;
+  var status = document.getElementById('drift-status');
+  var utm = (location.search || '').replace(/^\?/, '').slice(0, 500);
+  f.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var email = (document.getElementById('drift-email').value || '').trim();
+    status.textContent = '…';
+    fetch(f.action, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email: email, source: 'landing', utm: utm, website: f.website.value })
+    })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (b) { return { ok: r.ok, b: b }; }); })
+      .then(function (res) {
+        if (res.ok) {
+          status.textContent = res.b.duplicate
+            ? "You're already on the list — we'll ping you before your taps break."
+            : "✓ You're on the list. We'll email you before your taps break.";
+          f.reset();
+        } else {
+          status.textContent = (res.b && res.b.error) ? ('Hmm — ' + res.b.error + '. Try again?') : 'Something went wrong. Try again?';
+        }
+      })
+      .catch(function () { status.textContent = 'Network hiccup — try again in a moment.'; });
+  });
+})();
+</script>
+{% endif %}
+
 <footer>
   <div class="container">
     <div class="footer-grid">

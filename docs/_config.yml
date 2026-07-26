@@ -5,6 +5,13 @@ author:
   name: Leon Ting
   url: https://github.com/LeonTing1010
 
+# Drift-alerts email capture → our OWN Cloudflare Worker (core/workers/drift-alerts)
+# backed by D1. The subscriber list is ours — no third party. Setting `endpoint`
+# makes the landing form (#drift-alerts) render; unset it and the form stays
+# hidden (so a broken/unwired form never ships).
+newsletter:
+  endpoint: https://taprun-drift-alerts.toptest.workers.dev/subscribe
+
 plugins:
   - jekyll-sitemap
 
