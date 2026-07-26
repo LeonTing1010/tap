@@ -1,0 +1,44 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.LeonTing1010/tap",
+  "title": "Taprun",
+  "description": "Browser MCP for logged-in tasks. Uses your Chrome — credentials stay local. Zero-token replay.",
+  "websiteUrl": "https://taprun.dev/?utm_source=wellknown&utm_medium=discovery&utm_campaign=v0.27",
+  "icons": [
+    {
+      "src": "https://taprun.dev/logo-400.png",
+      "sizes": ["400x400"],
+      "mimeType": "image/png"
+    }
+  ],
+  "repository": {
+    "url": "https://github.com/LeonTing1010/tap",
+    "source": "github"
+  },
+  "version": "0.27.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@taprun/cli",
+      "version": "0.27.0",
+      "transport": { "type": "stdio" },
+      "runtimeArguments": [
+        { "type": "positional", "value": "mcp" },
+        { "type": "positional", "value": "stdio" }
+      ]
+    },
+    {
+      "registryType": "pypi",
+      "identifier": "taprun",
+      "version": "0.27.0",
+      "transport": { "type": "stdio" },
+      "runtimeArguments": [
+        { "type": "positional", "value": "mcp" },
+        { "type": "positional", "value": "stdio" }
+      ]
+    }
+  ],
+  "remotes": [
+    { "type": "streamable-http", "url": "https://mcp.taprun.dev/mcp" }
+  ]
+}

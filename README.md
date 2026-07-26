@@ -70,7 +70,7 @@ Repair:  re-run capture against the same site/name; the next      (only when nee
 /plugin install tap@taprun
 ```
 
-That installs the Tap MCP server **plus** the skills that teach your agent when to use it and the hook that routes walled fetches to Tap — no terminal, no config file. (CodeBuddy wires plugin MCP servers at startup only, so **fully restart it once** after installing; Claude Code picks them up with `/reload-plugins`.)
+That installs the Taprun MCP server **plus** the skills that teach your agent when to use it and the hook that routes walled fetches to Taprun — no terminal, no config file. (CodeBuddy wires plugin MCP servers at startup only, so **fully restart it once** after installing; Claude Code picks them up with `/reload-plugins`.)
 
 **Any other MCP host** (Cursor · VS Code · Claude Desktop) — one command writes the config for you:
 
@@ -80,12 +80,12 @@ npx -y @taprun/cli embed cursor   # or: vscode | claude-desktop | claude-code | 
 
 The binary self-copies to `~/.tap/bin` and your agent's MCP config is written. Re-check anytime with `tap embed --verify`.
 
-> **Using a coding agent that isn't in that list?** `tap embed` targets are *data, not code*: drop a row into `~/.tap/embed-targets.json` and the new agent works immediately — no engine release. Each row names one of four install *kinds* (`cc-plugin` for Claude-Code-plugin hosts, `cli-mcp-add` for CLIs with a `<cli> mcp add`, `ide-deeplink`, `desktop-bundle`), e.g. `[{"id":"kode","kind":"cc-plugin","display":"Kode CLI","tier":1,"cli":"kode"}]`. Same doctrine as the rest of Tap — the engine stays closed and mechanical; you extend it in local data.
+> **Using a coding agent that isn't in that list?** `tap embed` targets are *data, not code*: drop a row into `~/.tap/embed-targets.json` and the new agent works immediately — no engine release. Each row names one of four install *kinds* (`cc-plugin` for Claude-Code-plugin hosts, `cli-mcp-add` for CLIs with a `<cli> mcp add`, `ide-deeplink`, `desktop-bundle`), e.g. `[{"id":"kode","kind":"cc-plugin","display":"Kode CLI","tier":1,"cli":"kode"}]`. Same doctrine as the rest of Taprun — the engine stays closed and mechanical; you extend it in local data.
 
 Now pick your runtime — **the extension is only needed to reuse your *live* logged-in Chrome:**
 
 - **Public pages / open APIs / CI — nothing more to install.** The MCP server runs over `npx`; you're done. Append `--no-extension` for a fully in-chat Playwright runtime with its own isolated profile (no browser gesture, no click).
-- **Logged-in sites** (your bank / internal dashboard / Xiaohongshu / Zhihu) — just tell your agent **"set up tap for logged-in sites"** right in the chat. The **tap-setup** skill drives the whole bridge from the chat: it materializes the stable binary (from the engine `npx` already downloaded — no second download) and registers the native-messaging manifest, then opens the extension page. The single **[Add to Chrome](https://chromewebstore.google.com/detail/tap/llcidejeoobdegbkolbjhfoeckphldce)** click is the only step that isn't a chat action — it *is* the trust gate that lets Tap reuse your existing login, and the in-flight call resumes automatically once it lands.
+- **Logged-in sites** (your bank / internal dashboard / Xiaohongshu / Zhihu) — just tell your agent **"set up tap for logged-in sites"** right in the chat. The **tap-setup** skill drives the whole bridge from the chat: it materializes the stable binary (from the engine `npx` already downloaded — no second download) and registers the native-messaging manifest, then opens the extension page. The single **[Add to Chrome](https://chromewebstore.google.com/detail/tap/llcidejeoobdegbkolbjhfoeckphldce)** click is the only step that isn't a chat action — it *is* the trust gate that lets Taprun reuse your existing login, and the in-flight call resumes automatically once it lands.
 - **Claude Desktop**: download [`tap.mcpb`](https://github.com/LeonTing1010/tap/releases/latest) and double-click.
 
 <details>
@@ -156,7 +156,7 @@ The CLI emits `ToolResult<T>` envelopes as JSON — same shape the MCP surface r
 
 ### Have an existing Playwright / Puppeteer / Stagehand script?
 
-Don't rewrite. Convert with one of the open-source adapters — drop your existing source in, get a Tap-compatible `.plan.json` plan out:
+Don't rewrite. Convert with one of the open-source adapters — drop your existing source in, get a Taprun-compatible `.plan.json` plan out:
 
 ```bash
 # Existing Playwright script (47M weekly npm downloads — most likely the one you have)
@@ -174,7 +174,7 @@ npx create-tap-script github/trending https://github.com/trending
 | [`@taprun/from-stagehand`](https://www.npmjs.com/package/@taprun/from-stagehand) | `.ts/.js` Stagehand scripts | Hybrid: deterministic page.* mapped to plan ops; NL `act/extract/observe` flagged for honest verify verdicts |
 | [`create-tap-script`](https://www.npmjs.com/package/create-tap-script) | (none — scaffolder) | Generates a starter `.plan.json` envelope from `<site>/<name> <url>` |
 
-The format itself is documented at [`@taprun/spec`](https://www.npmjs.com/package/@taprun/spec) — the public protocol surface package: TypeScript types for the v2 Plan (18-op closed union + discriminated read/write Plan union) + JSON Schema 2020-12 with `$id` resolvable at `taprun.dev/spec/plan-v1/schema.json`, bidirectionally drift-guarded against the TS types. Third-party tooling (IDE `$schema` autocomplete, ajv-equivalent validators in Python/Ruby/Go, governance layers, alternative runtimes, MCP hosts with plan-aware permission scoping) builds against this package without depending on the proprietary Tap engine. Plan-v1 reference: [taprun.dev/spec/plan-v1](https://taprun.dev/spec/plan-v1/). Source for all five packages: [`packages/`](packages/) (see [`packages/README.md`](packages/README.md) for the workspace overview).
+The format itself is documented at [`@taprun/spec`](https://www.npmjs.com/package/@taprun/spec) — the public protocol surface package: TypeScript types for the v2 Plan (18-op closed union + discriminated read/write Plan union) + JSON Schema 2020-12 with `$id` resolvable at `taprun.dev/spec/plan-v1/schema.json`, bidirectionally drift-guarded against the TS types. Third-party tooling (IDE `$schema` autocomplete, ajv-equivalent validators in Python/Ruby/Go, governance layers, alternative runtimes, MCP hosts with plan-aware permission scoping) builds against this package without depending on the proprietary Taprun engine. Plan-v1 reference: [taprun.dev/spec/plan-v1](https://taprun.dev/spec/plan-v1/). Source for all five packages: [`packages/`](packages/) (see [`packages/README.md`](packages/README.md) for the workspace overview).
 
 ## What Can You Do?
 
@@ -304,7 +304,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ## Privacy
 
-Tap is local-first by architecture. It drives **your own** browser on **your own** machine — credentials, cookies, and page data never leave it. The engine ships no telemetry and makes no outbound network calls except the ones your own saved taps explicitly direct (`op:fetch`). Saved taps, secrets, and traces live under `~/.tap/` on your machine only.
+Taprun is local-first by architecture. It drives **your own** browser on **your own** machine — credentials, cookies, and page data never leave it. The engine ships no telemetry and makes no outbound network calls except the ones your own saved taps explicitly direct (`op:fetch`). Saved taps, secrets, and traces live under `~/.tap/` on your machine only.
 
 Full policy: **[taprun.dev/privacy](https://taprun.dev/privacy)**.
 

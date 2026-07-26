@@ -66,7 +66,7 @@
 /plugin install tap@taprun
 ```
 
-这会装上 Tap MCP 服务，**外加**教 agent 何时用它的 skill、以及把被墙的 fetch 路由到 Tap 的 hook —— 不进终端、不写配置文件。（CodeBuddy 只在启动时接线插件 MCP 服务，所以装完要**完全重启一次**；Claude Code 用 `/reload-plugins` 即可。）
+这会装上 Taprun MCP 服务，**外加**教 agent 何时用它的 skill、以及把被墙的 fetch 路由到 Taprun 的 hook —— 不进终端、不写配置文件。（CodeBuddy 只在启动时接线插件 MCP 服务，所以装完要**完全重启一次**；Claude Code 用 `/reload-plugins` 即可。）
 
 **其他任意 MCP host**（Cursor · VS Code · Claude Desktop）—— 一条命令替你写好配置：
 
@@ -76,12 +76,12 @@ npx -y @taprun/cli embed cursor   # 或：vscode | claude-desktop | claude-code 
 
 二进制自动拷贝到 `~/.tap/bin`，Agent 的 MCP 配置自动写好。随时用 `tap embed --verify` 复查。
 
-> **你的 coding agent 不在这个列表里？** `tap embed` 的 target 是**数据不是代码**：往 `~/.tap/embed-targets.json` 里加一行，新 agent 立即可用——不用等引擎发版。每行指定四种装法**类型**之一（`cc-plugin`=Claude Code 插件宿主 / `cli-mcp-add`=有 `<cli> mcp add` 的 CLI / `ide-deeplink` / `desktop-bundle`），例如 `[{"id":"kode","kind":"cc-plugin","display":"Kode CLI","tier":1,"cli":"kode"}]`。和 Tap 其余部分同一信条——引擎保持封闭机械，扩展发生在本地数据里。
+> **你的 coding agent 不在这个列表里？** `tap embed` 的 target 是**数据不是代码**：往 `~/.tap/embed-targets.json` 里加一行，新 agent 立即可用——不用等引擎发版。每行指定四种装法**类型**之一（`cc-plugin`=Claude Code 插件宿主 / `cli-mcp-add`=有 `<cli> mcp add` 的 CLI / `ide-deeplink` / `desktop-bundle`），例如 `[{"id":"kode","kind":"cc-plugin","display":"Kode CLI","tier":1,"cli":"kode"}]`。和 Taprun 其余部分同一信条——引擎保持封闭机械，扩展发生在本地数据里。
 
 接着选运行时 —— **只有要复用你「已登录的真实 Chrome」时才需要扩展：**
 
 - **公开页面 / 开放 API / CI —— 不用再装任何东西。** MCP 服务跑在 `npx` 上，到此为止。想要一条完全在聊天里的路径就加 `--no-extension`（Playwright 运行时 + 独立 profile，无浏览器手势、无点击）。
-- **需要登录的站点**（银行 / 内部后台 / 小红书 / 知乎）—— 直接在聊天里对 agent 说**「帮我给登录态站点 set up tap」**。**tap-setup** skill 会在聊天里把整条桥装好：从 `npx` 已下载的引擎里落位稳定二进制（**不会二次下载**）、写好 native-messaging manifest，然后打开扩展页面。唯一不是聊天动作的一步，就是那一下 **[Add to Chrome](https://chromewebstore.google.com/detail/tap/llcidejeoobdegbkolbjhfoeckphldce)** 点击 —— 它正是让 Tap 能复用你现有登录态的信任闸；点完，进行中的调用自动续跑。
+- **需要登录的站点**（银行 / 内部后台 / 小红书 / 知乎）—— 直接在聊天里对 agent 说**「帮我给登录态站点 set up tap」**。**tap-setup** skill 会在聊天里把整条桥装好：从 `npx` 已下载的引擎里落位稳定二进制（**不会二次下载**）、写好 native-messaging manifest，然后打开扩展页面。唯一不是聊天动作的一步，就是那一下 **[Add to Chrome](https://chromewebstore.google.com/detail/tap/llcidejeoobdegbkolbjhfoeckphldce)** 点击 —— 它正是让 Taprun 能复用你现有登录态的信任闸；点完，进行中的调用自动续跑。
 - **Claude Desktop**：下载 [`tap.mcpb`](https://github.com/LeonTing1010/tap/releases/latest) 双击安装。
 
 <details>
@@ -152,7 +152,7 @@ CLI 输出 `ToolResult<T>` JSON 信封——与 MCP 接口同构——任何有 
 
 ### 已有 Playwright / Puppeteer / Stagehand 脚本？
 
-不要重写。用其中一个开源 adapter 直接转换 — 把已有脚本扔进去，拿一份 Tap 兼容的 `.plan.json` 出来：
+不要重写。用其中一个开源 adapter 直接转换 — 把已有脚本扔进去，拿一份 Taprun 兼容的 `.plan.json` 出来：
 
 ```bash
 # 已有 Playwright 脚本（npm 47M 周下载，你最可能用的 SDK）
@@ -170,7 +170,7 @@ npx create-tap-script github/trending https://github.com/trending
 | [`@taprun/from-stagehand`](https://www.npmjs.com/package/@taprun/from-stagehand) | `.ts/.js` Stagehand 脚本 | 混合：确定性的 page.* 转 plan op；自然语言 `act/extract/observe` 被标记，让 verify 给出诚实裁定 |
 | [`create-tap-script`](https://www.npmjs.com/package/create-tap-script) | （无 — 脚手架） | 从 `<site>/<name> <url>` 生成一个起步 `.plan.json` 信封 |
 
-格式本身有完整文档：[`@taprun/spec`](https://www.npmjs.com/package/@taprun/spec) —— 公共协议接口包：v2 Plan 的 TypeScript 类型（18-op 闭集联合 + 区分式的读/写 Plan 联合）+ JSON Schema 2020-12，其 `$id` 可在 `taprun.dev/spec/plan-v1/schema.json` 解析，并与 TS 类型双向漂移校验。第三方工具（IDE `$schema` 补全、Python/Ruby/Go 中的 ajv 等价校验器、治理层、替代运行时、带 plan 感知权限作用域的 MCP host）都基于此包构建，无需依赖专有的 Tap 引擎。Plan-v1 规范：[taprun.dev/spec/plan-v1](https://taprun.dev/spec/plan-v1/)。五个包的源码：[`packages/`](packages/)（workspace 总览见 [`packages/README.md`](packages/README.md)）。
+格式本身有完整文档：[`@taprun/spec`](https://www.npmjs.com/package/@taprun/spec) —— 公共协议接口包：v2 Plan 的 TypeScript 类型（18-op 闭集联合 + 区分式的读/写 Plan 联合）+ JSON Schema 2020-12，其 `$id` 可在 `taprun.dev/spec/plan-v1/schema.json` 解析，并与 TS 类型双向漂移校验。第三方工具（IDE `$schema` 补全、Python/Ruby/Go 中的 ajv 等价校验器、治理层、替代运行时、带 plan 感知权限作用域的 MCP host）都基于此包构建，无需依赖专有的 Taprun 引擎。Plan-v1 规范：[taprun.dev/spec/plan-v1](https://taprun.dev/spec/plan-v1/)。五个包的源码：[`packages/`](packages/)（workspace 总览见 [`packages/README.md`](packages/README.md)）。
 
 ## 你能用 Taprun 做什么？
 
