@@ -10,7 +10,7 @@ author:
 # makes the landing form (#drift-alerts) render; unset it and the form stays
 # hidden (so a broken/unwired form never ships).
 newsletter:
-  endpoint: https://taprun-drift-alerts.toptest.workers.dev/subscribe
+  endpoint: https://drift.taprun.dev/subscribe
 
 plugins:
   - jekyll-sitemap
