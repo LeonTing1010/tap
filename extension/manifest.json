@@ -21,7 +21,6 @@
     "scripting",
     "cookies",
     "storage",
-    "contextMenus",
     "sidePanel"
   ],
   "host_permissions": [

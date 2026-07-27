@@ -1,11 +1,11 @@
-<h2>Tap — Automate the Websites You're Already Logged Into</h2>
-<p>Tap runs the browser chores you do by hand — pulling invoices, downloading statements, checking dashboards, filling forms — inside your own already-logged-in Chrome. Set a task up once and it runs on schedule forever, for free, with your passwords never leaving your machine. An optional AI agent can help you build a task the first time, but every replay after that is plain, deterministic automation in your real browser — no per-step AI cost, no cloud, no vendor lock-in. It closes the loop: act, verify the effect, re-run on drift.</p>
+<h2>Taprun — Automate the Websites You're Already Logged Into</h2>
+<p>Taprun runs the browser chores you do by hand — pulling invoices, downloading statements, checking dashboards, filling forms — inside your own already-logged-in Chrome. Set a task up once and it runs on schedule forever, for free, with your passwords never leaving your machine. An optional AI agent can help you build a task the first time, but every replay after that is plain, deterministic automation in your real browser — no per-step AI cost, no cloud, no vendor lock-in. It closes the loop: act, verify the effect, re-run on drift.</p>
 <p><strong>AI helps only at build time (optional):</strong> saved tasks replay deterministically at zero AI token cost.</p>
 
-<h2>Why Tap (vs. Stagehand / Browserbase / Playwright-MCP / BrowserMCP)</h2>
-<p>Every cloud-first browser-automation MCP forces a tradeoff: ship your credentials to someone else's server, OR re-run an LLM on every step. Tap takes neither:</p>
+<h2>Why Taprun (vs. Stagehand / Browserbase / Playwright-MCP / BrowserMCP)</h2>
+<p>Every cloud-first browser-automation MCP forces a tradeoff: ship your credentials to someone else's server, OR re-run an LLM on every step. Taprun takes neither:</p>
 <ul>
-<li><strong>Runs in YOUR browser</strong> — your existing Chrome session with all your cookies, 2FA state, single-sign-on tokens. Credentials never cross a trust boundary; the extension only relays plan steps to the local Tap binary on your machine.</li>
+<li><strong>Runs in YOUR browser</strong> — your existing Chrome session with all your cookies, 2FA state, single-sign-on tokens. Credentials never cross a trust boundary; the extension only relays plan steps to the local Taprun binary on your machine.</li>
 <li><strong>Zero-token replay</strong> — the AI agent compiles a plan ONCE into an inspectable JSON artifact. Every subsequent run is pure data + dispatch. No vision loop, no accessibility-tree re-parse, no per-execution token bill.</li>
 <li><strong>Plans are diff-able JSON</strong> — version-controllable, testable, shareable. Not opaque generated code, not LLM scratch-state.</li>
 </ul>
@@ -22,34 +22,34 @@
 </ul>
 
 <h2>Compared</h2>
-<p>Tap is the only option that runs with your logged-in session, replays at zero LLM tokens, uses inspectable JSON plans, is MCP-native, and ships an open-source plan corpus:</p>
+<p>Taprun is the only option that runs with your logged-in session, replays at zero LLM tokens, uses inspectable JSON plans, is MCP-native, and ships an open-source plan corpus:</p>
 <ul>
-<li><strong>Runs with your logged-in session:</strong> Tap yes (your browser) — Stagehand / Browserbase run in the cloud, Playwright-MCP only partial, BrowserMCP yes.</li>
-<li><strong>Zero LLM tokens on replay:</strong> Tap yes — every other option re-invokes the LLM on every step.</li>
-<li><strong>Plans as inspectable JSON:</strong> Tap yes — Stagehand / Browserbase are opaque, Playwright-MCP uses a vision loop, BrowserMCP an a11y loop.</li>
-<li><strong>MCP-native:</strong> Tap yes — Stagehand / Browserbase partial, Playwright-MCP and BrowserMCP yes.</li>
-<li><strong>Open-source plan corpus:</strong> Tap yes — none of the others ship one.</li>
+<li><strong>Runs with your logged-in session:</strong> Taprun yes (your browser) — Stagehand / Browserbase run in the cloud, Playwright-MCP only partial, BrowserMCP yes.</li>
+<li><strong>Zero LLM tokens on replay:</strong> Taprun yes — every other option re-invokes the LLM on every step.</li>
+<li><strong>Plans as inspectable JSON:</strong> Taprun yes — Stagehand / Browserbase are opaque, Playwright-MCP uses a vision loop, BrowserMCP an a11y loop.</li>
+<li><strong>MCP-native:</strong> Taprun yes — Stagehand / Browserbase partial, Playwright-MCP and BrowserMCP yes.</li>
+<li><strong>Open-source plan corpus:</strong> Taprun yes — none of the others ship one.</li>
 </ul>
 
 <h2>How It Works</h2>
-<p>Tap has two parts: this Chrome extension, and a small helper program that runs on your own computer. The extension tells the helper which task to run; the helper drives your browser. Nothing runs without both, and nothing ever leaves your machine.</p>
+<p>Taprun has two parts: this Chrome extension, and a small helper program that runs on your own computer. The extension tells the helper which task to run; the helper drives your browser. Nothing runs without both, and nothing ever leaves your machine.</p>
 <p>Getting set up takes about two minutes:</p>
 <ol>
 <li>Install this Chrome extension (you may have just done that).</li>
 <li>Open a terminal and run one command to install the helper and link it to your browser:<br><code>npx -y @taprun/cli embed claude-code</code><br>(or: cursor | vscode | claude-desktop — whichever AI assistant you use, or connect one later)<br><br>That single step installs the helper on your computer and registers this extension to talk to it. It opens no network ports and installs no background service.</li>
-<li>Click the Tap toolbar icon. When the popup shows "Connected", you're done.</li>
+<li>Click the Taprun toolbar icon. When the popup shows "Connected", you're done.</li>
 </ol>
 <p>Prefer to install the helper manually? Run <code>brew install LeonTing1010/tap/taprun</code> or <code>curl -fsSL https://taprun.dev/install.sh | sh</code>, then <code>tap bridge setup</code> once.</p>
 <p>The helper only runs while Chrome is open — close your browser and it stops; open Chrome again (or click the toolbar icon) and it starts back up.</p>
 
 <h2>Connect an AI Assistant (Optional)</h2>
-<p>You don't need an AI assistant to use Tap — you can build and run tasks on your own. But if you use one (Claude, Cursor, Windsurf, Continue, Cline, or any tool that supports MCP), it can turn a plain sentence like "pull my monthly bank statement" into a task, then hand it to Tap to run forever.</p>
-<p>If you ran the <code>embed</code> command during setup, this is already wired up. To connect an assistant manually, add Tap to its config:</p>
+<p>You don't need an AI assistant to use Taprun — you can build and run tasks on your own. But if you use one (Claude, Cursor, Windsurf, Continue, Cline, or any tool that supports MCP), it can turn a plain sentence like "pull my monthly bank statement" into a task, then hand it to Taprun to run forever.</p>
+<p>If you ran the <code>embed</code> command during setup, this is already wired up. To connect an assistant manually, add Taprun to its config:</p>
 <p><code>{<br>  "mcpServers": {<br>    "tap": {<br>      "command": "tap",<br>      "args": ["mcp", "stdio"]<br>    }<br>  }<br>}</code></p>
-<p>Restart the assistant. You can then say things like "use Tap to run github/stars" or "capture this site with Tap".</p>
+<p>Restart the assistant. You can then say things like "use Taprun to run github/stars" or "capture this site with Taprun".</p>
 
-<h2>Get the Most Out of Tap</h2>
-<p>Tap is at its best when you let an AI assistant build a task for you once, then run it on a schedule. If you'd rather use the command line directly, these are the basics:</p>
+<h2>Get the Most Out of Taprun</h2>
+<p>Taprun is at its best when you let an AI assistant build a task for you once, then run it on a schedule. If you'd rather use the command line directly, these are the basics:</p>
 <p><code>tap list</code> — see all your saved tasks<br>
 <code>tap list github</code> — narrow the list by name<br>
 <code>tap show &lt;site&gt;/&lt;name&gt;</code> — view what a task does<br>
@@ -62,7 +62,7 @@
 <li><strong>Give a task inputs.</strong> Many ready-made tasks take options (<code>tap run reddit/post-comment subreddit=mcp body="..."</code>). See what they accept with <code>tap show</code>.</li>
 <li><strong>Chain tasks together.</strong> One task can call another — assemble flows like "log in → extract → post" from small reusable pieces.</li>
 <li><strong>Put tasks on a schedule.</strong> Run them from launchd / cron / GitHub Actions with no AI cost, so your browser chores happen while you sleep.</li>
-<li><strong>Already have an automation script?</strong> Convert a Playwright / Puppeteer / Stagehand script — <code>npx @taprun/from-playwright &lt;file&gt;.spec.ts</code> turns it into a Tap task you can run today.</li>
+<li><strong>Already have an automation script?</strong> Convert a Playwright / Puppeteer / Stagehand script — <code>npx @taprun/from-playwright &lt;file&gt;.spec.ts</code> turns it into a Taprun task you can run today.</li>
 </ul>
 <p>Full guide &amp; task catalogue: <a href="https://taprun.dev">taprun.dev</a><br>
 Spec &amp; plan JSON Schema: <a href="https://taprun.dev/spec/plan-v1/">taprun.dev/spec/plan-v1</a><br>
@@ -71,7 +71,7 @@ Source (MIT, includes this extension): <a href="https://github.com/LeonTing1010/
 <h2>Use Cases</h2>
 <ul>
 <li><strong>Personal automation</strong> — pull monthly invoices, download statements, check dashboards, monitor price or stock changes on sites behind a login, all scheduled via launchd / cron and run in your own browser.</li>
-<li><strong>Paperwork that lives in portals</strong> — bank / supplier / utility / SaaS reserved areas with no API. Set the task up once; Tap rides your live session and does the monthly download dance for you.</li>
+<li><strong>Paperwork that lives in portals</strong> — bank / supplier / utility / SaaS reserved areas with no API. Set the task up once; Taprun rides your live session and does the monthly download dance for you.</li>
 <li><strong>Multi-step workflows</strong> — chain page-A → API-B → page-C with stable JSON tasks that survive site refactors better than vision-based loops.</li>
 <li><strong>Authenticated data pulls</strong> — extract from any site you are logged into using your existing session, with zero cloud round-trip.</li>
 <li><strong>Signed PDF output</strong> — pull a statement or contract, then stamp a pre-authored signature or seal onto it (op:pdf stamp mode) before it lands on disk. The document never leaves your browser and no one hand-draws in a viewer.</li>
@@ -81,9 +81,9 @@ Source (MIT, includes this extension): <a href="https://github.com/LeonTing1010/
 
 <h2>Troubleshooting</h2>
 <h3>Popup shows "Not connected to local bridge"</h3>
-<p>The Tap CLI either isn't installed or the native-messaging manifest isn't registered. One command fixes both: <code>npx -y @taprun/cli embed claude-code</code> (or your agent). Then restart Chrome.</p>
+<p>The Taprun CLI either isn't installed or the native-messaging manifest isn't registered. One command fixes both: <code>npx -y @taprun/cli embed claude-code</code> (or your agent). Then restart Chrome.</p>
 <h3>tap bridge setup says "extension not found"</h3>
-<p>The extension must be installed in the same Chrome profile you're configuring. If you use multiple profiles, switch to the one you want Tap on, then re-run <code>tap bridge setup</code>.</p>
+<p>The extension must be installed in the same Chrome profile you're configuring. If you use multiple profiles, switch to the one you want Taprun on, then re-run <code>tap bridge setup</code>.</p>
 <h3>tap run &lt;site&gt;/&lt;name&gt; returns tap_not_found but the file exists</h3>
 <p>A different plan in <code>~/.tap/plans/</code> is malformed JSON and breaks enumeration. Validate with: <code>python3 -c "import json,glob; [json.load(open(p)) for p in glob.glob('$HOME/.tap/plans/**/*.plan.json', recursive=True)]"</code> — fix the bad file.</p>
 <h3>mcp__tap__capture says "peer not registered"</h3>
@@ -91,31 +91,31 @@ Source (MIT, includes this extension): <a href="https://github.com/LeonTing1010/
 <h3>runtime_unavailable from MCP</h3>
 <p>Let your MCP host launch <code>tap mcp stdio</code> for you (see the snippet above) — that path runs in-process and doesn't need a separate bridge. If you're using <code>tap mcp http</code>, confirm the daemon is running.</p>
 <h3>Site needs a login I haven't done yet</h3>
-<p>Just log in normally in Chrome first. Tap reuses your existing cookies — there's no separate Tap login.</p>
+<p>Just log in normally in Chrome first. Taprun reuses your existing cookies — there's no separate Taprun login.</p>
 <h3>Site needs a secret/API key (not a cookie)</h3>
 <p>Store it with <code>tap secret &lt;KEY&gt;</code> (reads value from stdin). Plans reference secrets by name; values never appear in plan JSON.</p>
 
 <h2>FAQ</h2>
-<h3>Does Tap send my data anywhere?</h3>
-<p>No. There is no Tap cloud, no telemetry, no license check. The extension only talks to the <code>tap</code> binary on your machine via Chrome Native Messaging. Network traffic from a plan goes to the site that plan targets — same destinations your browser already reaches.</p>
-<h3>Do I need an API key to use Tap?</h3>
+<h3>Does Taprun send my data anywhere?</h3>
+<p>No. There is no Taprun cloud, no telemetry, no license check. The extension only talks to the <code>tap</code> binary on your machine via Chrome Native Messaging. Network traffic from a plan goes to the site that plan targets — same destinations your browser already reaches.</p>
+<h3>Do I need an API key to use Taprun?</h3>
 <p>No. The engine ships with no model and no key. Intelligence comes from the AI agent you connect via MCP — that's where your existing Anthropic / OpenAI / local-LLM token budget gets used, only at capture time.</p>
 <h3>How is this different from Stagehand / Browserbase / browser-use?</h3>
-<p>Those run in cloud browsers and need your credentials uploaded. Tap runs in your real Chrome. Same authenticated session you already have open; cookies and 2FA state never cross a trust boundary.</p>
+<p>Those run in cloud browsers and need your credentials uploaded. Taprun runs in your real Chrome. Same authenticated session you already have open; cookies and 2FA state never cross a trust boundary.</p>
 <h3>How is this different from Playwright MCP / BrowserMCP?</h3>
-<p>Those use vision or accessibility-tree loops that re-invoke the LLM on every step. Tap compiles a plan once, then replays as deterministic JSON dispatch — zero tokens, predictable timing, diff-able output.</p>
+<p>Those use vision or accessibility-tree loops that re-invoke the LLM on every step. Taprun compiles a plan once, then replays as deterministic JSON dispatch — zero tokens, predictable timing, diff-able output.</p>
 <h3>Can I share plans with my team?</h3>
 <p>Yes. Plans are bare JSON files at <code>~/.tap/plans/&lt;site&gt;/&lt;name&gt;.plan.json</code>. Commit them to a git repo, share over Slack, or publish to the community catalogue at <a href="https://taprun.dev/taps/">taprun.dev/taps</a>.</p>
-<h3>Does Tap work on Firefox / Safari?</h3>
+<h3>Does Taprun work on Firefox / Safari?</h3>
 <p>Not yet. Chrome / Edge / Brave / Arc (any Chromium browser that supports Chrome Native Messaging and unpacked-extension installs) are supported.</p>
 <h3>Will the bridge run in the background forever?</h3>
 <p>No. The bridge only lives while Chrome is open. Closing the last Chrome window shuts it down. No daemon, no system service.</p>
 
 <h2>Privacy &amp; Security</h2>
 <ul>
-<li>Everything stays on your machine. No data is sent to any Tap server (we don't operate one).</li>
+<li>Everything stays on your machine. No data is sent to any Taprun server (we don't operate one).</li>
 <li>The extension only reads tab content for tabs you have explicitly selected for automation. No background scraping.</li>
-<li>Cookies are read only for sites you have invoked an automation against, and are passed only to the local Tap binary over Chrome Native Messaging.</li>
+<li>Cookies are read only for sites you have invoked an automation against, and are passed only to the local Taprun binary over Chrome Native Messaging.</li>
 <li>No telemetry, no analytics, no license heartbeat. The MIT-licensed extension source is at <a href="https://github.com/LeonTing1010/tap/tree/main/extension">github.com/LeonTing1010/tap</a>.</li>
 </ul>
 <p>See <a href="https://taprun.dev/privacy">taprun.dev/privacy</a> for the full policy.</p>

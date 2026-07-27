@@ -113,9 +113,12 @@ document.addEventListener('click', (e) => {
       t.classList.add('copied')
       const prev = t.textContent
       t.textContent = '✓'
+      const announce = document.getElementById('copy-announce')
+      if (announce) announce.textContent = 'Copied to clipboard'
       setTimeout(() => {
         t.classList.remove('copied')
         t.textContent = prev
+        if (announce) announce.textContent = ''
       }, 1200)
     })
     return

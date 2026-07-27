@@ -75,7 +75,7 @@ jobs:
         run: |
           cd extension
           zip -r ../tap-extension-${{ steps.version.outputs.version }}.zip . \
-            -x '.*' 'test/*' 'TESTING.md' 'description.txt' 'STORE_LISTING.md' 'icons/icon.svg'
+            -x '.*' 'test/*' 'TESTING.md' 'description.txt' 'STORE_LISTING.md' 'icons/icon.svg' 'cn/*'
 
       - name: Attach extension to the existing release
         # This job must NEVER create the release. core's Release workflow owns

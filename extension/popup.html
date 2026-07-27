@@ -1,126 +1,128 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
   <header>
-    <img src="icons/icon32.png" alt="" width="20" height="20">
-    <span class="title">Tap</span>
+    <img src="icons/icon32.png" alt="" width="18" height="18">
+    <span class="title">Taprun</span>
     <span class="version" id="version"></span>
   </header>
 
-  <section id="connected" hidden>
-    <div class="row">
-      <span class="dot dot-ok"></span>
-      <span>Connected to local bridge</span>
-    </div>
-    <p class="muted">Saved taps run in this browser. Credentials stay on your machine.</p>
-    <label class="row" for="visible-mode" style="margin-top:10px;cursor:pointer;gap:8px;">
-      <input type="checkbox" id="visible-mode">
-      <span>Visible mode</span>
-    </label>
-    <p class="muted">Foregrounds each step and highlights the element Tap is acting on, so you can watch every operation as it runs — especially in live sessions. Off: silent, zero-token background replay. Auto-turns off when idle.</p>
-  </section>
+  <main>
+    <!-- Connected: bridge is up; saved taps run locally. -->
+    <section id="connected" hidden>
+      <div class="state">
+        <span class="dot dot-ok"></span>
+        <div>
+          <div class="state-title">Connected</div>
+          <div class="state-sub">Connected to your local bridge. Saved taps run in this browser; your credentials never leave this machine.</div>
+        </div>
+      </div>
+      <label class="switch-row">
+        <span>Show me each step</span>
+        <input type="checkbox" id="visible-mode">
+        <span class="switch"></span>
+      </label>
+      <p class="hint">Runs each tap in the foreground and highlights the element it touches, so you can watch every step. Off: silent background replay, zero tokens. Auto-off when idle.</p>
+    </section>
 
-  <!-- Disconnect mode: native messaging manifest not installed.
-       Triggered by lastError "Specified native messaging host not found".
-       Fix: one-step `embed` (installs the binary, registers this manifest,
-       wires the agent's MCP config); `tap bridge setup` alone suffices
-       when the CLI is already installed. -->
-  <section id="dc-not-installed" hidden>
-    <div class="row">
-      <span class="dot dot-warn"></span>
-      <span><strong>Setup required</strong></span>
-    </div>
-    <p>One command finishes setup — installs the tap binary, registers this extension, wires your agent:</p>
-    <pre><code>npx -y @taprun/cli embed claude-code</code><button class="copy" data-copy="npx -y @taprun/cli embed claude-code" title="Copy">⧉</button></pre>
-    <p class="muted">Swap <code>claude-code</code> for <code>cursor</code> / <code>vscode</code> / <code>claude-desktop</code>. Already have the CLI? <code>tap bridge setup</code> alone registers the manifest — the extension ID is pinned, no flag needed.</p>
-    <div class="actions">
-      <button class="retry">Retry connection</button>
-      <a id="install" href="https://taprun.dev/add?utm_source=chrome-ext&utm_medium=extension&utm_campaign=popup-setup" target="_blank" rel="noopener">Other install options</a>
-    </div>
-  </section>
+    <!-- Setup required: native messaging manifest not installed.
+         Primary CTA: link to taprun.dev/install (guides the native-engine
+         install — one-liner or signed platform installer; the web page cannot
+         itself write a native binary into the OS). Secondary: one-step
+         `embed` command, tucked behind a disclosure; `tap bridge setup`
+         alone suffices when the CLI is already installed. -->
+    <section id="dc-not-installed" hidden>
+      <div class="state">
+        <span class="dot dot-info"></span>
+        <div>
+          <div class="state-title">Setup required</div>
+          <div class="state-sub">You're one step from a connected browser. The Taprun engine runs locally and drives Chrome — your credentials never leave this machine.</div>
+        </div>
+      </div>
+      <a class="btn-primary" href="https://taprun.dev/install?utm_source=chrome-ext&utm_medium=extension&utm_campaign=popup-setup" target="_blank" rel="noopener">Set up Taprun</a>
+      <details class="disclosure">
+        <summary>Install from the terminal instead</summary>
+        <div class="code"><code>npx -y @taprun/cli embed claude-code</code><button class="copy" data-copy="npx -y @taprun/cli embed claude-code" title="Copy" aria-label="Copy">⧉</button></div>
+        <p class="hint">Swap <code>claude-code</code> for <code>cursor</code> / <code>vscode</code> / <code>claude-desktop</code>. Already have the CLI? <code>tap bridge setup</code> alone registers the manifest — the extension ID is pinned, no flag needed.</p>
+      </details>
+      <div class="actions">
+        <button class="retry">Retry</button>
+        <a class="link" href="https://taprun.dev/install?utm_source=chrome-ext&utm_medium=extension&utm_campaign=popup-setup-agent" target="_blank" rel="noopener">Wire an agent</a>
+      </div>
+    </section>
 
-  <!-- Disconnect mode: native host process started but exited (daemon down,
-       Unix socket unreachable, host bug). Triggered by lastError "Native
-       host has exited". Per ADR 2026-05-13-install-os-managed-daemon.md
-       the daemon is OS-supervised (launchd on macOS, systemd user service
-       on Linux). If it's not running, either the service wasn't loaded
-       yet (first install) or the host crashed (check host.log). -->
-  <section id="dc-host-exited" hidden>
-    <div class="row">
-      <span class="dot dot-err"></span>
-      <span><strong>Bridge not running</strong></span>
-    </div>
-    <p>The bridge launches when this extension's service worker is active. Try:</p>
-    <ul class="muted">
-      <li>Make sure Chrome's window is open — closing all windows suspends the SW.</li>
-      <li>Click the Retry button below to wake the SW + relaunch the host.</li>
-      <li>If it persists, the host may have crashed — open <code>host.log</code> next to your <code>tap</code> binary (find it with <code>which tap</code>); the last lines say why.</li>
-    </ul>
-    <div class="actions">
-      <button class="retry">Retry connection</button>
-      <a href="https://taprun.dev/install?utm_source=chrome-ext&utm_medium=extension&utm_campaign=popup-host-exited" target="_blank" rel="noopener">Learn more</a>
-    </div>
-  </section>
+    <!-- Bridge not running: native host started but exited. -->
+    <section id="dc-host-exited" hidden>
+      <div class="state">
+        <span class="dot dot-err"></span>
+        <div>
+          <div class="state-title">Bridge not running</div>
+          <div class="state-sub">The bridge starts with this extension's background worker. Keep a Chrome window open and retry.</div>
+        </div>
+      </div>
+      <p class="hint">If it keeps stopping, the host may have crashed — open <code>host.log</code> next to your <code>tap</code> binary (<code>which tap</code>) for the cause.</p>
+      <div class="actions">
+        <button class="retry">Retry</button>
+        <a class="link" href="https://taprun.dev/install?utm_source=chrome-ext&utm_medium=extension&utm_campaign=popup-host-exited" target="_blank" rel="noopener">Learn more</a>
+      </div>
+    </section>
 
-  <!-- Disconnect mode: Chrome anti-DoS blocklist or allowed_origins mismatch.
-       Triggered by lastError "...is forbidden". Fix: restart Chrome (clears
-       blocklist) or re-run setup with correct extension ID. -->
-  <section id="dc-forbidden" hidden>
-    <div class="row">
-      <span class="dot dot-err"></span>
-      <span><strong>Chrome blocked the host</strong></span>
-    </div>
-    <p>Either Chrome's anti-DoS lockout is active (~10 min), or the manifest's <code>allowed_origins</code> is wrong. Re-register:</p>
-    <pre><code>tap bridge setup</code><button class="copy" data-copy="tap bridge setup" title="Copy">⧉</button></pre>
-    <ul class="muted">
-      <li>Fully quit Chrome (⌘Q) and re-open — this clears the anti-DoS blocklist.</li>
-      <li>Then click <strong>Retry connection</strong>.</li>
-    </ul>
-    <div class="actions">
-      <button class="retry">Retry connection</button>
-      <a href="https://taprun.dev/install?utm_source=chrome-ext&utm_medium=extension&utm_campaign=popup-forbidden" target="_blank" rel="noopener">Learn more</a>
-    </div>
-  </section>
+    <!-- Chrome blocked the host: anti-DoS lockout or allowed_origins mismatch. -->
+    <section id="dc-forbidden" hidden>
+      <div class="state">
+        <span class="dot dot-err"></span>
+        <div>
+          <div class="state-title">Chrome blocked the host</div>
+          <div class="state-sub">Chrome's crash lockout kicked in, or the manifest doesn't match. Re-register, then retry.</div>
+        </div>
+      </div>
+      <div class="code"><code>tap bridge setup</code><button class="copy" data-copy="tap bridge setup" title="Copy" aria-label="Copy">⧉</button></div>
+      <p class="hint">Fully quit Chrome (⌘Q) and re-open to clear the lockout, then Retry.</p>
+      <div class="actions">
+        <button class="retry">Retry</button>
+        <a class="link" href="https://taprun.dev/install?utm_source=chrome-ext&utm_medium=extension&utm_campaign=popup-forbidden" target="_blank" rel="noopener">Learn more</a>
+      </div>
+    </section>
 
-  <!-- Disconnect mode: another Chrome profile owns the single bridge.
-       Triggered by the host's `host_unavailable / already_running` signal
-       (ADR 2026-05-30-bind-host-lifetime-to-nm-port §5). NOT a failure —
-       the bridge is up, just held by another profile. amber, not red. -->
-  <section id="dc-owned-by-other" hidden>
-    <div class="row">
-      <span class="dot dot-warn"></span>
-      <span><strong>Bridge in use by another profile</strong></span>
-    </div>
-    <p>Tap runs one bridge per machine, and another Chrome profile is holding it right now. This profile can't use the bridge until that one releases it.</p>
-    <ul class="muted">
-      <li>Use Tap in the profile that owns the bridge, or close it / disable the Tap extension there.</li>
-      <li>Then click <strong>Retry connection</strong> here to take over.</li>
-    </ul>
-    <div class="actions">
-      <button class="retry">Retry connection</button>
-      <a href="https://taprun.dev/install?utm_source=chrome-ext&utm_medium=extension&utm_campaign=popup-owned-by-other" target="_blank" rel="noopener">Learn more</a>
-    </div>
-  </section>
+    <!-- Another Chrome profile owns the single bridge (info, not failure). -->
+    <section id="dc-owned-by-other" hidden>
+      <div class="state">
+        <span class="dot dot-warn"></span>
+        <div>
+          <div class="state-title">Bridge in use by another profile</div>
+          <div class="state-sub">Taprun runs one bridge per machine; another Chrome profile holds it right now.</div>
+        </div>
+      </div>
+      <p class="hint">Use Taprun in the profile that owns the bridge, or turn off the Taprun extension there, then Retry to take over.</p>
+      <div class="actions">
+        <button class="retry">Retry</button>
+        <a class="link" href="https://taprun.dev/install?utm_source=chrome-ext&utm_medium=extension&utm_campaign=popup-owned-by-other" target="_blank" rel="noopener">Learn more</a>
+      </div>
+    </section>
 
-  <!-- Disconnect mode: unrecognized reason. Show raw text + generic retry. -->
-  <section id="dc-unknown" hidden>
-    <div class="row">
-      <span class="dot dot-err"></span>
-      <span><strong>Bridge down</strong></span>
-    </div>
-    <p class="muted">Reason: <code id="raw-reason">—</code></p>
-    <p>Run the diagnostic — it prints which side is unhappy:</p>
-    <pre><code>tap bridge status</code><button class="copy" data-copy="tap bridge status" title="Copy">⧉</button></pre>
-    <div class="actions">
-      <button class="retry">Retry connection</button>
-      <a href="https://taprun.dev/install?utm_source=chrome-ext&utm_medium=extension&utm_campaign=popup-unknown" target="_blank" rel="noopener">Learn more</a>
-    </div>
-  </section>
+    <!-- Unrecognized reason: show raw text + generic retry. -->
+    <section id="dc-unknown" hidden>
+      <div class="state">
+        <span class="dot dot-err"></span>
+        <div>
+          <div class="state-title">Bridge down</div>
+          <div class="state-sub">Reason: <code id="raw-reason">—</code></div>
+        </div>
+      </div>
+      <div class="code"><code>tap bridge status</code><button class="copy" data-copy="tap bridge status" title="Copy" aria-label="Copy">⧉</button></div>
+      <p class="hint">Run the diagnostic, then re-register if needed: <code>tap bridge setup</code>. Still stuck? Open <code>host.log</code> next to your <code>tap</code> binary for the cause.</p>
+      <div class="actions">
+        <button class="retry">Retry</button>
+        <a class="link" href="https://taprun.dev/install?utm_source=chrome-ext&utm_medium=extension&utm_campaign=popup-unknown" target="_blank" rel="noopener">Learn more</a>
+      </div>
+    </section>
+  </main>
 
+  <span class="sr-only" aria-live="polite" id="copy-announce"></span>
   <script src="popup.js"></script>
 </body>
 </html>

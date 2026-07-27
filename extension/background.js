@@ -1,5 +1,5 @@
 /**
- * Tap Extension — Chrome Runtime
+ * Taprun Extension — Chrome Runtime
  *
  * Implements 8 core + 17 built-in operations.
  * Built-in uses chrome.scripting.executeScript({ func }) — real function injection,
@@ -448,7 +448,7 @@ let __pendingTraceFrame = null
 async function showOpTrace(tabId, selector, label) {
   __pendingTraceFrame = null
   try { await ensureForeground(tabId) } catch { /* tab gone — op will surface its own error */ }
-  try { await execFunc(tabId, __tapDrawTrace, selector, 'Tap ▸ ' + String(label || 'op')) } catch { /* selector not resolvable as plain CSS — skip overlay */ }
+  try { await execFunc(tabId, __tapDrawTrace, selector, 'Taprun ▸ ' + String(label || 'op')) } catch { /* selector not resolvable as plain CSS — skip overlay */ }
   await new Promise(r => setTimeout(r, 260))
   // Capture with the box still lit, BEFORE the op mutates the page — this frame
   // (target highlighted) is the "operation trace"; the effect shows next step.
@@ -3608,7 +3608,7 @@ function setBadge(ok) {
   chrome.action.setBadgeText({ text: ok ? '' : '!' })
   if (!ok) chrome.action.setBadgeBackgroundColor({ color: '#EF4444' })
   // User-facing string says "bridge", not "daemon" (CLAUDE.md vocab rule).
-  chrome.action.setTitle({ title: ok ? 'Tap — connected' : 'Tap — bridge not running' })
+  chrome.action.setTitle({ title: ok ? 'Taprun — connected' : 'Taprun — bridge not running' })
   // Mirror the SINGLE source of truth for bridge liveness into storage so the
   // side panel reflects the real state (2026-07-08 false-negative fix). The
   // popup asks the SW live via sendMessage({type:'tap-status'}); the panel is a
@@ -4043,68 +4043,15 @@ function classifyExtensionError(msg, method) {
 // Daemon's lastActiveTab cache was deleted by parent SAA ADR; tab
 // routing flows through sessionId/sessions[] only.
 
-// ── Side panel + context-menu element picker (ADR 2026-07-08-op-capabilities) ──
-// Browser-live UX surfaces; guarded structurally by test/chrome-capabilities.
-// The picker closes the capture-time disambiguation gap: a human clicks the
-// exact element and the extension emits a TargetResolver (selector + role +
-// name), stored under chrome.storage.local['tap:lastPickedResolver'] for the
-// host/agent to read — replacing the ad-hoc data-tap dance.
+// ── Side panel (ADR 2026-07-08-op-capabilities) ──
+// The element picker was surfaced only via a right-click menu, which was
+// removed for a minimal surface (user pref). The agent self-targets from the
+// affordance-map read (web/affordances) + op:point, and the side panel still
+// displays any resolver the host/agent produces. The control panel opens on
+// demand only.
 try {
-  chrome.runtime.onInstalled.addListener(() => {
-    try {
-      // Minimal, agent-first menu (2026-07-08 re-analysis): the human menu is a
-      // fallback for authoring-time disambiguation, NOT the main path — the agent
-      // self-targets from the affordance-map read (web/affordances) + op:point when
-      // it's genuinely stuck. So exactly two items: pick one element, open panel.
-      chrome.contextMenus.create({ id: 'tap-pick', title: 'Tap: pick this element → resolver', contexts: ['all'] })
-      chrome.contextMenus.create({ id: 'tap-panel', title: 'Tap: open control panel', contexts: ['all'] })
-    } catch (_) { /* menus already exist */ }
-  })
-  chrome.contextMenus?.onClicked.addListener(async (info, tab) => {
-    if (!tab?.id) return
-    if (info.menuItemId === 'tap-panel') {
-      try { await chrome.sidePanel.open({ tabId: tab.id }) } catch (_) {}
-      return
-    }
-    if (info.menuItemId === 'tap-pick') {
-      try {
-        await ensureDeep(tab.id)
-        // Arm a one-shot capture-phase click listener; the NEXT click emits a
-        // resolver for the clicked element and is swallowed (not delivered to
-        // the page). Uses __tapDeep for role/name so the resolver matches what
-        // pick() will resolve at replay.
-        const [res] = await chrome.scripting.executeScript({
-          target: { tabId: tab.id }, world: 'MAIN',
-          func: () => new Promise((resolve) => {
-            const D = globalThis.__tapDeep
-            const onClick = (e) => {
-              e.preventDefault(); e.stopPropagation()
-              document.removeEventListener('click', onClick, true)
-              const el = e.target
-              const role = (D && D.implicitRole) ? D.implicitRole(el) : (el.getAttribute('role') || '')
-              // Build a stable-ish selector: prefer id, else tag + up to 2 classes.
-              let selector = ''
-              if (el.id) selector = '#' + CSS.escape(el.id)
-              else {
-                const cls = (el.className && typeof el.className === 'string')
-                  ? el.className.trim().split(/\s+/).slice(0, 2).map((c) => '.' + CSS.escape(c)).join('') : ''
-                selector = el.tagName.toLowerCase() + cls
-              }
-              const name = (el.getAttribute('aria-label') || el.textContent || '').trim().slice(0, 40)
-              resolve({ selector, role: role || undefined, name: name || undefined, visible: true })
-            }
-            document.addEventListener('click', onClick, true)
-            setTimeout(() => { document.removeEventListener('click', onClick, true); resolve(null) }, 15000)
-          }),
-        })
-        const resolver = res?.result
-        if (resolver) await chrome.storage.local.set({ 'tap:lastPickedResolver': resolver, 'tap:lastPickedAt': Date.now() })
-      } catch (_) { /* page not scriptable */ }
-    }
-  })
-  // Make the toolbar action / panel co-exist: panel opens on demand only.
   chrome.sidePanel?.setPanelBehavior?.({ openPanelOnActionClick: false }).catch(() => {})
-} catch (_) { /* APIs unavailable on this Chrome */ }
+} catch (_) { /* API unavailable on this Chrome */ }
 
 // Connect the native-messaging bridge on SW spawn. Per ADR 2026-05-13:
 // the Port itself keeps the SW alive (PoC T1: >19 min idle with 0

@@ -1,7 +1,7 @@
 # Chrome Web Store Submission — Source of Truth
 
 This file holds every text field required by the Chrome Web Store Developer
-Dashboard for the Tap extension. When CWS asks for an update (new permission,
+Dashboard for the Taprun extension. When CWS asks for an update (new permission,
 manifest change, policy refresh) **edit here, then copy-paste**. Do not edit
 the dashboard without backporting the change here, or the next reviewer round
 will diverge from the repo.
@@ -17,7 +17,7 @@ description (the "Description" textarea). Everything else lives in this file.
 
 | Field | Value |
 |---|---|
-| Item name | `Tap — Automate the Sites You're Logged Into` |
+| Item name | `Taprun — Automate the Sites You're Logged Into` |
 | Summary (132 chars max) | `Automate the sites you're logged into — pull invoices, sign PDFs, track changes — in your own browser. Private, free, forever.` |
 | Detailed description | see `description.txt` |
 | Category | `Productivity` |
@@ -31,7 +31,7 @@ description (the "Description" textarea). Everything else lives in this file.
 
 ### 2.1 Single purpose
 
-> Tap is a developer tool that lets users automate browsers by running pre-compiled deterministic programs against any website they have logged into. The extension exists for exactly one purpose: to bridge the user's locally-installed Tap CLI to the user's own browser tabs so that automation runs inside the same authenticated session the user already has open.
+> Taprun is a developer tool that lets users automate browsers by running pre-compiled deterministic programs against any website they have logged into. The extension exists for exactly one purpose: to bridge the user's locally-installed Taprun CLI to the user's own browser tabs so that automation runs inside the same authenticated session the user already has open.
 
 ### 2.2 Permission justifications
 
@@ -41,15 +41,15 @@ the corresponding text field on the Privacy practices tab. Keep each under
 
 #### `nativeMessaging`
 
-> The extension communicates with the user's locally-installed Tap CLI (`tap` binary, installed separately via Homebrew or curl) through Chrome's Native Messaging transport. This is the ONLY channel between the browser and the user's machine — no remote server is involved. The native host is launched by Chrome on demand, runs entirely on the user's device, and exchanges JSON messages over stdio to coordinate which tab the user wants automated. Without this permission the extension cannot connect to the CLI and the product does not function. We previously used a localhost WebSocket but migrated to Native Messaging because it is the OS-supervised, Chrome-recommended transport for browser↔local-binary communication and avoids opening a local network port.
+> The extension communicates with the user's locally-installed Taprun CLI (`tap` binary, installed separately via Homebrew or curl) through Chrome's Native Messaging transport. This is the ONLY channel between the browser and the user's machine — no remote server is involved. The native host is launched by Chrome on demand, runs entirely on the user's device, and exchanges JSON messages over stdio to coordinate which tab the user wants automated. Without this permission the extension cannot connect to the CLI and the product does not function. We previously used a localhost WebSocket but migrated to Native Messaging because it is the OS-supervised, Chrome-recommended transport for browser↔local-binary communication and avoids opening a local network port.
 
 #### `debugger`
 
-> Used to drive the Chrome DevTools Protocol against tabs the user has explicitly selected for automation. Tap programs need DevTools-level operations (network interception, accurate input synthesis, full-page screenshots, runtime evaluation in the page's main world) that are not reachable through `chrome.scripting` or `chrome.tabs` alone. The extension only attaches the debugger to a tab after the user has chosen it via the popup or via an explicit CLI command; we never silently attach in the background. The standard "Tap started debugging this browser" banner remains visible the entire time the debugger is attached, giving the user a continuous in-browser signal.
+> Used to drive the Chrome DevTools Protocol against tabs the user has explicitly selected for automation. Taprun programs need DevTools-level operations (network interception, accurate input synthesis, full-page screenshots, runtime evaluation in the page's main world) that are not reachable through `chrome.scripting` or `chrome.tabs` alone. The extension only attaches the debugger to a tab after the user has chosen it via the popup or via an explicit CLI command; we never silently attach in the background. The standard "Taprun started debugging this browser" banner remains visible the entire time the debugger is attached, giving the user a continuous in-browser signal.
 
 #### `activeTab`
 
-> Granted when the user clicks the Tap toolbar icon or invokes a Tap action against the focused tab. Used to read the URL, title, and DOM of the tab the user is currently looking at so the CLI can resolve the right page context (e.g. "extract the data on this page", "automate this form"). `activeTab` is scoped to the single tab the user just interacted with and expires when the user navigates away — strictly less invasive than `<all_urls>` host access for the same tab.
+> Granted when the user clicks the Taprun toolbar icon or invokes a Taprun action against the focused tab. Used to read the URL, title, and DOM of the tab the user is currently looking at so the CLI can resolve the right page context (e.g. "extract the data on this page", "automate this form"). `activeTab` is scoped to the single tab the user just interacted with and expires when the user navigates away — strictly less invasive than `<all_urls>` host access for the same tab.
 
 #### `tabs`
 
@@ -57,35 +57,31 @@ the corresponding text field on the Privacy practices tab. Keep each under
 
 #### `tabGroups`
 
-> Used by Tap's `op:tab` host operation to organize the tabs an automation spawns or operates on into named tab groups (e.g. group every tab opened during a multi-step scrape so the user can see at a glance which tabs belong to a running automation, and collapse or close them together). The extension only creates or modifies groups for tabs the automation itself manages; it never reads the content of grouped tabs and never regroups tabs the user organized manually. Without this permission the `op:tab` grouping operations cannot run.
+> Used by Taprun's `op:tab` host operation to organize the tabs an automation spawns or operates on into named tab groups (e.g. group every tab opened during a multi-step scrape so the user can see at a glance which tabs belong to a running automation, and collapse or close them together). The extension only creates or modifies groups for tabs the automation itself manages; it never reads the content of grouped tabs and never regroups tabs the user organized manually. Without this permission the `op:tab` grouping operations cannot run.
 
 #### `bookmarks`
 
-> Used by Tap's `op:bookmark` host operation so a user-authored automation can read or create bookmarks as an explicit, user-written step (e.g. "bookmark every product page that matches this filter"). Bookmark access is exercised only when the user's Tap program explicitly contains a bookmark operation; the extension never reads, exports, or modifies bookmarks on its own initiative, and bookmark data is never transmitted off-device — it stays in the user's local Chrome profile.
+> Used by Taprun's `op:bookmark` host operation so a user-authored automation can read or create bookmarks as an explicit, user-written step (e.g. "bookmark every product page that matches this filter"). Bookmark access is exercised only when the user's Taprun program explicitly contains a bookmark operation; the extension never reads, exports, or modifies bookmarks on its own initiative, and bookmark data is never transmitted off-device — it stays in the user's local Chrome profile.
 
 #### `scripting`
 
-> Used to inject the small content-script shim that Tap programs need to read and act on page DOM (querying selectors, dispatching DOM events, reading element text/attributes). Injection is only performed against tabs the user has selected for automation; no scripts are injected into background tabs the user has not opted into. Required for any DOM-level automation operation; without it the extension can only manipulate browser-level state (tabs, cookies) and cannot fulfil its core function.
+> Used to inject the small content-script shim that Taprun programs need to read and act on page DOM (querying selectors, dispatching DOM events, reading element text/attributes). Injection is only performed against tabs the user has selected for automation; no scripts are injected into background tabs the user has not opted into. Required for any DOM-level automation operation; without it the extension can only manipulate browser-level state (tabs, cookies) and cannot fulfil its core function.
 
 #### `cookies`
 
-> The local-first design depends on reusing the user's existing login cookies for the sites they choose to automate — credentials never leave the user's machine. The extension reads cookies for those sites so that the locally-running Tap CLI can replay authenticated HTTP requests against the same session the browser has open. Cookies are read only for the specific sites a user has invoked a Tap action against; we do not enumerate or export cookies for other sites, and cookies are never transmitted to any remote server.
+> The local-first design depends on reusing the user's existing login cookies for the sites they choose to automate — credentials never leave the user's machine. The extension reads cookies for those sites so that the locally-running Taprun CLI can replay authenticated HTTP requests against the same session the browser has open. Cookies are read only for the specific sites a user has invoked a Taprun action against; we do not enumerate or export cookies for other sites, and cookies are never transmitted to any remote server.
 
 #### `storage`
 
 > Used to persist user-facing settings (popup state, connection status, the last-known CLI version) in `chrome.storage.local`. No user content, page data, cookies, or credentials are written to extension storage. Storage is local to the user's profile and is cleared when the extension is uninstalled.
 
-#### `contextMenus`
-
-> Adds exactly two right-click menu items, both authoring-time helpers the user invokes deliberately: "Tap: pick this element" — the user right-clicks the precise element they want an automation step to target, and the extension records a selector/role/name descriptor for it locally (this closes the "which of these five identical buttons did you mean" gap when a Tap program is being authored); and "Tap: open control panel" — opens the extension's side panel. The menu items trigger nothing on their own; no page content is read until the user explicitly picks an element, and the recorded descriptor stays in `chrome.storage.local` on the user's machine. Without this permission the element-picking flow has no entry point.
-
 #### `sidePanel`
 
-> Hosts Tap's control console as a docked side panel: live status of the currently-running automation, bridge-connection state, and the last element the user picked via the context menu. Unlike the ephemeral popup, the panel stays visible while a multi-step automation runs, which is what makes human-in-the-loop moments workable (e.g. the automation pauses and asks the user to click one confirmation button themselves). The panel is a read-only reflection of extension state from `chrome.storage`; it reads no page content and makes no network requests. Without this permission there is no persistent surface to supervise a running automation from.
+> Hosts Taprun's control console as a docked side panel: live status of the currently-running automation and bridge-connection state. Unlike the ephemeral popup, the panel stays visible while a multi-step automation runs, which is what makes human-in-the-loop moments workable (e.g. the automation pauses and asks the user to click one confirmation button themselves). The panel is a read-only reflection of extension state from `chrome.storage`; it reads no page content and makes no network requests. Without this permission there is no persistent surface to supervise a running automation from.
 
 #### `host_permissions: <all_urls>`
 
-> Tap is a general-purpose browser automation tool — the user decides at runtime which site to automate. We cannot enumerate sites in advance because the value of the product is that it works against any site the user has access to. Host access is exercised only on tabs the user has explicitly selected for automation (via the popup or an explicit CLI command). No data is read, scraped, or transmitted from tabs the user has not opted into.
+> Taprun is a general-purpose browser automation tool — the user decides at runtime which site to automate. We cannot enumerate sites in advance because the value of the product is that it works against any site the user has access to. Host access is exercised only on tabs the user has explicitly selected for automation (via the popup or an explicit CLI command). No data is read, scraped, or transmitted from tabs the user has not opted into.
 
 #### `externally_connectable: matches <all_urls>`
 
@@ -93,7 +89,7 @@ the corresponding text field on the Privacy practices tab. Keep each under
 
 ### 2.3 Data usage disclosures
 
-Tick all that apply on the dashboard form. Tap's truthful answers:
+Tick all that apply on the dashboard form. Taprun's truthful answers:
 
 | Disclosure question | Answer |
 |---|---|
@@ -105,7 +101,7 @@ Tick all that apply on the dashboard form. Tap's truthful answers:
 | Does this extension collect or use **location** (region, IP, GPS coordinates)? | **No** |
 | Does this extension collect or use **web history** (URLs visited, time spent, click data)? | **No** — only the URL of tabs the user has explicitly selected for automation is read at the moment of automation, and is sent only to the user's own local CLI; it is never logged or transmitted off-device. |
 | Does this extension collect or use **user activity** (clicks, mouse position, keystrokes)? | **No** |
-| Does this extension collect or use **website content** (page text, images, audio, video, scraped data)? | **Yes** — strictly on tabs the user has selected for automation, and the data is delivered only to the user's own locally-installed Tap CLI over Native Messaging. No website content is transmitted off-device. |
+| Does this extension collect or use **website content** (page text, images, audio, video, scraped data)? | **Yes** — strictly on tabs the user has selected for automation, and the data is delivered only to the user's own locally-installed Taprun CLI over Native Messaging. No website content is transmitted off-device. |
 
 ### 2.4 Three certifications (must tick all)
 

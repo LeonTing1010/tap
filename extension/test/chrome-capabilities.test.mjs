@@ -54,11 +54,12 @@ test('op:notify pushes a message to the side panel storage key', () => {
   assert(BG.includes("'tap:notify'"), 'must write the tap:notify storage key the side panel reads')
 })
 
-test('context-menu element picker emits a resolver to storage', () => {
-  assert(BG.includes("id: 'tap-pick'"), 'pick menu must be registered')
-  assert(BG.includes("'tap:lastPickedResolver'"), 'picker must persist a resolver for the host/agent')
-  assert(BG.includes('D.implicitRole') || BG.includes('implicitRole('),
-    'picked resolver must include the role so it matches pick() at replay')
+test('context-menu element picker removed (minimal surface)', () => {
+  // 2026-07-27: the right-click pick flow was removed. The agent self-targets
+  // from the affordance map + op:point, so there is no human pick entry point.
+  // Guard against silent re-introduction of the tap-pick menu item.
+  assert(!BG.includes("id: 'tap-pick'"), 'background must NOT register the tap-pick context menu')
+  assert(!/contextMenus\.onClicked/.test(BG), 'background must NOT handle context-menu clicks')
 })
 
 test('background-tab presence shim spoofs visibilityState at document-start', () => {
@@ -75,13 +76,13 @@ test('background-tab presence shim spoofs visibilityState at document-start', ()
     'presence shim must be wired into the attach-time focus-emulation path')
 })
 
-test('context menu stays minimal (agent-first): only pick + panel, no menu creep', () => {
-  // 2026-07-08 re-analysis: the human menu is a fallback, not the main path — the
-  // agent self-targets from the affordance map + op:point. Guard against menu
-  // creep: exactly the two authoring-time items, nothing more.
-  const ids = [...BG.matchAll(/contextMenus\.create\(\s*\{\s*id:\s*'([^']+)'/g)].map((m) => m[1])
-  assert.deepEqual(new Set(ids), new Set(['tap-pick', 'tap-panel']),
-    `menu must be exactly {tap-pick, tap-panel}, got: ${ids.join(', ')}`)
+test('context menu removed (minimal surface): no contextMenus.create + no permission', () => {
+  // 2026-07-27: the right-click menu (tap-pick / tap-panel) was removed for a
+  // minimal surface — the agent self-targets and the side panel reads any
+  // resolver the host produces. Guard against silent re-introduction.
+  assert(!/contextMenus\.create/.test(BG), 'background must NOT create context menus')
+  assert(!/contextMenus\s*\?\.\s*onClicked/.test(BG), 'background must NOT listen for context-menu clicks')
+  assert(!new Set(MANIFEST.permissions).has('contextMenus'), 'manifest must NOT declare contextMenus permission')
 })
 
 test('bridge status has a producer: setBadge mirrors tap:bridgeConnected (false-negative fix)', () => {
@@ -110,7 +111,7 @@ test('side panel is declared + files present', () => {
 
 test('manifest grants the permissions the capabilities need (and NOT the deleted keepalive ones)', () => {
   const p = new Set(MANIFEST.permissions)
-  for (const need of ['contextMenus', 'sidePanel']) {
+  for (const need of ['sidePanel']) {
     assert(p.has(need), `manifest.permissions must include ${need}`)
   }
   // `downloads` was declared speculatively in the 2026-07-08 capabilities

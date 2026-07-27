@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Taprun 国内安装引导</title>
+<meta name="description" content="Chrome 网上应用店在中国大陆不可用时，手动安装 Taprun 扩展与本地引擎的引导页。">
+<style>
+  :root {
+    --bg:#0e1014; --raised:#16191f; --soft:#1b1f27; --rule:#2a2f3a;
+    --text:#e8eaed; --dim:#9aa1ad; --muted:#6b7280;
+    --signal:#b4f03a; --emerald:#4ade80; --amber:#ffb627; --rust:#f26d5b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin:0; background:var(--bg); color:var(--text);
+    font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,"PingFang SC","Microsoft YaHei",sans-serif;
+    padding:32px 20px 64px;
+  }
+  .wrap { max-width:760px; margin:0 auto; }
+  h1 { font-size:26px; margin:0 0 6px; letter-spacing:-.01em; }
+  h2 { font-size:18px; margin:28px 0 10px; }
+  p { color:var(--dim); margin:0 0 12px; }
+  .note {
+    border:1px solid rgba(255,182,39,.35); background:rgba(255,182,39,.06);
+    color:var(--text); padding:14px 16px; border-radius:8px; margin:18px 0;
+  }
+  .note b { color:var(--amber); }
+  .step {
+    background:var(--raised); border:1px solid var(--rule); border-radius:8px;
+    padding:18px 18px 18px 52px; position:relative; margin:14px 0;
+  }
+  .step .n {
+    position:absolute; top:16px; left:16px; width:26px; height:26px;
+    border:1px solid var(--signal); color:var(--signal); border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-family:ui-monospace,Menlo,monospace; font-weight:700; font-size:13px;
+  }
+  .step h3 { margin:0 0 6px; font-size:15px; }
+  .step p { margin:0 0 10px; font-size:14px; }
+  pre {
+    background:var(--soft); border:1px solid var(--rule); border-radius:8px;
+    padding:12px 14px; margin:0 0 10px; overflow-x:auto;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:13px; color:var(--text);
+    position:relative; cursor:pointer;
+  }
+  pre .c { color:var(--muted); }
+  pre::after {
+    content:"点击复制"; position:absolute; top:8px; right:10px;
+    font:11px/1 ui-monospace,monospace; color:rgba(255,255,255,.3); pointer-events:none;
+  }
+  pre.copied::after { content:"已复制 ✓"; color:var(--emerald); }
+  code.inline { background:var(--soft); border:1px solid var(--rule); padding:1px 6px; border-radius:4px; font-family:ui-monospace,Menlo,monospace; font-size:12.5px; }
+  ul { color:var(--dim); font-size:14px; padding-left:20px; }
+  li { margin:6px 0; }
+  a { color:var(--signal); text-decoration:none; }
+  a:hover { text-decoration:underline; }
+  .badge { display:inline-block; font-family:ui-monospace,monospace; font-size:12px; padding:2px 8px; border-radius:6px; }
+  .badge.green { background:rgba(74,222,128,.12); color:var(--emerald); border:1px solid rgba(74,222,128,.3); }
+  details { margin:18px 0; background:var(--soft); border:1px solid var(--rule); border-radius:8px; padding:14px 18px; }
+  summary { cursor:pointer; font-weight:600; color:var(--text); }
+  footer { margin-top:40px; color:var(--muted); font-size:13px; border-top:1px solid var(--rule); padding-top:16px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Taprun 国内安装引导</h1>
+  <p>Chrome 网上应用店在中国大陆不可用，但 Taprun 的扩展和引擎都能在本地正常运行。按下面三步手动安装即可，全程不依赖任何被屏蔽的站点。</p>
+
+  <div class="note">
+    <b>为什么不用商店？</b> Chrome 网上应用店与官网 <code class="inline">taprun.dev</code> 在中国大陆均不可达，因此本页把安装入口与下载都改到了国内可访问的通道：扩展包走 GitHub 代理下载，引擎走 npm 国内镜像安装。
+  </div>
+
+  <h2>安装步骤</h2>
+
+  <div class="step">
+    <div class="n">1</div>
+    <h3>下载并加载扩展</h3>
+    <p>扩展不能从商店安装，需手动「加载已解压的扩展」。</p>
+    <p>a. 下载扩展包（走 GitHub 代理，国内可访问）：</p>
+    <pre id="dl"><code>https://ghproxy.com/https://github.com/LeonTing1010/tap/releases/latest/download/taprun-chrome-extension.zip</code></pre>
+    <p>b. 解压到任意本地目录。</p>
+    <p>c. 打开 <code class="inline">chrome://extensions</code>，右上角打开「开发者模式」，点「加载已解压的扩展」，选择刚解压的目录。</p>
+    <p>工具栏出现 Taprun 图标即成功。</p>
+  </div>
+
+  <div class="step">
+    <div class="n">2</div>
+    <h3>安装本地引擎（npm 国内镜像）</h3>
+    <p>引擎通过 npm 镜像安装，无需访问官网：</p>
+    <pre data-copy='npx --registry https://registry.npmmirror.com -y @taprun/cli embed claude-code'><code><span class="c"># 一步完成：安装二进制 + 注册 Chrome 原生通讯清单（无需任何 flag）</span>
+npx --registry https://registry.npmmirror.com -y @taprun/cli embed claude-code</code></pre>
+    <p>或用 Homebrew（国内可换清华/中科大镜像源）：</p>
+    <pre data-copy='brew install LeonTing1010/tap/taprun && tap bridge setup'><code>brew install LeonTing1010/tap/taprun
+tap bridge setup   <span class="c"># 注册原生通讯清单（无 daemon、无端口）</span></code></pre>
+    <p>扩展 ID 已固定在清单的 <code class="inline">"key"</code> 字段，<code class="inline">tap bridge setup</code> 无需任何参数。</p>
+  </div>
+
+  <div class="step">
+    <div class="n">3</div>
+    <h3>验证连接</h3>
+    <p>点击工具栏 Taprun 图标，应显示 <span class="badge green">Connected to local bridge</span>。引擎只在 Chrome 打开时运行，关掉所有 Chrome 窗口即停止。</p>
+    <p>可选：让 AI 助手调用 Taprun（Claude Code 最简，无需终端）：</p>
+    <pre data-copy='/plugin marketplace add LeonTing1010/taprun'><code>/plugin marketplace add LeonTing1010/taprun
+/plugin install tap@taprun
+/reload-plugins</code></pre>
+  </div>
+
+  <h2>故障排查</h2>
+  <details>
+    <summary>扩展加载了但显示「Bridge not running」</summary>
+    <ul>
+      <li>运行 <code class="inline">which tap</code>：若为空，说明引擎没装进 PATH，回到步骤 2 重装。</li>
+      <li>若打印了路径，打开同目录下的 <code class="inline">host.log</code> 看启动崩溃原因。</li>
+      <li>常见原因：原生通讯清单里的扩展 ID 过期（运行 <code class="inline">tap bridge setup</code> 重写），或 Chrome 防 DoS 锁定（完全退出再重开 Chrome 清除）。</li>
+    </ul>
+  </details>
+  <details>
+    <summary>显示「Chrome blocked the host」</summary>
+    <ul>
+      <li>运行 <code class="inline">tap bridge setup</code> 重写原生通讯清单。</li>
+      <li>完全退出 Chrome（macOS ⌘Q）再重开，清除防 DoS 锁定。</li>
+      <li>仍失败可运行 <code class="inline">tap bridge status</code> 看哪一侧配置错误。</li>
+    </ul>
+  </details>
+  <details>
+    <summary>显示「Bridge down」/ 未知错误</summary>
+    <ul>
+      <li>运行诊断：<code class="inline">tap bridge status</code>（检查 CLI 安装、socket、原生清单）。</li>
+      <li>若清单缺失：<code class="inline">tap bridge setup</code>。</li>
+      <li>引擎未运行：在 <code class="inline">chrome://extensions</code> 重新加载 Taprun 扩展，浏览器会按需拉起宿主进程，没有独立 daemon 要启动。</li>
+    </ul>
+  </details>
+
+  <footer>
+    源码（MIT，含本扩展）：<a href="https://github.com/LeonTing1010/tap" rel="noopener">github.com/LeonTing1010/tap</a><br>
+    Taprun 本地优先，凭据不出本机。本页不加载任何外部资源与统计脚本。
+  </footer>
+
+</div>
+
+<script>
+  // 点击复制（含整段与带 data-copy 的代码块）
+  document.addEventListener('click', function (e) {
+    var pre = e.target.closest('pre');
+    if (!pre || !navigator.clipboard) return;
+    var text = pre.getAttribute('data-copy') ||
+               (pre.innerText || pre.textContent || '').replace(/^\s+|\s+$/g, '');
+    if (!text) return;
+    e.preventDefault();
+    navigator.clipboard.writeText(text).then(function () {
+      pre.classList.add('copied');
+      setTimeout(function () { pre.classList.remove('copied'); }, 1500);
+    }).catch(function () {});
+  });
+</script>
+</body>
+</html>

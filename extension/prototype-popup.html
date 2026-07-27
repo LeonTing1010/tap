@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Taprun popup — prototype v2</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --fg: #1f2430; --muted: #6b7280; --border: #e7e9ee; --bg: #ffffff;
+    --code-bg: #f4f5f7; --ok: #18a957; --warn: #d98a00; --err: #e5484d;
+    --accent: #3b6ef6; --accent-press: #2f5bd8;
+  }
+  body.dark {
+    --fg: #e8eaed; --muted: #9aa1ad; --border: #2a2f3a; --bg: #181b21;
+    --code-bg: #232833; --ok: #2ec26b; --warn: #e8a33d; --err: #f06b6f;
+    --accent: #5b8bff; --accent-press: #4f7df0;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 32px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    background: #eef0f4; color: #1f2430;
+  }
+  body.dark { background: #0e1014; }
+  .proto-bar {
+    display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+    max-width: 720px; margin: 0 auto 18px;
+  }
+  .proto-bar .lbl { color: #6b7280; font-size: 12px; margin-right: 4px; }
+  .proto-bar button {
+    font: inherit; font-size: 12px; padding: 5px 10px; cursor: pointer;
+    border: 1px solid #d3d7df; background: #fff; color: #1f2430; border-radius: 7px;
+  }
+  body.dark .proto-bar button { background:#1b1f27; color:#e8eaed; border-color:#2a2f3a; }
+  .proto-bar button:hover { border-color: var(--accent); }
+  .proto-stage { display: flex; justify-content: center; }
+  .popup {
+    width: 340px; background: var(--bg); color: var(--fg);
+    border: 1px solid var(--border); border-radius: 14px; overflow: hidden;
+    box-shadow: 0 12px 40px rgba(0,0,0,.14);
+    font-size: 13px; line-height: 1.5;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  }
+  .popup header {
+    display: flex; align-items: center; gap: 8px;
+    padding: 14px 16px; border-bottom: 1px solid var(--border);
+  }
+  .popup header .logo { width: 18px; height: 18px; border-radius: 5px; flex-shrink: 0; }
+  .popup header .title { font-weight: 650; font-size: 14px; letter-spacing: .2px; }
+  .popup header .version { margin-left: auto; color: var(--muted); font-variant-numeric: tabular-nums; font-size: 12px; }
+  .popup main { padding: 14px 16px 16px; }
+  .popup section { animation: fade .18s ease both; }
+  @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  .popup .state { display: flex; gap: 10px; align-items: flex-start; }
+  .popup .dot { width: 9px; height: 9px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+  .popup .dot-ok { background: var(--ok); }
+  .popup .dot-info { background: var(--accent); }
+  .popup .dot-warn { background: var(--warn); }
+  .popup .dot-err { background: var(--err); }
+  .popup .state-title { font-weight: 600; font-size: 13.5px; }
+  .popup .state-sub { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+  .popup .hint { color: var(--muted); font-size: 12px; margin: 12px 0; }
+  .popup .hint code, .popup .state-sub code {
+    background: var(--code-bg); padding: 1px 5px; border-radius: 4px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px;
+  }
+  .popup code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .popup .btn-primary {
+    display: block; text-align: center; background: var(--accent); color: #fff;
+    text-decoration: none; font-weight: 600; font-size: 13px; padding: 10px 14px;
+    border-radius: 9px; margin-top: 12px; transition: background .15s ease, transform .05s ease;
+  }
+  .popup .btn-primary:hover { background: var(--accent-press); }
+  .popup .btn-primary:active { transform: scale(.99); }
+  .popup .code {
+    position: relative; background: var(--code-bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 38px 8px 10px; margin: 10px 0;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px;
+    overflow-x: auto; white-space: nowrap;
+  }
+  .popup .copy {
+    position: absolute; top: 5px; right: 5px; background: transparent;
+    border: 1px solid var(--border); border-radius: 5px; color: var(--muted);
+    cursor: pointer; font-size: 12px; padding: 2px 7px; transition: color .15s ease, border-color .15s ease;
+  }
+  .popup .copy:hover { color: var(--fg); }
+  .popup .copy.copied { color: var(--ok); border-color: var(--ok); }
+  .popup .actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 14px; }
+  .popup .retry {
+    background: transparent; color: var(--fg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 7px 14px; font-size: 12.5px; cursor: pointer; transition: background .15s ease;
+  }
+  .popup .retry:hover { background: var(--code-bg); }
+  .popup .link { color: var(--accent); font-size: 12.5px; text-decoration: none; }
+  .popup .link:hover { text-decoration: underline; }
+  .popup .switch-row {
+    position: relative; display: flex; align-items: center; gap: 10px;
+    margin-top: 14px; cursor: pointer; user-select: none;
+  }
+  .popup .switch-row > span:first-child { font-size: 13px; }
+  .popup .switch-row .switch {
+    margin-left: auto; width: 38px; height: 22px; border-radius: 999px;
+    background: var(--border); position: relative; transition: background .15s ease;
+  }
+  .popup .switch-row .switch::after {
+    content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px;
+    border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.2); transition: transform .15s ease;
+  }
+  .popup .switch-row input {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  }
+  .popup .switch-row input:checked + .switch { background: var(--accent); }
+  .popup .switch-row input:checked + .switch::after { transform: translateX(16px); }
+  .popup .switch-row input:focus-visible + .switch { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .popup details.disclosure { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 10px; }
+  .popup details.disclosure summary {
+    cursor: pointer; color: var(--muted); font-size: 12.5px; list-style: none;
+    user-select: none;
+  }
+  .popup details.disclosure summary::-webkit-details-marker { display: none; }
+  .popup details.disclosure summary::before { content: "\25B8\00a0"; }
+  .popup details.disclosure[open] summary::before { content: "\25BE\00a0"; }
+  .popup details.disclosure summary:hover { color: var(--fg); }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  }
+  .proto-note { max-width: 720px; margin: 20px auto 0; color: #9aa1ad; font-size: 12px; text-align: center; }
+</style>
+</head>
+<body>
+  <div class="proto-bar">
+    <span class="lbl">State:</span>
+    <button data-state="connected">Connected</button>
+    <button data-state="dc-not-installed">Setup required</button>
+    <button data-state="dc-host-exited">Bridge not running</button>
+    <button data-state="dc-forbidden">Chrome blocked</button>
+    <button data-state="dc-owned-by-other">Another profile</button>
+    <button data-state="dc-unknown">Unknown</button>
+    <button id="theme">🌓 Light / Dark</button>
+  </div>
+
+  <div class="proto-stage">
+    <div class="popup">
+      <header>
+        <svg class="logo" viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="3" y="3" width="18" height="18" rx="5" fill="var(--accent)"/>
+          <path d="M8 12h8M12 8v8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+        </svg>
+        <span class="title">Taprun</span>
+        <span class="version">v0.27.0</span>
+      </header>
+
+      <main>
+        <section id="connected" hidden>
+          <div class="state">
+            <span class="dot dot-ok"></span>
+            <div>
+              <div class="state-title">Connected</div>
+              <div class="state-sub">Connected to your local bridge. Saved taps run in this browser; your credentials never leave this machine.</div>
+            </div>
+          </div>
+          <label class="switch-row">
+            <span>Show me each step</span>
+            <input type="checkbox" id="visible-mode">
+            <span class="switch"></span>
+          </label>
+          <p class="hint">Runs each tap in the foreground and highlights the element it touches, so you can watch every step. Off: silent background replay, zero tokens. Auto-off when idle.</p>
+        </section>
+
+        <section id="dc-not-installed" hidden>
+          <div class="state">
+            <span class="dot dot-info"></span>
+            <div>
+              <div class="state-title">Setup required</div>
+              <div class="state-sub">You're one step from a connected browser. The Taprun engine runs locally and drives Chrome — your credentials never leave this machine.</div>
+            </div>
+          </div>
+          <a class="btn-primary" href="https://taprun.dev/install?utm_source=chrome-ext&utm_medium=extension&utm_campaign=popup-setup" target="_blank" rel="noopener">Set up Taprun</a>
+          <details class="disclosure">
+            <summary>Install from the terminal instead</summary>
+            <div class="code"><code>npx -y @taprun/cli embed claude-code</code><button class="copy" data-copy="npx -y @taprun/cli embed claude-code" title="Copy" aria-label="Copy">⧉</button></div>
+            <p class="hint">Swap <code>claude-code</code> for <code>cursor</code> / <code>vscode</code> / <code>claude-desktop</code>. Already have the CLI? <code>tap bridge setup</code> alone registers the manifest — the extension ID is pinned, no flag needed.</p>
+          </details>
+          <div class="actions">
+            <button class="retry">Retry</button>
+            <a class="link" href="https://taprun.dev/install?utm_source=chrome-ext&utm_medium=extension&utm_campaign=popup-setup-agent" target="_blank" rel="noopener">Wire an agent</a>
+          </div>
+        </section>
+
+        <section id="dc-host-exited" hidden>
+          <div class="state">
+            <span class="dot dot-err"></span>
+            <div>
+              <div class="state-title">Bridge not running</div>
+              <div class="state-sub">The bridge starts with this extension's background worker. Keep a Chrome window open and retry.</div>
+            </div>
+          </div>
+          <p class="hint">If it keeps stopping, the host may have crashed — open <code>host.log</code> next to your <code>tap</code> binary (<code>which tap</code>) for the cause.</p>
+          <div class="actions">
+            <button class="retry">Retry</button>
+            <a class="link" href="https://taprun.dev/install?utm_source=chrome-ext&utm_medium=extension&utm_campaign=popup-host-exited" target="_blank" rel="noopener">Learn more</a>
+          </div>
+        </section>
+
+        <section id="dc-forbidden" hidden>
+          <div class="state">
+            <span class="dot dot-err"></span>
+            <div>
+              <div class="state-title">Chrome blocked the host</div>
+              <div class="state-sub">Chrome's crash lockout kicked in, or the manifest doesn't match. Re-register, then retry.</div>
+            </div>
+          </div>
+          <div class="code"><code>tap bridge setup</code><button class="copy" data-copy="tap bridge setup" title="Copy" aria-label="Copy">⧉</button></div>
+          <p class="hint">Fully quit Chrome (⌘Q) and re-open to clear the lockout, then Retry.</p>
+          <div class="actions">
+            <button class="retry">Retry</button>
+            <a class="link" href="https://taprun.dev/install?utm_source=chrome-ext&utm_medium=extension&utm_campaign=popup-forbidden" target="_blank" rel="noopener">Learn more</a>
+          </div>
+        </section>
+
+        <section id="dc-owned-by-other" hidden>
+          <div class="state">
+            <span class="dot dot-warn"></span>
+            <div>
+              <div class="state-title">Bridge in use by another profile</div>
+              <div class="state-sub">Taprun runs one bridge per machine; another Chrome profile holds it right now.</div>
+            </div>
+          </div>
+          <p class="hint">Use Taprun in the profile that owns the bridge, or turn off the Taprun extension there, then Retry to take over.</p>
+          <div class="actions">
+            <button class="retry">Retry</button>
+            <a class="link" href="https://taprun.dev/install?utm_source=chrome-ext&utm_medium=extension&utm_campaign=popup-owned-by-other" target="_blank" rel="noopener">Learn more</a>
+          </div>
+        </section>
+
+        <section id="dc-unknown" hidden>
+          <div class="state">
+            <span class="dot dot-err"></span>
+            <div>
+              <div class="state-title">Bridge down</div>
+              <div class="state-sub">Reason: <code id="raw-reason">—</code></div>
+            </div>
+          </div>
+          <div class="code"><code>tap bridge status</code><button class="copy" data-copy="tap bridge status" title="Copy" aria-label="Copy">⧉</button></div>
+          <p class="hint">Run the diagnostic, then re-register if needed: <code>tap bridge setup</code>. Still stuck? Open <code>host.log</code> next to your <code>tap</code> binary for the cause.</p>
+          <div class="actions">
+            <button class="retry">Retry</button>
+            <a class="link" href="https://taprun.dev/install?utm_source=chrome-ext&utm_medium=extension&utm_campaign=popup-unknown" target="_blank" rel="noopener">Learn more</a>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <span class="sr-only" aria-live="polite" id="copy-announce"></span>
+  <p class="proto-note">Prototype v2 — real popup markup + CSS. Right-click menu removed. Not part of the shipped extension.</p>
+
+  <script>
+    const states = ['connected','dc-not-installed','dc-host-exited','dc-forbidden','dc-owned-by-other','dc-unknown'];
+    function show(state) {
+      for (const s of states) {
+        const el = document.querySelector('.popup #' + s);
+        if (s === state) {
+          el.hidden = false;
+          el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
+        } else {
+          el.hidden = true;
+        }
+      }
+    }
+    document.querySelectorAll('[data-state]').forEach(b => b.addEventListener('click', () => show(b.dataset.state)));
+    document.getElementById('theme').addEventListener('click', () => document.body.classList.toggle('dark'));
+    document.querySelectorAll('.copy').forEach(b => b.addEventListener('click', () => {
+      navigator.clipboard.writeText(b.dataset.copy).then(() => {
+        b.classList.add('copied'); const p = b.textContent; b.textContent = '✓';
+        document.getElementById('copy-announce').textContent = 'Copied to clipboard';
+        setTimeout(() => { b.classList.remove('copied'); b.textContent = p; document.getElementById('copy-announce').textContent = ''; }, 1200);
+      });
+    }));
+    show('dc-not-installed'); // start on the new primary CTA
+  </script>
+</body>
+</html>
