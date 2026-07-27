@@ -32,3 +32,15 @@ jobs:
         run: git clone --depth 1 https://github.com/LeonTing1010/tap-skills.git /tmp/tap-skills
       - name: Tap format
         run: node extension/test/tap-format.test.mjs /tmp/tap-skills
+
+  llms-registry:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Verify docs/llms.txt tap registry is regenerated
+        run: |
+          python3 scripts/generate-llms-tap-registry.py --write
+          if ! git diff --exit-code docs/llms.txt; then
+            echo "::error::docs/llms.txt tap registry is stale — run: python3 scripts/generate-llms-tap-registry.py --write"
+            exit 1
+          fi

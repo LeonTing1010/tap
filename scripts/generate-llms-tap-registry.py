@@ -66,10 +66,12 @@ def render(by_cat: dict[str, list[tuple[str, str, str, str]]], total: int) -> st
     out.append("## Available taps")
     out.append("")
     out.append(
-        "Pre-built automation programs in the public community corpus "
-        "([tap-skills](https://github.com/LeonTing1010/tap-skills)). Each tap is a "
-        "`<site>/<name>.plan.json` runnable via `run({ref: \"<site>/<name>\", "
-        "args: {...}})`. Per-tap page at `https://taprun.dev/taps/<site>/<name>`."
+        "Example taps (the public [tap-skills](https://github.com/LeonTing1010/tap-skills) "
+        "repo is now a claims ledger — dated falsifiable claims re-verified nightly at "
+        "zero tokens; the v1 skills catalog is archived on its v1-archive branch. Agents "
+        "forge new taps on demand via `capture`). Each tap is a `<site>/<name>.plan.json` "
+        "runnable via `run({ref: \"<site>/<name>\", args: {...}})`. Per-tap page at "
+        "`https://taprun.dev/taps/<site>/<name>`."
     )
     out.append("")
     for cat in ORDER:
