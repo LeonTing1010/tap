@@ -479,8 +479,6 @@ interface PlanCommon {
   id: TapId;
   description?: string;
   args?: Record<string, ArgSpec>;
-  /** CEL constraints over args. Each must return bool. */
-  arg_constraints?: CelExpr[];
   requires?: { runtime?: "extension" | "playwright" };
   /** Tab lifetime policy (per ADR 2026-05-10-plan-lifecycle-scoped-tabs.md).
    *  Absent ⇒ resolveLifecycle returns "scoped" (RAII-safe default). */

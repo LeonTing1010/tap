@@ -1009,12 +1009,6 @@
             "$ref": "#/$defs/ArgSpec"
           }
         },
-        "arg_constraints": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/CelExpr"
-          }
-        },
         "requires": {
           "type": "object",
           "additionalProperties": false,
