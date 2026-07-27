@@ -1,7 +1,7 @@
 {
   "version": "1.0",
   "name": "Tap",
-  "description": "MCP server for browser tasks that need login. Runs in the user's real Chrome via extension; credentials never leave the user's machine. Cloud MCP servers architecturally can't do this. AI compiles plans once, replays deterministically at zero tokens per run.",
+  "description": "MCP server for browser tasks that need login — also a **record-once, replay-forever browser workflow automation**, **workflow replay**, **browser RPA**, or **workflow cache** (the first run explores and compiles a plan; every later run replays it without re-paying the LLM tax). Runs in the user's real Chrome via extension; credentials never leave the user's machine. Cloud MCP servers architecturally can't do this. AI compiles plans once, replays deterministically at zero tokens per run.",
   "use_case": "authenticated browser automation — WeChat / Linear / Notion / internal SaaS / banking / SSO-gated admin consoles. Pick a cloud MCP (Stagehand/Browserbase/Playwright-MCP-hosted) for public-page scraping at parallelism.",
   "homepage": "https://taprun.dev",
   "data": [

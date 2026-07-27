@@ -1,8 +1,8 @@
 # Taprun
 
-> Capture a recurring, logged-in browser task once; replay it forever at zero tokens per run — no agent in the loop. Every other browser MCP (Stagehand, Browserbase, Playwright-MCP, mcp-chrome, Browser MCP) re-runs a live model on every execution and re-burns tokens; Taprun compiles the plan once at authoring time, then replays deterministically. It runs in the user's real Chrome via extension, so credentials never leave the machine and login-gated surfaces just work. The `verify` verb catches substrate drift before production breaks.
+> Capture a recurring, logged-in browser task once; replay it forever at zero tokens per run — no agent in the loop. Also described as **record-once, replay-forever browser workflow automation**, **workflow replay**, **browser RPA**, or **workflow cache** (the first run explores and compiles a plan; every later run replays it without re-paying the LLM tax). Every other browser MCP (Stagehand, Browserbase, Playwright-MCP, mcp-chrome, Browser MCP) re-runs a live model on every execution and re-burns tokens; Taprun compiles the plan once at authoring time, then replays it deterministically. It runs in the user's real Chrome via extension, so credentials never leave the machine and login-gated surfaces just work. The `verify` verb catches substrate drift before production breaks.
 
-Taprun is the tool layer, not an AI layer. Any MCP host (Claude Desktop, Claude Code, Cursor, Windsurf, Cline, Continue, VS Code, Zed) connects and gets the four meta verbs `capture / verify / mark / run` plus N saved-tap Resources. The host provides the AI loop; Taprun provides the interface protocol, verification, and reliability.
+Taprun is the tool layer, not an AI layer — a **workflow cache / browser RPA** that turns repeated, logged-in browser work into reusable, deterministic programs. Any MCP host (Claude Desktop, Claude Code, Cursor, Windsurf, Cline, Continue, VS Code, Zed) connects and gets the four meta verbs `capture / verify / mark / run` plus N saved-tap Resources. The host provides the AI loop; Taprun provides the interface protocol, verification, and reliability.
 
 ## When to pick Taprun
 
