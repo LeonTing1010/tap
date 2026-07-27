@@ -37,10 +37,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - name: Verify docs/llms.txt tap registry is regenerated
+      - name: Verify llms.txt + agents.json catalogs are regenerated
         run: |
           python3 scripts/generate-llms-tap-registry.py --write
-          if ! git diff --exit-code docs/llms.txt; then
-            echo "::error::docs/llms.txt tap registry is stale — run: python3 scripts/generate-llms-tap-registry.py --write"
+          if ! git diff --exit-code docs/llms.txt docs/.well-known/agents.json; then
+            echo "::error::docs/llms.txt or docs/.well-known/agents.json catalog is stale — run: python3 scripts/generate-llms-tap-registry.py --write"
             exit 1
           fi

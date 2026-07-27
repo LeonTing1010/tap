@@ -19,6 +19,7 @@ instead of 2-hop (read llms.txt → fetch GitHub API → see tap names).
 """
 
 import json
+import re
 import sys
 from collections import defaultdict
 from pathlib import Path
@@ -56,7 +57,15 @@ def first_sentence(text: str, max_len: int = 80) -> str:
     return (s[: max_len - 3] + "...") if len(s) > max_len else s
 
 
+def agent_description(text: str) -> str:
+    """agents.json item copy: keep the full first sentence, hard-truncate at
+    137 chars with '...' only when longer (matches committed catalog)."""
+    fs = (text or "").split(".")[0].strip()
+    return fs[:137] + "..." if len(fs) > 137 else fs
+
+
 LLMS_TXT = DOCS_TAPS.parent / "llms.txt"
+AGENTS_JSON = DOCS_TAPS.parent / ".well-known" / "agents.json"
 MARKER_START = "<!-- TAP_REGISTRY_START -->"
 MARKER_END = "<!-- TAP_REGISTRY_END -->"
 
@@ -103,14 +112,29 @@ def patch_llms_txt(content: str) -> None:
     print(f"# wrote {LLMS_TXT}", file=sys.stderr)
 
 
+def patch_agents_json(items: list[dict], total: int) -> None:
+    if not AGENTS_JSON.exists():
+        raise SystemExit(f"agents.json not found: {AGENTS_JSON}")
+    data = json.loads(AGENTS_JSON.read_text())
+    for entry in data.get("data", []):
+        if entry.get("name") == "taps":
+            entry["items"] = items
+            desc = entry.get("description", "")
+            entry["description"] = re.sub(r"^\s*\d+", str(total), desc)
+            break
+    else:
+        raise SystemExit("no 'taps' entry found in agents.json data")
+    AGENTS_JSON.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n")
+    print(f"# wrote {AGENTS_JSON}", file=sys.stderr)
+
+
 def main() -> int:
     write = "--write" in sys.argv[1:]
     if not DOCS_TAPS.exists():
         print(f"# not found: {DOCS_TAPS}", file=sys.stderr)
         return 1
 
-    by_cat: dict[str, list[tuple[str, str, str, str]]] = defaultdict(list)
-    total = 0
+    records: list[tuple[str, str, str, str, list[str]]] = []
     for f in sorted(DOCS_TAPS.glob("*/*.jsonld")):
         try:
             data = json.loads(f.read_text())
@@ -121,18 +145,35 @@ def main() -> int:
         site, name = body.get("site"), body.get("name")
         if not site or not name:
             continue
-        cat = SITE_TO_CAT.get(site, "Misc")
-        by_cat[cat].append((
-            site, name, body.get("intent", ""),
-            first_sentence(body.get("description", "")),
-        ))
-        total += 1
+        intent = body.get("intent", "")
+        raw_desc = body.get("description", "")
+        args_keys = list(body.get("args", {}).keys())
+        records.append((site, name, intent, raw_desc, args_keys))
 
-    content = render(by_cat, total)
+    total = len(records)
+
+    # llms.txt registry (grouped by category) — 80-char first-sentence cutoff
+    by_cat: dict[str, list[tuple[str, str, str, str]]] = defaultdict(list)
+    for site, name, intent, raw_desc, _ in records:
+        by_cat[SITE_TO_CAT.get(site, "Misc")].append((site, name, intent, first_sentence(raw_desc)))
+    llms_content = render(by_cat, total)
+
+    # agents.json inline catalog (sorted by site, then name) — 137-char cutoff
+    agent_items = []
+    for site, name, intent, raw_desc, args_keys in sorted(records, key=lambda r: (r[0], r[1])):
+        agent_items.append({
+            "ref": f"{site}/{name}",
+            "intent": intent,
+            "description": agent_description(raw_desc),
+            "args": args_keys,
+            "page": f"https://taprun.dev/taps/{site}/{name}",
+        })
+
     if write:
-        patch_llms_txt(content)
+        patch_llms_txt(llms_content)
+        patch_agents_json(agent_items, total)
     else:
-        print(content)
+        print(llms_content)
     return 0
 
 
