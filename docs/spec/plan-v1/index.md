@@ -1,6 +1,6 @@
 ---
 title: "Tap Plan Format v1 — Reference"
-description: "On-disk format for Tap v2 .plan.json. Bare-JSON plan body, 13-op closed union, Plan as discriminated read/write union, expression language, verification surface. The reference for integrators building governance layers, alternative runtimes, MCP hosts, and static analyzers against compiled Tap programs."
+description: "On-disk format for Tap v2 .flow.json. Bare-JSON plan body, 13-op closed union, Plan as discriminated read/write union, expression language, verification surface. The reference for integrators building governance layers, alternative runtimes, MCP hosts, and static analyzers against compiled Tap programs."
 permalink: /spec/plan-v1/
 ---
 
@@ -30,7 +30,7 @@ read/write classification, auth-layer composition.
 | Doc | Audience | URL |
 |---|---|---|
 | Vocabulary | JSON-LD validators, annotation stores citing tap terms | `taprun.dev/ns/tap-v1/` |
-| Plan format reference (this doc) | Integrators building governance / runtime / static-analyzers against `.plan.json` | `taprun.dev/spec/plan-v1/` |
+| Plan format reference (this doc) | Integrators building governance / runtime / static-analyzers against `.flow.json` | `taprun.dev/spec/plan-v1/` |
 | JSON Schema | Machine validators (VS Code `$schema`, ajv-equivalent libs) | `taprun.dev/spec/plan-v1/schema.json` |
 
 The vocabulary doc remains canonical for term IRIs; this doc remains

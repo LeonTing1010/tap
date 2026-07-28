@@ -1,10 +1,10 @@
 /**
- * @taprun/spec — public type subset of Tap's v2 plan schema.
+ * @taprun/spec — public type subset of Tap's v2 flow schema.
  *
  * This file is a STRICT PUBLIC SUBSET re-vendored from the upstream
  * `core/types.ts` in the proprietary Tap engine. Per ADR
  * `2026-05-04-ecosystem-v2-launch.md` §2.4, only the types needed to
- * CONSTRUCT or DISPLAY a Plan are exposed; engine-internal types
+ * CONSTRUCT or DISPLAY a Flow are exposed; engine-internal types
  * (Run, IntentRecord, Transition, TransitionKind, Fingerprint,
  * DoctorOutcome, Substrate, OpContext) are intentionally absent.
  *
@@ -426,24 +426,24 @@ export type OpName = typeof OP_NAMES_V2[number];
 // L3 — Plan
 // ═══════════════════════════════════════════════════════════════════════════
 
-// ─── Plan lifecycle (per ADR 2026-05-10-plan-lifecycle-scoped-tabs) ─────
+// ─── Flow lifecycle (per ADR 2026-05-10-plan-lifecycle-scoped-tabs) ─────
 //
-// Closed union: a plan declares its tab lifetime intent. Mirror of
-// `PLAN_LIFECYCLES` / `PlanLifecycle` / `resolveLifecycle` in
+// Closed union: a flow declares its tab lifetime intent. Mirror of
+// `FLOW_LIFECYCLES` / `FlowLifecycle` / `resolveLifecycle` in
 // core/types.ts. Growing past 2 values requires ADR amendment + arch
 // test PL1 update on the engine side.
 
 /** Tab lifetime policy values. */
-export const PLAN_LIFECYCLES = ["scoped", "interactive"] as const;
-export type PlanLifecycle = typeof PLAN_LIFECYCLES[number];
+export const FLOW_LIFECYCLES = ["scoped", "interactive"] as const;
+export type FlowLifecycle = typeof FLOW_LIFECYCLES[number];
 
 /** Resolution helper: explicit field wins; absent defaults to "scoped"
  *  (RAII-safe default per the ADR's Decision Standard 1). */
-export function resolveLifecycle(plan: { lifecycle?: PlanLifecycle }): PlanLifecycle {
+export function resolveLifecycle(plan: { lifecycle?: FlowLifecycle }): FlowLifecycle {
   return plan.lifecycle ?? "scoped";
 }
 
-/** The DURABLE half of a Plan — the verifiable intent that survives when the
+/** The DURABLE half of a Flow — the verifiable intent that survives when the
  *  ops are re-crystallized (per ADR `2026-07-14-intent-first-class.md`).
  *
  *  `observe`/`act`/`confirm` are a CACHE: a compiled realization of this intent
@@ -451,14 +451,14 @@ export function resolveLifecycle(plan: { lifecycle?: PlanLifecycle }): PlanLifec
  *  cache goes stale, THIS is the regeneration target:
  *    - `goal`       — what the tap is FOR (what to re-author toward)
  *    - `oracle`     — the effect predicate that DEFINES success, independent of
- *                     the ops that achieve it (a healed plan must re-establish
+ *                     the ops that achieve it (a healed flow must re-establish
  *                     `oracle`, not merely re-run stale ops)
  *    - `source_url` — where the substrate lives (regeneration entry point)
  *
  *  The flat `source_intent` / `source_url` / write-`postcondition` fields are
  *  the GRANDFATHERED projection of this object. Read via `resolveIntent(plan)`
  *  / `effectiveOracle(plan)`, never the flat fields directly. */
-export interface PlanIntent {
+export interface FlowIntent {
   /** The user's intent in natural language. Supersedes flat `source_intent`. */
   goal: string;
   /** The effect claim that defines success, independent of the ops that
@@ -469,8 +469,8 @@ export interface PlanIntent {
   source_url?: string;
 }
 
-/** Common Plan fields (shared by read and write variants). */
-interface PlanCommon {
+/** Common Flow fields (shared by read and write variants). */
+interface FlowCommon {
   /** Self-declared schema URL for forward-compatibility (per ADR
    *  `2026-05-09-userspace-via-standards.md` INV-2). When absent,
    *  the engine backward-fills to the current schema reader. When
@@ -482,7 +482,7 @@ interface PlanCommon {
   requires?: { runtime?: "extension" | "playwright" };
   /** Tab lifetime policy (per ADR 2026-05-10-plan-lifecycle-scoped-tabs.md).
    *  Absent ⇒ resolveLifecycle returns "scoped" (RAII-safe default). */
-  lifecycle?: PlanLifecycle;
+  lifecycle?: FlowLifecycle;
   /** Pure read of current state. */
   observe?: Op[];
   /** What the tap returns. CEL over $args + phase outputs. */
@@ -499,13 +499,13 @@ interface PlanCommon {
    *  as of ADR `2026-07-14-intent-first-class.md`: the ops are a regenerable
    *  cache OF this. Optional for backward compatibility — pre-migration plans
    *  project their flat fields via `resolveIntent(plan)`. */
-  intent?: PlanIntent;
+  intent?: FlowIntent;
 }
 
 /** Discriminated union: act non-empty ⇒ key required at type level.
  *  `never` (not `undefined`) makes absence a hard type-level invariant. */
-export type Plan =
-  | (PlanCommon & {
+export type Flow =
+  | (FlowCommon & {
       // Pure read variant — write fields unrepresentable
       act?: never;
       key?: never;
@@ -513,7 +513,7 @@ export type Plan =
       dedup_ttl_seconds?: never;
       confirm?: never;
     })
-  | (PlanCommon & {
+  | (FlowCommon & {
       // Write variant — act + key both required
       act: Op[];
       key: CelExpr;
@@ -522,14 +522,14 @@ export type Plan =
       dedup_ttl_seconds?: number;
     });
 
-/** Resolve the DURABLE intent of a Plan, unifying the first-class `intent`
+/** Resolve the DURABLE intent of a Flow, unifying the first-class `intent`
  *  object with the grandfathered flat fields (per ADR
  *  `2026-07-14-intent-first-class.md`). THE single read path — callers never
- *  read `plan.intent` / `plan.source_intent` directly, so a plan authored
- *  first-class and a grandfathered flat plan project identically. Mirrors
+ *  read `flow.intent` / `plan.source_intent` directly, so a flow authored
+ *  first-class and a grandfathered flat flow project identically. Mirrors
  *  `resolveLifecycle`. */
 export function resolveIntent(
-  plan: { intent?: PlanIntent; source_intent?: string; source_url?: string },
+  plan: { intent?: FlowIntent; source_intent?: string; source_url?: string },
 ): { goal?: string; oracle?: CelExpr; source_url?: string } {
   const it = plan.intent;
   const post = (plan as { postcondition?: CelExpr }).postcondition;
@@ -540,11 +540,11 @@ export function resolveIntent(
   };
 }
 
-/** The EFFECTIVE effect-oracle a Plan verifies — first-class `intent.oracle`
+/** The EFFECTIVE effect-oracle a Flow verifies — first-class `intent.oracle`
  *  when present, else the grandfathered write `postcondition`. THE read site
  *  for "what predicate defines this write's success". */
 export function effectiveOracle(
-  plan: { intent?: PlanIntent; postcondition?: CelExpr },
+  plan: { intent?: FlowIntent; postcondition?: CelExpr },
 ): CelExpr | undefined {
   const o = plan.intent?.oracle;
   if (typeof o === "string" && o.trim() !== "") return o;

@@ -1,5 +1,5 @@
 /**
- * @taprun/spec — Tap v2 plan format (public TypeScript types).
+ * @taprun/spec — Tap v2 flow format (public TypeScript types).
  *
  * Public contract third-party tools build against to construct, display,
  * or type-narrow Tap v2 plans without depending on the proprietary Tap
@@ -10,7 +10,7 @@
  *   https://github.com/LeonTing1010/tap/blob/main/docs/adr/2026-05-04-ecosystem-v2-launch.md
  *
  * What's in scope (PUBLIC):
- *   - Plan, ArgSpec, TapId
+ *   - Flow, ArgSpec, TapId
  *   - Op (13-arm closed union) + every member interface
  *   - OP_NAMES_V2, OpName
  *   - Verdict, IntentState (state-machine enums)
@@ -20,7 +20,7 @@
  * What's NOT in scope (proprietary engine — never published):
  *   - forge (compiling URLs / natural language into plans)
  *   - doctor (semantic cross-validation)
- *   - heal (AI-driven plan repair)
+ *   - heal (AI-driven flow repair)
  *   - Run, IntentRecord, Transition, Fingerprint, DoctorOutcome
  *   - Substrate, OpContext (runtime dispatch)
  */
@@ -52,8 +52,8 @@ export type {
   BookmarkOp,
   BookmarkAction,
   // Plan
-  Plan,
-  PlanIntent,
+  Flow,
+  FlowIntent,
   // State-machine enums
   IntentState,
   Verdict,
