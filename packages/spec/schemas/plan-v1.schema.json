@@ -1,15 +1,15 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://taprun.dev/spec/plan-v1/schema.json",
-  "title": "Tap Plan v1",
+  "title": "Tap Flow v1",
   "description": "On-disk format for Tap v2 plans (bare JSON; no W3C Annotation envelope). Plans are a discriminated union of read (observe+return) and write (act+key+confirm?) variants.",
   "$comment": "GENERATED from core/types.ts by scripts/gen-plan-schema.ts — DO NOT EDIT BY HAND. Regenerate: deno task gen:plan-schema. Freshness: gen:plan-schema --check (blocking).",
   "oneOf": [
     {
-      "$ref": "#/$defs/PlanRead"
+      "$ref": "#/$defs/FlowRead"
     },
     {
-      "$ref": "#/$defs/PlanWrite"
+      "$ref": "#/$defs/FlowWrite"
     }
   ],
   "$defs": {
@@ -280,6 +280,13 @@
           "type": "string",
           "description": "Wait until location.href includes this substring — deterministic SPA route-change wait (ADR 2026-07-08-op-capabilities). Tab-bound; polled in-page."
         },
+        "target": {
+          "type": "object",
+          "description": "Desktop wait target — macos-bridge peer only (ADR 2026-07-28). Resolves via AXUIElement (`ax`) or vision fallback (`vision`)."
+        },
+        "appBundleId": {
+          "type": "string"
+        },
         "timeout_ms": {
           "type": "number"
         },
@@ -322,6 +329,10 @@
         "trusted": {
           "type": "boolean",
           "description": "Substrate-tier hint. Absent/false (default) → L1: JS-injection el.click() — isTrusted:false, CSP-immune, no DevTools bar. true → L2: CDP-dispatched mouse events at element coordinates (isTrusted:true). L2 is REQUIRED to activate gesture-bound framework buttons (Polymer/Wiz tap recognizers — e.g. YouTube Studio ytcp-button, Material ripple buttons) that ignore a synthetic JS click. Set by capture when forge detects L1 fails the expect predicate; authors may set it directly when a click silently no-ops on a framework button."
+        },
+        "appBundleId": {
+          "type": "string",
+          "description": "Target a specific app for the synthesized input (ADR 2026-07-28). When set, a `click` resolves its target element inside this app's AX tree and posts the CGEvent to that app's PID."
         },
         "expect": {
           "$ref": "#/$defs/CelExpr",
@@ -814,6 +825,10 @@
           "maximum": 400,
           "description": "Max items returned. Default 120."
         },
+        "appBundleId": {
+          "type": "string",
+          "description": "Target a specific app for introspection (ADR 2026-07-28). When set, the macos-bridge peer walks this app's AX tree regardless of focus."
+        },
         "save": {
           "type": "string"
         }
@@ -960,7 +975,7 @@
         }
       ]
     },
-    "PlanLifecycle": {
+    "FlowLifecycle": {
       "type": "string",
       "description": "Tab lifetime policy. Absent ⇒ resolveLifecycle returns 'scoped' (RAII default).",
       "enum": [
@@ -968,7 +983,7 @@
         "interactive"
       ]
     },
-    "PlanIntent": {
+    "FlowIntent": {
       "type": "object",
       "description": "The durable verifiable intent (goal + source_url) — the regeneration target when ops drift stale. Ops are a cache OF this; the oracle lives in must[] (ADR tap-core 2026-07-25-plan-v3-clean-break).",
       "required": [
@@ -985,9 +1000,9 @@
         }
       }
     },
-    "PlanCommon": {
+    "FlowCommon": {
       "type": "object",
-      "description": "Fields shared by read and write Plan variants. NOT directly instantiable — use PlanRead or PlanWrite.",
+      "description": "Fields shared by read and write Flow variants. NOT directly instantiable — use FlowRead or FlowWrite.",
       "required": [
         "id",
         "return"
@@ -1016,13 +1031,14 @@
             "runtime": {
               "enum": [
                 "extension",
-                "playwright"
+                "playwright",
+                "macos-bridge"
               ]
             }
           }
         },
         "lifecycle": {
-          "$ref": "#/$defs/PlanLifecycle"
+          "$ref": "#/$defs/FlowLifecycle"
         },
         "observe": {
           "type": "array",
@@ -1040,7 +1056,7 @@
           "type": "string"
         },
         "intent": {
-          "$ref": "#/$defs/PlanIntent"
+          "$ref": "#/$defs/FlowIntent"
         },
         "must": {
           "type": "array",
@@ -1072,10 +1088,10 @@
         }
       }
     },
-    "PlanRead": {
+    "FlowRead": {
       "allOf": [
         {
-          "$ref": "#/$defs/PlanCommon"
+          "$ref": "#/$defs/FlowCommon"
         },
         {
           "type": "object",
@@ -1107,10 +1123,10 @@
         }
       ]
     },
-    "PlanWrite": {
+    "FlowWrite": {
       "allOf": [
         {
-          "$ref": "#/$defs/PlanCommon"
+          "$ref": "#/$defs/FlowCommon"
         },
         {
           "type": "object",
