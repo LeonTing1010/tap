@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * create-tap-script — scaffold a starter Tap v2 .plan.json.
+ * create-tap-script — scaffold a starter Tap v2 .flow.json.
  *
  * Usage:
  *   npx create-tap-script <site>/<name> "<description>" [--write] [--out DIR]
@@ -9,12 +9,12 @@
  *   npx create-tap-script github/issues "List issues for a repo"
  *
  * Creates:
- *   <DIR>/<site>/<name>.plan.json   (the starter v2 Plan)
+ *   <DIR>/<site>/<name>.flow.json   (the starter v2 Flow)
  *   <DIR>/<site>/<name>.README.md   (next-steps notes)
  *
  * Per ADR 2026-05-04 (ecosystem-v2-launch §2.4 + §2.5) this scaffolder
- * emits the v2 Plan shape directly (NOT the v1 W3C Annotation envelope,
- * NOT a `.tap.json` file). The runtime reads bare Plan documents.
+ * emits the v2 Flow shape directly (NOT the v1 W3C Annotation envelope,
+ * NOT a `.tap.json` file). The runtime reads bare Flow documents.
  */
 import { writeFile, mkdir } from "node:fs/promises";
 import { existsSync } from "node:fs";
@@ -23,7 +23,7 @@ import { fileURLToPath } from "node:url";
 import process from "node:process";
 
 import {
-  buildStarterPlan,
+  buildStarterFlow,
   parseArgs,
   type ParsedArgs,
 } from "./create.ts";
@@ -44,30 +44,30 @@ async function main(argv: string[]): Promise<number> {
   }
 
   const { site, name, description, variant, outDir } = parsed;
-  const planPath = join(outDir, site, `${name}.plan.json`);
+  const flowPath = join(outDir, site, `${name}.flow.json`);
   const readmePath = join(outDir, site, `${name}.README.md`);
 
-  if (existsSync(planPath) && !parsed.force) {
+  if (existsSync(flowPath) && !parsed.force) {
     console.error(
-      `error: ${planPath} already exists. Pass --force to overwrite.`,
+      `error: ${flowPath} already exists. Pass --force to overwrite.`,
     );
     return 1;
   }
 
-  const plan = buildStarterPlan({ site, name, description, variant });
-  await mkdir(dirname(planPath), { recursive: true });
-  await writeFile(planPath, JSON.stringify(plan, null, 2) + "\n", "utf8");
+  const flow = buildStarterFlow({ site, name, description, variant });
+  await mkdir(dirname(flowPath), { recursive: true });
+  await writeFile(flowPath, JSON.stringify(plan, null, 2) + "\n", "utf8");
   await writeFile(
     readmePath,
     buildReadme({ site, name, description, variant }),
     "utf8",
   );
 
-  console.log(`wrote ${planPath}`);
+  console.log(`wrote ${flowPath}`);
   console.log(`wrote ${readmePath}`);
   console.log("");
   console.log("Next steps:");
-  console.log(`  - Open ${planPath} and customize observe / args / return.`);
+  console.log(`  - Open ${flowPath} and customize observe / args / return.`);
   if (variant === "read") {
     console.log(
       `  - To convert to a write tap, add act + key fields (see commented block in README).`,
@@ -85,7 +85,7 @@ Arguments:
   "description"     Optional human description of what the tap does
 
 Options:
-  --write           Scaffold a write-variant plan (act + key required)
+  --write           Scaffold a write-variant flow (act + key required)
   --variant <r|w>   Equivalent to --write; "read" (default) or "write"
   --out <DIR>       Output directory (default: cwd)
   --force           Overwrite existing files
@@ -141,7 +141,7 @@ type level. Same key + unexpired ttl ⇒ runtime skips re-execution.
 `
     : "";
 
-  return `# ${site}/${name}.plan.json — starter v2 plan
+  return `# ${site}/${name}.flow.json — starter v2 plan
 
 Scaffolded by \`create-tap-script\` on ${new Date().toISOString().slice(0, 10)}.
 
@@ -156,7 +156,7 @@ ${description}
 
 ## Next steps
 
-1. Open \`${name}.plan.json\` and customize:
+1. Open \`${name}.flow.json\` and customize:
    - \`args\` — declare the inputs your tap accepts (with CEL constraints
      via \`arg_constraints\` if needed)
    - \`observe\` — the read-current-state op sequence (fetch / nav /
@@ -167,9 +167,9 @@ ${description}
    See https://taprun.dev/spec/ for the 11-op closed union and CEL
    reference.
 
-2. Validate the plan structure:
+2. Validate the flow structure:
    \`\`\`bash
-   npx -p @taprun/spec validate ./${name}.plan.json
+   npx -p @taprun/spec validate ./${name}.flow.json
    \`\`\`
 
 3. Run via the Tap CLI:

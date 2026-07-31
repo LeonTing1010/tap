@@ -26,7 +26,7 @@ tap migrate migrate
 npm install @taprun/spec@^1 @taprun/from-playwright@^1 @taprun/from-puppeteer@^1
 ```
 
-The CLI prints a report of three buckets: **auto-migratable** (W3C envelope wrapping a body that already uses only v2 ops), **needs-rewrite** (uses deleted ops or fields), and **corrupt**. Auto-migratable plans land in `~/.tap/plans/<site>/<name>.plan.json`. Originals stay read-only in `~/.tap/taps/` for the deprecation window so nothing is lost.
+The CLI prints a report of three buckets: **auto-migratable** (W3C envelope wrapping a body that already uses only v2 ops), **needs-rewrite** (uses deleted ops or fields), and **corrupt**. Auto-migratable plans land in `~/.tap/flows/<site>/<name>.flow.json`. Originals stay read-only in `~/.tap/taps/` for the deprecation window so nothing is lost.
 
 > **Be realistic about coverage.** Most v0.x plans were compiled with a universal `op:exec` body (the v1 escape hatch). Auto-migration coverage on the legacy corpus is therefore close to 0% — not because the migration tool is incomplete but because v1 leaned heavily on free-form JS. Most upgrades land in the **needs-rewrite** bucket. The cheapest path for those is `tap capture <url> <site>/<name> --intent "..."` against the original target, not a hand port.
 
@@ -65,7 +65,7 @@ tap migrate scan --site github          # one site
 
 ### `tap migrate migrate`
 
-Applies the conversion. For each auto-migratable plan: strips the W3C wrapper, drops the deleted top-level fields (`intent`, `legacy`, `allowUnverifiable`), synthesises `id: { site, name }` from the body, treats `ops` as `observe` for read taps, runs `lintPlan` on the result, and writes to `~/.tap/plans/<site>/<name>.plan.json` if lint passes. Originals stay untouched in `~/.tap/taps/` until you decide to delete them.
+Applies the conversion. For each auto-migratable plan: strips the W3C wrapper, drops the deleted top-level fields (`intent`, `legacy`, `allowUnverifiable`), synthesises `id: { site, name }` from the body, treats `ops` as `observe` for read taps, runs `lintPlan` on the result, and writes to `~/.tap/flows/<site>/<name>.flow.json` if lint passes. Originals stay untouched in `~/.tap/taps/` until you decide to delete them.
 
 ```bash
 tap migrate migrate --dry-run           # preview

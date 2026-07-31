@@ -68,7 +68,7 @@ const plan = puppeteerToTap(source, {
   // intent auto-detected: "write" because of the password type + submit click
 });
 
-await writeFile("example/login.plan.json", JSON.stringify(plan, null, 2));
+await writeFile("example/login.flow.json", JSON.stringify(plan, null, 2));
 ```
 
 Anything outside the supported APIs becomes a permissive

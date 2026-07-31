@@ -1,8 +1,8 @@
 /**
  * Constraint: tap.explain is a pure, non-throwing, static analyzer of Pipe
- * shape. Given a pipe, it returns a complete ExecutionPlan without running
+ * shape. Given a pipe, it returns a complete ExecutionFlow without running
  * any sub-tap, and reports problems (cycles, missing taps, dangling refs,
- * missing required args) as plan fields — never by throwing.
+ * missing required args) as flow fields — never by throwing.
  *
  * Why this matters: every downstream feature in the Tier 1.5 proposal
  * (AI pre-validation, doctor integration, visualization, cost estimation)
@@ -93,10 +93,10 @@ async function withFixtureDir(
 }
 
 // ============================================================================
-// Test 1 — explain returns a full plan for a 3-step pipe WITHOUT executing
+// Test 1 — explain returns a full flow for a 3-step pipe WITHOUT executing
 // ============================================================================
 
-Deno.test("[safety/what] explain returns full plan for a 3-step pipe without executing", async () => {
+Deno.test("[safety/what] explain returns full flow for a 3-step pipe without executing", async () => {
   await withFixtureDir(async (tapDir) => {
     const pipe: Pipe = {
       steps: [
@@ -115,14 +115,14 @@ Deno.test("[safety/what] explain returns full plan for a 3-step pipe without exe
       return: "$top.rows",
     };
 
-    const plan = await explain(pipe, { post: "abc123" }, { tapDirs: [tapDir] });
+    const flow = await explain(pipe, { post: "abc123" }, { tapDirs: [tapDir] });
 
     // Every step becomes a node in input order.
     assertEquals(plan.nodes.length, 3);
     assertEquals(plan.nodes.map((n) => n.id), ["hot", "comments", "top"]);
 
     // requires bill-of-materials is flat + deduped.
-    assertEquals(plan.requires.sort(), [
+    assertEquals(flow.requires.sort(), [
       "reddit/comments",
       "reddit/hot",
       "transform/top",
@@ -153,7 +153,7 @@ Deno.test("[safety/what] explain returns full plan for a 3-step pipe without exe
 
 Deno.test("[safety/what] explain detects cycles without throwing", async () => {
   // Why: runPipe throws on cycles by design (it's about to execute).
-  // explain is the forgiving dual — a plan with cycleDetected=true is a
+  // explain is the forgiving dual — a flow with cycleDetected=true is a
   // valid output, because the caller (AI validator, linter, visualizer)
   // must be able to *report* the cycle without blowing up.
   const pipe: Pipe = {
@@ -163,7 +163,7 @@ Deno.test("[safety/what] explain detects cycles without throwing", async () => {
     ],
   };
 
-  const plan = await explain(pipe, {}, {});
+  const flow = await explain(pipe, {}, {});
   assertEquals(plan.cycleDetected, true);
   // Nothing can enter any round — the entire graph is blocked.
   assertEquals(plan.rounds, []);
@@ -188,9 +188,9 @@ Deno.test("[safety/what] explain collects flat bill-of-materials via requires[]"
     ],
   };
 
-  const plan = await explain(pipe, {}, {});
+  const flow = await explain(pipe, {}, {});
   // Duplicate (github/trending) appears once — this is a SET, not a log.
-  assertEquals(plan.requires.sort(), ["github/trending", "hn/top"]);
+  assertEquals(flow.requires.sort(), ["github/trending", "hn/top"]);
 });
 
 // ============================================================================
@@ -210,7 +210,7 @@ Deno.test("[safety/what] explain collects capabilities union across all sub-taps
       ],
     };
 
-    const plan = await explain(pipe, {}, { tapDirs: [tapDir] });
+    const flow = await explain(pipe, {}, { tapDirs: [tapDir] });
     // reddit/hot declares ["fetch"], reddit/comments declares ["nav","eval"].
     // Union sorted alphabetically.
     assertEquals(plan.capabilities, ["eval", "fetch", "nav"]);
@@ -230,7 +230,7 @@ Deno.test("[safety/what] explain flags missing required args as schemaWarnings",
       ],
     };
 
-    const plan = await explain(pipe, {}, { tapDirs: [tapDir] });
+    const flow = await explain(pipe, {}, { tapDirs: [tapDir] });
     assertEquals(plan.nodes[0].required, ["subreddit"]);
     assert(
       plan.schemaWarnings.some((w) => w.includes("subreddit")),
@@ -246,7 +246,7 @@ Deno.test("[safety/what] explain flags missing required args as schemaWarnings",
 Deno.test("[safety/what] explain flags unresolved $refs instead of throwing", async () => {
   // Why: runPipe throws "unknown step" — fine for execution. For explain,
   // the whole point is "surface problems for the linter / visualizer to
-  // report ALL AT ONCE". A broken ref must become a plan field.
+  // report ALL AT ONCE". A broken ref must become a flow field.
   const pipe: Pipe = {
     steps: [
       // $nonexistent is neither a step id nor $args
@@ -254,7 +254,7 @@ Deno.test("[safety/what] explain flags unresolved $refs instead of throwing", as
     ],
   };
 
-  const plan = await explain(pipe, {}, {});
+  const flow = await explain(pipe, {}, {});
   assertEquals(plan.unresolvedRefs.length, 1);
   assert(
     plan.unresolvedRefs[0].includes("nonexistent"),
@@ -285,7 +285,7 @@ Deno.test("[safety/what] explain rounds correctly identify parallel steps", asyn
     ],
   };
 
-  const plan = await explain(pipe, {}, {});
+  const flow = await explain(pipe, {}, {});
   assertEquals(plan.rounds.length, 2);
   assertEquals(plan.rounds[0], ["a", "b"]); // parallel pair
   assertEquals(plan.rounds[1], ["c"]);
@@ -333,7 +333,7 @@ Deno.test("[principle/why] explain is a pure function — same input, same outpu
 
 Deno.test("[safety/what] explain reports missing sub-taps without throwing", async () => {
   // Why: a partially-migrated repo may reference taps that don't exist
-  // yet. explain must still return a complete plan for the parts that
+  // yet. explain must still return a complete flow for the parts that
   // DO exist, with the missing ones flagged for the author to fix.
   await withFixtureDir(async (tapDir) => {
     const pipe: Pipe = {
@@ -343,7 +343,7 @@ Deno.test("[safety/what] explain reports missing sub-taps without throwing", asy
       ],
     };
 
-    const plan = await explain(pipe, {}, { tapDirs: [tapDir] });
+    const flow = await explain(pipe, {}, { tapDirs: [tapDir] });
     // The valid node resolved.
     assertEquals(plan.nodes[0].path !== null, true);
     // The missing node's path is null.
@@ -379,7 +379,7 @@ Deno.test("[safety/what] explain resolves $args.* refs but leaves $step.* symbol
     ],
   };
 
-  const plan = await explain(pipe, { sub: "python", min: 5 }, {});
+  const flow = await explain(pipe, { sub: "python", min: 5 }, {});
   // Step a: $args.sub → "python", literal 10 preserved
   assertEquals(plan.nodes[0].argsResolved.subreddit, "python");
   assertEquals(plan.nodes[0].argsResolved.limit, 10);

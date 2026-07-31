@@ -762,11 +762,71 @@ async function pierceClosedShadowClick(tabId, fx, target) {
 // `fx` is the execFunc target (tabId or {tabId, frameId}) for the re-read;
 // `coords` arrive already translated to top-frame viewport space (#62).
 async function typeIntoContentEditable(tabId, fx, selector, text, coords) {
+  // Append mode: value prefixed with \x01APPEND\x01 skips select-all and
+  // positions cursor at end before inserting. This allows flows to add text
+  // (e.g. hashtags/topics) after existing content without replacing it.
+  const APPEND_PREFIX = '\x01APPEND\x01'
+  const append = typeof text === 'string' && text.startsWith(APPEND_PREFIX)
+  if (append) text = text.slice(APPEND_PREFIX.length)
   await cdpClick(tabId, coords.x, coords.y)
-  // Select existing content so insertText REPLACES it (preserves the
-  // select-all-then-type intent of the original `type` fallback). On an empty
-  // editor this selects nothing and insertText just inserts at the caret.
-  await handleMethod('keyboard', { tabId, key: 'a', action: 'press', modifiers: 4 })
+  // Ensure the editor actually received focus before any keystroke. cdpClick
+  // dispatches CDP mouse events that the editor processes asynchronously;
+  // ProseMirror in particular defers selection setup through its mousedown
+  // handler. Without this guard, Cmd+A / cursor-placement fires into an
+  // unready editor and insertText silently no-ops (input_ineffective).
+  const focusOk = await execFunc(fx, (sel) => {
+    const el = document.querySelector(sel)
+    if (!el) return false
+    if (el === document.activeElement || el.contains(document.activeElement)) return true
+    el.focus()
+    return el === document.activeElement || el.contains(document.activeElement)
+  }, selector)
+  if (!focusOk) throw new Error('Element not focusable or not found: ' + selector)
+  if (append) {
+    // Position cursor at the END of existing content without selecting all.
+    await execFunc(fx, (sel) => {
+      const el = document.querySelector(sel)
+      if (!el) return false
+      el.focus()
+      // Skip text inside non-editable atoms (e.g. converted topic/mention
+      // entities render as contenteditable=false); a caret placed inside one
+      // is rejected by ProseMirror and insertText no-ops (input_ineffective).
+      const editable = (n) => {
+        for (let p = n.parentElement; p && p !== el; p = p.parentElement) {
+          if (p.getAttribute && p.getAttribute('contenteditable') === 'false') return false
+        }
+        return true
+      }
+      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT)
+      let last = null, node
+      while (node = walker.nextNode()) {
+        if (node.textContent.trim().length > 0 && editable(node)) last = node
+      }
+      const range = document.createRange()
+      if (last) {
+        range.setStart(last, last.length)
+        range.collapse(true)
+      } else {
+        range.selectNodeContents(el)
+        range.collapse(false)
+      }
+      const s = window.getSelection()
+      s.removeAllRanges()
+      s.addRange(range)
+      return true
+    }, selector)
+  } else {
+    // ProseMirror defers selection setup after mousedown (often via
+    // requestAnimationFrame). A brief pause lets it finish before Cmd+A fires;
+    // without this, Cmd+A selects nothing and insertText silently no-ops.
+    // The diagnostic flow (pub-topics-diag2) proved this — its eval step between
+    // click and type forces a layout flush that gives ProseMirror the same time.
+    await new Promise(r => setTimeout(r, 200))
+    // Select existing content so insertText REPLACES it (preserves the
+    // select-all-then-type intent of the original `type` fallback). On an empty
+    // editor this selects nothing and insertText just inserts at the caret.
+    await handleMethod('keyboard', { tabId, key: 'a', action: 'press', modifiers: 4 })
+  }
   // Editor-aware composition (2026-06-12 weixin dogfood). Two kinds of
   // contenteditable need OPPOSITE handling:
   //  - Rich editors that manage their own input and handle Input.insertText
@@ -798,7 +858,19 @@ async function typeIntoContentEditable(tabId, fx, selector, text, coords) {
         })
       } catch (_) { /* composition unsupported/refused — insertText below still commits */ }
     }
-    await chrome.debugger.sendCommand({ tabId }, 'Input.insertText', { text })
+    if (append && nativeInsertEditor && text.length <= 40) {
+      // Per-char insert for short appends (hashtags/topics): a single whole-string
+      // insertText leaves ProseMirror suggestion decorations covering only part of
+      // the word (xhs topic dropdown then searches a truncated term — observed
+      // "#AI编程工" decorated with trailing "具" outside). One transaction per char
+      // mimics real typing so the suggestion match tracks to the end of the word.
+      for (const ch of Array.from(text)) {
+        await chrome.debugger.sendCommand({ tabId }, 'Input.insertText', { text: ch })
+        await new Promise(r => setTimeout(r, 30))
+      }
+    } else {
+      await chrome.debugger.sendCommand({ tabId }, 'Input.insertText', { text })
+    }
   })
   // Verify the mutation took effect (issue #19: no error, no effect). Compare
   // whitespace-stripped so rich-text wrapping (<p>/<br>) and newline
@@ -870,7 +942,7 @@ async function queryAttachCandidate(url, mode) {
   // an origin can host wholly unrelated surfaces (mp.weixin.qq.com serves
   // BOTH the wxamp admin console and public articles), and active/recency
   // alone bound the ARTICLE tab to an admin-console read. The tab sharing
-  // the deepest path with where the plan is going is the tab it means.
+  // the deepest path with where the flow is going is the tab it means.
   // Tiebreaks (2026-07-03 dogfood): prefer the ACTIVE tab over raw
   // recency — binding a background one surprises the user mid-flow; then
   // most-recently-accessed. `lastAccessed` is a chrome.tabs.Tab field
@@ -1098,7 +1170,7 @@ function notFoundMsg(sel, why) {
 //     exact trap tap-core#65 fixed for op:eval.
 //   • MOVED NOTHING MID-PAGE — the wheel went nowhere: no scrollable ancestor
 //     under the pointer, or the container swallows wheel events. That is a
-//     plan bug and MUST fail; it is the entire reason this kind earned a seat.
+//     flow bug and MUST fail; it is the entire reason this kind earned a seat.
 // The error text carries `selector_not_found:` so the classifier routes it to
 // a target problem instead of a transport problem.
 // Pure + named so it is extractable by test/scroll-postcondition.test.mjs.
@@ -1292,7 +1364,7 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
           if (r?.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description)
           return r?.result?.value
         } catch (e) {
-          if (!e.message?.includes('detached')) throw e
+          if (!e.message?.toLowerCase().includes('detached')) throw e
           debuggerSessions.delete(tabId)
         }
       }
@@ -1489,6 +1561,67 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
     }
 
     case 'wait': {
+      // Engine auto-settle (ADR 2026-07-29): `wait{stable}` waits for the page
+      // to go DOM-quiescent (no mutations for 250ms, capped 2.5s) — injected by
+      // the runtime after each act op so flows need no explicit `wait` ops.
+      // Best-effort: swallow any failure and proceed.
+      if (params.stable) {
+        try {
+          await execFunc(tabId, () => new Promise((resolve) => {
+            // Auto-settle (ADR 2026-07-29): wait for the page to be BOTH
+            // DOM-quiescent AND network-idle. A bare DOM-quiesce resolves during
+            // the silent gap of an in-flight async fetch — SPA shells render,
+            // then fetch, then render again — so late-mounting nodes (e.g. XHS's
+            // `.header-tabs`) aren't present yet when the next op fires. This
+            // mirrors the Playwright peer's networkidle pre-wait (playwright.ts
+            // handleWait) so "stable" means the same thing across peers.
+            // Marker so a run can prove this v3 network-idle settle actually
+            // executed (vs. a stale/reverted background.js). Inspected via
+            // document.documentElement.dataset.tapSettle.
+            document.documentElement.setAttribute("data-tap-settle", "v3");
+            // Network idle is tracked with a PerformanceObserver over `resource`
+            // entries. The browser records EVERY request (fetch / XHR / img /
+            // script / css) regardless of which JS API the page used, and reports
+            // each the instant it finishes (responseEnd) — so an in-flight
+            // request is seen exactly when it lands. The earlier v2 approach
+            // wrapped window.fetch / XMLHttpRequest and polled getEntriesByType,
+            // which (a) missed requests made through a captured fetch reference
+            // and (b) only saw already-completed entries that the ring buffer can
+            // evict — so it resolved during the SPA fetch gap and the next op
+            // fired before `.header-tabs` mounted.
+            const QUIET = 500, CAP = 6000;
+            const t0 = performance.now();
+            let lastMut = t0, lastNet = t0;
+            const obs = new MutationObserver(() => { lastMut = performance.now(); });
+            obs.observe(document, { childList: true, subtree: true, attributes: true, characterData: true });
+            let po = null;
+            try {
+              po = new PerformanceObserver((list) => {
+                for (const e of list.getEntries()) {
+                  const end = e.responseEnd || e.startTime || 0;
+                  if (end > lastNet) lastNet = end;
+                }
+              });
+              try { po.observe({ type: 'resource', buffered: true }); }
+              catch (_) { po.observe({ entryTypes: ['resource'] }); }
+            } catch (_) { /* no PerformanceObserver: fall back to DOM-only quiesce */ }
+            const finish = () => { obs.disconnect(); if (po) try { po.disconnect(); } catch (_) {} };
+            const tick = () => {
+              const now = performance.now();
+              const netIdle = now - lastNet >= QUIET;
+              // DOM-quiesce is the safety net: when the late async data lands and
+              // React re-renders `.header-tabs`, lastMut resets — so even if the
+              // network went idle a hair too early, we still wait out the render.
+              const domIdle = now - lastMut >= QUIET;
+              if (netIdle && domIdle) { finish(); resolve(true); }
+              else if (now - t0 >= CAP) { finish(); resolve(false); }
+              else setTimeout(tick, 50);
+            };
+            tick();
+          }));
+        } catch (e) { /* best-effort settle — proceed */ }
+        return {};
+      }
       // op:wait selector-mode arrives here (NM bridge maps op name → method
       // verbatim); the selector was historically IGNORED — Math.min(undefined)
       // = NaN ms sleep → instant ok, violating the peer-conformance contract
@@ -1535,7 +1668,7 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
         if (target) {
           // Resolve selector → bounding rect in page context, then pass as clip.
           // Mirrors the Playwright `locator(target).screenshot()` path used by
-          // src/runtime-playwright.ts so vision plan op behaves identically.
+          // src/runtime-playwright.ts so vision flow op behaves identically.
           const expr = `(() => {
             const el = document.querySelector(${JSON.stringify(target)});
             if (!el) return null;
@@ -1644,7 +1777,7 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
 
     case 'focusEmulate': {
       // Explicitly (re)assert focus/active emulation on demand — the attach
-      // path already does this, but a plan can re-arm it after a nav.
+      // path already does this, but a flow can re-arm it after a nav.
       await withDebugger(tabId, () => enableFocusEmulation(tabId))
       return { focusEmulated: true }
     }
@@ -2534,13 +2667,13 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
           // fetch is structurally TabBound. The dispatch envelope's sessionId
           // (engine's run_id) must already be bound to a tab via a prior
           // op:nav within the same plan. If we land here with no tabId,
-          // either (a) plan has no preceding op:nav, or (b) op:nav ran but
+          // either (a) flow has no preceding op:nav, or (b) op:nav ran but
           // the session-as-actor self-heal at handleMethod 'nav' did not
-          // populate sessions[sessionId]. Author fix: ensure the plan starts
+          // populate sessions[sessionId]. Author fix: ensure the flow starts
           // with op:nav (or session.create) before any page-session fetch.
           throw new Error('op:fetch failed: ' + JSON.stringify({
             kind: 'navigation_blocked',
-            message: 'page-session fetch needs an active tab — plan must precede this fetch with op:nav (or session.create) so the dispatch sessionId is bound to a tab',
+            message: 'page-session fetch needs an active tab — flow must precede this fetch with op:nav (or session.create) so the dispatch sessionId is bound to a tab',
             url,
           }))
         }
@@ -2820,7 +2953,7 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       // LIVE-DOM structured extraction (Phase 2, 2026-07-21). Typed home for the
       // querySelectorAll(...).map(...) work ~66% of op:eval traffic hand-rolls in
       // opaque JS. Same {root, per_item} shape + applySpec as the engine deno-dom
-      // extractor (core/handlers/extract.ts) — a plan reads identically from fetched
+      // extractor (core/handlers/extract.ts) — a flow reads identically from fetched
       // HTML (engine, op.from) or the LIVE page (here). ROOT pierces shadow/iframe
       // via __tapDeep.all; returns a typed array (no fn) — the read type hole closed.
       const { t: fx, sel } = await resolveFrame(tabId, params.root)
@@ -3950,7 +4083,7 @@ function connectBridge() {
               to: (live && live.url) || null,
               note: 'click dispatched; the page navigated during handling (frame detached) — consequence navigation, not a failure. Verify the effect via confirm/postcondition.',
               // Anomaly piggyback: ok-but-reclassified is a drift signal —
-              // the plan assumed an in-page click; the substrate navigated.
+              // the flow assumed an in-page click; the substrate navigated.
               _tap_anomalies: { reclassified: 'click_detach_consequence_nav' },
             },
           }

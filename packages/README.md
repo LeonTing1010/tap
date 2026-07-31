@@ -6,10 +6,10 @@ MIT, published to npm under `@taprun/*`.
 | Package | Version | What it is |
 |---|---|---|
 | [`@taprun/spec`](./spec) | `1.6.0` | **Public protocol surface.** TypeScript types for the v2 Plan format (13-op closed union + discriminated read/write Plan union), JSON Schema 2020-12 with `$id` resolvable at `taprun.dev/spec/plan-v1/schema.json`, lint rule names, namespace vocabulary terms. No runtime engine — pure type + schema package. Source-of-truth for third-party tooling. |
-| [`@taprun/from-playwright`](./from-playwright) | `1.0.0` | Convert Playwright `.ts/.js` source → v2 `.plan.json` (bare Plan, no envelope). Deterministic mapping of `page.goto/click/fill/waitFor/...` → `op:nav/input/wait/...`; falls back to `op:eval` for unsupported calls (with `returns.type` declaration). |
-| [`@taprun/from-puppeteer`](./from-puppeteer) | `1.0.0` | Convert Puppeteer `.ts/.js` source → v2 `.plan.json`. Mirrors from-playwright with Puppeteer-specific API tweaks. |
-| [`@taprun/from-stagehand`](./from-stagehand) | `1.0.0` | Convert Stagehand `.ts/.js` source → v2 `.plan.json`. Deterministic Playwright calls map to plan ops; NL `stagehand.act/extract/observe` fall through to `op:eval`. |
-| [`create-tap-script`](./create-tap-script) | `1.0.1` | `npx create-tap-script <site>/<name> <url>` — one-command scaffolder for a starter `.plan.json` in v2 shape. |
+| [`@taprun/from-playwright`](./from-playwright) | `1.0.0` | Convert Playwright `.ts/.js` source → v2 `.flow.json` (bare Plan, no envelope). Deterministic mapping of `page.goto/click/fill/waitFor/...` → `op:nav/input/wait/...`; falls back to `op:eval` for unsupported calls (with `returns.type` declaration). |
+| [`@taprun/from-puppeteer`](./from-puppeteer) | `1.0.0` | Convert Puppeteer `.ts/.js` source → v2 `.flow.json`. Mirrors from-playwright with Puppeteer-specific API tweaks. |
+| [`@taprun/from-stagehand`](./from-stagehand) | `1.0.0` | Convert Stagehand `.ts/.js` source → v2 `.flow.json`. Deterministic Playwright calls map to plan ops; NL `stagehand.act/extract/observe` fall through to `op:eval`. |
+| [`create-tap-script`](./create-tap-script) | `1.0.1` | `npx create-tap-script <site>/<name> <url>` — one-command scaffolder for a starter `.flow.json` in v2 shape. |
 
 ## How they relate
 
@@ -23,7 +23,7 @@ MIT, published to npm under `@taprun/*`.
        │     │        │        │
        └─────┴────────┴────────┘
                 │
-            emit v2 .plan.json
+            emit v2 .flow.json
                 │
                 ▼
        create-tap-script scaffolds starters of the same shape

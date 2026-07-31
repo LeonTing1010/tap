@@ -4,7 +4,7 @@ This guide is for AI agents (Cline, Claude Code, Claude Desktop, Cursor, Windsur
 
 ## Overview
 
-Tap turns "do this in my browser" into a deterministic program. Your agent runs `capture` once on a URL × intent — Tap inspects the page, picks the most stable address (open API / session API / in-page fetch / DOM), and emits a bare `.plan.json`. Saved plans replay at **zero LLM tokens** (the AI runs only at capture time), in the user's **own** browser, so credentials never leave the machine.
+Tap turns "do this in my browser" into a deterministic program. Your agent runs `capture` once on a URL × intent — Tap inspects the page, picks the most stable address (open API / session API / in-page fetch / DOM), and emits a bare `.flow.json`. Saved plans replay at **zero LLM tokens** (the AI runs only at capture time), in the user's **own** browser, so credentials never leave the machine.
 
 ## Prerequisites
 
@@ -57,7 +57,7 @@ Expected: a structured `ToolResult` (e.g. `inspection.source_class` = `html-list
 
 Tap exposes a **constant** surface of 4 meta verbs. Saved taps are **MCP Resources** (`tap://{site}/{name}`), not per-tap tools — discover them via `resources/list`, read the arg schema via `resources/read`, and execute with `run`.
 
-- **`capture`** — `{ url, intent?, site?, name? }`. Create a tap from URL × intent. With `site+name`, persists to `~/.tap/plans/<site>/<name>.plan.json` and it becomes a `tap://{site}/{name}` resource; without them, returns a preview. Re-capturing the same `site+name` overwrites — the heal path for `tap_drifted`.
+- **`capture`** — `{ url, intent?, site?, name? }`. Create a tap from URL × intent. With `site+name`, persists to `~/.tap/flows/<site>/<name>.flow.json` and it becomes a `tap://{site}/{name}` resource; without them, returns a preview. Re-capturing the same `site+name` overwrites — the heal path for `tap_drifted`.
 - **`verify`** — `{ site, name, args? }`. Read-only substrate health check; runs the observe phase only (safe for write taps). Returns `verdict ∈ { live | drifted | unreachable }` derived from op outcomes.
 - **`mark`** — `{ site, name, key, as: "committed" | "aborted" }`. Resolve an `intent_uncertain` record after observing the real side-effect outcome.
 - **`run`** — `{ ref, args }` where `ref` is `tap://{site}/{name}` or `{site}/{name}`. Execute a saved tap deterministically — zero AI tokens.

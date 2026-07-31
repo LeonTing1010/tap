@@ -14,7 +14,7 @@ layout: default
 `tap migrate` is the bulk migration entry point. Two verbs:
 
 - `scan` — read-only inventory. Walks `~/.tap/taps/` and classifies each `.tap.json` into **auto-migratable** (W3C envelope wrapping a body that already happens to use only v2 ops + no deleted fields), **needs-rewrite** (uses `op:exec`, `op:pipe`, `op:parseXML`, `legacy:true`, `allowUnverifiable`, etc.), or **corrupt**.
-- `migrate` — applies the conversion. For each auto-migratable plan: strips the W3C wrapper, drops deleted top-level fields, synthesises `id: { site, name }`, treats `ops` as `observe` for read taps, runs `lintPlan`, and writes to `~/.tap/plans/<site>/<name>.plan.json`. Originals stay untouched in `~/.tap/taps/`.
+- `migrate` — applies the conversion. For each auto-migratable plan: strips the W3C wrapper, drops deleted top-level fields, synthesises `id: { site, name }`, treats `ops` as `observe` for read taps, runs `lintPlan`, and writes to `~/.tap/flows/<site>/<name>.flow.json`. Originals stay untouched in `~/.tap/taps/`.
 
 ```bash
 tap migrate scan                       # all sites, dry inventory

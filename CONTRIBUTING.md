@@ -4,7 +4,7 @@ Tap welcomes contributions at every level. Here are the main paths.
 
 ## Path 1: Capture a New Tap (Easiest)
 
-A tap is a single `.plan.json` file. No build step needed.
+A tap is a single `.flow.json` file. No build step needed.
 
 ### With AI (recommended)
 

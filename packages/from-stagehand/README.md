@@ -52,7 +52,7 @@ const plan = stagehandToTap(source, {
 const v = runConformance(plan);
 if (!v.pass) throw new Error(JSON.stringify(v.failures));
 
-await writeFile("github/browserbase-search.plan.json", JSON.stringify(plan, null, 2));
+await writeFile("github/browserbase-search.flow.json", JSON.stringify(plan, null, 2));
 ```
 
 ## Scope notes

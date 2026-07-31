@@ -34,12 +34,12 @@
 
 As APIs get walled off and metered, the work that survives lives behind logins, OTP walls, and human-gesture gates — the exceptions, approvals, and compliance steps a cloud agent architecturally can't touch. Taprun is the action layer for exactly that: your agent drives your real, already-logged-in Chrome, closes the loop (act → verify the effect → re-run on drift), and hands you a deterministic replay you own.
 
-Every other browser agent re-runs a live LLM — and re-burns tokens — on every execution. Taprun's AI agent inspects the page **once** and emits a deterministic `.plan.json` program; every replay after that is pure data dispatch — same result every call, **$0 in tokens, no agent in the loop**. It runs in your real Chrome, so cookies and login sessions stay on your machine by architecture. `tap verify` catches breakage before your data goes stale.
+Every other browser agent re-runs a live LLM — and re-burns tokens — on every execution. Taprun's AI agent inspects the page **once** and emits a deterministic `.flow.json` program; every replay after that is pure data dispatch — same result every call, **$0 in tokens, no agent in the loop**. It runs in your real Chrome, so cookies and login sessions stay on your machine by architecture. `tap verify` catches breakage before your data goes stale.
 
 Works with Claude Code, CodeBuddy, Cursor, Cline, Windsurf, and any MCP host — install straight from the chat window. Forge a tap from any URL on demand — no catalog needed.
 
 ```
-Capture: AI inspects the site → compiles a .plan.json program     (one-time cost)
+Capture: AI inspects the site → compiles a .flow.json program     (one-time cost)
 Run:     The program executes instantly, same result every time   ($0, zero AI)
 Verify:  tap verify checks the snapshot equivalence predicate     (catches drift)
 Repair:  re-run capture against the same site/name; the next      (only when needed)
@@ -56,7 +56,7 @@ Repair:  re-run capture against the same site/name; the next      (only when nee
 | **Breakage diagnostics** | `tap verify` — exact diff of what changed | None | Manual spot checks |
 | **Detection risk** | Low (real browser sessions) | High | High |
 | **Runtimes** | 2 (Chrome extension + Playwright) | 1 | 1 |
-| **Code inspectable** | .plan.json — bare JSON, 18-op closed vocabulary, git diff | Black box / ephemeral | Fragile scripts |
+| **Code inspectable** | .flow.json — bare JSON, 18-op closed vocabulary, git diff | Black box / ephemeral | Fragile scripts |
 | **MCP native** | Yes (authoring layer only — execution is zero tokens) | No | No |
 
 ## Get Started
@@ -117,9 +117,9 @@ Manual MCP config, if you'd rather write it yourself:
 Run the first entry of the [claims ledger](https://github.com/LeonTing1010/tap-skills) — the exact verification its nightly CI runs:
 
 ```bash
-mkdir -p ~/.tap/plans/github
+mkdir -p ~/.tap/flows/github
 curl -fsSL https://raw.githubusercontent.com/LeonTing1010/tap-skills/main/claims/2026-07-11-github-trending-has-no-api/plan.json \
-  -o ~/.tap/plans/github/trending-no-api.plan.json
+  -o ~/.tap/flows/github/trending-no-api.flow.json
 tap github/trending-no-api
 ```
 
@@ -156,7 +156,7 @@ The CLI emits `ToolResult<T>` envelopes as JSON — same shape the MCP surface r
 
 ### Have an existing Playwright / Puppeteer / Stagehand script?
 
-Don't rewrite. Convert with one of the open-source adapters — drop your existing source in, get a Taprun-compatible `.plan.json` plan out:
+Don't rewrite. Convert with one of the open-source adapters — drop your existing source in, get a Taprun-compatible `.flow.json` plan out:
 
 ```bash
 # Existing Playwright script (47M weekly npm downloads — most likely the one you have)
@@ -172,7 +172,7 @@ npx create-tap-script github/trending https://github.com/trending
 | [`@taprun/from-playwright`](https://www.npmjs.com/package/@taprun/from-playwright) | `.ts/.js` Playwright tests | 8 page.* APIs (goto/click/fill/type/press/waitForSelector/waitForTimeout/screenshot) |
 | [`@taprun/from-puppeteer`](https://www.npmjs.com/package/@taprun/from-puppeteer) | `.ts/.js` Puppeteer scripts | 7 page.* APIs + page.keyboard.press |
 | [`@taprun/from-stagehand`](https://www.npmjs.com/package/@taprun/from-stagehand) | `.ts/.js` Stagehand scripts | Hybrid: deterministic page.* mapped to plan ops; NL `act/extract/observe` flagged for honest verify verdicts |
-| [`create-tap-script`](https://www.npmjs.com/package/create-tap-script) | (none — scaffolder) | Generates a starter `.plan.json` envelope from `<site>/<name> <url>` |
+| [`create-tap-script`](https://www.npmjs.com/package/create-tap-script) | (none — scaffolder) | Generates a starter `.flow.json` envelope from `<site>/<name> <url>` |
 
 The format itself is documented at [`@taprun/spec`](https://www.npmjs.com/package/@taprun/spec) — the public protocol surface package: TypeScript types for the v2 Plan (18-op closed union + discriminated read/write Plan union) + JSON Schema 2020-12 with `$id` resolvable at `taprun.dev/spec/plan-v1/schema.json`, bidirectionally drift-guarded against the TS types. Third-party tooling (IDE `$schema` autocomplete, ajv-equivalent validators in Python/Ruby/Go, governance layers, alternative runtimes, MCP hosts with plan-aware permission scoping) builds against this package without depending on the proprietary Taprun engine. Plan-v1 reference: [taprun.dev/spec/plan-v1](https://taprun.dev/spec/plan-v1/). Source for all five packages: [`packages/`](packages/) (see [`packages/README.md`](packages/README.md) for the workspace overview).
 
@@ -232,7 +232,7 @@ You → AI → Taprun ──────┤
 ```
 
 1. **You describe** what you want (URL × natural-language intent)
-2. **AI compiles** it into a `.plan.json` program — bare JSON, 18-op closed vocabulary, version-controlled
+2. **AI compiles** it into a `.flow.json` program — bare JSON, 18-op closed vocabulary, version-controlled
 3. **Taprun runs** the program on either runtime — forever, at $0
 
 Every successful compilation makes the next one faster. Need a tap for a new site? Your agent forges one on demand with `capture` — no catalog required.
@@ -244,9 +244,9 @@ Every successful compilation makes the next one faster. Need a tap for a new sit
 Verify the first claim yourself (~2 minutes, no login, no browser):
 
 ```bash
-mkdir -p ~/.tap/plans/github
+mkdir -p ~/.tap/flows/github
 curl -fsSL https://raw.githubusercontent.com/LeonTing1010/tap-skills/main/claims/2026-07-11-github-trending-has-no-api/plan.json \
-  -o ~/.tap/plans/github/trending-no-api.plan.json
+  -o ~/.tap/flows/github/trending-no-api.flow.json
 npx -y @taprun/cli github/trending-no-api
 ```
 
@@ -280,7 +280,7 @@ See [SECURITY.md](SECURITY.md) for the full threat model.
 
 ## Contributing
 
-The easiest way to contribute: **forge a new tap.** One `.plan.json` file is all it takes.
+The easiest way to contribute: **forge a new tap.** One `.flow.json` file is all it takes.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 

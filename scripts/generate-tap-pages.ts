@@ -33,7 +33,7 @@ const PRESERVE_HAND_CRAFTED = new Set([
   "36kr/hot",
 ]);
 
-interface TapPlan {
+interface TapFlow {
   body: {
     site: string;
     name: string;
@@ -56,7 +56,7 @@ interface Outcome {
 const outcomes: Outcome[] = [];
 
 // Pass 1: collect all plans so Related-taps rendering has full catalog.
-interface CollectedPlan { plan: TapPlan; planRel: string }
+interface CollectedFlow { plan: TapFlow; planRel: string }
 const allPlans: CollectedPlan[] = [];
 for (const top of INCLUDE) {
   const topDir = `${args.source}/${top}`;
@@ -79,14 +79,14 @@ for (const top of INCLUDE) {
       const srcPath = `${siteDir}/${f.name}`;
       const planRel = `${top}/${siteEntry.name}/${f.name}`;
       try {
-        const plan = f.ext === ".tap.json"
+        const flow = f.ext === ".tap.json"
           ? JSON.parse(await Deno.readTextFile(srcPath)) as TapPlan
           : await loadFromTapJs(srcPath);
         if (!plan.body || !plan.body.site || !plan.body.name) {
           outcomes.push({ path: srcPath, rel: planRel, status: "skipped-invalid", reason: "missing body.site/name" });
           continue;
         }
-        allPlans.push({ plan, planRel });
+        allPlans.push({ flow, planRel });
       } catch (e) {
         outcomes.push({ path: srcPath, rel: planRel, status: "skipped-invalid", reason: e instanceof Error ? e.message : String(e) });
       }
@@ -96,14 +96,14 @@ for (const top of INCLUDE) {
 
 // Build site → siblings index for Related-taps rendering.
 const siteIndex = new Map<string, Array<{ name: string; description: string }>>();
-for (const { plan } of allPlans) {
+for (const { flow } of allPlans) {
   const s = plan.body.site;
   if (!siteIndex.has(s)) siteIndex.set(s, []);
   siteIndex.get(s)!.push({ name: plan.body.name, description: plan.body.description ?? "" });
 }
 
 // Pass 2: render each page now that siblings are known.
-for (const { plan, planRel } of allPlans) {
+for (const { flow, planRel } of allPlans) {
   const key = `${plan.body.site}/${plan.body.name}`;
   const outPath = `${args.out}/${plan.body.site}/${plan.body.name}.html`;
   let exists = false;
@@ -165,7 +165,7 @@ if (invalid.length > 0) {
 }
 
 // ─── Page renderer ───────────────────────────────────────────────
-function renderPage(plan: TapPlan, planRel: string, siblings: Array<{ name: string; description: string }> = []): string {
+function renderPage(plan: TapFlow, planRel: string, siblings: Array<{ name: string; description: string }> = []): string {
   const b = plan.body;
   const desc = b.description ?? `${b.site}/${b.name} — a Taprun tap.`;
   const intent = b.intent ?? "read";
@@ -188,7 +188,7 @@ function renderPage(plan: TapPlan, planRel: string, siblings: Array<{ name: stri
     .map(([k, v]) => `--${k} ${shellQuote(String(v))}`)
     .join(" ");
 
-  const sourceUrl = `https://github.com/${REPO}/blob/main/${planRel.replace(/\.tap\.(json|js)$/, ".plan.json")}`;
+  const sourceUrl = `https://github.com/${REPO}/blob/main/${planRel.replace(/\.tap\.(json|js)$/, ".flow.json")}`;
 
   const frontmatter = [
     "---",
@@ -246,13 +246,13 @@ tap embed claude-code   # or: codebuddy | cursor | vscode | claude-desktop</code
   <h2>Call <code>${b.site}/${b.name}</code></h2>
   <p>Terminal, once installed:</p>
   <pre><code>tap run ${b.site}/${b.name}${exampleArgs ? " " + exampleArgs : ""}</code></pre>
-  <p>From the MCP host — exact same compiled plan, deterministic replay, zero LLM tokens:</p>
+  <p>From the MCP host — exact same compiled flow, deterministic replay, zero LLM tokens:</p>
   <pre><code>${escapeHtml(mcpInvoke)}</code></pre>
 </section>
 
 <section>
   <h2>Why compile it once</h2>
-  <p>This plan was forged once — the AI read <code>${b.site}</code>, picked stable structural addresses (JSON-LD, ARIA, RSS, or declared API endpoints, in that priority order), and saved them to a <code>.plan.json</code>. Every replay since then has used zero LLM tokens. When <code>${b.site}</code> ships a site change that breaks the extraction, <code>tap verify</code> surfaces it before your data goes stale — not after your pipeline silently writes garbage for a week.</p>
+  <p>This flow was forged once — the AI read <code>${b.site}</code>, picked stable structural addresses (JSON-LD, ARIA, RSS, or declared API endpoints, in that priority order), and saved them to a <code>.flow.json</code>. Every replay since then has used zero LLM tokens. When <code>${b.site}</code> ships a site change that breaks the extraction, <code>tap verify</code> surfaces it before your data goes stale — not after your pipeline silently writes garbage for a week.</p>
 </section>
 ${relatedSection}
 `;
@@ -265,9 +265,9 @@ ${relatedSection}
 // that the Jekyll layout references via `seeAlso` + the Provenance footer.
 // Without this file those links 404, so the page emits structurally broken
 // references for crawlers and AI clients.
-function renderJsonLd(plan: TapPlan, planRel: string): string {
+function renderJsonLd(plan: TapFlow, planRel: string): string {
   const b = plan.body;
-  const sourceUrl = `https://github.com/${REPO}/blob/main/${planRel.replace(/\.tap\.(json|js)$/, ".plan.json")}`;
+  const sourceUrl = `https://github.com/${REPO}/blob/main/${planRel.replace(/\.tap\.(json|js)$/, ".flow.json")}`;
   const htmlUrl = `https://taprun.dev/taps/${b.site}/${b.name}.html`;
   const id = `https://taprun.dev/taps/${b.site}/${b.name}`;
   const doc = {

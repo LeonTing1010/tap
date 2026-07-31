@@ -1,7 +1,7 @@
 {
   "name": "create-tap-script",
   "version": "1.0.2",
-  "description": "Scaffold a Tap v2 browser-automation plan in seconds. `npx create-tap-script <site>/<name>` generates a deterministic .plan.json that runs at zero LLM tokens in Claude Code, Cursor, and any MCP host.",
+  "description": "Scaffold a Tap v2 browser-automation plan in seconds. `npx create-tap-script <site>/<name>` generates a deterministic .flow.json that runs at zero LLM tokens in Claude Code, Cursor, and any MCP host.",
   "publishConfig": {
     "access": "public"
   },

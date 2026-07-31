@@ -1,13 +1,13 @@
 /**
  * Pure helpers — no I/O, no process exits. Tested via node --test.
  *
- * Emits Tap v2 Plan documents per ADR 2026-05-03 (unified-tap-primitive)
+ * Emits Tap v2 Flow documents per ADR 2026-05-03 (unified-tap-primitive)
  * and ADR 2026-05-04 (ecosystem-v2-launch §2.4 + §2.5).
  *
  * v2 vs v1 changes (relevant here):
- *   - Output file extension is `.plan.json` (NOT `.tap.json`).
- *   - Output is a BARE Plan object (NOT a W3C Annotation envelope).
- *   - No `intent: "read" | "write"` field — Plan is a TS discriminated
+ *   - Output file extension is `.flow.json` (NOT `.tap.json`).
+ *   - Output is a BARE Flow object (NOT a W3C Annotation envelope).
+ *   - No `intent: "read" | "write"` field — Flow is a TS discriminated
  *     union; presence of `act` + `key` denotes the write variant.
  *   - No `op:exec`, no `legacy:true`, no `generator` field.
  *   - 11-op closed union (fetch / nav / wait / input / extract / cookies /
@@ -98,13 +98,13 @@ export function parseArgs(argv: string[]): ParsedArgs {
   }
   [site, name] = id.split("/");
   description = positional[1] ??
-    `Tap plan for ${site}/${name}. Customize the ops and return expression.`;
+    `Tap flow for ${site}/${name}. Customize the ops and return expression.`;
 
   return { site, name, description, variant, outDir, force, help };
 }
 
 /**
- * Build a minimal but real Tap v2 Plan as a starting point.
+ * Build a minimal but real Tap v2 Flow as a starting point.
  *
  * Returns an unknown so callers serialize via JSON.stringify; we do not
  * import @taprun/spec types here to keep this package's runtime
@@ -113,7 +113,7 @@ export function parseArgs(argv: string[]): ParsedArgs {
  * The shape is hand-mirrored from `core/types.ts` (PUBLIC subset per
  * ADR 2026-05-04 §2.4).
  */
-export function buildStarterPlan(opts: StarterOptions): unknown {
+export function buildStarterFlow(opts: StarterOptions): unknown {
   const { site, name, description, variant } = opts;
   const exampleUrl =
     `https://api.${site}.example.com/{{$args.someArg}}`;
@@ -121,7 +121,7 @@ export function buildStarterPlan(opts: StarterOptions): unknown {
   // Read variant — the default, no act/key. The op:fetch uses
   // page-session credentials so it reuses the user's authenticated
   // browser session at runtime.
-  const readPlan = {
+  const readFlow = {
     id: { site, name },
     description,
     args: {
@@ -153,14 +153,14 @@ export function buildStarterPlan(opts: StarterOptions): unknown {
   };
 
   if (variant === "read") {
-    return readPlan;
+    return readFlow;
   }
 
   // Write variant — adds act + key. Includes a comment-friendly
   // structure showing how a write tap composes observe (read current
   // state) with act (mutate) and a CEL key for intent dedup.
   return {
-    ...readPlan,
+    ...readFlow,
     // The act phase performs the mutation. Replace this stub with the
     // real op sequence (input, fetch POST, etc.).
     act: [
@@ -184,7 +184,7 @@ export function buildStarterPlan(opts: StarterOptions): unknown {
 }
 
 /**
- * Structural validator for the starter Plan shape — used by tests in
+ * Structural validator for the starter Flow shape — used by tests in
  * the absence of a published @taprun/spec@1.0. Mirrors core/types.ts
  * shape rules at a basic level: id present, ops use the closed 11-op
  * union, no forbidden v1 fields.
@@ -207,12 +207,12 @@ export interface ValidationResult {
   failures: string[];
 }
 
-export function validateV2Plan(plan: unknown): ValidationResult {
+export function validateV2Flow(plan: unknown): ValidationResult {
   const failures: string[] = [];
-  if (!plan || typeof plan !== "object" || Array.isArray(plan)) {
+  if (!plan || typeof flow !== "object" || Array.isArray(plan)) {
     return { ok: false, failures: ["plan must be a non-array object"] };
   }
-  const p = plan as Record<string, unknown>;
+  const p = flow as Record<string, unknown>;
   for (const f of FORBIDDEN_FIELDS) {
     if (f in p) {
       failures.push(`forbidden v1 field present: ${f}`);
@@ -224,7 +224,7 @@ export function validateV2Plan(plan: unknown): ValidationResult {
     typeof (p.id as Record<string, unknown>).site !== "string" ||
     typeof (p.id as Record<string, unknown>).name !== "string"
   ) {
-    failures.push("plan.id must be { site: string, name: string }");
+    failures.push("flow.id must be { site: string, name: string }");
   }
   if (typeof p.return !== "string") {
     failures.push("plan.return must be a CEL expression string");

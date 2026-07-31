@@ -75,11 +75,11 @@ export {
 export type { TapTrace } from "./src/trace.ts";
 
 // Explain — the static dual of runPipe. Given a Pipe, returns an
-// ExecutionPlan describing rounds, edges, capabilities, and arg-contract
+// ExecutionFlow describing rounds, edges, capabilities, and arg-contract
 // warnings without executing any sub-tap. Safe to call anywhere.
 export { explain } from "./src/explain.ts";
 export type {
-  ExecutionPlan,
+  ExecutionFlow,
   ExplainOptions,
   PlanEdge,
   PlanNode,

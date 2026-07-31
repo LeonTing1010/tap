@@ -109,7 +109,7 @@ Tap 是一个 MCP server，提供四个 meta 动词：`capture / verify / mark /
 
 第 2 步是云端竞品无法复制的，因为约束就在这里。第 1 步和第 3 步可以复制，但第 2 步无法。
 
-Plan 的格式是 `.plan.json`——一个 11 个 op 的闭包并集（fetch / nav / wait / input / extract / cookies / tap / if / foreach / parallel / eval），bare JSON，[规范开源](https://taprun.dev/spec/plan-v1/)、可 diff、可 git 化、可被任何兼容运行时执行。AI 在编译期参与一次，运行期是纯数据 + dispatch，单次重放成本 ≈ \$0.003（仅本地浏览器算力）。
+Plan 的格式是 `.flow.json`——一个 11 个 op 的闭包并集（fetch / nav / wait / input / extract / cookies / tap / if / foreach / parallel / eval），bare JSON，[规范开源](https://taprun.dev/spec/plan-v1/)、可 diff、可 git 化、可被任何兼容运行时执行。AI 在编译期参与一次，运行期是纯数据 + dispatch，单次重放成本 ≈ \$0.003（仅本地浏览器算力）。
 
 ## 什么时候 cloud browser MCP 是对的选择
 
@@ -131,7 +131,7 @@ curl -fsSL https://taprun.dev/install.sh | bash
 tap mcp start    # 把 MCP host (Claude Code / Cursor / Cline / Continue) 指向这条命令
 ```
 
-然后让 Claude Code 在上面列的任何一个登录态任务上调 `capture`。Tap 会用你的登录态去探查，编译出一个确定性 Plan。这个 plan 是你的——存在 `~/.tap/plans/<site>/<name>.plan.json`，可以审、可以 diff、可以 0-token 重复运行，站点变化时 `tap verify` 会检测漂移。
+然后让 Claude Code 在上面列的任何一个登录态任务上调 `capture`。Tap 会用你的登录态去探查，编译出一个确定性 Plan。这个 plan 是你的——存在 `~/.tap/flows/<site>/<name>.flow.json`，可以审、可以 diff、可以 0-token 重复运行，站点变化时 `tap verify` 会检测漂移。
 
 **v0.x 期间所有功能免费**，包括 AI 辅助 capture、verify、社区维护的 taps。付费层次尚未启用，未来引入也会保留 100% 本地模式（per 项目 ADR 2026-05-04-paid-tier-deferred）。
 

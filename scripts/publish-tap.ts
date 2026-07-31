@@ -60,7 +60,7 @@ const sourcePresets: Record<string, { layer: string; layerSource: string }> = {
 
 let plan: any
 try {
-  plan = JSON.parse(await Deno.readTextFile(tapFile))
+  flow = JSON.parse(await Deno.readTextFile(tapFile))
 } catch (e) {
   console.error(`✗ cannot read ${tapFile}: ${(e as Error).message}`)
   Deno.exit(1)
@@ -68,7 +68,7 @@ try {
 
 const body = plan?.body
 if (!body || body.site !== site || body.name !== name) {
-  console.error(`✗ tap plan mismatch: expected ${site}/${name}, got ${body?.site}/${body?.name}`)
+  console.error(`✗ tap flow mismatch: expected ${site}/${name}, got ${body?.site}/${body?.name}`)
   Deno.exit(1)
 }
 
@@ -95,7 +95,7 @@ const columns: string[] = body.columns || []
 const argsObj: Record<string, any> = body.args || {}
 const health = body.health || {}
 // CLI flags win; otherwise fall back to body["tap:layer"]/body["tap:layerSource"]
-// (which lets CI auto-publish read metadata directly from the source plan).
+// (which lets CI auto-publish read metadata directly from the source flow).
 const layer = args.layer !== "?" ? String(args.layer) : String(body["tap:layer"] ?? "?")
 const layerSource = args["layer-source"] !== "unspecified"
   ? String(args["layer-source"])
@@ -176,7 +176,7 @@ const presJsonldPath = join(presPageDir, `${name}.jsonld`)
 const skillsDir = join(tapSkillsRoot, "showcase", site)
 const skillsPath = join(skillsDir, `${name}.tap.json`)
 
-console.log(`✓ plan parsed: ${site}/${name}`)
+console.log(`✓ flow parsed: ${site}/${name}`)
 console.log(`  columns: ${columns.join(", ")}`)
 console.log(`  args: ${Object.keys(argsObj).join(", ") || "(none)"}`)
 console.log(`  layer: L${layer} (${layerSource})`)

@@ -1,6 +1,6 @@
 # create-tap-script
 
-> One command. One starter `.plan.json`. Ready to customize.
+> One command. One starter `.flow.json`. Ready to customize.
 
 ```bash
 npx create-tap-script@latest github/issues "List issues for a repo"
@@ -10,7 +10,7 @@ Creates:
 
 ```
 github/
-├── issues.plan.json     # Tap v2 Plan starter
+├── issues.flow.json     # Tap v2 Plan starter
 └── issues.README.md     # next-steps notes
 ```
 
@@ -83,7 +83,7 @@ Use one of the dedicated adapters instead:
 
 [Tap](https://taprun.dev?utm_source=npm&utm_medium=readme&utm_campaign=create-tap-script) is local-first browser automation — compile your scraper once, run it in your own browser forever, and diff the drift when sites change.
 
-- Format spec: [`@taprun/spec`](https://www.npmjs.com/package/@taprun/spec) — TypeScript types + JSON Schema validator for `.plan.json`
+- Format spec: [`@taprun/spec`](https://www.npmjs.com/package/@taprun/spec) — TypeScript types + JSON Schema validator for `.flow.json`
 - Run locally: [Tap Chrome extension](https://taprun.dev) — credentials never leave your machine
 - Source: <https://github.com/LeonTing1010/tap> · npm: <https://www.npmjs.com/~taprun>
 

@@ -71,7 +71,7 @@ Three meta verbs + N saved-tap projections:
   • mark              — resolve uncertain intent → committed / aborted
   • <site>.<name>     — every saved tap auto-projects as an MCP tool
 
-Local-first architecture: taps live in ~/.tap/plans/, the binary is a
+Local-first architecture: taps live in ~/.tap/flows/, the binary is a
 single zero-dependency Deno compile, and nothing leaves your machine
 except license validation. Free tier covers all meta verbs and
 saved-tap execution; pricing tiers cap saved-plan count (3 / 5 / 20)
@@ -193,7 +193,7 @@ sees. Keep them ≤160 chars each for Glama display truncation.
 
 | Tool             | Description (Glama-tuned) |
 |------------------|---------------------------|
-| `capture`        | Create a tap from URL × intent. With site+name, persists to `~/.tap/plans/`. Re-call to heal drifted. |
+| `capture`        | Create a tap from URL × intent. With site+name, persists to `~/.tap/flows/`. Re-call to heal drifted. |
 | `verify`         | Read-only substrate check. 4-arm verdict: equivalent / drifted / first_snapshot / unreachable. |
 | `mark`           | Resolve an `intent_uncertain` record → committed or aborted. Use after observing the side effect. |
 | `<site>.<name>`  | Every saved tap auto-projects as an MCP tool (e.g. `github.trending`). Args follow the plan's schema. |

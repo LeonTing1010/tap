@@ -142,7 +142,7 @@ Deno.test("[smoke] runPipe dedupes identical sub-tap calls via run cache", async
   assertEquals(calls, 1, "identical calls must dedupe");
 });
 
-Deno.test("[smoke] runPipe rejects cycles at plan time", async () => {
+Deno.test("[smoke] runPipe rejects cycles at flow time", async () => {
   const run: TapRun = async () => ({ rows: [] });
   await assertRejects(
     () =>

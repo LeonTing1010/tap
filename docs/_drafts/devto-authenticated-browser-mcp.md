@@ -100,7 +100,7 @@ Connect to any MCP host:
 
 Tap exposes **four meta verbs** that any AI host gets:
 
-- `capture { url, intent, site, name }` — AI inspects the page once, emits a deterministic `.plan.json` program
+- `capture { url, intent, site, name }` — AI inspects the page once, emits a deterministic `.flow.json` program
 - `verify { site, name }` — read-only substrate equivalence check (catches drift before prod breaks)
 - `mark { site, name, key, as }` — resolves uncertain side-effects (the "did the post actually send?" problem)
 - `run { ref, args }` — replays a saved tap at **zero LLM tokens** — pure data + dispatch

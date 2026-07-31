@@ -88,9 +88,9 @@ Stagehand (Browserbase, 22K★, 745K weekly npm downloads) and Tap target the sa
 
 ### vs Browserbase
 
-Browserbase hosts the browser; Tap defines the program. They're not the same product even though both touch "reliable browser automation." Browserbase's value is hosted infra (anti-bot, replay, hosted sessions for orgs without infra). Tap's value is the program format (`.plan.json`, compile-once, deterministic replay, drift verify).
+Browserbase hosts the browser; Tap defines the program. They're not the same product even though both touch "reliable browser automation." Browserbase's value is hosted infra (anti-bot, replay, hosted sessions for orgs without infra). Tap's value is the program format (`.flow.json`, compile-once, deterministic replay, drift verify).
 
-A `.plan.json` plan with `runtime: "playwright"` can target any Playwright endpoint, including a Browserbase-hosted browser — Browserbase as a deployment target, not a competitor.
+A `.flow.json` plan with `runtime: "playwright"` can target any Playwright endpoint, including a Browserbase-hosted browser — Browserbase as a deployment target, not a competitor.
 
 *Honest weakness*: Browserbase has $20M+ funding, hosted control plane, replay tooling Tap doesn't ship. Tap doesn't compete on infrastructure. Pick Browserbase when you need a hosted browser pool; pick Tap when the session has to stay on the user's machine.
 

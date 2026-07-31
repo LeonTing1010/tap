@@ -1,5 +1,5 @@
 /**
- * @taprun/from-puppeteer — Puppeteer source → Tap Plan v2 adapter.
+ * @taprun/from-puppeteer — Puppeteer source → Tap Flow v2 adapter.
  *
  * Reference implementation that converts a Puppeteer script
  * (.ts / .js source text) into a v2 `Plan` object. Output is conformant
@@ -47,11 +47,11 @@
  *
  * NOTE: v2 has NO op:exec. All legacy escape paths route through op:eval
  * with a mandatory `returns.type` declaration. The user MUST fix up
- * `returns.type` before the plan will validate at runtime — `lint.ts`
+ * `returns.type` before the flow will validate at runtime — `lint.ts`
  * will flag any eval where returns.type is structurally unknown.
  */
 
-import type { Op, Plan } from "@taprun/spec";
+import type { Op, Flow } from "@taprun/spec";
 
 export interface PuppeteerToTapOptions {
   site: string;
@@ -114,7 +114,7 @@ const RE_PAGE_CALL =
   /(?:page|context|browser|frame)\s*\.\s*([a-zA-Z_$][\w$]*)\s*\(/;
 
 /** Lifecycle methods that are test scaffolding, not user actions —
- *  silently dropped (no plan op emitted, no warning). */
+ *  silently dropped (no flow op emitted, no warning). */
 const LIFECYCLE_METHODS: ReadonlySet<string> = new Set([
   "launch",
   "newPage",
@@ -142,7 +142,7 @@ function pickStr2(m: RegExpMatchArray): [string, string] | undefined {
 export function puppeteerToTap(
   source: string,
   options: PuppeteerToTapOptions,
-): Plan {
+): Flow {
   if (!options.site || !options.name) {
     throw new PuppeteerConversionError(
       "site and name are required in PuppeteerToTapOptions",
@@ -260,7 +260,7 @@ export function puppeteerToTap(
           fn:
             `/* TODO: original Puppeteer line ${i + 1} not auto-` +
             `converted: ${line.replace(/\*\//g, "*\\/")} ` +
-            `— v2 has no op:exec; rewrite as plan ops or declare ` +
+            `— v2 has no op:exec; rewrite as flow ops or declare ` +
             `correct returns.type. */ () => ({})`,
           returns: { type: "object" },
         });
@@ -280,26 +280,26 @@ export function puppeteerToTap(
   const id = { site: options.site, name: options.name };
 
   if (intent === "write") {
-    // Write variant — act + key both required by v2 Plan discriminated
+    // Write variant — act + key both required by v2 Flow discriminated
     // union. We synthesize a placeholder key from site/name; author MUST
     // refine to a real CEL expression that uniquely identifies the
     // intended side-effect (per ADR §10 Plan.key dedup contract).
-    const plan: Plan = {
+    const plan: Flow = {
       id,
       ...(options.description ? { description: options.description } : {}),
       act: ops,
       key: `"${options.site}:${options.name}:" + string($args)`,
       return: "true",
     };
-    return plan;
+    return flow;
   }
 
   // Read variant — observe only, no act/key.
-  const plan: Plan = {
+  const plan: Flow = {
     id,
     ...(options.description ? { description: options.description } : {}),
     observe: ops,
     return: "true",
   };
-  return plan;
+  return flow;
 }

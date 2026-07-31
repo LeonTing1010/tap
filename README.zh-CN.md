@@ -30,12 +30,12 @@
 
 当 API 被圈起来收费，真正剩下的活都躲在登录、OTP、真人手势这些门后面 —— 那些云 agent 架构上碰不到的例外、审批、合规步骤。Taprun 就是干这个的行动层：你的 agent 驱动你自己已登录的 Chrome，闭环跑完（执行 → 核验效果 → 漂移即重跑），再把一份你拥有的确定性重放交到你手上。
 
-别的浏览器 agent 每跑一次都要现场调一次大模型、反复烧 token。Taprun 让 AI 把页面分析**一次**，产出确定性的 `.plan.json` 程序；之后每次重放都是纯数据派发 —— 每次结果完全一致，**$0 token，agent 不在运行路径**。它跑在你自己真实的 Chrome 里，cookie 和登录会话因此留在你机器上（架构决定）。`tap verify` 在数据变质前发现页面变化。
+别的浏览器 agent 每跑一次都要现场调一次大模型、反复烧 token。Taprun 让 AI 把页面分析**一次**，产出确定性的 `.flow.json` 程序；之后每次重放都是纯数据派发 —— 每次结果完全一致，**$0 token，agent 不在运行路径**。它跑在你自己真实的 Chrome 里，cookie 和登录会话因此留在你机器上（架构决定）。`tap verify` 在数据变质前发现页面变化。
 
 适用于 Claude Code、CodeBuddy、Cursor、Cline、Windsurf 以及任何 MCP host —— 在聊天窗口里就能装。任意 URL 按需锻造 tap——不需要目录。
 
 ```
-捕获：  AI 分析网站 → 编译成 .plan.json 程序        （一次性成本）
+捕获：  AI 分析网站 → 编译成 .flow.json 程序        （一次性成本）
 执行：  程序即时运行，每次结果完全一致              ($0，零 AI）
 验证：  tap verify 检查快照等价断言                 （捕获漂移）
 修复：  对同一 site/name 重新执行 capture；         （仅在需要时）
@@ -52,7 +52,7 @@
 | **故障诊断** | `tap verify` — 精确 diff 出变了什么 | 无 | 手动抽查 |
 | **检测风险** | 低（真实浏览器会话） | 高 | 高 |
 | **运行时** | 2（Chrome 扩展 + Playwright） | 1 | 1 |
-| **代码可检查** | .plan.json — 纯 JSON，18-op 闭集词汇，可 git diff | 黑盒 / 临时的 | 脆弱脚本 |
+| **代码可检查** | .flow.json — 纯 JSON，18-op 闭集词汇，可 git diff | 黑盒 / 临时的 | 脆弱脚本 |
 | **MCP 原生** | 是（仅创作层 — 执行零 token） | 否 | 否 |
 
 ## 快速开始
@@ -113,9 +113,9 @@ npx -y @taprun/cli --version                    # 零安装（任何 Node 环境
 跑一下[判断台账](https://github.com/LeonTing1010/tap-skills)的第一条——和它每晚 CI 跑的是同一份验证：
 
 ```bash
-mkdir -p ~/.tap/plans/github
+mkdir -p ~/.tap/flows/github
 curl -fsSL https://raw.githubusercontent.com/LeonTing1010/tap-skills/main/claims/2026-07-11-github-trending-has-no-api/plan.json \
-  -o ~/.tap/plans/github/trending-no-api.plan.json
+  -o ~/.tap/flows/github/trending-no-api.flow.json
 tap github/trending-no-api
 ```
 
@@ -152,7 +152,7 @@ CLI 输出 `ToolResult<T>` JSON 信封——与 MCP 接口同构——任何有 
 
 ### 已有 Playwright / Puppeteer / Stagehand 脚本？
 
-不要重写。用其中一个开源 adapter 直接转换 — 把已有脚本扔进去，拿一份 Taprun 兼容的 `.plan.json` 出来：
+不要重写。用其中一个开源 adapter 直接转换 — 把已有脚本扔进去，拿一份 Taprun 兼容的 `.flow.json` 出来：
 
 ```bash
 # 已有 Playwright 脚本（npm 47M 周下载，你最可能用的 SDK）
@@ -168,7 +168,7 @@ npx create-tap-script github/trending https://github.com/trending
 | [`@taprun/from-playwright`](https://www.npmjs.com/package/@taprun/from-playwright) | `.ts/.js` Playwright 测试 | 8 个 page.* API（goto/click/fill/type/press/waitForSelector/waitForTimeout/screenshot） |
 | [`@taprun/from-puppeteer`](https://www.npmjs.com/package/@taprun/from-puppeteer) | `.ts/.js` Puppeteer 脚本 | 7 个 page.* API + page.keyboard.press |
 | [`@taprun/from-stagehand`](https://www.npmjs.com/package/@taprun/from-stagehand) | `.ts/.js` Stagehand 脚本 | 混合：确定性的 page.* 转 plan op；自然语言 `act/extract/observe` 被标记，让 verify 给出诚实裁定 |
-| [`create-tap-script`](https://www.npmjs.com/package/create-tap-script) | （无 — 脚手架） | 从 `<site>/<name> <url>` 生成一个起步 `.plan.json` 信封 |
+| [`create-tap-script`](https://www.npmjs.com/package/create-tap-script) | （无 — 脚手架） | 从 `<site>/<name> <url>` 生成一个起步 `.flow.json` 信封 |
 
 格式本身有完整文档：[`@taprun/spec`](https://www.npmjs.com/package/@taprun/spec) —— 公共协议接口包：v2 Plan 的 TypeScript 类型（18-op 闭集联合 + 区分式的读/写 Plan 联合）+ JSON Schema 2020-12，其 `$id` 可在 `taprun.dev/spec/plan-v1/schema.json` 解析，并与 TS 类型双向漂移校验。第三方工具（IDE `$schema` 补全、Python/Ruby/Go 中的 ajv 等价校验器、治理层、替代运行时、带 plan 感知权限作用域的 MCP host）都基于此包构建，无需依赖专有的 Taprun 引擎。Plan-v1 规范：[taprun.dev/spec/plan-v1](https://taprun.dev/spec/plan-v1/)。五个包的源码：[`packages/`](packages/)（workspace 总览见 [`packages/README.md`](packages/README.md)）。
 
@@ -226,7 +226,7 @@ tap capture https://arxiv.org/list/cs.AI/recent arxiv/recent --intent "recent pa
 ```
 
 1. **你描述**你想要什么（URL × 自然语言意图）
-2. **AI 编译**成 `.plan.json` 程序 — 纯 JSON，18-op 闭集词汇，可版本控制
+2. **AI 编译**成 `.flow.json` 程序 — 纯 JSON，18-op 闭集词汇，可版本控制
 3. **Taprun 运行**程序 — 两个运行时任选，永久运行，$0
 
 每次成功编译都让下一次更快。要给新网站建 tap？你的 Agent 用 `capture` 按需锻造——不需要目录。
@@ -238,9 +238,9 @@ tap capture https://arxiv.org/list/cs.AI/recent arxiv/recent --intent "recent pa
 亲手验证第一条（约 2 分钟，无需登录、无需浏览器）：
 
 ```bash
-mkdir -p ~/.tap/plans/github
+mkdir -p ~/.tap/flows/github
 curl -fsSL https://raw.githubusercontent.com/LeonTing1010/tap-skills/main/claims/2026-07-11-github-trending-has-no-api/plan.json \
-  -o ~/.tap/plans/github/trending-no-api.plan.json
+  -o ~/.tap/flows/github/trending-no-api.flow.json
 npx -y @taprun/cli github/trending-no-api
 ```
 
@@ -274,7 +274,7 @@ Taprun 跑在 **你的** 浏览器，不是别人的云。Chrome 扩展复用你
 
 ## 贡献
 
-最简单的贡献方式：**锻造一个新 tap。** 只需一个 `.plan.json` 文件。
+最简单的贡献方式：**锻造一个新 tap。** 只需一个 `.flow.json` 文件。
 
 详见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 

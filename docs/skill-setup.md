@@ -72,7 +72,7 @@ metadata:
 ## 三步动作
 
 1. **先查注册表**：`resources/list` —— 已存的 tap 是 Resource（`tap://{site}/{name}`）。命中就别重复造；`resources/read` 看参数 schema，然后 `run({ ref: "{site}/{name}", args })` 执行。
-2. **没有就录**：`capture { url, intent, site, name }`。带 `site+name` 会把编译好的 plan 存到 `~/.tap/plans/<site>/<name>.plan.json`，之后可无限重放。AI 只在**录制这一刻**参与；重放是纯数据 + 分发，零 token。
+2. **没有就录**：`capture { url, intent, site, name }`。带 `site+name` 会把编译好的 plan 存到 `~/.tap/flows/<site>/<name>.flow.json`，之后可无限重放。AI 只在**录制这一刻**参与；重放是纯数据 + 分发，零 token。
 3. **重放**：`run({ ref, args })`。想在跑之前确认 tap 没因页面改版失效，先 `verify`（只读，不执行写操作）。
 
 ## 为什么这跟别的浏览器工具不一样（说给用户听）

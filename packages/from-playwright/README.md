@@ -30,7 +30,7 @@ if (warnings.length) {
   console.warn("Conversion warnings:", warnings);
 }
 
-await writeFile("github/search.plan.json", JSON.stringify(plan, null, 2));
+await writeFile("github/search.flow.json", JSON.stringify(plan, null, 2));
 ```
 
 ## Mapping (v1.0)
