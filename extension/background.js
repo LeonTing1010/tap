@@ -573,6 +573,33 @@ const CLICK_WATCH_ARM = () => {
   globalThis.__tapClickWatch = W
   return true
 }
+// Geometry check, run IN-PAGE immediately before a trusted CDP click: is the
+// element currently at (x,y) the one the resolver picked? Coordinates resolved
+// at time T are clicked at T+Δ; any reflow between (lazy images, a feed loading,
+// an auto-rotating carousel) moves the target and the click lands elsewhere.
+// Needs no attribution — unlike the effect watch, ambient page noise cannot
+// affect it. A descendant counts as a hit: the label inside a button IS the
+// button as far as the click is concerned.
+const CLICK_HIT_TEST = (sel, x, y) => {
+  const want = document.querySelector(sel)
+  if (!want) return false
+  const at = document.elementFromPoint(x, y)
+  if (!at) return false
+  return at === want || want.contains(at)
+}
+
+// ONE spelling of "the click provably did nothing" — shared by the escalation
+// gate (untrusted arm: retry via CDP) and the trusted report (no remedy left, so
+// report the fact). Two hand-rolled copies would drift, and the trusted arm
+// would start disagreeing with the untrusted one about what inert means.
+// A null/absent reading is NOT inert: no reading is not a reading of zero.
+const isInertClickEffect = (effect) => {
+  if (!effect) return false
+  return !effect.navigated && effect.m === 0 && effect.net === 0 &&
+    !effect.hrefChanged && (effect.opens || []).length === 0 &&
+    (effect.blocked || []).length === 0
+}
+
 const CLICK_WATCH_READ = () => {
   const W = globalThis.__tapClickWatch
   if (!W) return null
@@ -2222,7 +2249,14 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       if (!result) throw new Error(notFoundMsg(innerSel))
       // CDP fallback: if site needs isTrusted events, retry with cdpClick
       // (dx/dy translate frame-relative coords to top-frame viewport space)
+      let hitMiss = null
       if (params.trusted) {
+        // Hit-test BEFORE dispatching: after the click the miss has already
+        // happened and is indistinguishable from "clicked, no effect".
+        try {
+          const hit = await execFunc(fx, CLICK_HIT_TEST, innerSel, result.x, result.y)
+          if (hit === false) hitMiss = { selector: innerSel, x: result.x, y: result.y }
+        } catch (_e) { /* frame gone / selector not plain CSS — stay silent, never block */ }
         await cdpClick(tabId, result.x + dx, result.y + dy)
       }
       // Effect probe (click-effect watch, 2026-07-23): read the counters the
@@ -2236,8 +2270,7 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
         await new Promise(r => setTimeout(r, 450))
         try { effect = await execFunc(fx, CLICK_WATCH_READ) } catch (_e) { effect = { navigated: true } }
         if (effect === null || effect === undefined) effect = null
-        else if (!effect.navigated && effect.m === 0 && effect.net === 0 && !effect.hrefChanged &&
-            effect.opens.length === 0 && effect.blocked.length === 0 &&
+        else if (isInertClickEffect(effect) &&
             !params.trusted && result && typeof result.x === 'number') {
           // Provably INERT JS click (zero mutations, zero requests, zero
           // opens, same href) → escalate ONCE to a CDP trusted click at the
@@ -2271,6 +2304,16 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       if (effect) {
         const ce = {}
         if (effect.blocked && effect.blocked.length) ce.popup_blocked = effect.blocked
+        // Trusted arm: escalation is correctly untrusted-only (a second CDP click
+        // could double-fire a write), so there is NO remedy here — which makes the
+        // fact itself the only honest output. Withholding it is exactly how a
+        // stale-coordinate trusted click that hit nothing still returned ok:true
+        // (2026-08-01 goofish 下架 dogfood).
+        if (params.trusted && isInertClickEffect(effect)) ce.silent_trusted_click = true
+        // Proven miss: the coordinates no longer held the resolved target when
+        // the click fired. Unlike silent_trusted_click this survives a noisy
+        // page — geometry needs no attribution (2026-08-01 goofish dogfood).
+        if (hitMiss) ce.stale_coords = hitMiss
         if (effect.silentJsClick) {
           ce.silent_js_click = true
           ce.escalated = !!effect.escalated

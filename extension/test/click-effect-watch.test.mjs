@@ -56,15 +56,27 @@ test('effect read waits 450ms and a read failure counts as NAVIGATED, not inert'
     'a post-click probe failure must be recorded as navigation (strongest effect)')
 })
 
-test('escalation gate is ALL-ZERO and untrusted-only', () => {
-  const gate = clickCase.match(/else if \(([^)]+(?:\)[^{]*?)?)\) \{/s)
-  assert(clickCase.includes("!effect.navigated && effect.m === 0 && effect.net === 0 && !effect.hrefChanged"),
+// 2026-08-01: the ALL-ZERO spelling moved OUT of this gate into the shared
+// top-level `isInertClickEffect` (so the untrusted escalation and the new
+// trusted-inert report can never disagree about what "inert" means). The
+// property is unchanged and still defended — it just has a new home, so these
+// assertions follow it there rather than being deleted. Predicate SEMANTICS
+// (executed against fixtures) are owned by trusted-click-inert-report.test.mjs;
+// this test keeps owning the GATE's composition.
+test('escalation gate delegates to the shared ALL-ZERO predicate and stays untrusted-only', () => {
+  assert(/const isInertClickEffect = /.test(BG_SRC),
+    'the all-zero test must be ONE shared top-level predicate, not inlined per gate')
+  const pred = BG_SRC.slice(BG_SRC.indexOf('const isInertClickEffect = '))
+    .slice(0, 400)
+  assert(pred.includes('!effect.navigated') && pred.includes('effect.m === 0') &&
+    pred.includes('effect.net === 0') && pred.includes('!effect.hrefChanged'),
     'inert predicate must require zero mutations, zero net, unchanged href')
-  assert(clickCase.includes('effect.opens.length === 0 && effect.blocked.length === 0'),
+  assert(/opens[^)]*\)\.length === 0/.test(pred) && /blocked[^)]*\)\.length === 0/.test(pred),
     'inert predicate must require zero window.open calls (allowed OR blocked)')
+  assert(clickCase.includes('isInertClickEffect(effect)'),
+    'the gate must CALL the shared predicate rather than re-spell it')
   assert(clickCase.includes("!params.trusted && result && typeof result.x === 'number'"),
     'escalation must be untrusted-only and require resolved coords')
-  void gate
 })
 
 test('escalation re-arms, CDP-clicks the same coords once, and re-probes', () => {
@@ -81,10 +93,15 @@ test('escalation re-arms, CDP-clicks the same coords once, and re-probes', () =>
 test('popup_blocked reports but NEVER escalates (double-fire hazard)', () => {
   assert(/ce\.popup_blocked = effect\.blocked/.test(clickCase),
     'blocked opens must surface as click_effect.popup_blocked')
-  // blocked.length === 0 sits inside the escalation gate → any blocked open
-  // fails the gate → no escalation path can run.
-  assert(clickCase.includes('effect.blocked.length === 0'),
-    'escalation gate must exclude blocked-popup clicks')
+  // The blocked-is-empty term moved into the shared `isInertClickEffect`
+  // (2026-08-01) — the property is identical: a blocked open makes the
+  // predicate false, the gate calls the predicate, so no escalation path can
+  // run. Assert it where it now lives, plus that the gate actually calls it.
+  const pred = BG_SRC.slice(BG_SRC.indexOf('const isInertClickEffect = ')).slice(0, 400)
+  assert(/blocked[^)]*\)\.length === 0/.test(pred),
+    'inert predicate must exclude blocked-popup clicks')
+  assert(clickCase.includes('isInertClickEffect(effect)'),
+    'escalation gate must go through the predicate, else the exclusion is bypassable')
 })
 
 test('anomalies merge preserves witness voting report', () => {
