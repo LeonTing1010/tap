@@ -13,6 +13,142 @@
     }
   ],
   "$defs": {
+    "Shape": {
+      "description": "Witnessed value shape (ADR 2026-08-01-shape-algebra-witnessed-semilattice): a bounded join-semilattice recording what a value looked like. Emitted by freeze from the live session's actual values (the must_candidate lane); never authored by hand, never required. Bounds enforced by the emitter (depth<=4, width<=32, lits<=8); this schema pins the wire form.",
+      "type": "object",
+      "required": [
+        "t"
+      ],
+      "oneOf": [
+        {
+          "properties": {
+            "t": {
+              "enum": [
+                "bot",
+                "dyn",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "t"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "t": {
+              "const": "bool"
+            },
+            "n": {
+              "const": true
+            }
+          },
+          "required": [
+            "t"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "t": {
+              "const": "str"
+            },
+            "lits": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 8
+            },
+            "n": {
+              "const": true
+            }
+          },
+          "required": [
+            "t"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "t": {
+              "const": "num"
+            },
+            "lits": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "maxItems": 8
+            },
+            "n": {
+              "const": true
+            }
+          },
+          "required": [
+            "t"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "t": {
+              "const": "arr"
+            },
+            "e": {
+              "$ref": "#/$defs/Shape"
+            },
+            "n": {
+              "const": true
+            }
+          },
+          "required": [
+            "t",
+            "e"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "t": {
+              "const": "obj"
+            },
+            "f": {
+              "type": "array",
+              "maxItems": 32,
+              "items": {
+                "type": "object",
+                "required": [
+                  "k",
+                  "s"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "k": {
+                    "type": "string"
+                  },
+                  "s": {
+                    "$ref": "#/$defs/Shape"
+                  },
+                  "opt": {
+                    "const": true
+                  }
+                }
+              }
+            },
+            "n": {
+              "const": true
+            }
+          },
+          "required": [
+            "t",
+            "f"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
     "TapId": {
       "type": "object",
       "description": "Pure identity for a tap. Two TapIds equal iff site AND name match.",
@@ -576,6 +712,9 @@
                 "object",
                 "array"
               ]
+            },
+            "shape": {
+              "$ref": "#/$defs/Shape"
             }
           }
         },
