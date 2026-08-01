@@ -1,7 +1,7 @@
 {
   "name": "@taprun/spec",
-  "version": "1.9.0",
-  "description": "Tap v2 plan format \u2014 public TypeScript types for the 13-op closed union, Plan discriminated union, and state-machine enums (Verdict, IntentState). Schema break vs v0.x; see ADR 2026-05-04-ecosystem-v2-launch.",
+  "version": "1.10.0",
+  "description": "Tap v2 plan format — public TypeScript types for the 13-op closed union, Plan discriminated union, and state-machine enums (Verdict, IntentState). Schema break vs v0.x; see ADR 2026-05-04-ecosystem-v2-launch.",
   "publishConfig": {
     "access": "public"
   },

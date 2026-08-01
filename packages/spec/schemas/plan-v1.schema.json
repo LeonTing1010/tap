@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://taprun.dev/spec/plan-v1/schema.json",
   "title": "Tap Flow v1",
-  "description": "On-disk format for Tap v2 plans (bare JSON; no W3C Annotation envelope). Plans are a discriminated union of read (observe+return) and write (act+key+confirm?) variants.",
+  "description": "On-disk format for Tap v2 flows (bare JSON; no W3C Annotation envelope). Flows are a discriminated union of read (observe+return) and write (act+key+confirm?) variants.",
   "$comment": "GENERATED from core/types.ts by scripts/gen-plan-schema.ts — DO NOT EDIT BY HAND. Regenerate: deno task gen:plan-schema. Freshness: gen:plan-schema --check (blocking).",
   "oneOf": [
     {
@@ -38,7 +38,7 @@
     },
     "ArgSpec": {
       "type": "object",
-      "description": "Argument schema declaration on a Plan.",
+      "description": "Argument schema declaration on a Flow.",
       "required": [
         "type"
       ],
@@ -289,6 +289,10 @@
         },
         "timeout_ms": {
           "type": "number"
+        },
+        "stable": {
+          "type": "boolean",
+          "description": "Quiesce the LIVE page (DOM + network idle) instead of waiting on a condition. Tab-bound by construction (types.ts:waitNeedsTab) — engineWait cannot honour it."
         },
         "save": {
           "type": "string"
@@ -580,6 +584,10 @@
         },
         "save": {
           "type": "string"
+        },
+        "mutates": {
+          "type": "boolean",
+          "description": "Does this eval body DISPATCH a side effect (HTTP write, beacon)? The act-phase mutation tracker keys the honest-failure edge, the commit-gate and lint `must-missing` on this fact. Omit and the tracker DETECTS dispatch syntax in `fn` — declaring it is exact. `false` overrides a false-positive detection (inert string, read-only GET). See notes/engine-gaps/eval-invisible-mutation-2026-08-01.md."
         }
       }
     },
@@ -870,7 +878,7 @@
         "method"
       ],
       "additionalProperties": false,
-      "description": "Resolved host-caps registry entry (Lane-B). Peer transport only — attached at the core dispatch boundary; not authored in plans.",
+      "description": "Resolved host-caps registry entry (Lane-B). Peer transport only — attached at the core dispatch boundary; not authored in flows.",
       "properties": {
         "namespace": {
           "type": "string"

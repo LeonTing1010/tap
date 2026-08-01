@@ -146,6 +146,11 @@ export interface WaitOp {
    *  route-change wait (ADR 2026-07-08-op-capabilities). Tab-bound. */
   url?: string;
   timeout_ms?: number;
+  /** Quiesce the LIVE page (DOM + network idle) instead of waiting on a
+   *  condition. Tab-bound by construction — an engine-inline wait cannot
+   *  honour it. Present in the engine since the auto-settle work; documented
+   *  here in 1.10.0 (the schema had omitted it). */
+  stable?: boolean;
   save?: string;
 }
 
@@ -261,6 +266,16 @@ export interface EvalOp {
   returns?: { type: "string" | "number" | "boolean" | "object" | "array" };
   args?: Json[];
   save?: string;
+  /** Does this eval body DISPATCH a side effect (HTTP write, beacon)? The
+   *  engine's act-phase mutation tracker keys the honest-failure edge, the
+   *  commit-gate and the `must-missing` lint on this fact. Omit and the
+   *  tracker DETECTS dispatch syntax in `fn`; declaring it is exact. `false`
+   *  overrides a false-positive detection (an inert string, a read-only GET).
+   *
+   *  Added 1.10.0 after a stored flow's POST-in-eval proved invisible to all
+   *  three gates: page-native HTTP has been permitted in `eval.fn` since
+   *  1.6.0, but nothing in the format let an author SAY that a body writes. */
+  mutates?: boolean;
 }
 
 /** Host op (1) — browser-harness management (tabs / tab-groups). Acts on

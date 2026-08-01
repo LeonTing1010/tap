@@ -1,5 +1,33 @@
 # @taprun/spec — Changelog
 
+## 1.10.0 — 2026-08-01
+
+**Additive (backward-compatible).** Two optional op fields.
+
+- `EvalOp.mutates?: boolean` — does this eval body dispatch a side effect?
+
+  1.6.0 settled that page-native HTTP stays PERMITTED in `eval.fn` ("op:eval
+  reflects page capability and there is no non-eval page-HTTP op"). What the
+  format never gained was a way to SAY so. The engine's act-phase mutation
+  tracker had been assuming the opposite — it classified every `op:eval` as
+  non-mutating, and three separate gates read that one fact: whether a failed
+  run settles `uncertain` (side effect in doubt) or `aborted` (safe to retry),
+  whether the commit-gate demands verification, and whether `must-missing`
+  applies. A stored flow that POSTs from `eval.fn` therefore reported a landed
+  write as `aborted`, and a retry would double-fire.
+
+  Omitting the field is safe: the engine detects dispatch syntax in `fn` and
+  guesses conservatively. Declaring it is exact — and `false` is how an author
+  overrides a false positive (an inert string, a read-only GET).
+
+- `WaitOp.stable?: boolean` — quiesce the live page (DOM + network idle)
+  instead of waiting on a condition. Long present in the engine; the published
+  schema had simply omitted it.
+
+Schema `description` prose also follows the engine's Plan→Flow naming pass.
+Non-normative: `$id`, the `plan-v1` filename, every property name and the
+`application/tap-plan+json` media type are the wire contract and are unchanged.
+
 ## 1.6.0 — 2026-06-16
 
 **Additive (backward-compatible).** Three new `LINT_RULE_NAMES` slugs for the
