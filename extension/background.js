@@ -600,6 +600,38 @@ const isInertClickEffect = (effect) => {
     (effect.blocked || []).length === 0
 }
 
+/** Compare-and-swap for a trusted click (ADR tap-core 2026-08-02-the-oracle-
+ *  obligation-belongs-to-dispatch §3).
+ *
+ *  The page is a concurrent mutable store: `selector → (x,y)` is a READ and
+ *  dispatching at (x,y) is a WRITE. Before this helper the call site performed
+ *  the compare (CLICK_HIT_TEST) and then swapped regardless — a textbook lost
+ *  update, and the miss it recorded was the only evidence that the click had
+ *  landed on nothing.
+ *
+ *  A click at a point PROVEN not to be the target is worse than no click: it
+ *  is an unattributable side effect somewhere else on the page. So a proven
+ *  miss RE-READS (the element moved; its new position is the whole point) and,
+ *  after `attempts` reads without agreement, does not dispatch at all.
+ *
+ *  `hitTest` returning null/undefined means UNDECIDABLE (frame gone, non-CSS
+ *  target, closed shadow) — never a miss. Refusing there would break every
+ *  coords/pierced target, which is exactly the class trusted:true exists for.
+ *
+ *  Injected-free and dependency-free so extension/test can execute it. */
+const casClick = async ({ resolve, hitTest, dispatch, attempts = 3 }) => {
+  let stale = null
+  for (let i = 0; i < attempts; i++) {
+    const p = await resolve()
+    if (!p) continue
+    const hit = await hitTest(p)
+    if (hit === false) { stale = p; continue }
+    await dispatch(p)
+    return { dispatched: true, point: p, attempts: i + 1 }
+  }
+  return { dispatched: false, stale, attempts }
+}
+
 const CLICK_WATCH_READ = () => {
   const W = globalThis.__tapClickWatch
   if (!W) return null
@@ -2251,13 +2283,35 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       // (dx/dy translate frame-relative coords to top-frame viewport space)
       let hitMiss = null
       if (params.trusted) {
-        // Hit-test BEFORE dispatching: after the click the miss has already
-        // happened and is indistinguishable from "clicked, no effect".
-        try {
-          const hit = await execFunc(fx, CLICK_HIT_TEST, innerSel, result.x, result.y)
-          if (hit === false) hitMiss = { selector: innerSel, x: result.x, y: result.y }
-        } catch (_e) { /* frame gone / selector not plain CSS — stay silent, never block */ }
-        await cdpClick(tabId, result.x + dx, result.y + dy)
+        // Compare-and-swap, not compare-then-swap-anyway: a proven miss
+        // re-resolves (the element moved — its NEW position is the point) and,
+        // failing to agree, does not dispatch at all. See casClick.
+        const cas = await casClick({
+          resolve: async () => {
+            if (result) { const r = result; result = null; return { x: r.x, y: r.y } }
+            try {
+              const again = await execFunc(fx, clickResolver, innerTarget, false)
+              return again ? { x: again.x, y: again.y } : null
+            } catch (_e) { return null }
+          },
+          hitTest: async (p) => {
+            // null = undecidable, never a miss (frame gone / non-CSS target).
+            try { return await execFunc(fx, CLICK_HIT_TEST, innerSel, p.x, p.y) } catch (_e) { return null }
+          },
+          dispatch: (p) => cdpClick(tabId, p.x + dx, p.y + dy),
+        })
+        if (!cas.dispatched) {
+          // Proven stale after every re-read. Reporting ok here would be the
+          // exact lie this ADR is about; the caller may safely retry because
+          // nothing was dispatched.
+          const at = cas.stale
+          throw new Error(
+            `stale_target: ${innerSel} moved on every one of ${cas.attempts} reads` +
+            (at ? ` (last resolved ${at.x},${at.y} — the point no longer holds the target)` : '') +
+            ' — nothing was clicked. Wait for layout to settle (lazy images, a' +
+            ' loading feed, a carousel) and retry.')
+        }
+        if (cas.attempts > 1) hitMiss = { selector: innerSel, reads: cas.attempts, recovered: true }
       }
       // Effect probe (click-effect watch, 2026-07-23): read the counters the
       // pre-click ARM installed. 450ms balances detection (framework handlers
