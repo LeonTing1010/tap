@@ -619,6 +619,35 @@ const isInertClickEffect = (effect) => {
  *  coords/pierced target, which is exactly the class trusted:true exists for.
  *
  *  Injected-free and dependency-free so extension/test can execute it. */
+/** Read the acted-on element's own state (ADR tap-core 2026-08-02-the-oracle-
+ *  obligation-belongs-to-dispatch §6 slice 2b). Injected in-page, called once
+ *  BEFORE the act and once after; the pair is what the derived φ
+ *  `!target.present || target.witness != target.witness_before` compares.
+ *
+ *  Why the target rather than the page: attribution. A page can be
+ *  arbitrarily loud — x.com POSTs heartbeats continuously — and still cannot
+ *  forge the state of the element we clicked. The document-wide effect watch
+ *  has no such property, which is why it reads constant-true on any live SPA.
+ *
+ *  `visible:false` on the pick: an element that went hidden has NOT left the
+ *  DOM, and conflating the two would report a successful click for a target
+ *  that merely scrolled out of view.
+ *
+ *  Returns null when the resolver is unavailable — "cannot observe" is never
+ *  reported as "observed and present". */
+const TARGET_READBACK = (sel) => {
+  const D = globalThis.__tapDeep
+  if (!D) return null
+  const el = D.pick({ selector: sel, visible: false }, document)
+  if (!el) return { present: false, witness: null }
+  const role = D.implicitRole(el) || ''
+  const name = (D.accName(el) || '').slice(0, 80)
+  const w = (role || name)
+    ? { ...(role ? { role } : {}), ...(name ? { name } : {}) }
+    : null
+  return { present: true, witness: w }
+}
+
 const casClick = async ({ resolve, hitTest, dispatch, attempts = 3 }) => {
   let stale = null
   for (let i = 0; i < attempts; i++) {
@@ -2258,6 +2287,16 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       // never clicks). Best-effort: a CSP-exotic page that rejects the arm
       // injection must not break the click itself.
       if (!params.probe) { try { await execFunc(fx, CLICK_WATCH_ARM) } catch (_e) { /* effect probe degrades to null */ } }
+      // Slice 2b: observe the target BEFORE the act — and "before" means
+      // before `clickResolver`, because the untrusted arm's JS click happens
+      // INSIDE it. A read placed after the resolver call is a post-act
+      // reading wearing a pre-act name (caught by TB4).
+      // Best-effort: the readback is evidence, never a precondition, so a
+      // page that refuses the injection must not lose its click.
+      let targetBefore = null
+      if (!params.probe) {
+        try { targetBefore = await execFunc(fx, TARGET_READBACK, innerSel) } catch (_e) { /* evidence only */ }
+      }
       try {
         result = await execFunc(fx, clickResolver, innerTarget, params.probe)
       } catch (e) {
@@ -2361,6 +2400,17 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       // click_effect joins it: popup_blocked and silent-click/escalation are
       // exactly the "ok proved dispatch, not effect" facts the author cannot
       // see from ok:true alone.
+      // Slice 2b: observe it again after the act. The PAIR is the evidence;
+      // either half alone answers a weaker question than the φ asks.
+      let targetAfter = null
+      try { targetAfter = await execFunc(fx, TARGET_READBACK, innerSel) } catch (_e) { /* evidence only */ }
+      const targetReadback = (targetBefore || targetAfter)
+        ? {
+          present: targetAfter ? targetAfter.present : null,
+          witness: targetAfter ? targetAfter.witness : null,
+          witness_before: targetBefore ? targetBefore.witness : null,
+        }
+        : null
       const anomalies = { ...(result._tap_anomalies || {}) }
       if (effect) {
         const ce = {}
@@ -2388,7 +2438,10 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
         }
         if (Object.keys(ce).length) anomalies.click_effect = ce
       }
-      return Object.keys(anomalies).length ? { _tap_anomalies: anomalies } : {}
+      return {
+        ...(Object.keys(anomalies).length ? { _tap_anomalies: anomalies } : {}),
+        ...(targetReadback ? { _tap_target: targetReadback } : {}),
+      }
     }
 
     case 'type': {
