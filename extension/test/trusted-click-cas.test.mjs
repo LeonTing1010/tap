@@ -112,6 +112,25 @@ await test('CAS4 — an undecidable hit test (frame gone / non-CSS target) must 
   assert.equal(r.dispatched, true)
 })
 
+await test('CAS5 — post-mortem: the CAS closures must not destroy state the downstream still reads', () => {
+  // Why this exists (2026-08-02): the first implementation consumed the
+  // pre-resolved coordinates by assigning `result = null` inside the resolve
+  // closure. Every unit test passed — casClick is exercised in ISOLATION, so
+  // nothing executed the lines after it. The effect probe and the anomaly
+  // merge both dereference `result` unconditionally, so a real trusted click
+  // would have thrown on null. Caught only by walking the call site.
+  //
+  // The residual surface the type system cannot cover here is exactly one
+  // pattern, so the guard is one pattern (ladder Rule 3), not a general ban.
+  const arm = BG.slice(BG.indexOf('if (params.trusted) {'), BG.indexOf('// Effect probe'))
+  assert.ok(!/\bresult\s*=\s*null\b/.test(arm),
+    'the trusted arm must not null `result`: the effect probe and the anomaly ' +
+    'merge below read it unconditionally, and no isolated CAS test can see that')
+  assert.ok(/result\s*=\s*again/.test(arm),
+    'a re-resolve must REFRESH `result` so the downstream reads the live element, ' +
+    'not the stale one it already proved wrong')
+})
+
 console.log(`\n  ${passed} passed, ${failed} failed`)
 if (failed) process.exit(1)
 })()

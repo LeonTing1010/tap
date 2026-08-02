@@ -2282,16 +2282,23 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       // CDP fallback: if site needs isTrusted events, retry with cdpClick
       // (dx/dy translate frame-relative coords to top-frame viewport space)
       let hitMiss = null
+      let consumedFirstRead = false
       if (params.trusted) {
         // Compare-and-swap, not compare-then-swap-anyway: a proven miss
         // re-resolves (the element moved — its NEW position is the point) and,
         // failing to agree, does not dispatch at all. See casClick.
         const cas = await casClick({
           resolve: async () => {
-            if (result) { const r = result; result = null; return { x: r.x, y: r.y } }
+            // Consume the first read WITHOUT destroying `result` — the effect
+            // probe and the anomaly merge below still read it. (Nulling it
+            // here was a null-deref that no unit test could see, because the
+            // CAS helper is exercised in isolation; caught by SHOW.)
+            if (!consumedFirstRead) { consumedFirstRead = true; return { x: result.x, y: result.y } }
             try {
               const again = await execFunc(fx, clickResolver, innerTarget, false)
-              return again ? { x: again.x, y: again.y } : null
+              if (!again) return null
+              result = again   // downstream (effect probe, anomaly merge) reads the LIVE one
+              return { x: again.x, y: again.y }
             } catch (_e) { return null }
           },
           hitTest: async (p) => {
