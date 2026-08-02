@@ -329,6 +329,12 @@
       ],
       "additionalProperties": false,
       "properties": {
+        "must": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MustClause"
+          }
+        },
         "op": {
           "const": "fetch"
         },
@@ -382,6 +388,12 @@
       ],
       "additionalProperties": false,
       "properties": {
+        "must": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MustClause"
+          }
+        },
         "op": {
           "const": "nav"
         },
@@ -403,6 +415,12 @@
       ],
       "additionalProperties": false,
       "properties": {
+        "must": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MustClause"
+          }
+        },
         "op": {
           "const": "wait"
         },
@@ -443,6 +461,12 @@
       ],
       "additionalProperties": false,
       "properties": {
+        "must": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MustClause"
+          }
+        },
         "op": {
           "const": "input"
         },
@@ -514,6 +538,12 @@
       ],
       "additionalProperties": false,
       "properties": {
+        "must": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MustClause"
+          }
+        },
         "op": {
           "const": "extract"
         },
@@ -554,6 +584,12 @@
       ],
       "additionalProperties": false,
       "properties": {
+        "must": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MustClause"
+          }
+        },
         "op": {
           "const": "cookies"
         },
@@ -577,6 +613,12 @@
       ],
       "additionalProperties": false,
       "properties": {
+        "must": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MustClause"
+          }
+        },
         "op": {
           "const": "tap"
         },
@@ -603,6 +645,12 @@
       ],
       "additionalProperties": false,
       "properties": {
+        "must": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MustClause"
+          }
+        },
         "op": {
           "const": "if"
         },
@@ -634,6 +682,12 @@
       ],
       "additionalProperties": false,
       "properties": {
+        "must": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MustClause"
+          }
+        },
         "op": {
           "const": "foreach"
         },
@@ -665,6 +719,12 @@
       ],
       "additionalProperties": false,
       "properties": {
+        "must": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MustClause"
+          }
+        },
         "op": {
           "const": "parallel"
         },
@@ -691,6 +751,12 @@
       ],
       "additionalProperties": false,
       "properties": {
+        "must": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MustClause"
+          }
+        },
         "op": {
           "const": "eval"
         },
@@ -754,6 +820,12 @@
       ],
       "additionalProperties": false,
       "properties": {
+        "must": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MustClause"
+          }
+        },
         "op": {
           "const": "tab"
         },
@@ -804,6 +876,12 @@
       ],
       "additionalProperties": false,
       "properties": {
+        "must": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MustClause"
+          }
+        },
         "op": {
           "const": "bookmark"
         },
@@ -890,6 +968,12 @@
       ],
       "additionalProperties": false,
       "properties": {
+        "must": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MustClause"
+          }
+        },
         "op": {
           "const": "pdf"
         },
@@ -936,6 +1020,12 @@
       ],
       "additionalProperties": false,
       "properties": {
+        "must": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MustClause"
+          }
+        },
         "op": {
           "const": "notify"
         },
@@ -955,6 +1045,12 @@
       ],
       "additionalProperties": false,
       "properties": {
+        "must": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MustClause"
+          }
+        },
         "op": {
           "const": "ax"
         },
@@ -989,6 +1085,12 @@
       ],
       "additionalProperties": false,
       "properties": {
+        "must": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MustClause"
+          }
+        },
         "op": {
           "const": "screenshot"
         },
@@ -1045,6 +1147,12 @@
       ],
       "additionalProperties": false,
       "properties": {
+        "must": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MustClause"
+          }
+        },
         "op": {
           "const": "host"
         },
