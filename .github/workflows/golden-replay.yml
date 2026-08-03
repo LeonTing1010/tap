@@ -57,3 +57,115 @@ jobs:
         run: |
           TAP_HOME="$PWD/test/golden-replay" \
             npx -y @taprun/cli "${{ matrix.plan }}"
+
+  # The reason this job exists is that the fixtures above were red for nine
+  # consecutive nights and nobody found out until the owner happened to open a
+  # GitHub failure email. This workflow is deliberately NOT a PR gate, and
+  # "not a gate" had silently meant "does not reach anyone either".
+  #
+  # A gate stops someone; an email is stateless (a nine-day-old failure mail
+  # and tonight's look identical in an inbox). This keeps ONE standing issue
+  # instead: opened + assigned on the first red, its body rewritten in place on
+  # every later red (rewriting the body does NOT notify, so a long outage does
+  # not become one ping per night), and closed automatically on the first
+  # green. Whether the wiring is currently broken is therefore answerable by
+  # looking at whether the issue is open — which is what an inbox cannot say.
+  notify:
+    needs: replay
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      actions: read
+    steps:
+      - name: Open, update, or close the standing issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+          RESULT: ${{ needs.replay.result }}
+          # Passed through env rather than interpolated into the script body,
+          # like every other value here — an expression expanded inside `run:`
+          # is substituted before bash ever parses the line.
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          set -euo pipefail
+          TITLE="golden-replay is red — nightly drift detection is not reporting"
+
+          # Match on exact title rather than a label so the job owns no state
+          # outside the issue itself (a missing label would fail the create).
+          NUM=$(gh issue list --repo "$REPO" --state open --limit 100 \
+                  --json number,title \
+                  --jq "[.[] | select(.title == \"$TITLE\")] | .[0].number // empty")
+
+          RUN_URL="https://github.com/$REPO/actions/runs/$RUN_ID"
+
+          if [ "$RESULT" = "success" ]; then
+            if [ -n "$NUM" ]; then
+              gh issue comment "$NUM" --repo "$REPO" \
+                --body "Green again — all replay jobs passed in [this run]($RUN_URL). Closing."
+              gh issue close "$NUM" --repo "$REPO"
+              echo "closed #$NUM"
+            else
+              echo "green, no standing issue — nothing to do"
+            fi
+            exit 0
+          fi
+
+          # Which matrix legs actually failed, and why. Without this the issue
+          # would reproduce the original problem one level up: visible, but not
+          # readable without opening the run.
+          # On an HTTP error `gh api` still prints the error body on stdout, so
+          # the fallback has to overwrite the capture rather than append to it.
+          FAILED=$(gh api "repos/$REPO/actions/runs/$RUN_ID/jobs" --paginate \
+                     --jq '.jobs[] | select(.conclusion == "failure") | "- `\(.name)`"' \
+                     2>/dev/null) || FAILED=""
+          [ -n "$FAILED" ] || FAILED="- (could not list jobs — open the run)"
+
+          # Best effort: the CLI prints a JSON envelope, so `kind` + `message`
+          # are the two lines worth lifting out of the logs.
+          ENVELOPE=$(gh run view "$RUN_ID" --repo "$REPO" --log-failed 2>/dev/null \
+                       | grep -oE '"(kind|message)": "[^"]*"' \
+                       | sort -u | head -20 || true)
+
+          BODY=$(cat <<EOF
+          The nightly \`golden-replay\` workflow is failing. It replays five
+          credential-free public-API flows and asserts each one's \`op.expect\`
+          and \`post_return\` \`must\` against live HTTP, so a red here means
+          either a substrate API changed shape, or a Tap release changed the
+          flow format out from under the fixtures.
+
+          **Latest failing run:** $RUN_URL
+          **Result:** \`$RESULT\`
+
+          ### Failing jobs
+          $FAILED
+
+          ### Error envelope (best effort, from the failed job logs)
+          \`\`\`
+          ${ENVELOPE:-(none extracted — open the run)}
+          \`\`\`
+
+          ---
+          This issue is maintained by the workflow itself: the body is rewritten
+          on each subsequent failure and the issue closes automatically on the
+          first green run. Do not close it by hand while the job is still red —
+          it will simply be reopened as a new issue on the next failure, and the
+          history of how long this has been broken will be lost.
+          EOF
+          )
+          # Strip the heredoc's leading indentation.
+          BODY=$(printf '%s\n' "$BODY" | sed 's/^          //')
+
+          if [ -n "$NUM" ]; then
+            # Editing the body does not notify — intentional. The first red
+            # already pinged; a ten-night outage should not be ten pings.
+            gh issue edit "$NUM" --repo "$REPO" --body "$BODY"
+            echo "updated #$NUM"
+          else
+            gh issue create --repo "$REPO" \
+              --title "$TITLE" \
+              --body "$BODY" \
+              --assignee "$OWNER"
+            echo "opened a new issue"
+          fi
