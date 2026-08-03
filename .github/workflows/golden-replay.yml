@@ -5,9 +5,10 @@ name: golden-replay
 # per-tap op.expect predicates still pass against today's API shape.
 #
 # Catches what the contract layer can't: a substrate site renaming a JSON
-# field, returning empty arrays, or moving an endpoint. Each plan's
-# op.expect is the per-tap drift assertion (per ADR 2026-05-08 §2B);
-# this workflow exercises that mechanism against live HTTP.
+# field, returning empty arrays, or moving an endpoint. Each flow's
+# op.expect is the per-tap drift assertion (per ADR 2026-05-08 §2B) and its
+# post_return `must` asserts the read-outcome contract; this workflow
+# exercises both against live HTTP.
 #
 # Trigger: nightly cron (catch site-side drift even when no Tap change)
 # + workflow_dispatch. NOT a PR gate — real network = flake risk + 2-3s
@@ -41,10 +42,18 @@ jobs:
           node-version: 22
 
       - name: Replay ${{ matrix.plan }}
-        # Plan fixtures live under test/golden-replay/plans/<site>/<name>.plan.json
-        # (mirrors ~/.tap/plans/ layout) and are pointed at via TAP_HOME so the
+        # Flow fixtures live under test/golden-replay/flows/<site>/<name>.flow.json
+        # (mirrors ~/.tap/flows/ layout) and are pointed at via TAP_HOME so the
         # CLI loads them without polluting user state. Drift in any op.expect
         # surfaces as exit 1 with a tap_drifted envelope on stdout.
+        #
+        # NOTE (2026-08-03): this job runs unpinned `npx -y @taprun/cli`, so a
+        # release that changes the flow format kills it — which is exactly what
+        # happened. 0.26.0 moved plans/*.plan.json -> flows/*.flow.json and
+        # retired the v2 JSONata spelling for CEL; these fixtures were the only
+        # v2 holdouts left in the repo and went red for 9 nights unnoticed.
+        # Keep it unpinned on purpose: that red WAS the signal that a
+        # recompile-not-migrate release had left something behind.
         run: |
           TAP_HOME="$PWD/test/golden-replay" \
             npx -y @taprun/cli "${{ matrix.plan }}"

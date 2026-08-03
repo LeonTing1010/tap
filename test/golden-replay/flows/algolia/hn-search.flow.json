@@ -1,0 +1,26 @@
+{
+  "id": {
+    "site": "algolia",
+    "name": "hn-search"
+  },
+  "description": "HN Algolia search for 'tap' (golden-replay fixture for Layer 2). Different upstream + response shape from hn/top — paginated hits-array with rich metadata.",
+  "observe": [
+    {
+      "op": "fetch",
+      "url": "https://hn.algolia.com/api/v1/search?query=tap&hitsPerPage=20",
+      "method": "GET",
+      "format": "json",
+      "save": "body",
+      "expect": "size(result.hits) > 0 && \"objectID\" in result.hits[0] && \"title\" in result.hits[0] && \"author\" in result.hits[0]"
+    }
+  ],
+  "return": "{\"outcome\": dyn(size(observe.body.hits) > 0 ? \"ok\" : \"empty\"), \"reason\": dyn(size(observe.body.hits) > 0 ? \"\" : \"no hits for query 'tap'\"), \"count\": dyn(size(observe.body.hits)), \"hits\": dyn(observe.body.hits.map(h, {\"objectID\": dyn(h.objectID), \"title\": dyn(h.title), \"author\": dyn(h.author), \"points\": dyn(h.points), \"num_comments\": dyn(h.num_comments)}))}",
+  "must": [
+    {
+      "moment": "post_return",
+      "holds": "result.outcome == \"ok\""
+    }
+  ],
+  "source_url": "https://hn.algolia.com/api/v1/search?query=tap&hitsPerPage=20",
+  "source_intent": "HN Algolia search results for query 'tap'"
+}

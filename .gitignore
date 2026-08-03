@@ -30,3 +30,10 @@ scripts/weekly-digest.ts
 # Keep this stanza commented as a reminder — if you ever add screen recordings
 # again, ship them via Git LFS or release attachments, not the main repo.
 # docs/assets/*.mov
+
+# golden-replay runs with TAP_HOME=test/golden-replay, so the CLI writes its
+# runtime state (cells/, logs/) next to the checked-in flow fixtures. Only the
+# fixtures are source; the run artifacts are not.
+test/golden-replay/cells/
+test/golden-replay/logs/
+test/golden-replay/runs/

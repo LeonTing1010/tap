@@ -11,10 +11,16 @@
       "method": "GET",
       "format": "json",
       "save": "body",
-      "expect": "$exists($result.name) and $exists($result.`dist-tags`.latest) and $count($keys($result.versions)) > 0"
+      "expect": "has(result.name) && \"dist-tags\" in result && size(result.versions) > 0"
     }
   ],
-  "return": "{ 'name': $observe.body.name, 'latest': $observe.body.`dist-tags`.latest, 'version_count': $count($keys($observe.body.versions)) }",
+  "return": "{\"outcome\": dyn(has(observe.body.name) ? \"ok\" : \"unavailable\"), \"reason\": dyn(has(observe.body.name) ? \"\" : \"registry record has no name field\"), \"name\": dyn(observe.body.name), \"latest\": dyn(observe.body[\"dist-tags\"][\"latest\"]), \"version_count\": dyn(size(observe.body.versions))}",
+  "must": [
+    {
+      "moment": "post_return",
+      "holds": "result.outcome == \"ok\" && result.version_count > 0"
+    }
+  ],
   "source_url": "https://registry.npmjs.org/@taprun/cli",
   "source_intent": "npm registry record for @taprun/cli"
 }

@@ -11,10 +11,16 @@
       "method": "GET",
       "format": "json",
       "save": "body",
-      "expect": "$count($result) > 0 and $exists($result[0].number) and $exists($result[0].title) and $exists($result[0].html_url)"
+      "expect": "size(result) > 0 && \"number\" in result[0] && \"title\" in result[0] && \"html_url\" in result[0]"
     }
   ],
-  "return": "$observe.body",
+  "return": "{\"outcome\": dyn(size(observe.body) > 0 ? \"ok\" : \"empty\"), \"reason\": dyn(size(observe.body) > 0 ? \"\" : \"issues list came back empty\"), \"count\": dyn(size(observe.body)), \"issues\": dyn(observe.body.map(i, {\"number\": dyn(i.number), \"title\": dyn(i.title), \"html_url\": dyn(i.html_url), \"state\": dyn(i.state), \"updated_at\": dyn(i.updated_at)}))}",
+  "must": [
+    {
+      "moment": "post_return",
+      "holds": "result.outcome == \"ok\""
+    }
+  ],
   "source_url": "https://api.github.com/repos/browserbase/stagehand/issues?state=all&sort=updated&direction=desc&per_page=20",
   "source_intent": "Recent issues + PRs in browserbase/stagehand"
 }

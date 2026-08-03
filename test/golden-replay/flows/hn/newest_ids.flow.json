@@ -11,10 +11,16 @@
       "method": "GET",
       "format": "json",
       "save": "body",
-      "expect": "$count($result) > 10 and $type($result[0]) = \"number\""
+      "expect": "size(result) > 10 && result[0] > 0"
     }
   ],
-  "return": "$observe.body",
+  "return": "{\"outcome\": dyn(size(observe.body) > 10 ? \"ok\" : \"empty\"), \"reason\": dyn(size(observe.body) > 10 ? \"\" : \"newstories returned 10 or fewer ids\"), \"count\": dyn(size(observe.body)), \"ids\": dyn(observe.body)}",
+  "must": [
+    {
+      "moment": "post_return",
+      "holds": "result.outcome == \"ok\""
+    }
+  ],
   "source_url": "https://hacker-news.firebaseio.com/v0/newstories.json",
   "source_intent": "list of HN newest story IDs"
 }
