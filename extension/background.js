@@ -297,9 +297,32 @@ async function installPresenceShim(tabId) {
   try { await chrome.debugger.sendCommand({ tabId }, 'Runtime.evaluate', { expression: PRESENCE_SHIM_SRC }) } catch { /* benign */ }
 }
 
+// ONE spelling of "MV3 silently reclaimed the debugger session" — shared by
+// withDebugger and cdpClick so the two cannot disagree about what a reclaimed
+// session looks like. debuggerSessions still says attached:true, so
+// ensureDebugger no-ops and the next sendCommand throws.
+const isSessionReclaimed = (e) => /not attached|detached/i.test(String(e?.message || e))
+
 async function withDebugger(tabId, fn) {
   await ensureDebugger(tabId)
   try { return await fn() }
+  catch (e) {
+    // Reattach-once. This recovery already existed on the click path
+    // (cdpClick) and NOWHERE else, so every other CDP op — printToPDF,
+    // captureScreenshot, getFullAXTree, focus emulation — died outright on a
+    // reclaimed session. Found 2026-08-04 by a flow whose op:pdf failed with
+    // "Detached while handling command" on a tab that was alive and healthy.
+    // Safe to retry: this error means the command never reached the renderer,
+    // so nothing can double-fire. (A multi-command fn that fails on its 2nd
+    // command does replay the 1st — the same trade cdpClick already makes,
+    // and the same reason it is bounded to ONE retry.)
+    if (!isSessionReclaimed(e)) throw e
+    const s = debuggerSessions.get(tabId)
+    if (s?.detachTimer) clearTimeout(s.detachTimer)
+    debuggerSessions.delete(tabId)
+    await ensureDebugger(tabId)
+    return await fn()
+  }
   finally { scheduleDetach(tabId) }
 }
 
@@ -511,7 +534,7 @@ async function cdpClick(tabId, x, y) {
     // in-iframe repro: nav + ~14s idle wait before the click reclaimed the session.
     // Force-clear the stale entry, re-attach, and re-dispatch ONCE. (op:input
     // trusted runs from a USER command — the exact at-risk path the note calls out.)
-    if (/not attached|detached/i.test(String(e?.message || e))) {
+    if (isSessionReclaimed(e)) {
       const s = debuggerSessions.get(tabId)
       if (s?.detachTimer) clearTimeout(s.detachTimer)
       debuggerSessions.delete(tabId)
@@ -1407,9 +1430,19 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
   // 'notify' added 2026-07-12: handler is chrome.storage-only (side panel),
   // never touches tabId — core reclassified op:notify TAB_FREE the same day
   // (tap-core notify_tab_free_test.ts). Guard: test/notify-tab-free.test.mjs.
+  // 'host' added 2026-08-04: op:host runs a thin host capability
+  // (chrome.<namespace>.<method> from the Lane-B registry, ADR
+  // 2026-07-16). Core has classified it TAB_FREE since it shipped
+  // (TAB_FREE_OP_NAMES in tap-core core/types.ts) — the extension half was
+  // never updated, so core dispatched op:host with no tabId and this gate
+  // threw "No active tab" before the handler ever ran. Net effect: op:host
+  // could not execute from a flow at all, including its one shipped cap
+  // (tab-reload). Found by the first flow that actually used it. Same class
+  // of cross-repo desync ADR 2026-07-16 §6 flags as ungated.
+  // Guard: test/host-tab-free.test.mjs.
   const noTabNeeded = ['nav', 'tab', 'bookmark', 'tab.new', 'tab.list', 'tab.close', 'capabilities', 'reload',
                        'session.create', 'session.destroy', 'session.info',
-                       'visualize', 'fetch', 'notify']
+                       'visualize', 'fetch', 'notify', 'host']
   // op:pdf stamp mode is tab-FREE (overlays a local file via pdf-lib); export mode
   // still needs the bound tab for Page.printToPDF. Mirrors core pdfNeedsTab().
   const pdfTabFree = method === 'pdf' && params.mode === 'stamp'
@@ -1892,17 +1925,36 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       }
       // Defense-in-depth: mirror core HOST_CAP_NAMESPACES so a wire that
       // bypassed core validation still cannot invoke an arbitrary chrome API.
-      const HOST_NS_OK = new Set(['tabs', 'windows'])
+      const HOST_NS_OK = new Set(['tabs', 'windows', 'tabGroups', 'downloads', 'history', 'sessions', 'readingList', 'browsingData', 'contentSettings'])
       if (!HOST_NS_OK.has(spec.namespace)) {
         throw new Error('op:host: namespace "' + spec.namespace + '" not allowed')
       }
+      // `method` may be a DOTTED PATH. Several chrome namespaces are two
+      // levels deep — `chrome.contentSettings.notifications.get` is the API
+      // behind the site-permission bubbles, and a flat `chrome[ns][method]`
+      // lookup lands on an OBJECT and throws "is not a function". That was a
+      // registry-SHAPE limit masquerading as "the browser won't let us"
+      // (2026-08-04). Walking the path keeps Lane B data-only: the namespace
+      // allowlist still bounds the reach, and each leaf is still admitted
+      // one registry entry at a time — `contentSettings.notifications.get`
+      // can be registered while `.set` (which would grant any site camera or
+      // notifications from a data edit) simply is not.
       const ns = chrome[spec.namespace]
-      const fn = ns && ns[spec.method]
+      const segs = String(spec.method).split('.')
+      // Walk to the leaf, keeping its PARENT: chrome's bindings are methods on
+      // a specific receiver, so `chrome.contentSettings.notifications.get`
+      // applied with `chrome.contentSettings` as `this` throws "Illegal
+      // invocation: Function must be called on an object of type
+      // ContentSetting". For a single-segment method the parent IS ns, so the
+      // flat case is unchanged.
+      let owner = ns
+      for (const k of segs.slice(0, -1)) owner = owner == null ? owner : owner[k]
+      const fn = owner == null ? undefined : owner[segs[segs.length - 1]]
       if (typeof fn !== 'function') {
         throw new Error('op:host: chrome.' + spec.namespace + '.' + spec.method + ' is not a function')
       }
       const argv = (Array.isArray(spec.params) ? spec.params : []).map((name) => (params.args || {})[name])
-      const result = await fn.apply(ns, argv)
+      const result = await fn.apply(owner, argv)
       return result === undefined ? { host: spec.namespace + '.' + spec.method } : result
     }
 
@@ -1915,6 +1967,26 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       const s = (params.type || 'local') === 'session' ? chrome.storage.session : chrome.storage.local
       return { data: await s.get(null) }
     }
+
+    // (A temporary `_probe.cdp` case lived here on 2026-08-04 to settle one
+    //  question first-hand: can a chrome.debugger TAB session reach the
+    //  browser-scoped CDP domains, where Chrome keeps the UI a page can never
+    //  touch? Measured answer, on Chrome 150: NO.
+    //    Browser.getVersion         → -32601 "'Browser.getVersion' wasn't found"
+    //    Browser.getWindowForTarget → -32601 (same)
+    //    Target.getTargets          → -32000 "Not allowed"
+    //  So Browser.setDownloadBehavior (the download bubble) and
+    //  Browser.grantPermissions (the permission bubbles) are NOT reachable
+    //  from an extension, and no amount of registry or op design changes
+    //  that — it is Chrome's boundary, not ours. Recorded here rather than
+    //  kept as code: the probe answered its question and would otherwise
+    //  become a permanent CDP passthrough surface for one dead lead.
+    //  Still open, NOT measured: Fetch.authRequired + continueWithAuth for
+    //  the HTTP Basic auth sheet — the Fetch domain IS reachable (intercept.on
+    //  uses it), so that one is plausible; it needs `Fetch.enable
+    //  {handleAuthRequests:true}` paired with a handler, and enabling Fetch
+    //  without one hangs every matching request, so it deserves its own
+    //  throwaway tab and its own change.)
 
     case 'capabilities':
       return {

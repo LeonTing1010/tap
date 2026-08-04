@@ -61,7 +61,17 @@ test('scheduleDetach clears previous timer before scheduling', () => {
 test('withDebugger delegates to ensureDebugger and has try/finally lifecycle', () => {
   const wdStart = BG_SRC.indexOf('async function withDebugger(')
   assert(wdStart !== -1, 'withDebugger function must exist')
-  const wdBody = BG_SRC.substring(wdStart, wdStart + 400)
+  // Slice to the function's own closing brace, NOT a fixed character window.
+  // This assertion used to read `substring(wdStart, wdStart + 400)`, and on
+  // 2026-08-04 adding a reattach-once catch block pushed `finally` past 400 —
+  // the guard went red for a function that still satisfied every property it
+  // claims to check. A magic-number window measures LENGTH while pretending to
+  // measure STRUCTURE; widening it to 900 would only re-arm the same trap for
+  // the next edit. (Same footgun the frame-piercing guard documents in
+  // background.js with its 700-char slice.)
+  const wdEnd = BG_SRC.indexOf('\n}', wdStart)
+  assert(wdEnd !== -1, 'withDebugger must have a closing brace at column 0')
+  const wdBody = BG_SRC.substring(wdStart, wdEnd)
   assert(wdBody.includes('ensureDebugger'), 'withDebugger must delegate attach to ensureDebugger')
   assert(wdBody.includes('try'), 'withDebugger must have try block')
   assert(wdBody.includes('finally'), 'withDebugger must have finally block')
