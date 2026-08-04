@@ -14,20 +14,13 @@
   "permissions": [
     "nativeMessaging",
     "debugger",
-    "activeTab",
     "tabs",
     "tabGroups",
     "bookmarks",
     "scripting",
     "cookies",
     "storage",
-    "sidePanel",
-    "downloads",
-    "history",
-    "sessions",
-    "readingList",
-    "browsingData",
-    "contentSettings"
+    "sidePanel"
   ],
   "host_permissions": [
     "<all_urls>"

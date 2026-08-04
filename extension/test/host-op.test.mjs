@@ -74,7 +74,7 @@ test('defense-in-depth namespace allowlist (mirrors core HOST_CAP_NAMESPACES)', 
   // {index,windowId}), which is the admission rule for a host-caps
   // namespace. Widening again requires the same two-sided edit.
   assert(
-    body.includes("new Set(['tabs', 'windows', 'tabGroups', 'downloads', 'history', 'sessions', 'readingList', 'browsingData', 'contentSettings'])"),
+    body.includes("new Set(['tabs', 'windows', 'tabGroups'])"),
     'must guard the namespace against arbitrary chrome-API invocation',
   )
 })
@@ -96,21 +96,9 @@ test('the namespace allowlist admits nothing that can take OS focus', () => {
   )
 })
 
-test('dotted method paths resolve to the leaf AND bind its parent as receiver', () => {
-  // Several chrome namespaces are two levels deep — chrome.contentSettings
-  // .notifications.get is the API behind the site-permission bubbles. A flat
-  // chrome[ns][method] lookup lands on an OBJECT ("is not a function"), and
-  // even after walking the path, applying with `ns` as `this` throws
-  // "Illegal invocation: Function must be called on an object of type
-  // ContentSetting". Both were measured on 2026-08-04. Pin BOTH halves: a
-  // half-fix that walks the path but keeps `fn.apply(ns, ...)` looks correct
-  // and fails only on exactly the nested caps it was written for.
-  const h = body.slice(body.indexOf("case 'host':"))
-  const handler = h.slice(0, h.indexOf("case 'cookies':"))
-  assert(/split\('\.'\)/.test(handler), 'method must be treated as a dotted path')
-  assert(/fn\.apply\(owner, argv\)/.test(handler), 'must apply with the leaf\'s PARENT as receiver, not the namespace')
-  assert(!/fn\.apply\(ns, argv\)/.test(handler), 'applying with the namespace is the Illegal-invocation bug')
-})
+// The dotted-path test retired 2026-08-04 with the feature: its only caller
+// was chrome.contentSettings.notifications.get, and that permission was
+// withdrawn as unearned. Keeping the guard would pin a capability nothing uses.
 
 
 console.log(`\n${passed + failed} constraints, ${passed} passed, ${failed} failed\n`)

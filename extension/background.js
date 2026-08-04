@@ -1925,31 +1925,19 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
       }
       // Defense-in-depth: mirror core HOST_CAP_NAMESPACES so a wire that
       // bypassed core validation still cannot invoke an arbitrary chrome API.
-      const HOST_NS_OK = new Set(['tabs', 'windows', 'tabGroups', 'downloads', 'history', 'sessions', 'readingList', 'browsingData', 'contentSettings'])
+      const HOST_NS_OK = new Set(['tabs', 'windows', 'tabGroups'])
       if (!HOST_NS_OK.has(spec.namespace)) {
         throw new Error('op:host: namespace "' + spec.namespace + '" not allowed')
       }
-      // `method` may be a DOTTED PATH. Several chrome namespaces are two
-      // levels deep — `chrome.contentSettings.notifications.get` is the API
-      // behind the site-permission bubbles, and a flat `chrome[ns][method]`
-      // lookup lands on an OBJECT and throws "is not a function". That was a
-      // registry-SHAPE limit masquerading as "the browser won't let us"
-      // (2026-08-04). Walking the path keeps Lane B data-only: the namespace
-      // allowlist still bounds the reach, and each leaf is still admitted
-      // one registry entry at a time — `contentSettings.notifications.get`
-      // can be registered while `.set` (which would grant any site camera or
-      // notifications from a data edit) simply is not.
+      // Flat `chrome.<namespace>.<method>` only. Dotted-path support shipped
+      // for one afternoon to reach chrome.contentSettings.notifications.get,
+      // and left with the permission that made it reachable — a generic
+      // capability with no consumer is the same dead weight this codebase just
+      // deleted a whole cache over. It is six lines; re-add them WITH the
+      // caller that needs them.
       const ns = chrome[spec.namespace]
-      const segs = String(spec.method).split('.')
-      // Walk to the leaf, keeping its PARENT: chrome's bindings are methods on
-      // a specific receiver, so `chrome.contentSettings.notifications.get`
-      // applied with `chrome.contentSettings` as `this` throws "Illegal
-      // invocation: Function must be called on an object of type
-      // ContentSetting". For a single-segment method the parent IS ns, so the
-      // flat case is unchanged.
-      let owner = ns
-      for (const k of segs.slice(0, -1)) owner = owner == null ? owner : owner[k]
-      const fn = owner == null ? undefined : owner[segs[segs.length - 1]]
+      const owner = ns
+      const fn = ns && ns[spec.method]
       if (typeof fn !== 'function') {
         throw new Error('op:host: chrome.' + spec.namespace + '.' + spec.method + ' is not a function')
       }
