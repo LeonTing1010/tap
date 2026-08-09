@@ -118,6 +118,37 @@ test('HIT6 — the hit test runs BEFORE cdpClick on the trusted path', () => {
   assert(i < c, 'hit-testing AFTER the click is useless — the miss already happened')
 })
 
+test('HIT8 — `want` is the element the RESOLVER picked, not querySelector(sel)#1', () => {
+  // 2026-08-09 youtube dogfood. The selector reaching the hit test is BARE: the
+  // target's text/name discriminator and the resolver's visibility filter are
+  // already stripped. So for {selector:'button', text:'内容转文字'} on a page
+  // with 256 buttons, the resolver picks the visible discriminated one while a
+  // bare querySelector picks #1 — two different elements. `at === want` was
+  // then false on EVERY read and casClick proved a perfectly good click
+  // "stale", dispatching nothing, three reads in a row, forever.
+  const first = el('button')   // document.querySelector('button') → this one
+  const picked = el('button')  // what the click resolver actually chose
+  const restore = domDouble({ target: first, atPoint: picked })
+  const prev = globalThis.__tapCasTarget
+  globalThis.__tapCasTarget = picked
+  try {
+    assert.equal(hitTest('button', 1, 1), true,
+      'the point lands on the element the resolver picked — that is a hit, and ' +
+      'disagreeing with the click about WHICH element is the target is not a ' +
+      'geometry miss')
+  } finally { globalThis.__tapCasTarget = prev; restore() }
+})
+
+test('HIT9 — the resolver publishes its pick for the hit test to read', () => {
+  // The HIT8 fix only bites if the other half is wired: a hit test reading
+  // __tapCasTarget while nobody sets it silently falls back to
+  // querySelector(sel)#1 — i.e. straight back to the bug, with no test red.
+  assert(/globalThis\.__tapCasTarget\s*=/.test(BG),
+    'the click resolver must publish the element it picked on ' +
+    'globalThis.__tapCasTarget — otherwise CLICK_HIT_TEST falls back to ' +
+    'querySelector(sel)#1 and the discriminator bug returns unnoticed')
+})
+
 test('HIT7 — a proven miss is surfaced, not swallowed', () => {
   assert(/stale_coords|coords_missed|hit_test/.test(clickCase),
     'a click whose coordinates no longer hold the target must surface the fact — ' +

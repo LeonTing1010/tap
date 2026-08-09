@@ -604,7 +604,19 @@ const CLICK_WATCH_ARM = () => {
 // affect it. A descendant counts as a hit: the label inside a button IS the
 // button as far as the click is concerned.
 const CLICK_HIT_TEST = (sel, x, y) => {
-  const want = document.querySelector(sel)
+  // `want` must be the element the CLICK RESOLVER picked, not whatever
+  // `document.querySelector(sel)` returns first. `sel` reaching here is the
+  // BARE selector — the target's text/name discriminator and the resolver's
+  // visibility filter are already stripped — so for any target that needed
+  // them the two disagree, `at === want` is false on every read, and casClick
+  // proves a perfectly good click "stale" and never dispatches it.
+  // (2026-08-09 youtube dogfood: {selector:'button', text:'内容转文字'} —
+  // 256 buttons on the page, the resolver picked the visible one, this picked
+  // #1, three reads, zero clicks. The same click with a uniquely-matching
+  // selector dispatched fine.) The resolver publishes its pick on
+  // globalThis.__tapCasTarget; the querySelector path stays as the fallback
+  // for an older resolver / a target that needed no discriminator.
+  const want = globalThis.__tapCasTarget || document.querySelector(sel)
   if (!want) return false
   const at = document.elementFromPoint(x, y)
   if (!at) return false
@@ -2285,6 +2297,16 @@ async function handleMethod(method, params = {}, senderTabId = null, { fromDaemo
           }
         }
         const label = isObj ? (t.selector || '[resolver]') : t
+        // CAS identity (2026-08-09). Publish the element THIS chain actually
+        // picked, so CLICK_HIT_TEST can compare geometry against it instead of
+        // re-deriving a target with `document.querySelector(selector)`. That
+        // bare re-derivation returns the FIRST match, while a target carrying a
+        // text/name discriminator (or one skipped by the visibility filter)
+        // resolves to the Nth — two different elements, so `at === want` was
+        // false on every read and casClick proved every such trusted click
+        // "stale" and never dispatched it. Same-frame, same MAIN world as the
+        // hit test, so the reference survives between the two injections.
+        try { globalThis.__tapCasTarget = el || null } catch (_e) { /* exotic realm */ }
         // Probe mode (Clause B click half): report whether the target resolves
         // via THIS exact chain, WITHOUT clicking. Placed after the full chain so
         // the probe reflects click's real semantics (incl. semantic fallback).
