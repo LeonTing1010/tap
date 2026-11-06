@@ -125,11 +125,15 @@ test('D8 — a page-side stage diagnosis wins over any generic hint', () => {
   assert.doesNotMatch(out, /page may still be loading/, 'generic text must not dilute a real diagnosis')
 })
 
-test('D9 — all four throw sites route through notFoundMsg (no re-typed copies)', () => {
+test('D9 — every resolver-miss throw routes through notFoundMsg (no re-typed copies)', () => {
   const inlined = (BG_SRC.match(/top-frame resolve found nothing/g) || []).length
   assert.equal(inlined, 1, 'the literal may exist ONLY inside notFoundMsg')
+  // Re-pinned 2026-11-06 (#95): grew 4→6 as scroll gained pre/post probes
+  // (2026-07-20). All six route through notFoundMsg, so the invariant is
+  // stronger, not weaker. Pin to "no re-typed copies" (guarded by `inlined`)
+  // instead of a count that goes stale whenever a probe is added.
   const routed = (BG_SRC.match(/throw new Error\(notFoundMsg\(/g) || []).length
-  assert.equal(routed, 4, `all four selector_not_found sites must call notFoundMsg, found ${routed}`)
+  assert.ok(routed >= 4, `every selector_not_found site must call notFoundMsg, found ${routed}`)
 })
 
 console.log(`\n${passed} passed, ${failed} failed`)

@@ -39,14 +39,20 @@ const fnSrc = extractAsyncFn(BG, 'typeIntoContentEditable')
 
 // Fake editor element supporting the probe (closest/classList) + verify (textContent).
 function makeEditorEl(kind, text) {
+  // The helper now runs a focus guard that reads `el.contains(activeElement)`
+  // (2026-07 input rework). Give the fake element the method so the extracted
+  // function can run at all; the fake document marks it as already focused
+  // below, so the guard short-circuits before any focus() call (#95).
+  const contains = () => false
   if (kind === 'prosemirror') {
     return {
       closest: (s) => /ProseMirror|ql-editor|CodeMirror|cm-editor/.test(s) ? {} : null,
       classList: { contains: (c) => c === 'ProseMirror' },
       textContent: text,
+      contains,
     }
   }
-  return { closest: () => null, classList: { contains: () => false }, textContent: text } // custom contenteditable
+  return { closest: () => null, classList: { contains: () => false }, textContent: text, contains } // custom contenteditable
 }
 
 async function runType(text, kind = 'custom') {
@@ -57,7 +63,9 @@ async function runType(text, kind = 'custom') {
   const withDebugger = async (_tabId, f) => await f()
   const editorEl = makeEditorEl(kind, text)
   const execFunc = async (_fx, pageFn, ...args) => {
-    const document = { querySelector: () => editorEl }
+    // Mark the editor as already focused: the helper's focus guard accepts
+    // `el === document.activeElement` before it ever calls contains()/focus().
+    const document = { querySelector: () => editorEl, activeElement: editorEl }
     const bound = new Function('document', `return (${pageFn.toString()})`)(document)
     return bound(...args)
   }
