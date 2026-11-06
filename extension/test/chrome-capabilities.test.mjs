@@ -34,7 +34,14 @@ test('op:pdf stamp mode overlays via bundled offline pdf-lib (not chrome://pdf C
   // no CDP annotation command). Guards the spike-proven mechanism from silently
   // regressing to a chrome://pdf dependency.
   assert(BG.includes("mode === 'stamp'"), 'pdf handler must branch on stamp mode')
-  assert(BG.includes("import('./lib/pdf-lib.esm.js')"), 'stamp must use the vendored OFFLINE pdf-lib (local ./lib path)')
+  // Re-pinned 2026-11-06 (#95): MV3 service workers forbid runtime import(),
+  // so pdf-lib is a STATIC import from the vendored ./lib path (protocol.test
+  // Rule 6 carries the carve-out). Offline / pinned / local is unchanged —
+  // only the import form moved.
+  assert(/import\s*\{[^}]*\}\s*from\s*['"]\.\/lib\/pdf-lib\.esm\.js['"]/.test(BG),
+    'stamp must use the vendored OFFLINE pdf-lib (static import from local ./lib path)')
+  assert(!/import\(\s*['"]\.\/lib\/pdf-lib/.test(BG),
+    'must NOT lazy-import pdf-lib (MV3 SW forbids runtime import())')
   assert(BG.includes('embedPng'), 'stamp must embed the signature PNG')
   assert(BG.includes('drawImage'), 'stamp must draw the overlay at (x,y)')
   assert(BG.includes('bytesToB64'), 'stamp must return base64 PDF bytes (same {data,mime} shape as export)')

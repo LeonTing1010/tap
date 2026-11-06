@@ -80,7 +80,11 @@ test('typeIntoContentEditable helper exists', () => {
 })
 
 {
-  const helper = BG_SRC.substring(helperStart, helperStart + 3200) // widened for the RC1 IME-composition pipeline + clear-selection (2026-06-12)
+  // Brace-match the whole helper (#95): a fixed 3200-char window stopped short
+  // once APPEND mode + the focus guard + the composition pipeline grew the
+  // function past 6800 chars, hiding `Input.insertText` and the tabId-bearing
+  // keyboard sub-call. Both are still present; the window was blind.
+  const helper = blockAfter('async function typeIntoContentEditable(')
 
   test('helper uses CDP Input.insertText (not per-char dispatchKeyEvent)', () => {
     assert(helper.includes("'Input.insertText'") || helper.includes('"Input.insertText"'),

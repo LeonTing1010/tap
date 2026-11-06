@@ -47,6 +47,24 @@ function slice(marker, len) {
   return BG_SRC.slice(i, i + len)
 }
 
+// Brace-match the whole block after `marker`. Fixed-length windows go stale
+// every time a handler grows (#95): `result.x + dx` moved to +13868 while the
+// click pin still looked at 13000, and `wait`'s selector delegation moved to
+// +4531 behind the `wait{stable}` branch while the pin looked at 1100. Both
+// invariants still hold in the current source — the pins were blind, not the
+// behaviour. Pin to the whole handler instead of a byte count.
+function blockAfter(marker) {
+  const i = BG_SRC.indexOf(marker)
+  assert(i >= 0, `marker not found: ${marker}`)
+  const braceStart = BG_SRC.indexOf('{', i)
+  let depth = 0
+  for (let j = braceStart; j < BG_SRC.length; j++) {
+    if (BG_SRC[j] === '{') depth++
+    else if (BG_SRC[j] === '}') { depth--; if (depth === 0) return BG_SRC.slice(i, j + 1) }
+  }
+  throw new Error(`unbalanced braces after: ${marker}`)
+}
+
 console.log('\nframe-piercing combinator (#62)\n')
 
 test('resolveFrame helper exists with the " >>> " separator', () => {
@@ -94,11 +112,18 @@ test('selector-bearing handlers route through resolveFrame', () => {
 })
 
 test('CDP coordinate ops translate frame-relative coords (dx/dy)', () => {
-  const click = slice("case 'click': {", 13000) // widened: visible-match clickResolver (2026-06-11) + probe-mode branch (Clause B, 2026-06-17) + inline deepAll shadow helper (2026-06-23) + closed-shadow pierce fallback (Phase 2, 2026-07-10) + witness-voting report (ADR 2026-07-17) + 6400->8000 full one-click pointer sequence (ADR 2026-07-21) + 8000->13000 click-effect watch + inViewport self-heal (2026-07-23)
+  // Re-pinned 2026-11-06 (#95): the hit-test redesign (85f6110) re-derived its
+  // own target, and the trusted-click offset now appears as
+  // `cdpClick(tabId, p.x + dx, ...)` in the dispatch closure AND
+  // `cdpClick(tabId, result.x + dx, ...)` in the direct path — both still
+  // translate frame-relative rects into top-frame viewport space. The old
+  // 13000-char window stopped ~868 chars short of the latter; behaviour never
+  // left (the AGC in-frame trusted click still depends on it).
+  const click = blockAfter("case 'click': {")
   assert(click.includes('result.x + dx'), 'trusted click must offset by iframe viewport position')
-  const hover = slice("case 'hover': {", 1000) // widened 800->1000: the selector-miss message now carries the iframe ' >>> ' hint (2026-07-16)
+  const hover = blockAfter("case 'hover': {")
   assert(hover.includes('coords.x + dx'), 'hover mouseMoved must offset by iframe viewport position')
-  const type = slice("case 'type': {", 4300)
+  const type = blockAfter("case 'type': {")
   assert(type.includes('probe.x + dx'), 'type keys/contenteditable paths must offset coords')
 })
 
@@ -134,7 +159,12 @@ test('upload trusted path intercepts the file chooser and clicks the trigger', (
 })
 
 test('op:wait selector-mode delegates to waitFor (was silently ignored)', () => {
-  const body = slice("case 'wait': {", 1100)
+  // Re-pinned 2026-11-06 (#95): `wait{stable}` auto-settle (ADR 2026-07-29)
+  // now opens the case and pushes the selector→waitFor delegation ~4500 chars
+  // down. The delegation AND the timeout→selector_not_found mapping are both
+  // still present — a selector wait does NOT instant-ok — the old 1100-char
+  // window just no longer reached them.
+  const body = blockAfter("case 'wait': {")
   assert(body.includes("handleMethod('waitFor'"),
     'method wait with a selector must delegate to waitFor, not NaN-ms sleep to instant ok')
   assert(body.includes("'selector_not_found: '"),
