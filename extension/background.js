@@ -3787,6 +3787,27 @@ chrome.tabs.onRemoved.addListener((tabId) => pendingPageExceptions.delete(tabId)
 const WRITE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
 const pendingWriteMeta = new Map()   // tabId -> Map(requestId -> {method, url})
 const pendingWriteEvents = new Map() // tabId -> [{method, url, status, at}]
+// The Network capture buffer is per-tab, per-SESSION, and unbounded would
+// leak on a chatty notification SPA during a long authoring session — ring
+// it at 500 entries (oldest first is what a journal wants: the request the
+// author is chasing is usually recent).
+const NETWORK_CAPTURE_MAX = 500
+
+// Write-templating wants every authenticity header (Authorization SAPISIDHASH,
+// x-csrf-token, content-type variant, …) EXCEPT Cookie: op:fetch
+// credentials:page-session re-supplies the browser's cookies at replay, so a
+// captured plan must never itself embed a live cookie (repo law: cleartext
+// credentials stay in ~/.tap/config/secrets / the cookie jar — never in flow
+// JSON). Values are capped so a malformed huge header cannot blow the dump.
+function sanitizeRequestHeaders(h) {
+  const out = {}
+  for (const k in (h || {})) {
+    if (/^cookie$|^set-cookie$/i.test(k)) continue
+    out[k] = String(h[k]).slice(0, 4096)
+  }
+  return out
+}
+
 async function handleWriteRequestEvent(source, method, params) {
   const tabId = source?.tabId
   if (typeof tabId !== 'number') return
@@ -3845,6 +3866,10 @@ chrome.debugger.onEvent.addListener((source, method, params) => {
       url: params.request?.url || '',
       hasPostData: params.request?.hasPostData || false,
       postData: params.request?.postData || null,
+      // capture-tap (#67): headers at request time — the write-templating
+      // fields a plan's op:fetch needs (Authorization shape, x-csrf-*, …).
+      // Cookie is stripped by sanitizeRequestHeaders (replay re-supplies it).
+      requestHeaders: sanitizeRequestHeaders(params.request?.headers),
     })
     return
   }
@@ -3885,10 +3910,17 @@ chrome.debugger.onEvent.addListener((source, method, params) => {
       resourceType: params.type,               // CDP ResourceType — kept separately for diagnostics
       hasPostData: meta?.hasPostData || false,
       requestBody: meta?.postData || undefined, // Inline body, undefined for GETs and >~640KB POSTs
+      // capture-tap (#67): faithful header journal for write-templating —
+      // the agent reads `per_item: {headers: {attr: 'requestHeaders'}}` and
+      // templates an op:fetch. Cookie never present (see helper above).
+      requestHeaders: meta?.requestHeaders || {},
       status: response.status,
       type: response.mimeType || ct.split(';')[0],
       requestId,
     })
+    if (capture.entries.length > NETWORK_CAPTURE_MAX) {
+      capture.entries.splice(0, capture.entries.length - NETWORK_CAPTURE_MAX)
+    }
   }
 })
 
