@@ -69,6 +69,22 @@ test.describe("op-matrix (real SW dispatch)", () => {
     await context?.close();
   });
 
+  // A shared `let tabId` across Playwright tests is NOT reliable: the wait
+  // row used to lose it, and every later op then fell through to
+  // handleMethod's active-tab auto-discovery — which resolves to the
+  // popup.html driver (an extension page chrome.scripting cannot inject
+  // into), producing "Cannot access contents of url chrome-extension://…".
+  // Re-resolve the fixture tab from Chrome before EVERY row instead.
+  test.beforeEach(async () => {
+    tabId = await driver.evaluate(
+      (prefix) =>
+        new Promise((res) =>
+          chrome.tabs.query({ url: prefix }, (ts) => res(ts[0]?.id ?? null)),
+        ),
+      "https://example.com/*",
+    );
+  });
+
   /** Dispatch one wire method into the real SW; returns { result?, error? }. */
   const send = (method, params) =>
     driver.evaluate(
@@ -87,6 +103,17 @@ test.describe("op-matrix (real SW dispatch)", () => {
     expect(resp.error, `nav failed: ${resp.error}`).toBeUndefined();
     tabId = resp.result?.tabId;
     expect(tabId, "nav must return the bound tabId").toBeTruthy();
+
+    // example.com dropped its <h1> in a 2026 markup change (the body is now
+    // a <style> + <svg> shell). Seed our own fixture so every selector-based
+    // row below is independent of the external site's DOM.
+    const seed = await send("eval", {
+      tabId,
+      expression:
+        "document.body.insertAdjacentHTML('afterbegin'," +
+        "'<h1 id=\"e2e-h1\">Tap E2E</h1>'); 'seeded'",
+    });
+    expect(seed.error, `fixture seed failed: ${seed.error}`).toBeUndefined();
   });
 
   test("wait{selector} — resolver-injected selector wait", async () => {

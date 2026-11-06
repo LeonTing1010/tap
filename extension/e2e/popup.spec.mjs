@@ -93,10 +93,11 @@ test("popup renders connected state when SW reports connected", async () => {
     await expect(page.locator("#dc-forbidden")).toBeHidden();
     await expect(page.locator("#dc-unknown")).toBeHidden();
 
-    // Connected copy: green-dot row + headline text. The text is the
-    // user's primary signal that everything is working.
-    await expect(page.locator("#connected .row")).toContainText(
-      "Connected to local bridge",
+    // Connected copy: the state sub-line is the user's primary signal that
+    // everything is working. (2026-07-27 redesign replaced `.row` with
+    // `.state` / `.state-title` / `.state-sub`.)
+    await expect(page.locator("#connected .state-sub")).toContainText(
+      "Connected to your local bridge",
     );
 
     // .dot-ok styling renders the green dot — visual regression catch.
@@ -132,17 +133,24 @@ test("popup renders disconnected state when no bridge is reachable", async () =>
     await expect(page.locator("#dc-not-installed")).toBeVisible();
     await expect(page.locator("#connected")).toBeHidden();
 
-    // Canonical setup command literal — the dc-not-installed CTA. If anyone
-    // renames the CLI verb this test fails (paired with Layer 3a's structural
-    // assertion in popup.test.mjs). Note: `tap bridge start` was deleted in
-    // 94c6a43 — bridge launches via Chrome connectNative, no user command.
-    await expect(page.locator("#dc-not-installed pre code")).toContainText(
+    // Canonical setup command literal — the dc-not-installed CTA. The 2026-07-27
+    // redesign moved the primary CTA to a link and tucked the terminal command
+    // into a <details> disclosure; `tap bridge setup` survives as the
+    // already-installed shortcut in the hint (paired with Layer 3a's
+    // structural assertion in popup.test.mjs). Assert both shapes.
+    await expect(page.locator("#dc-not-installed .code code")).toContainText(
+      "npx -y @taprun/cli embed claude-code",
+    );
+    await expect(page.locator("#dc-not-installed .hint")).toContainText(
       "tap bridge setup",
     );
 
     // Install link must keep its UTM payload through Chrome's anchor handling
-    // (per memory feedback_always_utm_external_shares).
-    const href = await page.locator("#install").getAttribute("href");
+    // (per memory feedback_always_utm_external_shares). Redesign renamed
+    // #install → .btn-primary and campaign popup → popup-setup.
+    const href = await page
+      .locator("#dc-not-installed .btn-primary")
+      .getAttribute("href");
     expect(href).toContain("utm_source=chrome-ext");
     expect(href).toContain("utm_campaign=popup");
 
